@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Models\Operational;
+
+use App\Models\Data\FleetDriver;
+use App\Models\Data\Route;
+use App\Models\Master\Customer;
+use App\Models\Master\Employee;
+use App\Models\Master\Fleet;
+use App\Models\Master\Material;
+use App\Models\Master\OrderType;
+use App\Traits\Uuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Order extends Model
+{
+    use HasFactory, SoftDeletes, Uuid;
+
+    protected $table = 'order';
+    public $incrementing = false;
+
+    protected $fillable = [
+        'code',
+        'shipmentNumber',
+        'orderDate',
+        'shipmentDate',
+        'customerCode',
+        'materialCode',
+        'notes',
+        'salesOrder',
+        'sto',
+        'fleetDriverCode',
+        'routeCode',
+        'qty',
+        'routeCode',
+        'orderTypeCode',
+        'fleetTypeCode',
+        'bonUjt',
+        'driverCode',
+        'fleetCode',
+        'status',
+        'companyCode',
+        'estimatedTime',
+        'distance',
+        'returnDate'
+    ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customerCode', 'code');
+    }
+
+    public function material()
+    {
+        return $this->belongsTo(Material::class, 'materialCode', 'code');
+    }
+
+    public function fleetDriver()
+    {
+        return $this->belongsTo(FleetDriver::class, 'fleetDriverCode', 'code');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Employee::class, 'driverCode', 'code');
+    }
+
+    public function route()
+    {
+        return $this->belongsTo(Route::class, 'routeCode', 'code');
+    }
+
+    public function cost()
+    {
+        return $this->hasMany(OrderCost::class, 'orderCode', 'code');
+    }
+
+    public function orderType()
+    {
+        return $this->belongsTo(OrderType::class, 'orderTypeCode', 'code');
+    }
+
+    public function fleet()
+    {
+        return $this->belongsTo(Fleet::class, 'fleetCode', 'code');
+    }
+
+    public function orderStatus()
+    {
+        return $this->belongsTo(OrderStatus::class, 'status', 'code');
+    }
+}

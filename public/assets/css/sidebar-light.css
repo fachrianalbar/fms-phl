@@ -1,0 +1,30 @@
+.sidebar-link {
+    color: #00AC46;
+    background-color: #e6e9eb;
+}
+.sidebar-link:hover {
+    background-color: #00AC46 !important;
+    color: white !important;
+    border-radius: 8px;
+
+}
+
+.sidebar-link:hover i,
+.sidebar-link:hover svg,
+.sidebar-link:hover span {
+    color: white !important;
+}
+
+.sidebar-link-active {
+    color: white;
+    background-color: #00AC46;
+    border-radius: 8px;
+    margin: 5px 0;
+}
+
+.sidebar-link-active i,
+.sidebar-link-active svg,
+.sidebar-link-active span {
+    color: white !important;
+    background-color: #00AC46 !important;
+}

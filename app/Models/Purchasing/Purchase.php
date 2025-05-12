@@ -1,0 +1,61 @@
+<?php
+
+namespace App\Models\Purchasing;
+
+use App\Models\Inventory\Supplier;
+use App\Models\Inventory\Warehouse;
+use App\Models\Master\ConfigBank;
+use App\Models\Master\UserBank;
+use App\Traits\Uuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
+
+
+class Purchase extends Model
+{
+    use HasFactory, SoftDeletes, Uuid;
+
+    protected $table = 'purchase';
+    public $incrementing = false;
+
+    protected $fillable = [
+        'code',
+        'date',
+        'time',
+        'supplierCode',
+        'warehouseCode',
+        'status',
+        'receivedDate',
+        'paymentDate',
+        'nominal',
+        'paymentCode',
+        'userBankCode'
+    ];
+
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class, 'supplierCode', 'code');
+    }
+
+    public function userBank()
+    {
+        return $this->belongsTo(UserBank::class, 'userBankCode', 'code');
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouseCode', 'code');
+    }
+
+    public function details()
+    {
+        return $this->hasMany(PurchaseDetail::class, 'purchaseCode', 'code');
+    }
+
+    public function purchaseStatus()
+    {
+        return $this->belongsTo(PurchaseStatus::class, 'status', 'code');
+    }
+}

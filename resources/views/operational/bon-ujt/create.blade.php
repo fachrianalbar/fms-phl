@@ -1,0 +1,316 @@
+@extends('layouts.main', [
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => $title,
+    'secondSegment' => 'Add',
+])
+
+@push('style')
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/datatables.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+@endpush
+
+@section('content')
+    <form class="row g-3" method="post" action="{{ route($view . 'store') }}" onsubmit="return submitForm('note')">
+        @csrf
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>{{ $title }} Add Data</h4>
+
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                </div>
+                <div class="card-body col-md-12">
+                    <div class="row g-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label" for="name">Code <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input type="hidden" name="code" value="TBU{{ now()->format('ymdHis') }}">
+                                <input class="form-control" type="text" required placeholder="Name" readonly disabled
+                                    value="TBU{{ now()->format('ymdHis') }}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label" for="name">Date <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="date" id="datetime-local" type="date" required
+                                    placeholder="Order Date" value="{{ now()->toDateString() }}">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label">Time</label>
+                                <input class="form-control digits" name="time" type="time"
+                                    value="{{ now()->setTimezone('Asia/Jakarta')->format('H:i') }}">
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label class="form-label" for="submitDate">Date Submitted <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="submitDate" id="datetime-local" type="date" required
+                                    placeholder="Date Submitted">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="fleetTypeCode">Serah Terima Oleh <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode"
+                                    required="">
+                                    <option selected="" disabled="" value="">Choose...</option>
+                                    @foreach ($fleetType as $item)
+                                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label class="form-label" for="bon">Nomor Bon <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="bon" id="bon" type="text" required
+                                    placeholder="Nomor Bon">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="note">Catatan</label>
+                                <input class="form-control" name="note" id="note" type="text"
+                                    placeholder="Catatan" oninput="formatAngka(this)">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button class="btn btn-primary" type="button" id="openModalButton">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myLargeModalLabel">Data Order</h4>
+                            <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="card">
+                            <div class="card-body col-md-12">
+                                <div class="row g-3">
+                                    <table class="display " id="dt">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>No</th>
+                                                <th>Shipment No</th>
+                                                <th>Order Date</th>
+                                                <th>Origin</th>
+                                                <th>Destination</th>
+                                                <th>Plate No</th>
+                                                <th>Fleet Type</th>
+                                                <th>Order Type</th>
+                                                {{-- <th>Allowance</th> --}}
+                                                {{-- <th>Qty</th>
+                                                <th>Cost</th>
+                                                <th>Tonase</th>
+                                                <th>Add Cost</th> --}}
+                                                <th>Total Cost</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-start">
+                            <button type="submit" id="saveBonUjt" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+@endsection
+
+@push('script')
+    <script src="{{ asset('assets/js/datatable/datatables/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
+    <script src=" {{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+    <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+
+    <script>
+        let selectedOrders = [];
+
+        $(document).ready(function() {
+            $('#openModalButton').click(function() {
+
+                // Validate form fields
+                let isValid = true;
+                $('form input[required]').each(function() {
+                    if ($(this).val() === '') {
+
+                        isValid = false;
+
+                        swal({
+                            title: "Warning",
+                            text: "Please fill all required fields",
+                            icon: "warning",
+                        })
+                        return;
+                    }
+                });
+                table.ajax.reload();
+
+                // If form is valid, show the modal
+                if (isValid) {
+                    $('.bd-example-modal-xl').modal('show');
+                }
+            });
+
+            // Event handler untuk checkbox
+            $(document).on('change', '.order-checkbox', function() {
+                const orderId = $(this).val();
+                if ($(this).is(':checked')) {
+                    if (!selectedOrders.includes(orderId)) {
+                        selectedOrders.push(orderId);
+                    }
+                } else {
+                    selectedOrders = selectedOrders.filter(id => id !== orderId);
+                }
+
+            });
+
+            // Simpan state saat DataTable di-reload (misalnya saat pindah halaman)
+            $('#dt').on('draw.dt', function() {
+                $('.order-checkbox').each(function() {
+                    const orderId = $(this).val();
+                    if (selectedOrders.includes(orderId)) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            });
+
+
+            const table = $('#dt').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "destroy": true,
+                "ajax": {
+                    "url": "{{ route('dt.bon-ujt-order') }}",
+                    "data": function(d) {
+                        d.fleetTypeCode = $('select[name="fleetTypeCode"]').val();
+                    }
+                },
+                "columns": [{
+                        "data": 'action'
+                    },
+                    {
+                        "data": 'DT_RowIndex'
+                    },
+                    {
+                        "data": 'shipmentNumber'
+                    },
+                    {
+                        "data": 'orderDate'
+                    },
+                    {
+                        "data": 'route.originLocation.name'
+                    },
+                    {
+                        "data": 'route.destinationLocation.name'
+                    },
+                    {
+                        "data": 'fleet.plateNumber'
+                    },
+                    {
+                        "data": 'fleet.type.name'
+                    },
+                    {
+                        "data": 'orderType.name'
+                    },
+                    // {
+                    //     "data": 'allowance'
+                    // },
+                    // {
+                    //     "data": 'qty'
+                    // },
+                    // {
+                    //     "data": 'cost',
+                    // },
+                    // {
+                    //     "data": 'bonus'
+                    // },
+                    // {
+                    //     "data": 'addCost'
+                    // },
+                    {
+                        "data": 'totalPrice'
+                    },
+
+
+                ],
+                "columnDefs": [{
+                        "searchable": false,
+                        "targets": [0, 1]
+                    },
+                    {
+                        "orderable": false,
+                        "targets": [0, 1]
+                    }
+                ],
+                "order": [
+                    [3, 'desc']
+                ]
+            })
+        });
+
+        $('#saveBonUjt').click(function(e) {
+            // Get all checkboxes
+            if (selectedOrders.length === 0) {
+                event.preventDefault();
+                swal({
+                    title: "Warning",
+                    text: "Please select at least one item",
+                    icon: "warning",
+                });
+                return;
+            }
+
+            // Tambahkan array ke form
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'selectedOrders',
+                value: JSON.stringify(selectedOrders)
+            }).appendTo('form');
+        });
+
+        function deleteData(uuid) {
+            var url = '{{ route('operational.order.index') }}/' + uuid;
+            $('#delete-form').attr('action', url);
+
+            swal({
+                title: "Are you sure?",
+                text: "Want to delete this data?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $('#delete-form').submit();
+                } else {
+                    swal("Your data is safe!");
+                }
+            });
+        }
+    </script>
+@endpush
