@@ -8,9 +8,9 @@ require __DIR__ . '/auth.php';
 require __DIR__ . '/guest.php';
 
 
-Route::get('/', function () {
-    return view('index');
-})->name("guest.home");
+// Route::get('/', function () {
+//     return view('index');
+// })->name("guest.home");
 
 
 Route::middleware(['auth'])->group(function () {

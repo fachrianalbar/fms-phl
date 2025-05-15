@@ -1,116 +1,84 @@
-<div class="page-header">
-    <div class="header-wrapper row m-0">
-        <form class="form-inline search-full col" action="#" method="get">
-            <div class="form-group w-100">
-                <div class="Typeahead Typeahead--twitterUsers">
-                    <div class="u-posRelative">
-                        <input class="demo-input Typeahead-input form-control-plaintext w-100" type="text"
-                            placeholder="Search Riho .." name="q" title="" autofocus>
-                        <div class="spinner-border Typeahead-spinner" role="status"><span class="sr-only">Loading...
-                            </span></div><i class="close-search" data-feather="x"></i>
-                    </div>
-                    <div class="Typeahead-menu"> </div>
-                </div>
-            </div>
-        </form>
-        <div class="header-logo-wrapper col-auto p-0">
-            <div class="logo-wrapper">
-                <a href="index.html">
-                    <img class="img-fluid for-light" src="{{ asset('assets/images/logo/logo_dark.png') }}"
-                        alt="logo-light">
-                    <img class="img-fluid for-dark" src="{{ asset('assets/images/logo/logo.png') }}" alt="logo-dark">
-                </a>
-            </div>
-
-            <div class="toggle-sidebar"> <i class="status_toggle middle sidebar-toggle" data-feather="align-center"></i>
-            </div>
-        </div>
-        <div class="left-header col-xxl-5 col-xl-6 col-lg-5 col-md-4 col-sm-3 p-0">
-            <div> <a class="toggle-sidebar" href="#"> <i class="iconly-Category icli"> </i></a>
-                <div class="d-flex align-items-center gap-2 ">
-                    <h4 class="f-w-600">Welcome {{ auth()->user()->name }}</h4>
-                    <img class="mt-0" src="{{ asset('assets/images/hand.gif') }}" alt="hand-gif">
-                </div>
-
-            </div>
-
-        </div>
-        <div class="nav-right col-xxl-7 col-xl-6 col-md-7 col-8 pull-right right-header p-0 ms-auto">
-
-            <ul class="nav-menus">
-
+<div class="topbar-custom">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between">
+            <ul class="list-unstyled topnav-menu mb-0 d-flex align-items-center">
                 <li>
-                    <div class="pointer" id="darkModeToggle"><i class="moon" data-feather="moon"> </i></div>
-
+                    <button class="button-toggle-menu nav-link">
+                        <i data-feather="menu" class="noti-icon"></i>
+                    </button>
                 </li>
-
-                <li class="btn-group">
-                    @if (auth()->user()->balance())
-                        <span class="h6 btn dropdown-toggle" style="font-size: 16px" data-bs-toggle="dropdown"
-                            aria-expanded="false" data-bs-auto-close="outside">Saldo:
-                            {{ auth()->user()->balance() }}</span>
-                        <form class="dropdown-menu p-4 form-wrapper dark-form">
-                            @foreach (auth()->user()->listBalance() as $item)
-                                <div class="mb-3">
-                                    <span>{{ $item->userBank->bank->name }}
-                                        <br />
-                                    </span>
-                                    <span>{{ number_format($item->balance, 0, ',', '.') }}</span>
-                                </div>
-                            @endforeach
-                        </form>
-                    @endif
-
+                <li class="d-none d-lg-block">
+                    <h5 class="mb-0">Hello {{ auth()->user()->name }}</h5>
                 </li>
+            </ul>
 
-
-
-                <li class="profile-nav onhover-dropdown">
-                    <div class="media profile-media">
-                        {{-- <img class="b-r-10" src="{{ asset('assets/images/dashboard/profile.png') }}" alt=""> --}}
-                        <div class="media-body d-xxl-block d-none box-col-none">
-                            <div class="d-flex align-items-center gap-2">
-                                <span>{{ auth()->user()->name }}</span>
-                                <i class="middle fa fa-angle-down"></i>
-                            </div>
-                            <p class="mb-0 font-roboto">Admin</p>
+            <ul class="list-unstyled topnav-menu mb-0 d-flex align-items-center">
+                <li class="d-none d-lg-block">
+                    <form class="app-search d-none d-md-block me-auto">
+                        <div class="position-relative topbar-search">
+                            <input type="text" class="form-control ps-4" placeholder="Search..." />
+                            <i
+                                class="mdi mdi-magnify fs-16 position-absolute text-muted top-50 translate-middle-y ms-2"></i>
                         </div>
+                    </form>
+                </li>
+
+                <!-- Button Trigger Customizer Offcanvas -->
+                <li class="d-none d-sm-flex">
+                    <button type="button" class="btn nav-link" data-toggle="fullscreen">
+                        <i data-feather="maximize" class="align-middle fullscreen noti-icon"></i>
+                    </button>
+                </li>
+
+                <!-- Light/Dark Mode Button Themes -->
+                <li class="d-none d-sm-flex">
+                    <button type="button" class="btn nav-link" id="light-dark-mode">
+                        <i data-feather="moon" class="align-middle dark-mode"></i>
+                        <i data-feather="sun" class="align-middle light-mode"></i>
+                    </button>
+                </li>
+
+                <!-- User Dropdown -->
+                <li class="dropdown notification-list topbar-dropdown">
+                    <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
+                        role="button" aria-haspopup="false" aria-expanded="false">
+                        <img src="{{ asset('assets/images/users/user-13.jpg') }}" alt="user-image"
+                            class="rounded-circle" />
+                        <span class="pro-user-name ms-1">{{ auth()->user()->name }} <i
+                                class="mdi mdi-chevron-down"></i></span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end profile-dropdown">
+                        <!-- item-->
+                        <div class="dropdown-header noti-title">
+                            <h6 class="text-overflow m-0">Welcome !</h6>
+                        </div>
+
+                        <!-- item-->
+                        {{-- <a href="pages-profile.html" class="dropdown-item notify-item">
+                            <i class="mdi mdi-account-circle-outline fs-16 align-middle"></i>
+                            <span>My Account</span>
+                        </a>
+
+                        <!-- item-->
+                        <a href="auth-lock-screen.html" class="dropdown-item notify-item">
+                            <i class="mdi mdi-lock-outline fs-16 align-middle"></i>
+                            <span>Lock Screen</span>
+                        </a> --}}
+
+                        <div class="dropdown-divider"></div>
+
+                        <!-- item-->
+                        <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="dropdown-item notify-item">
+                                <i class="mdi mdi-location-exit fs-16 align-middle"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+
                     </div>
-                    <ul class="profile-dropdown onhover-show-div">
-
-                        {{-- <li><a href="letter-box.html"><i data-feather="mail"></i><span>Inbox</span></a></li>
-                        <li> <a href="edit-profile.html"> <i data-feather="settings"></i><span>Settings</span></a></li> --}}
-
-                        <li class="text-center"><a href="{{ route('guest.home') }}"><i></i><span>Guest Order
-                                    Monitoring</span></a>
-                        </li>
-
-                        <li> <a href="{{ route('change-password.index') }}"> <span class="no-wrap">Change
-                                    Password</span></a></li>
-                        <li>
-
-                            {{-- <li class="text-center"> <a href="{{ route('guest.home') }}"> <span class="no-wrap">Guest Order
-
-                                    Monitoring</span></a></li>
-                        <li> --}}
-                            <form action="{{ route('logout') }}" method="POST">
-                                @csrf
-                                <button type="submit" class="btn btn-pill btn-outline-primary btn-sm">Log
-                                    Out</button>
-                            </form>
-
-                        </li>
-                    </ul>
                 </li>
             </ul>
         </div>
-        <script class="result-template" type="text/x-handlebars-template">
-    <div class="ProfileCard u-cf">                        
-    <div class="ProfileCard-avatar"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-airplay m-0"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg></div>
-    <div class="ProfileCard-details"> 
-    </div> 
-    </div>
-  </script>
-        <script class="empty-template" type="text/x-handlebars-template"><div class="EmptyMessage">Your search turned up 0 results. This most likely means the backend is down, yikes!</div></script>
     </div>
 </div>

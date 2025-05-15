@@ -7,6 +7,8 @@
 
 @push('style')
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
 @endpush
 

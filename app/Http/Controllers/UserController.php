@@ -173,11 +173,26 @@ class UserController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li><a href="javascript:resetData(\'' . $row->id . '\')"><i class="icon-key"></i></a></li>
-                                        <li class="edit mx-2"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                                    </ul>';
+                    $btn = ' <td>
+                            <a href="javascript:resetData(\'' . $row->id . '\')"
+                            class="btn btn-icon btn-sm bg-success-subtle me-1"
+                            data-bs-toggle="tooltip" title="Reset Password">
+                                <i class="mdi mdi-key fs-14 text-success"></i>
+                            </a>
+
+                            <a href="' . route($this->view . 'edit', $row->id) . '"
+                            class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                            data-bs-toggle="tooltip" title="Edit">
+                                <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                            </a>
+
+                            <a href="javascript:deleteData(\'' . $row->id . '\')"
+                            class="btn btn-icon btn-sm bg-danger-subtle"
+                            data-bs-toggle="tooltip" title="Delete">
+                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                            </a>
+                        </td>';
+
 
                     return $btn;
                 })

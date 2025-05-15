@@ -7,6 +7,8 @@
 
 @push('style')
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 @endpush
 
 @section('content')
@@ -109,8 +111,9 @@
 
                                 <label class="form-label" for="fleetPicture">Vehicle</label>
 
-                                <button id="addInputFile" type="button" class="btn btn-sm btn-info  font-weight-bold mb-2"
-                                    href="#" target="_blank"><i class="fa fa-plus"></i></button>
+                                <button id="addInputFile" type="button"
+                                    class="btn btn-sm btn-info  font-weight-bold mb-2" href="#" target="_blank"><i
+                                        class="fa fa-plus"></i></button>
                             </div>
                             <input class="form-control" name="fleetPicture[0]" id="fleetPicture" type="file"
                                 accept=".jpg, .jpeg, .png">

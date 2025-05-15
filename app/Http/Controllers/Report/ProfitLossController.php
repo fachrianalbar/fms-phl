@@ -221,10 +221,19 @@ class ProfitLossController extends Controller
                     return '' . number_format($price, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                                    </ul>';
+                    $btn = '<td>
+        <a href="' . route($this->view . 'edit', $row->id) . '"
+           class="btn btn-icon btn-sm bg-primary-subtle me-1"
+           data-bs-toggle="tooltip" title="Edit">
+            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+        </a>
+
+        <a href="javascript:deleteData(\'' . $row->id . '\')"
+           class="btn btn-icon btn-sm bg-danger-subtle"
+           data-bs-toggle="tooltip" title="Delete">
+            <i class="mdi mdi-delete fs-14 text-danger"></i>
+        </a>
+    </td>';
 
                     return $btn;
                 })
@@ -537,10 +546,13 @@ class ProfitLossController extends Controller
                     return number_format($this->totalMargin, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'show', $row->code) . '"><i class="icon-eye"></i></a></li>                                 
-                            </ul>';
-
+                    $btn = '<td>
+                                    <a href="' . route($this->view . 'show', $row->id) . '"
+                                    class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                                    data-bs-toggle="tooltip" title="Show">
+                                        <i class="mdi mdi-eye fs-14 text-primary"></i>
+                                    </a>
+                                </td>';
                     return $btn;
                 })
                 ->rawColumns(['type.name', 'basic_sales', 'basic_allowance', 'additional_cost', 'maintenance', 'tonase', 'total_margin', 'action'])

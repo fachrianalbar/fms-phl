@@ -323,15 +323,28 @@ class PurchaseController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                                    </ul>';
+                    $btn = '<td>
+                                <a href="' . route($this->view . 'edit', $row->id) . '"
+                                class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                                data-bs-toggle="tooltip" title="Edit">
+                                    <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                                </a>
+
+                                <a href="javascript:deleteData(\'' . $row->id . '\')"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
+                            </td>';
 
                     if (in_array($row->status, [1, 2, 3])) {
-                        $btn = '<ul class="action">
-                                    <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                </ul>';
+                        $btn = '<td>
+                                    <a href="' . route($this->view . 'edit', $row->id) . '"
+                                    class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                                    data-bs-toggle="tooltip" title="Edit">
+                                        <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                                    </a>
+                                </td>';
                     }
 
                     return $btn;
