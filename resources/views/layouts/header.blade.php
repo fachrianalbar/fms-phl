@@ -38,6 +38,50 @@
                     </button>
                 </li>
 
+                {{-- Languange --}}
+                <li class="dropdown notification-list topbar-dropdown">
+                    <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
+                        role="button" aria-haspopup="false" aria-expanded="false">
+                        <i data-feather="flag" class="align-middle fullscreen noti-icon"></i>
+
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end profile-dropdown">
+                        <!-- item-->
+                        <div class="dropdown-header noti-title bg-primary">
+                            <h6 class="text-overflow m-0 text-white">Inggris</h6>
+                        </div>
+
+                        <div class="dropdown-divider"></div>
+
+                        <div class="dropdown-header noti-title">
+                            <h6 class="text-overflow m-0">Indonesia</h6>
+                        </div>
+
+                        <!-- item-->
+                        {{-- <a href="pages-profile.html" class="dropdown-item notify-item">
+                            <i class="mdi mdi-account-circle-outline fs-16 align-middle"></i>
+                            <span>My Account</span>
+                        </a>
+
+                        <!-- item-->
+                        <a href="auth-lock-screen.html" class="dropdown-item notify-item">
+                            <i class="mdi mdi-lock-outline fs-16 align-middle"></i>
+                            <span>Lock Screen</span>
+                        </a> --}}
+
+
+                        <!-- item-->
+                        {{-- <form action="{{ route('logout') }}" method="POST">
+                            @csrf
+                            <button type="submit" class="dropdown-item notify-item">
+                                <i class="mdi mdi-location-exit fs-16 align-middle"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form> --}}
+
+                    </div>
+                </li>
+
                 <!-- User Dropdown -->
                 <li class="dropdown notification-list topbar-dropdown">
                     <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
