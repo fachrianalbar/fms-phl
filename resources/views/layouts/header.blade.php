@@ -47,15 +47,30 @@
                     </a>
                     <div class="dropdown-menu dropdown-menu-end profile-dropdown">
                         <!-- item-->
-                        <div class="dropdown-header noti-title bg-primary">
-                            <h6 class="text-overflow m-0 text-white">Inggris</h6>
-                        </div>
+                        <form
+                            class="dropdown-header noti-title {{ auth()->user()->languange == 'en' ? 'bg-primary' : '' }}"
+                            method="POST" action="{{ route('general.change-languange') }}">
+                            @csrf
+                            <input type="hidden" name="languange" value="en">
+                            <button type="submit"
+                                class="btn btn-sm text-overflow m-0 {{ auth()->user()->languange == 'en' ? 'text-white' : '' }}">
+                                Inggris
+                            </button>
+                        </form>
 
                         <div class="dropdown-divider"></div>
 
-                        <div class="dropdown-header noti-title">
-                            <h6 class="text-overflow m-0">Indonesia</h6>
-                        </div>
+                        <form
+                            class="dropdown-header noti-title {{ auth()->user()->languange == 'id' ? 'bg-primary' : '' }}"
+                            method="POST" action="{{ route('general.change-languange') }}">
+                            @csrf
+                            <input type="hidden" name="languange" value="id">
+                            <button type="submit"
+                                class="btn btn-sm text-overflow m-0 {{ auth()->user()->languange == 'id' ? 'text-white' : '' }}">
+                                Indonesia
+                            </button>
+                        </form>
+
 
                         <!-- item-->
                         {{-- <a href="pages-profile.html" class="dropdown-item notify-item">

@@ -28,4 +28,5 @@ Route::middleware(['auth'])->group(function () {
     require __DIR__ . '/bank.php';
     require __DIR__ . '/finance.php';
     require __DIR__ . '/dashboard.php';
+    require __DIR__ . '/general.php';
 });

@@ -428,7 +428,7 @@
         <div class="collapse" id="sidebarDashboards">
             <ul class="nav-second-level">
                 <li>
-                    <a href="/home" class="tp-link">Beranda</a>
+                    <a href="/home" class="tp-link">{{ auth()->user()->languange == 'id' ? 'Beranda' : 'Home' }}</a>
                 </li>
             </ul>
         </div>

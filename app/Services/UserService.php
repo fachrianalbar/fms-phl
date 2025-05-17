@@ -69,6 +69,13 @@ class UserService
         ]);
     }
 
+    public function changeLanguange($lang)
+    {
+        $this->service->where('id', Auth::user()->id)->update([
+            'languange' => $lang
+        ]);
+    }
+
     public function reset($id)
     {
         $this->service->where('id', $id)->update([

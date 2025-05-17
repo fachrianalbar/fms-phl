@@ -166,6 +166,13 @@ class UserController extends Controller
         return redirect()->route($this->view . 'index')->with('success', 'Reset Password Success');
     }
 
+    public function changeLanguange(Request $request)
+    {
+        $this->service->changeLanguange($request->languange);
+
+        return redirect()->back();
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
