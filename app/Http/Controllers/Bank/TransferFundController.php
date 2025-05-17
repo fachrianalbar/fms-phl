@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Bank;
 use App\Enums\CashType;
 use App\Enums\TransferType;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Bank\TransferFund;
 use App\Models\LiveMutation;
 use App\Models\User;
@@ -22,6 +23,7 @@ class TransferFundController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $userBankSvc;
 
 

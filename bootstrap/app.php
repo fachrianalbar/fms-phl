@@ -12,9 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+
+
         $middleware->alias(['jwt.verify' => \App\Http\Middleware\JwtVerify::class]);
         $middleware->alias(['access' => \App\Http\Middleware\RoleAccess::class]);
         $middleware->alias(['api-key' => \App\Http\Middleware\ApiKey::class]);
+
+        $middleware->appendToGroup('web', [
+            \App\Http\Middleware\SetLocale::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

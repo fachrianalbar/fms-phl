@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\FleetTypeService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,6 +15,7 @@ class FleetTypeController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
     public function __construct(FleetTypeService $fleetTypeService)
     {

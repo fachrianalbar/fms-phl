@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Data\PickupLocationService;
 use App\Services\Master\LocationService;
 use Illuminate\Http\Request;
@@ -15,9 +16,10 @@ class PickupLocationController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $locationSvc;
 
-    public function __construct(PickupLocationService $pickupLocationSvc, LocationService $locationSvc)
+    public function __construct(PickupLocationService $pickupLocationSvc, LocationService $locationSvc, MenuService $menuSvc)
     {
         $this->service = $pickupLocationSvc;
         $this->title = "Pickup Location";

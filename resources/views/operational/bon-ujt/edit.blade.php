@@ -130,7 +130,7 @@
                     <a target="_blank" href="{{ route($view . 'pdf-bon-ujt', $data->id) }}" class="btn btn-danger"><i
                             class="icofont icofont-file-pdf"></i></a>
                     <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                        data-bs-target=".bd-example-modal-xl" id="openModalButton">Add Data</button>
+                        data-bs-target=".bd-example-modal-xl" id="openModalButton">{{ __('general.add_data') }}</button>
                 </div>
             </div>
             <div class="card-body col-md-12">

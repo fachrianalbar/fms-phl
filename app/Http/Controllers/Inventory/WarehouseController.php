@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Inventory\WarehouseService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class WarehouseController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(WarehouseService $warehouseSvc)
+    public function __construct(WarehouseService $warehouseSvc, MenuService $menuSvc)
     {
         $this->service = $warehouseSvc;
         $this->title = "Warehouse";

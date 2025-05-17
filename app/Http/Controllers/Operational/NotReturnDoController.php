@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Operational;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Operational\NotReturnDoService;
 use Illuminate\Http\Request;
@@ -16,6 +17,7 @@ class NotReturnDoController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
     public function __construct(NotReturnDoService $notReturnDoService)
     {

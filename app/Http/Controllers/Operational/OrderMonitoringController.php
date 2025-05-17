@@ -8,6 +8,7 @@ use App\Helpers\GetAddress;
 use App\Helpers\GetTokenHelper;
 use App\Helpers\SendNotif;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Jobs\SendEmailTruckNotification;
 use App\Jobs\SendTelegramNotification;
 use App\Jobs\SendWaNotification;
@@ -31,8 +32,9 @@ class OrderMonitoringController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(OrderMonitoringService $orderMonitoringSvc)
+    public function __construct(OrderMonitoringService $orderMonitoringSvc, MenuService $menuSvc)
     {
         $this->service = $orderMonitoringSvc;
         $this->title = "Order Monitoring";

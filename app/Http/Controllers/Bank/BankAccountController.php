@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Bank\BankAccountService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class BankAccountController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(BankAccountService $bankAccountSvc)
+    public function __construct(BankAccountService $bankAccountSvc, MenuService $menuSvc)
     {
         $this->service = $bankAccountSvc;
         $this->title = "Bank Account";

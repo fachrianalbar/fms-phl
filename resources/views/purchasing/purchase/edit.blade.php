@@ -82,7 +82,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4>Detail Purchasing</h4>
                     @if ($data->status == 0)
-                        <button class="btn btn-primary" type="button" id="save">Add Data</button>
+                        <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                     @endif
                 </div>
                 <div class="card-body col-md-12">

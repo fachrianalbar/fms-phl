@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Enums\Citizenship;
 use App\Enums\Gender;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\CityService;
 use App\Services\Master\DistrictService;
 use App\Services\Master\EmployeeService;
@@ -22,12 +23,13 @@ class EmployeeController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $positionSvc;
     protected $provinceSvc;
     protected $citySvc;
     protected $districtSvc;
 
-    public function __construct(EmployeeService $employeeSvc, PositionService $positionSvc, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc)
+    public function __construct(EmployeeService $employeeSvc, PositionService $positionSvc, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
     {
         $this->service = $employeeSvc;
         $this->title = "Employee";

@@ -149,7 +149,8 @@
 
                     @if ($status == 0)
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target=".bd-example-modal-xl" id="openModalButton">Add Data</button>
+                            data-bs-target=".bd-example-modal-xl"
+                            id="openModalButton">{{ __('general.add_data') }}</button>
                     @endif
                 </div>
             </div>

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Bank\ConfigBank;
 use App\Services\Bank\ConfigBankService;
 use App\Services\Bank\UserBankService;
@@ -18,10 +19,11 @@ class ConfigBankController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $userBankSvc;
     protected $userSvc;
 
-    public function __construct(ConfigBankService $configBankSvc, UserBankService $userBankSvc, UserService $userSvc)
+    public function __construct(ConfigBankService $configBankSvc, UserBankService $userBankSvc, UserService $userSvc, MenuService $menuSvc)
     {
         $this->service = $configBankSvc;
         $this->userBankSvc = $userBankSvc;

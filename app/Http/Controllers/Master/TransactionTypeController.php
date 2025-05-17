@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\TransactionTypeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,8 +16,9 @@ class TransactionTypeController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(TransactionTypeService $transactionTypeSvc)
+    public function __construct(TransactionTypeService $transactionTypeSvc, MenuService $menuSvc)
     {
         $this->service = $transactionTypeSvc;
         $this->title = "Transaction Type";

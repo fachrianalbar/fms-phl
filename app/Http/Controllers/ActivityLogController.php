@@ -16,10 +16,11 @@ class ActivityLogController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $userSvc;
     protected $roleSvc;
 
-    public function __construct(ActivityLogService $activityLogSvc, UserService $userSvc, RoleService $roleSvc)
+    public function __construct(ActivityLogService $activityLogSvc, UserService $userSvc, RoleService $roleSvc, MenuService $menuSvc)
     {
         $this->service = $activityLogSvc;
         $this->title = "Activity Log";

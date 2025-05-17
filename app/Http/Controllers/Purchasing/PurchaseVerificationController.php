@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Services\Inventory\SupplierService;
@@ -20,9 +21,10 @@ class PurchaseVerificationController extends Controller
     protected $supplierSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
 
-    public function __construct(PurchaseVerificationService $purchaseVerificationSvc, SupplierService $supplierSvc)
+    public function __construct(PurchaseVerificationService $purchaseVerificationSvc, SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseVerificationSvc;
         $this->supplierSvc = $supplierSvc;

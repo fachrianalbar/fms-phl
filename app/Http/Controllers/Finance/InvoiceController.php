@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Finance;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\CompanySetting;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
@@ -21,11 +22,12 @@ class InvoiceController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $customerSvc;
     protected $totalPrice;
     protected $totalPriceInvoice;
 
-    public function __construct(InvoiceService $invoiceSvc, CustomerService $customerSvc)
+    public function __construct(InvoiceService $invoiceSvc, CustomerService $customerSvc, MenuService $menuSvc)
     {
         $this->service = $invoiceSvc;
         $this->title = "Invoice";

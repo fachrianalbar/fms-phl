@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Inventory\ItemCategoryService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class ItemCategoryController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(ItemCategoryService $itemCategorySvc)
+    public function __construct(ItemCategoryService $itemCategorySvc, MenuService $menuSvc)
     {
         $this->service = $itemCategorySvc;
         $this->title = "Item Category";

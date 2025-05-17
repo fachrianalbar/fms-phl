@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Inventory\SupplierService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class SupplierController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(SupplierService $supplierSvc)
+    public function __construct(SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $supplierSvc;
         $this->title = "Supplier";

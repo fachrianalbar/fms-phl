@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Operational;
 
 use App\Enums\DownPaymentType;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\EmployeeService;
 use App\Services\Operational\DownPaymentDetailService;
 use App\Services\UserService;
@@ -22,12 +23,13 @@ class DownPaymentController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $userSvc;
     protected $isPaid;
     protected $driverSvc;
     protected $downPaymentDetailSvc;
 
-    public function __construct(DownPaymentService $downPaymentSvc, UserService $userSvc, EmployeeService $driverSvc, DownPaymentDetailService $downPaymentDetailSvc)
+    public function __construct(DownPaymentService $downPaymentSvc, UserService $userSvc, EmployeeService $driverSvc, DownPaymentDetailService $downPaymentDetailSvc, MenuService $menuSvc)
     {
         $this->service = $downPaymentSvc;
         $this->title = "Down Payment";

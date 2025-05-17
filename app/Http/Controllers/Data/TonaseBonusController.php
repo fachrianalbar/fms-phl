@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Data\TonaseBonusService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class TonaseBonusController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(TonaseBonusService $tonaseBonusSvc)
+    public function __construct(TonaseBonusService $tonaseBonusSvc, MenuService $menuSvc)
     {
         $this->service = $tonaseBonusSvc;
         $this->title = "Tonase Bonus";

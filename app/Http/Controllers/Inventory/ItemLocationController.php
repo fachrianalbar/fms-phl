@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Inventory\ItemLocationService;
 use App\Services\Inventory\WarehouseService;
 use Illuminate\Http\Request;
@@ -16,8 +17,9 @@ class ItemLocationController extends Controller
     protected $warehouseSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(ItemLocationService $itemLocationSvc, WarehouseService $warehouseSvc)
+    public function __construct(ItemLocationService $itemLocationSvc, WarehouseService $warehouseSvc, MenuService $menuSvc)
     {
         $this->service = $itemLocationSvc;
         $this->warehouseSvc = $warehouseSvc;

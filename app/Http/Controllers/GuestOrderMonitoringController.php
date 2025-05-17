@@ -18,8 +18,9 @@ class GuestOrderMonitoringController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(OrderMonitoringService $orderMonitoringSvc)
+    public function __construct(OrderMonitoringService $orderMonitoringSvc, MenuService $menuSvc)
     {
         $this->service = $orderMonitoringSvc;
         $this->title = "Guest Order Monitoring";

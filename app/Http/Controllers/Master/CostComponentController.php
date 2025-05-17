@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Enums\CostComponentType;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\CostComponentService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -15,8 +16,9 @@ class CostComponentController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(CostComponentService $positionSvc)
+    public function __construct(CostComponentService $positionSvc, MenuService $menuSvc)
     {
         $this->service = $positionSvc;
         $this->title = "Cost Component";

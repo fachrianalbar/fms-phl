@@ -19,8 +19,9 @@ class UserController extends Controller
     protected $roleSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(UserService $userSvc, RoleService $roleSvc)
+    public function __construct(UserService $userSvc, RoleService $roleSvc, MenuService $menuSvc)
     {
         $this->service = $userSvc;
         $this->title = "User";

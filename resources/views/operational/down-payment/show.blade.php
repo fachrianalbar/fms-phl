@@ -119,7 +119,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4> {{ $title }} Detail Data</h4>
 
-                <button type="button" class="btn btn-primary" onclick="create()">Add Data</button>
+                <button type="button" class="btn btn-primary" onclick="create()">{{ __('general.add_data') }}</button>
 
 
             </div>
@@ -148,7 +148,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="myLargeModalLabel" onclick="create()">Add Data</h4>
+                        <h4 class="modal-title" id="myLargeModalLabel" onclick="create()">{{ __('general.add_data') }}</h4>
                         <button class="btn-close py-0" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="card">

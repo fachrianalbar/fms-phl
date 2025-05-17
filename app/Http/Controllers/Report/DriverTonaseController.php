@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\Exports\DriverTonaseReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Master\CustomerService;
 use App\Services\Master\EmployeeService;
@@ -18,6 +19,7 @@ class DriverTonaseController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $driverSvc;
     protected $customerSvc;
 

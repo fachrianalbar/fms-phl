@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\LiveMutation;
 use App\Services\Bank\UserBankService;
@@ -22,9 +23,10 @@ class PurchasePaymentController extends Controller
     protected $userBankSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
 
-    public function __construct(PurchasePaymentService $purchasePaymentSvc, SupplierService $supplierSvc, UserBankService $userBankSvc)
+    public function __construct(PurchasePaymentService $purchasePaymentSvc, SupplierService $supplierSvc, UserBankService $userBankSvc, MenuService $menuSvc)
     {
         $this->service = $purchasePaymentSvc;
         $this->supplierSvc = $supplierSvc;

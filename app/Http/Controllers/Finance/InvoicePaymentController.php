@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Bank\UserBankService;
@@ -20,13 +21,14 @@ class InvoicePaymentController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $invoiceSvc;
     protected $customerSvc;
     protected $userBankSvc;
     protected $totalPrice;
     protected $totalPriceInvoice;
 
-    public function __construct(InvoicePaymentService $invoicePaymentSvc, InvoiceService $invoiceSvc, CustomerService $customerSvc, UserBankService $userBankSvc)
+    public function __construct(InvoicePaymentService $invoicePaymentSvc, InvoiceService $invoiceSvc, CustomerService $customerSvc, UserBankService $userBankSvc, MenuService $menuSvc)
     {
         $this->service = $invoicePaymentSvc;
         $this->title = "Invoice Payment";

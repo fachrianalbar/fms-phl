@@ -52,7 +52,7 @@
                     </a>
 
 
-                    <a href="{{ route($view . 'create') }}" class="btn btn-primary">Add Data</a>
+                    <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
                 </div>
 
             </div>

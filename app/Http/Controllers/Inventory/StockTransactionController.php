@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\StockTransaction;
 use App\Services\Inventory\StockService;
 use App\Services\Inventory\StockTransactionService;
@@ -18,8 +19,9 @@ class StockTransactionController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(StockTransactionService $stockTransactionSvc)
+    public function __construct(StockTransactionService $stockTransactionSvc, MenuService $menuSvc)
     {
         $this->service = $stockTransactionSvc;
         $this->title = "Stock Transaction";

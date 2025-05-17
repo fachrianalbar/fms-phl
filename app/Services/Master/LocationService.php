@@ -16,7 +16,7 @@ class LocationService
     protected $citySvc;
     protected $districtSvc;
 
-    public function __construct(Location $location, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc)
+    public function __construct(Location $location, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
     {
         $this->service = $location;
         $this->citySvc = $citySvc;

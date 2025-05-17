@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Operational;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Operational\DownPayment;
 use App\Services\Operational\DownPaymentDetailService;
 use App\Services\Operational\DownPaymentService;
@@ -16,8 +17,9 @@ class DownPaymentDetailController extends Controller
     protected $downPaymentSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(DownPaymentDetailService $dpSvc, DownPaymentService $downPaymentSvc)
+    public function __construct(DownPaymentDetailService $dpSvc, DownPaymentService $downPaymentSvc, MenuService $menuSvc)
     {
         $this->service = $dpSvc;
         $this->downPaymentSvc = $downPaymentSvc;

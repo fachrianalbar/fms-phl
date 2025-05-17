@@ -19,6 +19,7 @@ class CompanySettingController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
     public function __construct(CompanySettingService $companySettingService)
     {

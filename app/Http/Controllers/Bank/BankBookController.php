@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Bank\BankBookService;
 use App\Services\MutationService;
 use Yajra\DataTables\DataTables;
@@ -15,8 +16,9 @@ class BankBookController extends Controller
     protected $mutationSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(BankBookService $bankBookSvc, MutationService $mutationSvc)
+    public function __construct(BankBookService $bankBookSvc, MutationService $mutationSvc, MenuService $menuSvc)
     {
         $this->service = $bankBookSvc;
         $this->mutationSvc = $mutationSvc;

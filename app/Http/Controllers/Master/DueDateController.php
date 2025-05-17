@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\DueDateService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class DueDateController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(DueDateService $dueDateSvc)
+    public function __construct(DueDateService $dueDateSvc, MenuService $menuSvc)
     {
         $this->service = $dueDateSvc;
         $this->title = "Due Date";

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\FleetBrandService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class FleetBrandController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(FleetBrandService $fleetBrandSvc)
+    public function __construct(FleetBrandService $fleetBrandSvc, MenuService $menuSvc)
     {
         $this->service = $fleetBrandSvc;
         $this->title = "Fleet Brand";

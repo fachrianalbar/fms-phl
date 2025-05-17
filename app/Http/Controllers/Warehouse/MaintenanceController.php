@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Warehouse;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Inventory\Stock;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
@@ -25,8 +26,9 @@ class MaintenanceController extends Controller
     protected $stockSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(MaintenanceService $maintenanceService, FleetService $fleetSvc, StockService $stockSvc)
+    public function __construct(MaintenanceService $maintenanceService, FleetService $fleetSvc, StockService $stockSvc, MenuService $menuSvc)
     {
         $this->service = $maintenanceService;
         $this->fleetSvc = $fleetSvc;

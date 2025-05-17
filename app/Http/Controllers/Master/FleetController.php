@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Master;
 
 use App\Helpers\GetTokenHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\CompanySetting;
 use App\Models\Master\FleetPicture;
 use App\Services\Master\FleetBrandService;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 
 class FleetController extends Controller
@@ -24,13 +26,16 @@ class FleetController extends Controller
     protected $fleetTypeSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(FleetService $fleetSvc, FleetBrandService $fleetBrandSvc, FleetTypeService $fleetTypeSvc)
+    public function __construct(FleetService $fleetSvc, FleetBrandService $fleetBrandSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
     {
         $this->service = $fleetSvc;
         $this->fleetBrandSvc = $fleetBrandSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
         $this->title = "Fleet";
+        $this->menuSvc = $menuSvc->getByName("Fleet");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "master.fleets.";
     }
 

@@ -29,7 +29,7 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} Add Data</h4>
+                    <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
                     <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
                 </div>

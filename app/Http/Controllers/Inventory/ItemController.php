@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\inventory\Item;
 use App\Services\Inventory\ItemCategoryService;
 use App\Services\Inventory\ItemLocationService;
@@ -28,6 +29,7 @@ class ItemController extends Controller
     protected $locationSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
     public function __construct(
         ItemService $itemSvc,

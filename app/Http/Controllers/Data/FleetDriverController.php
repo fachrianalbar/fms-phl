@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Master\Employee;
 use App\Services\Data\FleetDriverService;
 use App\Services\Master\FleetService;
@@ -19,8 +20,9 @@ class FleetDriverController extends Controller
     protected $fleetTypeSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(FleetDriverService $fleetDriverSvc, FleetService $fleetSvc, FleetTypeService $fleetTypeSvc)
+    public function __construct(FleetDriverService $fleetDriverSvc, FleetService $fleetSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
     {
         $this->service = $fleetDriverSvc;
         $this->fleetSvc = $fleetSvc;

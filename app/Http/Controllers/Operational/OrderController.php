@@ -6,6 +6,7 @@ use App\Enums\OrderCostType;
 use App\Exports\OrderReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\CostComponent;
@@ -35,6 +36,7 @@ class OrderController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $materialSvc;
     protected $fleetDriverSvc;
     protected $customerSvc;

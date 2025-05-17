@@ -15,8 +15,9 @@ class RoleController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(RoleService $roleSvc)
+    public function __construct(RoleService $roleSvc, MenuService $menuSvc)
     {
         $this->service = $roleSvc;
         $this->title = "Role";

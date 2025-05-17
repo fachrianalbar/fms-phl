@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\MaterialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -15,8 +16,9 @@ class MaterialController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(MaterialService $materialSvc)
+    public function __construct(MaterialService $materialSvc, MenuService $menuSvc)
     {
         $this->service = $materialSvc;
         $this->title = "Material";

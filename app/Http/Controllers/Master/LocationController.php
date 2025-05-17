@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\CityService;
 use App\Services\Master\CustomerService;
 use App\Services\Master\DistrictService;
@@ -18,12 +19,13 @@ class LocationController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $provinceSvc;
     protected $customerSvc;
     protected $citySvc;
     protected $districtSvc;
 
-    public function __construct(LocationService $locationSvc, ProvinceService $provinceSvc, CustomerService $customerSvc, CityService $citySvc, DistrictService $districtSvc)
+    public function __construct(LocationService $locationSvc, ProvinceService $provinceSvc, CustomerService $customerSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
     {
         $this->service = $locationSvc;
         $this->title = "Location";

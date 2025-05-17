@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Operational;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Master\FleetTypeService;
@@ -22,11 +23,12 @@ class BonUjtController extends Controller
     protected $fleetTypeSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $totalPrice;
 
 
 
-    public function __construct(BonUjtService $bonUjtSvc, FleetTypeService $fleetTypeSvc)
+    public function __construct(BonUjtService $bonUjtSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
     {
         $this->service = $bonUjtSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;

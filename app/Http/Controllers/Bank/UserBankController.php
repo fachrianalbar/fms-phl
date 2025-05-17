@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Bank\BankAccountService;
 use App\Services\Bank\UserBankService;
 use Illuminate\Validation\Rule;
@@ -16,9 +17,10 @@ class UserBankController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $bankSvc;
 
-    public function __construct(UserBankService $userBankSvc, BankAccountService $bankSvc)
+    public function __construct(UserBankService $userBankSvc, BankAccountService $bankSvc, MenuService $menuSvc)
     {
         $this->service = $userBankSvc;
         $this->bankSvc = $bankSvc;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\Exports\FleetTonaseReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Master\CustomerService;
 use App\Services\Master\FleetService;
@@ -20,6 +21,7 @@ class FleetTonaseController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $fleetSvc;
     protected $customerSvc;
     protected $fleetTypeSvc;

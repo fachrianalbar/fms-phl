@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\LiveMutation;
 use App\Models\User;
 use App\Services\Bank\ExpenseService;
@@ -19,6 +20,7 @@ class ExpenseController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $driverSvc;
     protected $userBankSvc;
 

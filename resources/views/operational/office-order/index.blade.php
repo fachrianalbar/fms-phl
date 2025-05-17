@@ -29,7 +29,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
 
-                {{-- <a href="{{ route($view . 'create') }}" class="btn btn-primary">Add Data</a> --}}
+                {{-- <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a> --}}
 
                 <div class="d-flex align-items-center gap-3">
                     <div class="accordion-item ">

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\CustomerService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -17,8 +18,9 @@ class CustomerController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(CustomerService $customerSvc)
+    public function __construct(CustomerService $customerSvc, MenuService $menuSvc)
     {
         $this->service = $customerSvc;
         $this->title = "Customer";

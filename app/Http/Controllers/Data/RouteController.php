@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Data;
 
 use App\Enums\CostComponentType;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Data\RouteService;
 use App\Services\Master\CostComponentService;
 use App\Services\Master\CustomerService;
@@ -20,6 +21,7 @@ class RouteController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $customerSvc;
     protected $locationSvc;
     protected $fleetTypeSvc;

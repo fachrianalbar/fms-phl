@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Data\RouteDetailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -13,8 +14,9 @@ class RouteDetailController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(RouteDetailService $routeDetailSvc)
+    public function __construct(RouteDetailService $routeDetailSvc, MenuService $menuSvc)
     {
         $this->service = $routeDetailSvc;
         $this->title = "Route Detail";

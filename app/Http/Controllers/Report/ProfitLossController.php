@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Report;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\Fleet;
@@ -22,6 +23,7 @@ class ProfitLossController extends Controller
     protected $fleetSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $totalMargin;
     protected $fleetTypeSvc;
     protected $totalPrice;

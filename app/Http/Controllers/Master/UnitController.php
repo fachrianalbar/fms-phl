@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Master\UnitService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class UnitController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(UnitService $unitSvc)
+    public function __construct(UnitService $unitSvc, MenuService $menuSvc)
     {
         $this->service = $unitSvc;
         $this->title = "Unit";

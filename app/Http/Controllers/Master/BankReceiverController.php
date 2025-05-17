@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\User;
 use App\Services\Master\BankReceiverService;
 use Illuminate\Http\Request;
@@ -16,8 +17,9 @@ class BankReceiverController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(BankReceiverService $bankReceiverSvc)
+    public function __construct(BankReceiverService $bankReceiverSvc, MenuService $menuSvc)
     {
         $this->service = $bankReceiverSvc;
         $this->title = "Bank Receiver";

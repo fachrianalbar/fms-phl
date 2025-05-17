@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Purchasing\PurchaseDetail;
@@ -24,9 +25,10 @@ class PurchaseController extends Controller
     protected $supplierSvc;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
 
-    public function __construct(PurchaseService $purchaseSvc, SupplierService $supplierSvc)
+    public function __construct(PurchaseService $purchaseSvc, SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseSvc;
         $this->supplierSvc = $supplierSvc;

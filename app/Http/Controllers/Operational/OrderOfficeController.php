@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Operational;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Data\FleetDriverService;
@@ -25,6 +26,7 @@ class OrderOfficeController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
     protected $materialSvc;
     protected $fleetDriverSvc;
     protected $customerSvc;

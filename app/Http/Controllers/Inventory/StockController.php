@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Services\MenuService;
 use App\Services\Inventory\StockService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -14,8 +15,9 @@ class StockController extends Controller
     protected $service;
     protected $title;
     protected $view;
+    protected $menuSvc;
 
-    public function __construct(StockService $stockSvc)
+    public function __construct(StockService $stockSvc, MenuService $menuSvc)
     {
         $this->service = $stockSvc;
         $this->title = "Stock";
