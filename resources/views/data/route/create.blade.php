@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Add',
+    'secondSegment' => __('general.add'),
 ])
 
 @push('style')
@@ -270,7 +270,6 @@
                 return;
             }
 
-            // Add the new route data
             routeData.push({
                 name: nameValue,
                 customer: customer,

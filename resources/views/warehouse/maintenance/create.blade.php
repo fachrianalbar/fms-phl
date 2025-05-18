@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Add',
+    'secondSegment' => __('general.add'),
 ])
 
 @push('style')
@@ -241,7 +241,7 @@
             }
         });
 
-        // Add new row to purchase detail
+
         $('#save').on('click', function() {
             let row = $('#purchaseDetails tr').length + 1;
 

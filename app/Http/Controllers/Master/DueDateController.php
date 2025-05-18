@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DueDateController extends Controller
 {
@@ -21,6 +22,8 @@ class DueDateController extends Controller
     {
         $this->service = $dueDateSvc;
         $this->title = "Due Date";
+        $this->menuSvc = $menuSvc->getByName($this->title);
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "master.due-date.";
     }
 

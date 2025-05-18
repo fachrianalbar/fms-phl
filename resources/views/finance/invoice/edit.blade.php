@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Add',
+    'secondSegment' => __('general.add'),
 ])
 
 @php

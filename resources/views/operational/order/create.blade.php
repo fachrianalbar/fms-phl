@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Add',
+    'secondSegment' => __('general.add'),
 ])
 
 @push('style')
@@ -261,7 +261,6 @@
 
         // When routeTypeCode is changed
         $('#routeTypeCode').on('change', function() {
-            // Add loader to the body
             $('body').append(`
             <div class="loader-wrapper">
                 <div class="loader">

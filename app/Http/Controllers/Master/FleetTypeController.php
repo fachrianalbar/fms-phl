@@ -21,6 +21,7 @@ class FleetTypeController extends Controller
     {
         $this->service = $fleetTypeService;
         $this->title = "Fleet Type";
+
         $this->view = "master.fleet-type.";
     }
 

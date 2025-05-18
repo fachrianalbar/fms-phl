@@ -220,7 +220,6 @@
                 table.ajax.reload(); // Reload DataTable dengan filter baru
             });
 
-            // Add click event for the Print PDF button
             $('#print-pdf').click(function(e) {
                 e.preventDefault(); // Prevent the default action of the link
 

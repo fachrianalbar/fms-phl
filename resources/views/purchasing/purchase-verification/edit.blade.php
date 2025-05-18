@@ -280,7 +280,7 @@
             $(`#totalPrice_${row}`).val(totalPrice);
         }
 
-        // Add new row to purchase detail
+
         $('#save').on('click', function() {
             let row = $('#purchaseDetails tr').length + 1;
 
