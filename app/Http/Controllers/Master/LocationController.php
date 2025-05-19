@@ -74,8 +74,8 @@ class LocationController extends Controller
             // 'cityId' => 'required',
             // 'districtId' => 'required',
             // 'address' => 'required',
-            'latitude' => 'required',
-            'longitude' => 'required',
+            // 'latitude' => 'required',
+            // 'longitude' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -141,8 +141,8 @@ class LocationController extends Controller
             // 'cityId' => 'required',
             // 'districtId' => 'required',
             // 'address' => 'required',
-            'latitude' => 'required',
-            'longitude' => 'required',
+            // 'latitude' => 'required',
+            // 'longitude' => 'required',
         ]);
 
         if ($validator->fails()) {
