@@ -41,7 +41,11 @@ class LocationService
 
     public function store($request, $title)
     {
-        $address = GetAddress::getAddress($request->latitude, $request->longitude);
+        $address = null;
+
+        if (isset($request->latitude) && isset($request->longitued)) {
+            $address = GetAddress::getAddress($request->latitude, $request->longitude);
+        }
 
         $data = $this->service->create([
             'name' => $request->name,
@@ -62,7 +66,11 @@ class LocationService
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $address = GetAddress::getAddress($request->latitude, $request->longitude);
+        $address = null;
+
+        if (isset($request->latitude) && isset($request->longitued)) {
+            $address = GetAddress::getAddress($request->latitude, $request->longitude);
+        }
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,

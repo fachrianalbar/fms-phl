@@ -97,14 +97,14 @@
                             <label class="form-label" for="latitude">Latitude <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
                             <input class="form-control" name="latitude" id="latitude" type="number" step="any"
-                                required placeholder="Latitude" value="{{ $data->latitude }}">
+                                placeholder="Latitude" value="{{ $data->latitude }}">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label" for="longitude">Longitude <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
                             <input class="form-control" name="longitude" id="longitude" type="number" step="any"
-                                required placeholder="longitude" value="{{ $data->longitude }}">
+                                placeholder="longitude" value="{{ $data->longitude }}">
                         </div>
                     </div>
 

@@ -83,13 +83,13 @@
                             <label class="form-label" for="latitude">Latitude <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
                             <input class="form-control" name="latitude" id="latitude" type="number" step="any"
-                                required placeholder="Latitude" step="any">
+                                placeholder="Latitude" step="any">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label" for="longitude">Longitude <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="longitude" id="longitude" type="number" required
+                            <input class="form-control" name="longitude" id="longitude" type="number"
                                 placeholder="longitude" step="any">
                         </div>
                     </div>
