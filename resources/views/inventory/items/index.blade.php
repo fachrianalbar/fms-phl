@@ -78,9 +78,9 @@
                                 <th>Brand</th>
                                 <th>Category</th>
                                 <th>Unit</th>
-                                <th>Item Location</th>
+                                {{-- <th>Item Location</th> --}}
                                 <th>Warehouse</th>
-                                <th>Price</th>
+                                {{-- <th>Price</th> --}}
                                 <th>Supplier</th>
                             </tr>
                         </thead>
@@ -154,15 +154,15 @@
                     {
                         "data": 'unit.name'
                     },
-                    {
-                        "data": 'location.name'
-                    },
+                    // {
+                    //     "data": 'location.name'
+                    // },
                     {
                         "data": 'warehouse.name'
                     },
-                    {
-                        "data": 'price'
-                    },
+                    // {
+                    //     "data": 'price'
+                    // },
                     {
                         "data": 'supplier.name'
                     }
