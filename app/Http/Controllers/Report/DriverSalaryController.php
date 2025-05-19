@@ -154,10 +154,21 @@ class DriverSalaryController extends Controller
             ]
         );
 
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
         $mpdf->WriteHTML(
             view($this->view . 'report.driver-salary-pdf')
                 ->with('data', $data->get())
         );
+        // $mpdf->WriteHTML(
+        //     view('finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada')
+        //         ->with('data', $data->get())
+        // );
+        // $mpdf->WriteHTML(
+        //     view('finance.invoice.pdf.header.phl')
+        //         ->with('data', $data->get())
+        // );
 
         return $mpdf->Output('Driver Salary Report.pdf', 'I');
     }

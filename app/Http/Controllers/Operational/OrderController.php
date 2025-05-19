@@ -60,7 +60,8 @@ class OrderController extends Controller
         EmployeeService $driverSvc,
         FleetService $fleetSvc,
         LocationService $locationSvc,
-        CompanySettingService $companySvc
+        CompanySettingService $companySvc,
+        MenuService $menuSvc
 
     ) {
         $this->service = $orderSvc;

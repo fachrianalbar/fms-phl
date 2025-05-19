@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Services\Bank\BankAccountService;
 use App\Services\Bank\UserBankService;
+use App\Services\MenuService;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
