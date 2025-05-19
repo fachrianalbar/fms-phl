@@ -63,6 +63,30 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
+                            <label class="form-label" for="warehouseCode">Warehouse <i
+                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                            <select class="js-example-basic-single" name="warehouseCode" id="warehouseCode" required>
+                                <option selected="" disabled="" value="">Choose...</option>
+                                @foreach ($warehouse as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="supplierCode">Supplier <i
+                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                            <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
+                                <option selected="" disabled="" value="">Choose...</option>
+                                @foreach ($supplier as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
                             <label class="form-label" for="unitCode">Item Unit <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
                             <select class="js-example-basic-single" name="unitCode" id="unitCode" required>
@@ -90,30 +114,6 @@
                             <input class="form-control" name="price" id="price" type="text"
                                 oninput="formatAngka(this)" required placeholder="Price">
                         </div> --}}
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="warehouseCode">Warehouse <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <select class="js-example-basic-single" name="warehouseCode" id="warehouseCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
-                                @foreach ($warehouse as $item)
-                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="supplierCode">Supplier <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
-                                @foreach ($supplier as $item)
-                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                     </div>
 
 
