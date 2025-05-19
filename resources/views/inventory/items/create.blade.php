@@ -73,7 +73,7 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label" for="itemLocationCode">Item Location <i
                                     class="icofont icofont-warning-alt text-danger"></i></label>
                             <select class="js-example-basic-single" name="itemLocationCode" id="itemLocationCode" required>
@@ -82,7 +82,14 @@
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
                             </select>
-                        </div>
+                        </div> --}}
+
+                        {{-- <div class="col-md-6">
+                            <label class="form-label" for="price">Price <i
+                                    class="icofont icofont-warning-alt text-danger"></i></input></label>
+                            <input class="form-control" name="price" id="price" type="text"
+                                oninput="formatAngka(this)" required placeholder="Price">
+                        </div> --}}
                     </div>
 
                     <div class="row mt-4">
@@ -109,14 +116,6 @@
                         </div>
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="price">Price <i
-                                    class="icofont icofont-warning-alt text-danger"></i></input></label>
-                            <input class="form-control" name="price" id="price" type="text"
-                                oninput="formatAngka(this)" required placeholder="Price">
-                        </div>
-                    </div>
 
 
                     <div class="col-12">

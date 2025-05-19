@@ -92,11 +92,11 @@ class ItemController extends Controller
             'name' => 'required',
             'brandName' => 'required',
             'categoryCode' => 'required',
-            'itemLocationCode' => 'required',
+            // 'itemLocationCode' => 'required',
             'warehouseCode' => 'required',
             'unitCode' => 'required',
             'supplierCode' => 'required',
-            'price' => 'required',
+            // 'price' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
@@ -161,11 +161,11 @@ class ItemController extends Controller
             'name' => 'required',
             'brandName' => 'required',
             'categoryCode' => 'required',
-            'itemLocationCode' => 'required',
+            // 'itemLocationCode' => 'required',
             'warehouseCode' => 'required',
             'unitCode' => 'required',
             'supplierCode' => 'required',
-            'price' => 'required',
+            // 'price' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
