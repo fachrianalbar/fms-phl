@@ -24,11 +24,17 @@
                         @endif
                         <tr>
                             <td>
-                                <ul class="action">
+                                <a href="javascript:deleteCostComponent('{{ $item->id }}')"
+                                    class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
 
-                                    <li class="delete"><a href="javascript:deleteCostComponent('{{ $item->id }}')"><i
-                                                class="icon-trash"></i></a></li>
-                                </ul>
+
+                                    {{-- <ul class="action">
+                                        <li class="delete">
+                                            <a href="javascript:deleteCostComponent('{{ $item->id }}')"><i
+                                                    class="icon-trash"></i></a>
+                                        </li>
+                                    </ul> --}}
                             </td>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $item->costComponent->name }}</td>

@@ -130,7 +130,8 @@
                     </div>
 
                     <div class="card-body">
-                        <table class="display" id="routeTable">
+                        <table class="table table-order table-bordered dt-responsive table-responsive nowrap"
+                            id="routeTable">
                             <thead>
                                 <tr>
                                     <th>Actions</th>
@@ -295,10 +296,11 @@
                 let row = `
                 <tr>
                       <td>
-                         <ul class="action">
-                                                    <li class="delete"><a href="javascript:removeRoute(${index})"><i
-                                                class="icon-trash"></i></a></li>
-                                </ul>
+                         <a href="javascript:removeRoute(${index})"
+                            class="btn btn-icon btn-sm bg-danger-subtle"
+                            data-bs-toggle="tooltip" title="Delete">
+                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                         </a>
                          
                     </td>
                      <td>
