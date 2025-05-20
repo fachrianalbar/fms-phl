@@ -44,7 +44,7 @@
                         </a>
                     </div>
 
-                    <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
                 </div>
 
 

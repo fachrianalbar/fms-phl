@@ -19,7 +19,7 @@ class CustomerService
 
     public function findAll()
     {
-        return $this->service->get();
+        return $this->service->with(['company'])->get();
     }
 
     public function getById($id)
@@ -36,7 +36,7 @@ class CustomerService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TC'),
+            'code' => GenerateCode::generateCode('FC'),
             'picName' => $request->picName,
             'nickname' => $request->nickname,
             'email' => $request->email,
@@ -47,7 +47,9 @@ class CustomerService
             'accountNumber' => $request->accountNumber,
             'ppn' => $request->ppn,
             'pph' => $request->pph,
-            'telegramUsername' => $request->telegramUsername
+            'companyCode' => $request->companyCode,
+            'due_date_duration' => $request->due_date_duration
+            // 'telegramUsername' => $request->telegramUsername
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -69,7 +71,9 @@ class CustomerService
             'accountNumber' => $request->accountNumber,
             'ppn' => $request->ppn,
             'pph' => $request->pph,
-            'telegramUsername' => $request->telegramUsername
+            'companyCode' => $request->companyCode,
+            'due_date_duration' => $request->due_date_duration
+            // 'telegramUsername' => $request->telegramUsername
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

@@ -36,11 +36,11 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Name</th>
-                                <th>Nickname</th>
-                                <th>PIC</th>
+                                <th>{{ __('menu_customer.name') }}</th>
                                 <th>Email</th>
-                                <th>Phone</th>
+                                <th>{{ __('menu_customer.company') }}</th>
+                                <th>{{ __('menu_customer.due_date_duration') }}
+                                    ({{ __('menu_customer.days') }})</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,17 +97,15 @@
                         "data": 'name'
                     },
                     {
-                        "data": 'nickname'
-                    },
-                    {
-                        "data": 'picName'
-                    },
-                    {
                         "data": 'email'
                     },
                     {
-                        "data": 'phone'
+                        "data": 'company.name'
                     },
+                    {
+                        "data": 'due_date_duration'
+                    }
+
 
                 ],
                 "columnDefs": [{

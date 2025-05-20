@@ -17,7 +17,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -26,24 +26,15 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="plateNumber">Plate Number <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <select class="js-example-basic-single" name="deviceName" id="deviceName"
-                                onchange="setVehicleName()">
-                                <option value="">Plate Number</option>
-                                @foreach ($data as $item)
-                                    <option value="{{ $item['device_name'] }}" data-vehicle="{{ $item['vehicle_name'] }}">
-                                        {{ $item['vehicle_name'] . ' - ' . $item['company_name'] }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <!-- Hidden field for vehicleName -->
-                            <input type="hidden" name="vehicleName" id="vehicleName" value="">
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <input class="form-control" name="frameNumber" id="frameNumber" type="text"
+                                placeholder="Frame Number">
                         </div>
 
 
                         <div class="col-md-6">
                             <label class="form-label" for="fleetTypeCode">Type <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required>
                                 <option value="">Choose...</option>
                                 @foreach ($type as $item)
@@ -112,8 +103,10 @@
                                 <label class="form-label" for="fleetPicture">Vehicle</label>
 
                                 <button id="addInputFile" type="button"
-                                    class="btn btn-sm btn-info  font-weight-bold mb-2" href="#" target="_blank"><i
-                                        class="fa fa-plus"></i></button>
+                                    class="btn btn-icon btn-sm btn-sm btn-info font-weight-bold mb-2" href="#"
+                                    target="_blank">
+                                    <i class="mdi mdi-plus fs-14 text-white"></i>
+                                </button>
                             </div>
                             <input class="form-control" name="fleetPicture[0]" id="fleetPicture" type="file"
                                 accept=".jpg, .jpeg, .png">
@@ -136,13 +129,6 @@
 @push('script')
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
-    <script>
-        function setVehicleName() {
-            var selectedOption = document.getElementById("deviceName").selectedOptions[0];
-            var vehicleName = selectedOption.getAttribute("data-vehicle");
-            document.getElementById("vehicleName").value = vehicleName;
-        }
-    </script>
 
     <script>
         const addInputFile = document.getElementById("addInputFile");
@@ -162,8 +148,8 @@
             div.innerHTML = `
             <input type="file" class="form-control mr-2" name="fleetPicture[${num}]">
             <div>
-                    <button type="button" onclick="removeFile(${num})" class="btn btn-sm btn-danger mt-2">
-                        <i class="fa fa-trash"></i>
+                    <button type="button" onclick="removeFile(${num})" class="btn btn-sm btn-icon btn-danger mt-2">
+                        <i class="mdi mdi-delete fs-14 text-white"></i>
                     </button>
                 </div>
             `

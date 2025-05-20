@@ -17,7 +17,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Add Nominal</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -29,7 +29,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="nominal">Nominal <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="nominal" id="nominal" type="text" required
                                 placeholder="Nominal" oninput="formatAngka(this)">
                         </div>
@@ -38,7 +38,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="description">Deskripsi / Notes <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <textarea class="form-control" name="description" id="description" required rows="3"></textarea>
                         </div>
                     </div>

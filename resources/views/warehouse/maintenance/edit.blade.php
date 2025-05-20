@@ -32,7 +32,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h4>{{ $title }} Edit Data</h4>
-                    <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
                 </div>
                 <div class="card-body col-md-6">
                     <div class="row g-3">

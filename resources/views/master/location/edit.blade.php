@@ -17,7 +17,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -27,7 +27,7 @@
                     <div class="row">
                         <div class="col-md-12">
                             <label class="form-label" for="name">Name <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="Name" value="{{ $data->name }}">
                         </div>
@@ -65,7 +65,8 @@
                                 onchange="districtByCity(this.value)">
                                 <option selected="" disabled="" value="">Choose...</option>
                                 @foreach ($city as $item)
-                                    <option value="{{ $item->id }}" {{ $data->cityId == $item->id ? 'selected' : '' }}>
+                                    <option value="{{ $item->id }}"
+                                        {{ $data->cityId == $item->id ? 'selected' : '' }}>
                                         {{ $item->name }}
                                     </option>
                                 @endforeach
@@ -95,14 +96,14 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="latitude">Latitude <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="latitude" id="latitude" type="number" step="any"
                                 placeholder="Latitude" value="{{ $data->latitude }}">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label" for="longitude">Longitude <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="longitude" id="longitude" type="number" step="any"
                                 placeholder="longitude" value="{{ $data->longitude }}">
                         </div>

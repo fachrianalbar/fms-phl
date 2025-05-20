@@ -18,7 +18,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -28,7 +28,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="fleetCode">Fleet Name <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
                                 <option selected="" disabled="" value="">Choose...</option>
                                 @foreach ($fleet as $item)
@@ -41,7 +41,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="fleetTypeCode">Fleet Type <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required="">
                                 <option selected="" disabled="" value="">Choose...</option>
                                 @foreach ($fleetType as $item)
@@ -54,7 +54,7 @@
 
                         {{-- <div class="col-md-6">
                             <label class="form-label" for="driverCode">Driver Name <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="driverCode" id="driverCode" required="">
                                 <option selected="" disabled="" value="">Choose...</option>
                                 @foreach ($driver as $item)
@@ -71,7 +71,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="vehicleRegistrationNumber">Vehicle Registration Number <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="vehicleRegistrationNumber" id="vehicleRegistrationNumber"
                                 type="text" required placeholder="Vehicle Registration Number"
                                 value="{{ $data->vehicleRegistrationNumber }}">
@@ -93,7 +93,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="kir">KIR <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="kir" id="kir" type="text" required
                                 placeholder="KIR" value="{{ $data->kir }}">
                         </div>

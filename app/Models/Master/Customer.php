@@ -29,11 +29,18 @@ class Customer extends Model
         'picName',
         'email',
         'npwp',
-        'telegramUsername'
+        'telegramUsername',
+        'due_date_duration',
+        'companyCode'
     ];
 
     public function routes()
     {
         return $this->hasMany(Route::class, 'customerCode');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'companyCode', 'code');
     }
 }

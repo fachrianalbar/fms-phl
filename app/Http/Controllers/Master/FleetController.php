@@ -58,28 +58,9 @@ class FleetController extends Controller
         $brand = $this->fleetBrandSvc->findAll();
         $type = $this->fleetTypeSvc->findAll();
 
-
-        $response = Http::get(env('API_TOTAL_KILAT') . 'deviceInfo', [
-            'grant_type' => 'totalkilatgps',
-            'access_token' => GetTokenHelper::getToken(),
-        ]);
-
-        $dataApi = $response->json();
-
-        $company = CompanySetting::groupBy('id', 'name')->pluck('name')->toArray();
-
-        $data = [];
-        foreach ($dataApi[0] as $item) {
-            if (in_array($item['company_name'], $company)) {
-                array_push($data, $item);
-            }
-        }
-        // return $data;
-
         return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
-            ->with('data', $data)
             ->with('type', $type)
             ->with('brand', $brand);
     }
@@ -90,7 +71,6 @@ class FleetController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'deviceName' => 'required',
             // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
             // 'fleetBrandCode' => 'required',
             'fleetTypeCode' => 'required',
@@ -151,7 +131,6 @@ class FleetController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            // 'deviceName' => 'required',
             // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
             // 'fleetBrandCode' => 'required',
             'fleetTypeCode' => 'required',

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
+use App\Models\Master\Company;
+use App\Services\Master\CompanyService;
 use App\Services\MenuService;
 use App\Services\Master\CustomerService;
 use Illuminate\Http\Request;
@@ -11,6 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 
 
 class CustomerController extends Controller
@@ -19,11 +22,15 @@ class CustomerController extends Controller
     protected $title;
     protected $view;
     protected $menuSvc;
+    protected $companySvc;
 
-    public function __construct(CustomerService $customerSvc, MenuService $menuSvc)
+    public function __construct(CustomerService $customerSvc, MenuService $menuSvc, CompanyService $companySvc)
     {
         $this->service = $customerSvc;
         $this->title = "Customer";
+        $this->menuSvc = $menuSvc->getByName("Customer");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->companySvc = $companySvc;
         $this->view = "master.customer.";
     }
 
@@ -42,8 +49,11 @@ class CustomerController extends Controller
      */
     public function create()
     {
+        $company = $this->companySvc->findAll();
+
         return view($this->view . 'create')
             ->with('view', $this->view)
+            ->with('company', $company)
             ->with('title', $this->title);
     }
 
@@ -54,12 +64,11 @@ class CustomerController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'phone' => [
-                'required',
-                Rule::unique('customer', 'phone')->whereNull('deleted_at')
-            ],
-            'email' => ['required', Rule::unique('customer', 'email')->whereNull('deleted_at')],
-            'telegramUsername' => ['required', Rule::unique('customer', 'telegramUsername')->whereNull('deleted_at')],
+            // 'phone' => [
+            //     Rule::unique('customer', 'phone')->whereNull('deleted_at')
+            // ],
+            // 'email' => [Rule::unique('customer', 'email')->whereNull('deleted_at')],
+            // 'telegramUsername' => [Rule::unique('customer', 'telegramUsername')->whereNull('deleted_at')],
 
 
             // 'nickname' => ['required', 'nickname', 'unique:users,nickname'],
@@ -79,7 +88,7 @@ class CustomerController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' data was save succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -106,8 +115,12 @@ class CustomerController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
+        $company = $this->companySvc->findAll();
+
+
         return view($this->view . 'edit')
             ->with('view', $this->view)
+            ->with('company', $company)
             ->with('title', $this->title)
             ->with('data', $data);
     }
@@ -121,14 +134,13 @@ class CustomerController extends Controller
 
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            'email' => ['required', Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
-            'telegramUsername' => ['required', Rule::unique('customer', 'telegramUsername')->ignore($data->id)->whereNull('deleted_at')],
-            'phone' => [
-                'required',
-                Rule::unique('customer', 'phone')
-                    ->ignore($data->id)
-                    ->whereNull('deleted_at')
-            ],
+            // 'email' => [Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
+            // 'telegramUsername' => [Rule::unique('customer', 'telegramUsername')->ignore($data->id)->whereNull('deleted_at')],
+            // 'phone' => [
+            //     Rule::unique('customer', 'phone')
+            //         ->ignore($data->id)
+            //         ->whereNull('deleted_at')
+            // ],
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
@@ -164,6 +176,9 @@ class CustomerController extends Controller
             $data = $this->service->findAll();
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->editColumn('company.name', function ($row) {
+                    return isset($row->company->name) ? $row->company->name : '';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="' . route($this->view . 'edit', $row->id) . '"
@@ -181,7 +196,7 @@ class CustomerController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'company.name'])
                 ->toJson();
         }
     }

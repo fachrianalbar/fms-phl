@@ -46,7 +46,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -57,14 +57,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="name">Code <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" type="text" required placeholder="Name" readonly disabled
                                 value="{{ $data->code }}">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label" for="name">Date <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="date" id="datetime-local" type="date" required
                                 placeholder="Order Date" value="{{ $data->date }}">
                         </div>
@@ -78,14 +78,14 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="name">Date Submitted <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="submitDate" id="datetime-local" type="date" required
                                 placeholder="Order Date" value="{{ $data->submitDate }}">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label" for="handover">Serah Terima Oleh <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
 
                             <input type="hidden" name="fleetTypeCode" id="fleetTypeCode"
                                 value="{{ $data->fleetTypeCode }}" readonly>
@@ -103,7 +103,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="bon">Nomor Bon <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="bon" id="bon" type="text" required
                                 placeholder="Nomor Bon" value="{{ $data->bon }}">
                         </div>

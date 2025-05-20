@@ -5,13 +5,19 @@
     'secondSegment' => __('general.add'),
 ])
 
+@push('style')
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+@endpush
+
 @section('content')
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -19,52 +25,51 @@
                     @csrf
                     <div class="row mt-4">
                         <div class="col-md-12">
-                            <label class="form-label" for="name">Name <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                            <label class="form-label" for="name">{{ __('menu_customer.name') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
-                                placeholder="Name">
+                                placeholder="{{ __('menu_customer.name') }}">
                         </div>
                     </div>
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="picName">Pic Name</label>
-                            <input class="form-control" name="picName" id="picName" type="text" placeholder="Pic Name">
+                            <label class="form-label" for="picName">{{ __('menu_customer.pic_name') }}</label>
+                            <input class="form-control" name="picName" id="picName" type="text"
+                                placeholder="{{ __('menu_customer.pic_name') }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="nickname">Nickname</label>
+                            <label class="form-label" for="nickname">{{ __('menu_customer.nickname') }}</label>
                             <input class="form-control" name="nickname" id="nickname" type="text"
-                                placeholder="Nickname">
+                                placeholder="{{ __('menu_customer.nickname') }}">
                         </div>
                     </div>
 
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="email">Email <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="email" id="email" type="email" placeholder="Email"
-                                required>
+                            <label class="form-label" for="email">Email</label>
+                            <input class="form-control" name="email" id="email" type="email" placeholder="Email">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="phone">Phone <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="phone" id="phone" type="number" required
-                                placeholder="Phone">
+                            <label class="form-label" for="phone">Phone</label>
+                            <input class="form-control" name="phone" id="phone" type="number" placeholder="Phone">
                         </div>
                     </div>
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="address1">Address 1</label>
-                            <textarea class="form-control" name="address1" id="address1" placeholder=" Address 1" rows="4"></textarea>
+                            <label class="form-label" for="address1"> {{ __('menu_customer.address') }} 1</label>
+                            <textarea class="form-control" name="address1" id="address1" placeholder=" {{ __('menu_customer.address') }} 1"
+                                rows="4"></textarea>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="address2">Address 2</label>
-                            <textarea class="form-control" name="address2" id="address2" placeholder=" Address 2" rows="4"></textarea>
+                            <label class="form-label" for="address2">{{ __('menu_customer.address') }} 2</label>
+                            <textarea class="form-control" name="address2" id="address2" placeholder=" {{ __('menu_customer.address') }} 2"
+                                rows="4"></textarea>
                         </div>
                     </div>
 
@@ -75,9 +80,10 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="accountNumber"> Account Number</label>
+                            <label class="form-label" for="accountNumber">
+                                {{ __('menu_customer.account_number') }}</label>
                             <input class="form-control" name="accountNumber" id="accountNumber" type="number"
-                                placeholder="Account Number">
+                                placeholder="{{ __('menu_customer.account_number') }}">
                         </div>
                     </div>
 
@@ -93,19 +99,48 @@
                         </div>
                     </div>
 
-                    <div class="row mt-4">
+                    {{-- <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="telegramUsername">Telegram Username</label>
                             <input class="form-control" name="telegramUsername" id="telegramUsername" type="text"
                                 placeholder="Telegram Username">
                         </div>
+                    </div> --}}
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="companyCode"> {{ __('menu_customer.company') }}</label>
+                            <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
+                                <option selected="" disabled="" value="">
+                                    {{ __('general.choose') }}...</option>
+                                @foreach ($company as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="due_date_duration">
+                                {{ __('menu_customer.due_date_duration') }}
+                                ({{ __('menu_customer.days') }})</label>
+                            <input class="form-control" name="due_date_duration" id="due_date_duration" type="number"
+                                min="1"
+                                placeholder="{{ __('menu_customer.due_date_duration') }} ({{ __('menu_customer.days') }})">
+                        </div>
+
+
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Add</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 @endsection
+
+@push('script')
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+    <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+@endpush

@@ -19,7 +19,6 @@ class Fleet extends Model
     protected $fillable = [
         'code',
         'plateNumber',
-        'deviceName',
         'year',
         'engineNumber',
         'frameNumber',

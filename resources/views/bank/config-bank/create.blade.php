@@ -17,7 +17,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-6">
@@ -43,7 +43,7 @@
                         <div class="d-flex justify-content-between align-items-center">
 
                             <label class="form-label" for="userBankCode">User Bank <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <button id="addUserBank" type="button" class="btn btn-sm btn-info  font-weight-bold mb-2"
                                 href="#" target="_blank"><i class="fa fa-plus"></i></button>
                         </div>

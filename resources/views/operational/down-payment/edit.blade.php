@@ -29,7 +29,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -41,7 +41,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="name">Code <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input type="hidden" name="code" value="TDP{{ now()->format('ymdHis') }}">
                             <input class="form-control" type="text" required placeholder="Name" readonly disabled
                                 value="TDP{{ now()->format('ymdHis') }}">
@@ -49,7 +49,7 @@
 
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="driverCode">Driver Name <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input type="hidden" name="driverCode" value="{{ $data->code }}">
                             <select class="js-example-basic-single" id="driverCode" name="driverCode" required="">
                                 <option selected="" disabled="" value="">Choose...</option>
@@ -65,7 +65,7 @@
                     <div class="row mt-4">
                         <div class="col-md-3">
                             <label class="form-label" for="name">Date <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="date" id="datetime-local" type="date" required
                                 placeholder="Order Date" value="{{ $data->date }}">
                         </div>
@@ -77,7 +77,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="price">Price <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="price" id="price" type="text" placeholder="Price"
                                 oninput="formatAngka(this)" value="{{ $data->price }}" required>
                         </div>

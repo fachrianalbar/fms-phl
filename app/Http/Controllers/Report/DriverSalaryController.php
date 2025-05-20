@@ -12,6 +12,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 use Mpdf\Mpdf;
+use Illuminate\Support\Facades\File;
+use ZipArchive;
+use Illuminate\Support\Facades\View;
 
 
 class DriverSalaryController extends Controller
@@ -147,29 +150,83 @@ class DriverSalaryController extends Controller
 
         $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
 
-        $mpdf = new Mpdf(
-            [
-                'orientation' => 'P',
-                'format' => [215, 330],
-            ]
-        );
-
-        $mpdf->setAutoTopMargin = 'stretch';
-        $mpdf->setAutoBottomMargin = 'stretch';
-
-        $mpdf->WriteHTML(
-            view($this->view . 'report.driver-salary-pdf')
-                ->with('data', $data->get())
-        );
-        // $mpdf->WriteHTML(
-        //     view('finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada')
-        //         ->with('data', $data->get())
+        // $mpdf = new Mpdf(
+        //     [
+        //         'orientation' => 'P',
+        //         'format' => [215, 330],
+        //     ]
         // );
+
+        // $mpdf->setAutoTopMargin = 'stretch';
+        // $mpdf->setAutoBottomMargin = 'stretch';
+
+        // // $mpdf->WriteHTML(
+        // //     view($this->view . 'report.driver-salary-pdf')
+        // //         ->with('data', $data->get())
+        // // );
+        // // $mpdf->WriteHTML(
+        // //     view('finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada')
+        // //         ->with('data', $data->get())
+        // // );
         // $mpdf->WriteHTML(
         //     view('finance.invoice.pdf.header.phl')
         //         ->with('data', $data->get())
         // );
 
-        return $mpdf->Output('Driver Salary Report.pdf', 'I');
+        // return $mpdf->Output('Driver Salary Report.pdf', 'I');
+
+        $viewDir = resource_path('views/finance/invoice/pdf/customer');
+        $bladeFiles = File::files($viewDir);
+        $outputFolder = storage_path('app/customer-invoice');
+        $zipPath = storage_path('app/customer-invoice.zip');
+
+        // Buat folder output kalau belum ada
+        if (!File::exists($outputFolder)) {
+            File::makeDirectory($outputFolder, 0755, true);
+        } else {
+            File::cleanDirectory($outputFolder);
+        }
+
+        // Generate PDF dari setiap blade
+        foreach ($bladeFiles as $bladeFile) {
+            $filename = str_replace('.blade.php', '', $bladeFile->getFilename());
+            $viewName = 'finance.invoice.pdf.customer.' . $filename;
+
+            // Render view ke HTML
+            $html = View::make($viewName, ['data' => $this->getDummyData()])->render();
+
+            // ✅ Konfigurasi mPDF milik kamu
+            $mpdf = new Mpdf([
+                'orientation' => 'P',
+                'format' => [215, 330],
+            ]);
+            $mpdf->setAutoTopMargin = 'stretch';
+            $mpdf->setAutoBottomMargin = 'stretch';
+
+            // Tulis HTML ke PDF
+            $mpdf->WriteHTML($html);
+            $mpdf->Output("{$outputFolder}/{$filename}.pdf", \Mpdf\Output\Destination::FILE);
+        }
+
+        // Buat ZIP
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
+            foreach (File::files($outputFolder) as $pdfFile) {
+                $zip->addFile($pdfFile->getRealPath(), 'customer-invoice/' . $pdfFile->getFilename());
+            }
+            $zip->close();
+        }
+
+        // Kirim ZIP ke user
+        return response()->download($zipPath)->deleteFileAfterSend(true);
+    }
+
+    protected function getDummyData()
+    {
+        return [
+            'customer_name' => 'Contoh Customer',
+            'total' => 'Rp1.000.000',
+            // Tambah data lain sesuai isi Blade kamu
+        ];
     }
 }

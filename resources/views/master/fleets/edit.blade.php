@@ -16,7 +16,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -27,14 +27,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="plateNumber">Plate Number <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="plateNumber" id="plateNumber" type="text" required
-                                placeholder="Plate Number" readonly value="{{ $data->plateNumber }}">
+                                placeholder="Plate Number" value="{{ $data->plateNumber }}">
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label" for="fleetTypeCode">Type <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="form-select" name="fleetTypeCode" id="fleetTypeCode">
                                 <option value="">Choose...</option>
                                 @foreach ($type as $item)

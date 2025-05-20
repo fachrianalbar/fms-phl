@@ -37,7 +37,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Edit Data</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">Back To List</a>
+                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
             </div>
             <div class="card-body col-md-12">
@@ -62,7 +62,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="invoiceNumber">Invoice Number <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="invoiceNumber" id="invoiceNumber" type="text" required
                                 placeholder="Invoice Number" value="{{ $data->invoiceNumber }}">
                         </div>
@@ -71,7 +71,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label" for="receiptNumber">Receipt Number <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="receiptNumber" id="receiptNumber" type="text" required
                                 placeholder="Receipt Number" value="{{ $data->receiptNumber }}">
                         </div>
@@ -86,7 +86,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="name">Invoice Date <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="invoiceDate" id="datetime-local" type="date" required
                                 placeholder="Invoice Date" value="{{ $data->invoiceDate }}">
                         </div>
@@ -127,7 +127,7 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="notes">Notes <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                                    class="mdi mdi-information text-danger"></i></label>
                             <textarea class="form-control" name="notes" id="notes" placeholder="Notes" rows="4" required>{{ $data->notes }}</textarea>
                         </div>
                     </div>

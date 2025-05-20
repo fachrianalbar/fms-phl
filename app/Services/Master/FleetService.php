@@ -59,7 +59,6 @@ class FleetService
 
         $data = $this->service->create([
             'plateNumber' => $request->vehicleName,
-            'deviceName' => $request->deviceName,
             'year' => $request->year,
             'engineNumber' => $request->engineNumber,
             'frameNumber' => $request->frameNumber,
@@ -186,7 +185,6 @@ class FleetService
 
         $this->service->where('id', $id)->update([
             // 'plateNumber' => $request->vehicleName,
-            // 'deviceName' => $request->deviceName,
             'year' => $request->year,
             'engineNumber' => $request->engineNumber,
             'frameNumber' => $request->frameNumber,

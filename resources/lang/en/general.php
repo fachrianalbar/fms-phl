@@ -2,5 +2,8 @@
 
 return [
     'add_data' => 'Add Data',
-    'add' => 'Add'
+    'add' => 'Add',
+    'back_to_list' => 'Back To List',
+    'data_was_save_successfully' => 'data was save succesfully',
+    'choose' => 'Choose'
 ];
