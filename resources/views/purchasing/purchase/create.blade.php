@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -174,8 +181,7 @@
 
         $(document).ready(function() {
             $('#dt').DataTable();
-            // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
+
         });
 
         // Load items based on supplier
@@ -289,12 +295,16 @@
 
             let newRow = `<tr>
                          <td class="remove-btn">
-                               <ul class="action">
-                                 <li class="delete"><a href="javascript:removeDetailRow(${row})"><i class="icon-trash"></i></a></li>
-                             </ul>
+                              
+
+                                <a href="javascript:removeDetailRow(${row})"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
                          </td>
                          <td>
-                             <select class="js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
+                             <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                  <!-- Options yang di-generate -->
                              </select>
                          </td>

@@ -273,8 +273,6 @@
     <script>
         $(document).ready(function() {
             $('#dt').DataTable();
-            // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
 
             $("#check-all").click(function() {
                 let allChecked = $(".confirm-checkbox:not(:disabled)").length === $(
@@ -328,7 +326,7 @@
                     "id");
 
                 $.ajax({
-                    url: "{{ route('ajax.purchase-detail', ':id') }}".replace(':id', id),
+                    url: "{{ url('ajax/purchase-detail') }}/" + id,
                     type: "GET",
                     success: function(response) {
                         console.log(response);

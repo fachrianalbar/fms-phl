@@ -21,6 +21,7 @@ class MaintenanceDetail extends Model
         'qty',
         'itemCode',
         'maintenanceCode',
+        'purchaseDetailCode',
         'status'
     ];
 

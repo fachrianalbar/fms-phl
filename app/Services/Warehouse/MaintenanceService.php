@@ -4,16 +4,13 @@ namespace App\Services\Warehouse;
 
 use App\Helpers\GenerateCode;
 use App\Models\Inventory\Stock;
-use App\Models\Purchasing\Purchase;
+use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
+use App\Models\Warehouse\MaintenanceFifo;
 use App\Traits\LogActivity;
-use Carbon\Carbon;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-
 
 class MaintenanceService
 {
@@ -52,107 +49,107 @@ class MaintenanceService
 
     public function store($request, $title)
     {
+        // 1. Simpan data maintenance utama
         $data = $this->service->create([
             'code' => $request->code,
-            // 'maintenanceCode' => $request->maintenanceCode,
             'date' => $request->date,
             'time' => $request->time,
             'fleetCode' => $request->fleetCode
         ]);
 
-        if (env('DB_PREFIX') == 'el_') {
-            DB::connection('mysql2')->table('maintenance')->insert([
-                'id' => $data->id,
-                'code' => $request->code,
-                // 'maintenanceCode' => $request->maintenanceCode,
-                'date' => $request->date,
-                'time' => $request->time,
-                'fleetCode' => $request->fleetCode,
-                'status' => 1,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-        }
-
-
+        // 2. Jika ada item yang digunakan dalam maintenance
         if (isset($request->itemCode)) {
             $filtered = Arr::only($request->all(), ['itemCode', 'qty']);
 
             for ($i = 0; $i < count($request->itemCode); $i++) {
-                $stock = Stock::where('itemCode', $filtered['itemCode'][$i])->first();
+                $itemCode = $filtered['itemCode'][$i];
+                $requestedQty = (int)$filtered['qty'][$i];
 
-                if ($filtered['qty'][$i] > $stock->stockIn) {
-                    return;
+                // 3. Cek apakah stok cukup berdasarkan FIFO data
+                $totalAvailableQty = PurchaseDetail::where('itemCode', $itemCode)
+                    ->selectRaw('SUM(receivedQty - qtyUsed) as available')
+                    ->value('available');
+
+                if ($totalAvailableQty < $requestedQty) {
+                    // Jika stok tidak cukup, batalkan dan kembalikan pesan error
+                    return response()->json([
+                        'message' => "Stok tidak cukup untuk item $itemCode. Tersedia: $totalAvailableQty, Diminta: $requestedQty"
+                    ], 400);
                 }
 
+                // 4. Update FIFO PurchaseDetail: qtyUsed sesuai permintaan
+                $remainingQty = $requestedQty;
+                $purchases = PurchaseDetail::where('itemCode', $itemCode)
+                    ->whereColumn('qtyUsed', '<', 'receivedQty')
+                    ->orderBy('created_at')
+                    ->get();
+
+                foreach ($purchases as $purchase) {
+                    if ($remainingQty <= 0) break;
+
+                    $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                    $useQty = min($remainingQty, $availableQty);
+
+                    $purchase->qtyUsed += $useQty;
+                    $purchase->save();
+
+                    $remainingQty -= $useQty;
+                }
+
+                // 5. Update stok global
+                $stock = Stock::where('itemCode', $itemCode)->first();
+
                 $stock->update([
-                    // 'stockIn' => $stock->stockIn - (int)$filtered['qty'][$i],
-                    'stockOut' => $stock->stockOut + (int)$filtered['qty'][$i]
+                    'stockOut' => $stock->stockOut + $requestedQty
                 ]);
 
+                // 6. Buat MaintenanceDetail dan StockTransaction
                 $code = $data->code;
 
-                $md = MaintenanceDetail::where('itemCode', $filtered['itemCode'][$i])
+                $md = MaintenanceDetail::where('itemCode', $itemCode)
                     ->whereHas('maintenance', function ($query) use ($code) {
                         $query->where('code', $code);
                     })
                     ->first();
 
-
                 if (!$md) {
                     $detail = $data->details()->create([
                         'code' => GenerateCode::generateCode('TMD', true),
                         'maintenanceCode' => $code,
-                        'itemCode' => $filtered['itemCode'][$i],
-                        'qty' => $filtered['qty'][$i]
+                        'itemCode' => $itemCode,
+                        'qty' => $requestedQty
                     ]);
-
-                    if (env('DB_PREFIX') == 'el_') {
-                        DB::connection('mysql2')->table('maintenance_detail')->insert([
-                            'id' => $detail->id,
-                            'code' => $detail->code,
-                            'maintenanceCode' => $code,
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'qty' => $filtered['qty'][$i],
-                            'status' => 1,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
-                    }
 
                     StockTransaction::create([
                         'code' => GenerateCode::generateCode('TPD', true),
-                        'itemCode' => $filtered['itemCode'][$i],
-                        'qty' => $filtered['qty'][$i],
+                        'itemCode' => $itemCode,
+                        'qty' => $requestedQty,
                         'transactionCode' => $detail->code,
                         'date' => $request->date,
                         'type' => 'OUT'
                     ]);
                 } else {
-                    if (env('DB_PREFIX') == 'el_') {
-                        DB::connection('mysql2')->table('maintenance_detail')->where('code', $md->code)->update([
-                            'qty' => $filtered['qty'][$i]
-                        ]);
-                    }
-
                     $md->update([
-                        'qty' => $filtered['qty'][$i] + $md->qty
+                        'qty' => $requestedQty + $md->qty
                     ]);
 
-                    $stockTransaction = StockTransaction::where('itemCode', $filtered['itemCode'][$i])->where('transactionCode', $md->code)->first();
+                    $stockTransaction = StockTransaction::where('itemCode', $itemCode)
+                        ->where('transactionCode', $md->code)
+                        ->first();
 
                     if ($stockTransaction) {
                         $stockTransaction->update([
-                            'qty' => $filtered['qty'][$i] + $stockTransaction->qty
+                            'qty' => $requestedQty + $stockTransaction->qty
                         ]);
                     }
                 }
             }
         }
 
-
+        // 7. Log aktivitas
         $this->logActivity($title, $data, 'Create');
     }
+
 
     public function update($request, $id, $title)
     {
@@ -165,161 +162,149 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode
         ]);
 
-        if (env('DB_PREFIX') == 'el_') {
-            DB::connection('mysql2')->table('maintenance')->where('id', $id)->update([
-                'code' => $request->code,
-                'date' => $request->date,
-                'time' => $request->time,
-                'fleetCode' => $request->fleetCode
-            ]);
-        }
-
-
         if (isset($request->itemCode)) {
             $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode']);
 
-            for ($i = 0; $i < count($request->itemCode); $i++) {
+            for ($i = 0; $i < count($filtered['itemCode']); $i++) {
+                $qty = (int)$filtered['qty'][$i];
+                $itemCode = $filtered['itemCode'][$i];
+                $detailCode = $filtered['maintenanceDetailCode'][$i] ?? null;
 
-                if (isset($filtered['maintenanceDetailCode'][$i])) {
+                if ($qty <= 0) {
+                    throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
+                }
 
-                    $md = MaintenanceDetail::where('code', $filtered['maintenanceDetailCode'][$i])->first();
-                    $stock = Stock::where('itemCode', $md->itemCode)->first();
+                $stock = Stock::where('itemCode', $itemCode)->firstOrFail();
 
-                    if ($filtered['qty'][$i] > $stock->stockIn) {
-                        return;
+                if ($detailCode) {
+                    // UPDATE DETAIL LAMA
+                    $md = MaintenanceDetail::where('code', $detailCode)->firstOrFail();
+                    $originalQty = $md->qty;
+                    $oldItemCode = $md->itemCode;
+
+                    // ROLLBACK FIFO: Ambil data lama dari maintenance_fifo
+                    $oldFifos = MaintenanceFifo::where('maintenanceDetailCode', $detailCode)->get();
+                    foreach ($oldFifos as $fifo) {
+                        $purchase = PurchaseDetail::where('code', $fifo->purchaseDetailCode)->first();
+                        if ($purchase) {
+                            $purchase->qtyUsed -= $fifo->qty;
+                            $purchase->save();
+                        }
                     }
 
-                    if ($filtered['itemCode'][$i] != $md->itemCode) {
-                        Stock::where('itemCode', $md->itemCode)->update([
-                            // 'stockIn' => $stock->stockIn + $md->qty,
-                            'stockOut' => $stock->stockOut - $md->qty
-                        ]);
+                    // Rollback stockOut
+                    Stock::where('itemCode', $oldItemCode)->decrement('stockOut', $originalQty);
 
+                    // Hapus maintenance_fifo lama
+                    MaintenanceFifo::where('maintenanceDetailCode', $detailCode)->delete();
 
-                        MaintenanceDetail::where('code', $filtered['maintenanceDetailCode'][$i])->update([
-                            'maintenanceCode' => $request->code,
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'qty' => $filtered['qty'][$i]
-                        ]);
+                    // Validasi stok
+                    $available = PurchaseDetail::where('itemCode', $itemCode)
+                        ->selectRaw('SUM(receivedQty - qtyUsed) as available')
+                        ->value('available');
 
-                        if (env('DB_PREFIX') == 'el_') {
-                            DB::connection('mysql2')->table('maintenance_detail')->where('code', $filtered['maintenanceDetailCode'][$i])->update([
-                                'maintenanceCode' => $request->code,
-                                'itemCode' => $filtered['itemCode'][$i],
-                                'qty' => $filtered['qty'][$i]
-                            ]);
-                        }
-
-                        $md = MaintenanceDetail::where('code', $filtered['maintenanceDetailCode'][$i])->first();
-                        $stock = Stock::where('itemCode', $md->itemCode)->first();
-
-                        Stock::where('itemCode', $md->itemCode)->update([
-                            // 'stockIn' => $stock->stockIn - $filtered['qty'][$i],
-                            'stockOut' => $stock->stockOut + $filtered['qty'][$i]
-                        ]);
-
-                        StockTransaction::where('transactionCode', $filtered['maintenanceDetailCode'][$i])->update([
-                            'qty' => $filtered['qty'][$i],
-                            'itemCode' => $filtered['itemCode'][$i],
-                        ]);
-                    } else {
-                        $stock = Stock::where('itemCode', $md->itemCode)->first();
-
-                        Stock::where('itemCode', $md->itemCode)->update([
-                            // 'stockIn' => $stock->stockIn + $md->qty,
-                            'stockOut' => $stock->stockOut - $md->qty
-                        ]);
-
-                        $stock = Stock::where('itemCode', $md->itemCode)->first();
-
-                        Stock::where('itemCode', $md->itemCode)->update([
-                            // 'stockIn' => $stock->stockIn - $filtered['qty'][$i],
-                            'stockOut' => $stock->stockOut + $filtered['qty'][$i]
-                        ]);
-
-                        if (env('DB_PREFIX') == 'el_') {
-                            DB::connection('mysql2')->table('maintenance_detail')->where('code', $md->code)->update([
-                                'qty' => $filtered['qty'][$i]
-                            ]);
-                        }
-
-                        $md->update([
-                            'qty' => $filtered['qty'][$i]
-                        ]);
-
-                        StockTransaction::where('transactionCode', $filtered['maintenanceDetailCode'][$i])->update([
-                            'qty' => $filtered['qty'][$i]
-                        ]);
+                    if ($qty > $available) {
+                        throw new \Exception("Qty untuk item {$itemCode} melebihi stok tersedia (FIFO) = {$available}.");
                     }
+
+                    // Update MaintenanceDetail
+                    $md->update([
+                        'itemCode' => $itemCode,
+                        'qty' => $qty,
+                        'maintenanceCode' => $request->code
+                    ]);
+
+                    // ALOKASI FIFO BARU
+                    $remainingQty = $qty;
+                    $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
+                        ->whereColumn('qtyUsed', '<', 'receivedQty')
+                        ->orderBy('created_at')
+                        ->get();
+
+                    foreach ($fifoPurchases as $purchase) {
+                        if ($remainingQty <= 0) break;
+
+                        $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                        $useQty = min($remainingQty, $availableQty);
+
+                        $purchase->qtyUsed += $useQty;
+                        $purchase->save();
+
+                        MaintenanceFifo::create([
+                            'code' => GenerateCode::generateCode('MF', true),
+                            'maintenanceDetailCode' => $detailCode,
+                            'purchaseDetailCode' => $purchase->code,
+                            'qty' => $useQty
+                        ]);
+
+                        $remainingQty -= $useQty;
+                    }
+
+                    Stock::where('itemCode', $itemCode)->increment('stockOut', $qty);
+
+                    StockTransaction::where('transactionCode', $detailCode)->update([
+                        'itemCode' => $itemCode,
+                        'qty' => $qty
+                    ]);
                 } else {
+                    // TAMBAH DETAIL BARU
+                    $available = PurchaseDetail::where('itemCode', $itemCode)
+                        ->selectRaw('SUM(receivedQty - qtyUsed) as available')
+                        ->value('available');
+
+                    if ($qty > $available) {
+                        throw new \Exception("Qty untuk item {$itemCode} melebihi stok tersedia (FIFO) = {$available}.");
+                    }
+
                     $data = $this->getById($id);
                     $code = $data->code;
 
-                    $md = MaintenanceDetail::where('itemCode', $filtered['itemCode'][$i])
-                        ->whereHas('maintenance', function ($query) use ($code) {
-                            $query->where('code', $code);
-                        })
-                        ->first();
-
-                    $stock = Stock::where('itemCode', $filtered['itemCode'][$i])->first();
-
-                    Stock::where('itemCode', $filtered['itemCode'][$i])->update([
-                        // 'stockIn' => $stock->stockIn - $filtered['qty'][$i],
-                        'stockOut' => $stock->stockOut + $filtered['qty'][$i]
+                    $detail = $data->details()->create([
+                        'code' => GenerateCode::generateCode('TMD', true),
+                        'maintenanceCode' => $code,
+                        'itemCode' => $itemCode,
+                        'qty' => $qty
                     ]);
 
-                    if (!$md) {
-                        $detail = $data->details()->create([
-                            'code' => GenerateCode::generateCode('TMD', true),
-                            'maintenanceCode' => $code,
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'qty' => $filtered['qty'][$i]
+                    // ALOKASI FIFO BARU
+                    $remainingQty = $qty;
+                    $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
+                        ->whereColumn('qtyUsed', '<', 'receivedQty')
+                        ->orderBy('created_at')
+                        ->get();
+
+                    foreach ($fifoPurchases as $purchase) {
+                        if ($remainingQty <= 0) break;
+
+                        $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                        $useQty = min($remainingQty, $availableQty);
+
+                        $purchase->qtyUsed += $useQty;
+                        $purchase->save();
+
+                        MaintenanceFifo::create([
+                            'code' => GenerateCode::generateCode('MF', true),
+                            'maintenanceDetailCode' => $detail->code,
+                            'purchaseDetailCode' => $purchase->code,
+                            'qty' => $useQty
                         ]);
 
-                        if (env('DB_PREFIX') == 'el_') {
-                            DB::connection('mysql2')->table('maintenance_detail')->insert([
-                                'id' => $detail->id,
-                                'code' => $detail->code,
-                                'maintenanceCode' => $code,
-                                'itemCode' => $filtered['itemCode'][$i],
-                                'qty' => $filtered['qty'][$i],
-                                'status' => 1,
-                                'created_at' => now(),
-                                'updated_at' => now()
-                            ]);
-                        }
-
-                        StockTransaction::create([
-                            'code' => GenerateCode::generateCode('TPD', true),
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'qty' => $filtered['qty'][$i],
-                            'transactionCode' => $detail->code,
-                            'date' => $request->date,
-                            'type' => 'OUT'
-                        ]);
-                    } else {
-                        if (env('DB_PREFIX') == 'el_') {
-                            DB::connection('mysql2')->table('maintenance_detail')->where('code', $md->code)->update([
-                                'qty' => $filtered['qty'][$i]
-                            ]);
-                        }
-
-                        $md->update([
-                            'qty' => $filtered['qty'][$i]
-                        ]);
-
-                        $stockTransaction = StockTransaction::where('itemCode', $filtered['itemCode'][$i])->where('transactionCode', $md->code)->first();
-
-                        if ($stockTransaction) {
-                            $stockTransaction->update([
-                                'qty' => $filtered['qty'][$i] + $stockTransaction->qty
-                            ]);
-                        }
+                        $remainingQty -= $useQty;
                     }
+
+                    Stock::where('itemCode', $itemCode)->increment('stockOut', $qty);
+
+                    StockTransaction::create([
+                        'code' => GenerateCode::generateCode('TPD', true),
+                        'itemCode' => $itemCode,
+                        'qty' => $qty,
+                        'transactionCode' => $detail->code,
+                        'date' => $request->date,
+                        'type' => 'OUT'
+                    ]);
                 }
             }
         }
-
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
@@ -339,19 +324,7 @@ class MaintenanceService
                 'stockOut' => $stock->stockOut - $item->qty
             ]);
 
-            if (env('DB_PREFIX') == 'el_') {
-                DB::connection('mysql2')->table('maintenance_detail')->where('code', $item->code)->update([
-                    'deleted_at' => now(),
-                ]);
-            }
-
             StockTransaction::where('transactionCode', $item->code)->delete();
-        }
-
-        if (env('DB_PREFIX') == 'el_') {
-            DB::connection('mysql2')->table('maintenance')->where('id', $id)->update([
-                'deleted_at' => now(),
-            ]);
         }
 
         $data->details()->delete();

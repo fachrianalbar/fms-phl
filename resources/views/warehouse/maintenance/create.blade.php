@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -82,12 +89,12 @@
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
-                    <table class="display " id="dt">
+                    <table lass="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
-                                <th>Item/Part</th>
+                                <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty Existing</th>
                                 <th style="width: 10%">Qty</th>
                             </tr>
@@ -108,7 +115,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <div class="me-5">
+                                    <div class="mx-5">
                                         <input class="form-control" type="text" id="itemName_1" required readonly>
                                     </div>
                                 </td>
@@ -167,7 +174,6 @@
         $(document).ready(function() {
             $('#dt').DataTable();
             // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
 
             dataItem = @json($stock)
 
@@ -247,17 +253,19 @@
 
             let newRow = `<tr>
                             <td class="remove-btn">
-                                  <ul class="action">
-                                    <li class="delete"><a href="javascript:removeDetailRow(${row})"><i class="icon-trash"></i></a></li>
-                                </ul>
+                                 <a href="javascript:removeDetailRow(${row})"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
                             </td>
                             <td>
-                                <select class="js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
+                                <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                     <option selected="" disabled="" value="">Choose...</option>
                                 </select>
                             </td>
                             <td>
-                                <div class="me-5">
+                                <div class="mx-5">
                                     <input class="form-control" type="text" id="itemName_${row}" required readonly>
                                 </div>
                             </td>

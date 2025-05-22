@@ -180,12 +180,6 @@ class MaintenanceController extends Controller
             'stockOut' => $stock->stockOut - $md->qty
         ]);
 
-        if (env('DB_PREFIX') == 'el_') {
-            DB::connection('mysql2')->table('maintenance_detail')->where('code', $md->code)->update([
-                'deleted_at' => now(),
-            ]);
-        }
-
         $md->delete();
 
         return redirect()->route($this->view . 'edit', $md->maintenance->id)->with('success', 'Delete Data Success');

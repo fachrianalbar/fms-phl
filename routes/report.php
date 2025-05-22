@@ -30,6 +30,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('all-order-list', [AllOrderListController::class, 'datatable'])->name('all-order-list');
 });
 
-Route::prefix('ajax')->name('ajax.')->group(function () {
-    Route::get('purchase-detail/{id}', [ProfitLossController::class, 'getProfitLossSummary'])->name('profit-loss-summary');
-});
+// Route::prefix('ajax')->name('ajax.')->group(function () {
+//     Route::get('purchase-detail/{id}', [ProfitLossController::class, 'getProfitLossSummary'])->name('profit-loss-summary');
+// });

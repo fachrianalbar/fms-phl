@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -101,12 +108,11 @@
                             @foreach ($data->details as $it)
                                 <tr>
                                     <td>
-                                        <ul class="action">
-                                            <li class="delete"><a
-                                                    href="javascript:deleteMaintenanceDetail('{{ $it->id }}')"><i
-                                                        class="icon-trash"></i></a>
-                                            </li>
-                                        </ul>
+                                        <a href="javascript:deleteMaintenanceDetail('{{ $it->id }}')"
+                                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                            title="Delete">
+                                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                        </a>
                                     </td>
                                     <td>
                                         <input type="hidden" name="maintenanceDetailCode[]" value="{{ $it->code }}">
@@ -125,7 +131,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <div class="me-5">
+                                        <div class="mx-5">
                                             <input class="form-control" type="text" value="{{ $it->item->name }}"
                                                 id="itemName_{{ $loop->iteration }}" required readonly>
                                         </div>
@@ -139,6 +145,7 @@
                                         <input class="form-control w-75" type="number" name="qty[]"
                                             id="qty_{{ $loop->iteration }}" required min="0"
                                             value="{{ $it->qty }}">
+                                        <input type="hidden" name="original_qty[]" value="{{ $it->qty }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -192,8 +199,6 @@
         $(document).ready(function() {
             $('#dt').DataTable();
             // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
-
             dataItem = @json($stock)
 
         });
@@ -252,14 +257,18 @@
             $('#purchaseDetails tr').each(function() {
                 let qtyInput = parseInt($(this).find('input[name="qty[]"]').val());
                 let qtyExisting = parseInt($(this).find('input[name="qty_exist[]"]').val());
+                let originalQty = parseInt($(this).find('input[name="original_qty[]"]').val()) || 0;
+
                 let code = $(this).find('select[name="itemCode[]"]').val();
                 let itemName = $(this).find('input[id^="itemName_"]').val(); // Get the item name
 
-                if (qtyInput > qtyExisting) {
+                let totalAvailable = qtyExisting + originalQty;
+
+                if (qtyInput > totalAvailable) {
                     isValid = false;
                     errorMessage =
-                        `The quantity for the item "${itemName}" cannot exceed the existing quantity.`;
-                    return false; // Exit loop early
+                        `"${itemName}" quantity cannot exceed available stock (${totalAvailable}).`;
+                    return false;
                 }
 
                 // Check for duplicate codes
@@ -292,17 +301,19 @@
 
             let newRow = `<tr>
                             <td class="remove-btn">
-                                  <ul class="action">
-                                    <li class="delete"><a href="javascript:removeDetailRow(${row})"><i class="icon-trash"></i></a></li>
-                                </ul>
+                                 <a href="javascript:removeDetailRow(${row})"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
                             </td>
                             <td>
-                                <select class="js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
+                                <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                     <option selected="" disabled="" value="">Choose...</option>
                                 </select>
                             </td>
                             <td>
-                                <div class="me-5">
+                                <div class="mx-5">
                                     <input class="form-control" type="text" id="itemName_${row}" required readonly>
                                 </div>
                             </td>
@@ -311,6 +322,8 @@
                             </td>
                             <td>
                                 <input class="form-control w-75" type="number" name="qty[]" id="qty_${row}" required value="1">
+                                <input type="hidden" name="original_qty[]" value="0">
+
                             </td>
                           </tr>`;
             $('#purchaseDetails').append(newRow);

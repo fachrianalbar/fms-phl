@@ -27,8 +27,8 @@
                         <div class="col-md-6">
                             <label class="form-label" for="plateNumber">Plate Number <i
                                     class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="frameNumber" id="frameNumber" type="text"
-                                placeholder="Frame Number">
+                            <input class="form-control" name="plateNumber" id="plateNumber" type="text"
+                                placeholder="Plate Number">
                         </div>
 
 

@@ -22,6 +22,7 @@ class PurchaseDetail extends Model
         'qty',
         'status',
         'receivedQty',
+        'qtyUsed',
         'description'
     ];
 

@@ -77,6 +77,7 @@ class PurchaseConfirmationService
                 'status' => 1,
                 'description' => $request->description,
                 'receivedQty' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
+                'qtyUsed' => 0
             ]);
 
             $pd = PurchaseDetail::where('id', $selectedPurchase[$i])->first();

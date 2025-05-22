@@ -98,7 +98,6 @@
                                 <th>Code</th>
                                 <th>Purchase Date</th>
                                 <th>Received Date</th>
-                                <th>Payment Date</th>
                                 <th>Supplier name</th>
                                 <th>To Wh Name</th>
                                 <th>Total Prices</th>
@@ -172,9 +171,6 @@
                     },
                     {
                         "data": 'receivedDate'
-                    },
-                    {
-                        "data": 'paymentDate'
                     },
                     {
                         "data": "supplier.name"

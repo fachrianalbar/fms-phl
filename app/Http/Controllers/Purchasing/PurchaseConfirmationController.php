@@ -214,9 +214,15 @@ class PurchaseConfirmationController extends Controller
                     return 'No Stored';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                    </ul>';
+                    $btn = '
+                    <td>
+                        <a href="' . route($this->view . 'edit', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                        data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>
+                    </td>
+                    ';
 
                     return $btn;
                 })
