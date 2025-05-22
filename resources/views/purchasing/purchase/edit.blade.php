@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -92,7 +99,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
-                                <th>Item/Part</th>
+                                <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
                                 <th>Prices</th>
                                 <th>Total Prices</th>
@@ -105,12 +112,11 @@
                                     {{-- <td class="remove-btn"></td> --}}
                                     <td>
                                         @if ($data->status == 0)
-                                            <ul class="action">
-                                                <li class="delete"><a
-                                                        href="javascript:deletePurchaseDetail('{{ $item->id }}')"><i
-                                                            class="icon-trash"></i></a>
-                                                </li>
-                                            </ul>
+                                            <a href="javascript:deletePurchaseDetail('{{ $item->id }}')"
+                                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                                title="Delete">
+                                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                            </a>
                                         @endif
                                     </td>
                                     <td>
@@ -129,7 +135,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <div class="me-5">
+                                        <div class="mx-5">
                                             <input class="form-control" type="text"
                                                 id="itemName_{{ $loop->iteration }}" required readonly
                                                 value="{{ $item->item->name }}">
@@ -208,8 +214,6 @@
 
         $(document).ready(function() {
             $('#dt').DataTable();
-            // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
 
             // let supplierCode = $('#supplierCode').val();
 
@@ -354,18 +358,20 @@
 
             let newRow = `<tr>
                             <td class="remove-btn">
-                                 <ul class="action">
-                                    <li class="delete"><a href="javascript:removeDetailRow(${row})"><i class="icon-trash"></i></a></li>
-                                </ul>
+                                  <a href="javascript:removeDetailRow(${row})"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
 
                             </td>
                             <td>
-                                <select class="js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
+                                <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                     <option selected="" disabled="" value="">Choose...</option>
                                 </select>
                             </td>
                             <td>
-                                <div class="me-5">
+                                <div class="mx-5">
                                     <input class="form-control" type="text" id="itemName_${row}" required readonly>
                                 </div>
                             </td>

@@ -103,7 +103,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
-                                <th>Item/Part</th>
+                                <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
                                 <th>Prices</th>
                                 <th>Total Prices</th>
@@ -115,12 +115,11 @@
                                 <tr>
                                     {{-- <td class="remove-btn"></td> --}}
                                     <td>
-                                        <ul class="action">
-                                            <li class="delete"><a
-                                                    href="javascript:deletePurchaseDetail('{{ $item->id }}')"><i
-                                                        class="icon-trash"></i></a>
-                                            </li>
-                                        </ul>
+                                        <a href="javascript:deletePurchaseDetail('{{ $item->id }}')"
+                                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                            title="Delete">
+                                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                        </a>
                                     </td>
                                     <td>
                                         <input type="hidden" name="purchaseDetailCode[]" value="{{ $item->code }}">
@@ -134,7 +133,7 @@
                                         </select>
                                     </td>
                                     <td>
-                                        <div class="me-5">
+                                        <div class="mx-5">
                                             <input class="form-control" type="text" id="itemName_{{ $loop->iteration }}"
                                                 required readonly value="{{ $item->item->name }}">
                                         </div>
@@ -206,8 +205,6 @@
     <script>
         $(document).ready(function() {
             $('#dt').DataTable();
-            // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
         });
 
         function deletePurchaseDetail(id) {

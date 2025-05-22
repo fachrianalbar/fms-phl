@@ -68,9 +68,9 @@ class PurchaseService
 
                 $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
-                Item::where('code', $filtered['itemCode'][$i])->update([
-                    'price' => $price,
-                ]);
+                // Item::where('code', $filtered['itemCode'][$i])->update([
+                //     'price' => $price,
+                // ]);
 
                 $code = $data->code;
 
@@ -85,7 +85,8 @@ class PurchaseService
                         'code' => GenerateCode::generateCode('TPD', true),
                         'itemCode' => $filtered['itemCode'][$i],
                         'qty' => $filtered['qty'][$i],
-                        'purchaseCode' => $request->code
+                        'purchaseCode' => $request->code,
+                        'price' => $price
                     ]);
                 } else {
                     $pd->update([
@@ -122,16 +123,17 @@ class PurchaseService
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
 
-                    Item::where('code', $filtered['itemCode'][$i])->update([
-                        'price' => $price,
-                    ]);
+                    // Item::where('code', $filtered['itemCode'][$i])->update([
+                    //     'price' => $price,
+                    // ]);
 
                     if ($pd->item->code !=  $filtered['itemCode'][$i]) {
 
                         PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->update([
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
-                            'purchaseCode' => $request->code
+                            'purchaseCode' => $request->code,
+                            'price' => $price
                         ]);
                     } else {
                         $pd->update([
@@ -142,9 +144,9 @@ class PurchaseService
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
 
-                    Item::where('code', $filtered['itemCode'][$i])->update([
-                        'price' => $price,
-                    ]);
+                    // Item::where('code', $filtered['itemCode'][$i])->update([
+                    //     'price' => $price,
+                    // ]);
 
                     $data = $this->getById($id);
                     $supplier = $data->supplierCode;
@@ -158,11 +160,12 @@ class PurchaseService
 
 
                     if (!$pd) {
-                        $detail = PurchaseDetail::create([
+                        PurchaseDetail::create([
                             'code' => GenerateCode::generateCode('TPD', true),
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
-                            'purchaseCode' => $request->code
+                            'purchaseCode' => $request->code,
+                            'price' => $price
                         ]);
                     } else {
                         $pd->update([
