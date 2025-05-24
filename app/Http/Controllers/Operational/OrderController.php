@@ -485,15 +485,31 @@ class OrderController extends Controller
 
 
                     if ($row->notes) {
-                        $note = '<li class=""><a href="javascript:showModal(\'' . $row->id . '\')"><i class="icon-receipt"></i></a></li>';
+                        $note = '<a href="javascript:showModal(\'' . $row->id . '\')"
+                                class="btn btn-icon btn-sm bg-info-subtle me-1"
+                                data-bs-toggle="tooltip" title="Note">
+                                    <i class="mdi mdi-text-box fs-14 text-info"></i>
+                                </a>';
                     }
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'show-order', $row->id) . '"><i class="icon-eye"></i></a></li>
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                                        ' . $note . '                                   
+                    $btn = '<td>
+                      <a href="' . route($this->view . 'show-order', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-success-subtle me-1"
+                        data-bs-toggle="tooltip" title="Show">
+                            <i class="mdi mdi-eye fs-14 text-success"></i>
+                        </a>
+                        <a href="' . route($this->view . 'edit', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                        data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>
 
-                                    </ul>';
+                        <a href="javascript:deleteData(\'' . $row->id . '\')"
+                        class="btn btn-icon btn-sm bg-danger-subtle me-1"
+                        data-bs-toggle="tooltip" title="Delete">
+                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                        </a>
+                        ' . $note . '                                   
+                    </td>';
 
                     return $btn;
                 })
