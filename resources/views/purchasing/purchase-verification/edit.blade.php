@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -147,12 +154,12 @@
                                     <td>
                                         <input class="form-control w-75" type="text" name="price[]"
                                             id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" readonly
-                                            required value="{{ number_format($item->item->price, 0, ',', '.') }}">
+                                            required value="{{ number_format($item->price, 0, ',', '.') }}">
                                     </td>
                                     <td>
                                         <input class="form-control w-75" type="text"
                                             id="totalPrice_{{ $loop->iteration }}" readonly
-                                            value="{{ number_format($item->item->price * $item->qty, 0, ',', '.') }}">
+                                            value="{{ number_format($item->price * $item->qty, 0, ',', '.') }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -303,7 +310,7 @@
                                 </select>
                             </td>
                             <td>
-                                <div class="me-5">
+                                <div class="mx-5">
                                     <input class="form-control" type="text" id="itemName_${row}" required readonly>
                                 </div>
                             </td>

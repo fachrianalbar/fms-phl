@@ -10,5 +10,9 @@ return [
     'pic_name' => 'Nama Pic',
     'account_number' => 'Nomor Rekening',
     'nickname' => 'Nama Panggilan',
-    'phone' => 'Nomor Telepon'
+    'phone' => 'Nomor Telepon',
+    'type' => 'Tipe',
+    'is_do' => 'Apakah Do?',
+    'person' => 'Perorangan'
+
 ];

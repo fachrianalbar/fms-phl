@@ -109,7 +109,8 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="companyCode"> {{ __('menu_customer.company') }}</label>
+                            <label class="form-label" for="companyCode"> {{ __('menu_customer.company') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
                                 <option selected="" disabled="" value="">
                                     {{ __('general.choose') }}...</option>
@@ -129,6 +130,36 @@
                         </div>
 
 
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="type"> {{ __('menu_customer.type') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="type" id="type" required="">
+                                <option selected="" disabled="" value="">
+                                    {{ __('general.choose') }}...</option>
+                                <option value="Person">
+                                    {{ __('menu_customer.person') }}</option>
+                                <option value="Company">
+                                    {{ __('menu_customer.company') }}</option>
+
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="type"> {{ __('menu_customer.is_do') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="type" id="type" required="">
+                                <option selected="" disabled="" value="">
+                                    {{ __('general.choose') }}...</option>
+                                <option value=1>
+                                    {{ __('general.yes') }}</option>
+                                <option value=0>
+                                    {{ __('general.no') }}</option>
+
+                            </select>
+                        </div>
                     </div>
 
                     <div class="col-12">

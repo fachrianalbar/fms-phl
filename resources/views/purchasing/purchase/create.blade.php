@@ -92,7 +92,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
-                                <th>Item/Part</th>
+                                <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
                                 <th>Prices</th>
                                 <th>Total Prices</th>
@@ -114,7 +114,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <div class="me-5">
+                                    <div class="mx-5">
                                         <input class="form-control" type="text" id="itemName_1" required readonly>
 
                                     </div>
@@ -309,7 +309,7 @@
                              </select>
                          </td>
                          <td>
-                              <div class="me-5">
+                              <div class="mx-5">
                                   <input class="form-control" type="text" id="itemName_${row}" required readonly>
                              </div>
 

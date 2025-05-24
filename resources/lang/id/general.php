@@ -5,6 +5,8 @@ return [
     'add' => 'Tambah',
     'back_to_list' => 'Kembali',
     'data_was_save_successfully' => 'data berhasil disimpan',
-    'choose' => 'Pilih'
+    'choose' => 'Pilih',
+    'yes' => 'Ya',
+    'no' => 'Tidak'
 
 ];

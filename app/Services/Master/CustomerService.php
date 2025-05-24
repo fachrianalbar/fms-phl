@@ -48,7 +48,9 @@ class CustomerService
             'ppn' => $request->ppn,
             'pph' => $request->pph,
             'companyCode' => $request->companyCode,
-            'due_date_duration' => $request->due_date_duration
+            'due_date_duration' => $request->due_date_duration,
+            'type' => $request->type,
+            'isDo' => $request->isDo
             // 'telegramUsername' => $request->telegramUsername
         ]);
 
@@ -72,7 +74,9 @@ class CustomerService
             'ppn' => $request->ppn,
             'pph' => $request->pph,
             'companyCode' => $request->companyCode,
-            'due_date_duration' => $request->due_date_duration
+            'due_date_duration' => $request->due_date_duration,
+            'type' => $request->type,
+            'isDo' => $request->isDo
             // 'telegramUsername' => $request->telegramUsername
         ]);
 

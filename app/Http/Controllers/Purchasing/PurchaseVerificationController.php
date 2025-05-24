@@ -152,9 +152,8 @@ class PurchaseVerificationController extends Controller
                 ->addColumn('totalPrice', function ($row) {
                     $totalPrice = 0;
                     foreach ($row->details as $item) {
-                        $itemStock = Item::where('code', $item->itemCode)->first();
 
-                        $totalPrice += intval($itemStock->price) * $item->qty;
+                        $totalPrice += intval($item->price) * $item->qty;
                     }
 
                     return number_format($totalPrice, 0, ',', '.');

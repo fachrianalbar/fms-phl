@@ -105,7 +105,8 @@ class PurchaseConfirmationService
                 'qty' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
                 'transactionCode' => $pd->code,
                 'date' => Carbon::now(),
-                'type' => 'IN'
+                'type' => 'IN',
+                'transactionType' => 1
             ]);
         }
 

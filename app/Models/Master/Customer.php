@@ -31,7 +31,9 @@ class Customer extends Model
         'npwp',
         'telegramUsername',
         'due_date_duration',
-        'companyCode'
+        'companyCode',
+        'type',
+        'isDo'
     ];
 
     public function routes()

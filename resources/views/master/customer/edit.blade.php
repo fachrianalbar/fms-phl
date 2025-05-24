@@ -49,17 +49,15 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="email">Email <i
-                                    class="mdi mdi-information text-danger"></i></label>
+                            <label class="form-label" for="email">Email </label>
                             <input class="form-control" name="email" id="email" type="email" placeholder="Email"
-                                required value="{{ $data->email }}">
+                                value="{{ $data->email }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="phone">Phone <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="phone" id="phone" type="number" required
-                                placeholder="Phone" value="{{ $data->phone }}">
+                            <label class="form-label" for="phone">Phone </label>
+                            <input class="form-control" name="phone" id="phone" type="number" placeholder="Phone"
+                                value="{{ $data->phone }}">
                         </div>
                     </div>
 
@@ -113,7 +111,8 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="companyCode"> {{ __('menu_customer.company') }}</label>
+                            <label class="form-label" for="companyCode"> {{ __('menu_customer.company') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
                                 <option selected="" disabled="" value="">
                                     {{ __('general.choose') }}...</option>
@@ -129,6 +128,36 @@
                             <label class="form-label" for="due_date_duration">Due Date Duration</label>
                             <input class="form-control" name="due_date_duration" id="due_date_duration" type="number"
                                 min="1" placeholder="Telegram Username" value="{{ $data->due_date_duration }}">
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="type"> {{ __('menu_customer.type') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="type" id="type" required="">
+                                <option selected="" disabled="" value="">
+                                    {{ __('general.choose') }}...</option>
+                                <option value="Person" {{ $data->type == 'Person' ? 'selected' : '' }}>
+                                    {{ __('menu_customer.person') }}</option>
+                                <option value="Company" {{ $data->type == 'Company' ? 'selected' : '' }}>
+                                    {{ __('menu_customer.company') }}</option>
+
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="isDo"> {{ __('menu_customer.is_do') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="isDo" id="idDo" required="">
+                                <option selected="" disabled="" value="">
+                                    {{ __('general.choose') }}...</option>
+                                <option value=1 {{ $data->isDo == 1 ? 'selected' : '' }}>
+                                    {{ __('general.yes') }}</option>
+                                <option value=0 {{ $data->isDo == 0 && $data->isDo != null ? 'selected' : '' }}>
+                                    {{ __('general.no') }}</option>
+
+                            </select>
                         </div>
                     </div>
 

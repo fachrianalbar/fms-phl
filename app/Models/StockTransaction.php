@@ -23,7 +23,8 @@ class StockTransaction extends Model
         'transactionCode',
         'date',
         'type',
-        'qty'
+        'qty',
+        'transactionType'
     ];
 
     public function item()

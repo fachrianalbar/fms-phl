@@ -10,5 +10,8 @@ return [
     'pic_name' => 'Pic Name',
     'account_number' => 'Account Number',
     'nickname' => 'Nickname',
-    'phone' => 'Phone'
+    'phone' => 'Phone',
+    'type' => 'Type',
+    'is_do' => 'Is Do?',
+    'person' => 'Person',
 ];

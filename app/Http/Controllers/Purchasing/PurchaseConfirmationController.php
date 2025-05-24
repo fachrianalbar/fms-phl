@@ -167,9 +167,9 @@ class PurchaseConfirmationController extends Controller
                         $itemStock = Item::where('code', $item->itemCode)->first();
 
                         if ($item->receivedQty) {
-                            $totalPrice += intval($itemStock->price) * $item->receivedQty;
+                            $totalPrice += intval($item->price) * $item->receivedQty;
                         } else {
-                            $totalPrice += intval($itemStock->price) * $item->qty;
+                            $totalPrice += intval($item->price) * $item->qty;
                         }
                     }
 

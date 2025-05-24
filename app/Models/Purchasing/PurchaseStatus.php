@@ -16,5 +16,6 @@ class PurchaseStatus extends Model
     protected $fillable = [
         'code',
         'name',
+        'nama'
     ];
 }

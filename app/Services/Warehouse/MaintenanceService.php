@@ -126,7 +126,8 @@ class MaintenanceService
                         'qty' => $requestedQty,
                         'transactionCode' => $detail->code,
                         'date' => $request->date,
-                        'type' => 'OUT'
+                        'type' => 'OUT',
+                        'transactionType' => 2
                     ]);
                 } else {
                     $md->update([
@@ -300,7 +301,8 @@ class MaintenanceService
                         'qty' => $qty,
                         'transactionCode' => $detail->code,
                         'date' => $request->date,
-                        'type' => 'OUT'
+                        'type' => 'OUT',
+                        'transactionType' => 2
                     ]);
                 }
             }
