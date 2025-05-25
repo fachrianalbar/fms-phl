@@ -117,7 +117,6 @@
                                 <th>Date</th>
                                 <th>Plate No</th>
                                 <th>Items</th>
-                                <th>Cost</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -193,9 +192,6 @@
                     },
                     {
                         "data": "items"
-                    },
-                    {
-                        "data": "price"
                     },
 
                 ],

@@ -82,7 +82,7 @@ class PurchaseService
 
                 if (!$pd) {
                     $data->details()->create([
-                        'code' => GenerateCode::generateCode('TPD', true),
+                        'code' => GenerateCode::generateCode('FPD', true),
                         'itemCode' => $filtered['itemCode'][$i],
                         'qty' => $filtered['qty'][$i],
                         'purchaseCode' => $request->code,
@@ -161,7 +161,7 @@ class PurchaseService
 
                     if (!$pd) {
                         PurchaseDetail::create([
-                            'code' => GenerateCode::generateCode('TPD', true),
+                            'code' => GenerateCode::generateCode('FPD', true),
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
                             'purchaseCode' => $request->code,

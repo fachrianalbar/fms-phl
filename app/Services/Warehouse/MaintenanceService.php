@@ -57,6 +57,7 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode
         ]);
 
+
         // 2. Jika ada item yang digunakan dalam maintenance
         if (isset($request->itemCode)) {
             $filtered = Arr::only($request->all(), ['itemCode', 'qty']);
@@ -67,8 +68,8 @@ class MaintenanceService
 
                 // 3. Cek apakah stok cukup berdasarkan FIFO data
                 $totalAvailableQty = PurchaseDetail::where('itemCode', $itemCode)
-                    ->selectRaw('SUM(receivedQty - qtyUsed) as available')
-                    ->value('available');
+                    ->selectRaw('SUM(receivedQty - COALESCE(qtyUsed, 0)) as available')
+                    ->value('available') ?? 0;
 
                 if ($totalAvailableQty < $requestedQty) {
                     // Jika stok tidak cukup, batalkan dan kembalikan pesan error

@@ -237,16 +237,6 @@ class MaintenanceController extends Controller
 
                     return $items;
                 })
-                ->addColumn('price', function ($row) {
-                    $price = 0;
-
-                    foreach ($row->details as $item) {
-
-                        $price += intval($item->item->price) * $item->qty;
-                    }
-
-                    return '' . number_format($price, 0, ',', '.');
-                })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="' . route($this->view . 'edit', $row->id) . '"
@@ -264,7 +254,7 @@ class MaintenanceController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'items', 'price', 'action'])
+                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'items', 'action'])
                 ->toJson();
         }
     }
