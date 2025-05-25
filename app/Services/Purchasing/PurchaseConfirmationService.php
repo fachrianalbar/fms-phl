@@ -92,7 +92,7 @@ class PurchaseConfirmationService
 
             if (!$stock) {
                 Stock::create([
-                    'code' => GenerateCode::generateCode('TSTC', true),
+                    'code' => GenerateCode::generateCode('FSTC', true),
                     'itemCode' => $pd->itemCode,
                     'stockIn' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
                     'stockOut' => 0
@@ -100,7 +100,7 @@ class PurchaseConfirmationService
             }
 
             StockTransaction::create([
-                'code' => GenerateCode::generateCode('TPD', true),
+                'code' => GenerateCode::generateCode('FPD', true),
                 'itemCode' => $pd->itemCode,
                 'qty' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
                 'transactionCode' => $pd->code,

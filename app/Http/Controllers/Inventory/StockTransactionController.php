@@ -98,7 +98,7 @@ class StockTransactionController extends Controller
                 ->addColumn('bon', function ($row) {
                     $bon  = '';
 
-                    if ($row->type == 'IN') {
+                    if ($row->type == 'IN' && $row->transactionType == 1) {
                         $bon = $row->purchase->purchaseCode;
                     } else if ($row->type == 'OUT') {
                         $bon = $row->maintenance->maintenanceCode;
