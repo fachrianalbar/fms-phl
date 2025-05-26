@@ -70,17 +70,17 @@ class PurchasePaymentService
             'userBankCode' => $request->userBankCode
         ]);
 
-        LiveMutationHelper::updateLiveMutation($request->userBankCode, $totalPrice, 'credit');
+        // LiveMutationHelper::updateLiveMutation($request->userBankCode, $totalPrice, 'credit');
 
-        $this->mutation->create([
-            'code' => GenerateCode::generateCode('FMT'),
-            'userBankCode' => $request->userBankCode,
-            'nominal' => $totalPrice,
-            'type' => 'Out',
-            'date' => Carbon::now(),
-            'description' => 'Purchase Payment with amount ' . number_format($totalPrice, 0, '.', ','),
-            'transactionTypeCode' => 'FTT250306114138'
-        ]);
+        // $this->mutation->create([
+        //     'code' => GenerateCode::generateCode('FMT'),
+        //     'userBankCode' => $request->userBankCode,
+        //     'nominal' => $totalPrice,
+        //     'type' => 'Out',
+        //     'date' => Carbon::now(),
+        //     'description' => 'Purchase Payment with amount ' . number_format($totalPrice, 0, '.', ','),
+        //     'transactionTypeCode' => 'FTT250306114138'
+        // ]);
 
 
         $this->logActivity($title, $this->getById($id), 'After Update');

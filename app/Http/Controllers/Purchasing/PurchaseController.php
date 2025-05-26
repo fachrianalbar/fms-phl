@@ -100,7 +100,7 @@ class PurchaseController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' data was save succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -186,7 +186,7 @@ class PurchaseController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' data was update succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -262,12 +262,10 @@ class PurchaseController extends Controller
                 ->addColumn('totalPrice', function ($row) {
                     $totalPrice = 0;
                     foreach ($row->details as $item) {
-                        $itemStock = Item::where('code', $item->itemCode)->first();
-
                         if ($item->receivedQty) {
-                            $totalPrice += intval($itemStock->price) * $item->receivedQty;
+                            $totalPrice += intval($item->price) * $item->receivedQty;
                         } else {
-                            $totalPrice += intval($itemStock->price) * $item->qty;
+                            $totalPrice += intval($item->price) * $item->qty;
                         }
                     }
 

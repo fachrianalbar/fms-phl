@@ -7,5 +7,10 @@ return [
     'data_was_save_successfully' => 'data was save succesfully',
     'choose' => 'Choose',
     'yes' => 'Yes',
-    'no' => 'No'
+    'no' => 'No',
+    'data_was_save_successfully' => 'data was save succesfully',
+    'data_was_update_succesfully' => 'data was update succesfully',
+    'delete_data_success' => 'Delete Data Success',
+    'are_you_sure' => 'Are you sure?',
+    'want_to_delete_this_data' => 'Want to delete this data?'
 ];

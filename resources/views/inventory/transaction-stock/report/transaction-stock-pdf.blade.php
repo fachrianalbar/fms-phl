@@ -96,7 +96,7 @@
                         @php
                             $bon = '';
 
-                            if ($item->type == 'IN') {
+                            if ($item->type == 'IN' && $item->transactionType == 1) {
                                 $bon = $item->purchase->purchaseCode;
                             } elseif ($item->type == 'OUT') {
                                 $bon = $item->maintenance->maintenanceCode;
@@ -104,7 +104,7 @@
 
                             $in = 0;
 
-                            if ($item->type == 'IN') {
+                            if ($item->type == 'IN' && $item->transactionType == 1) {
                                 $in = $item->qty;
                             }
 

@@ -77,7 +77,7 @@ class RouteDetailController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'edit', $routeData->id)->with('success', $this->title . ' data was save succesfully');
+            return redirect()->route($this->view . 'edit', $routeData->id)->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 

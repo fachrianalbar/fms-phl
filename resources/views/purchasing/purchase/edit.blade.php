@@ -150,13 +150,13 @@
                                     <td>
                                         <input class="form-control w-75" type="text" name="price[]"
                                             id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" required
-                                            value="{{ number_format($item->item->price, 0, ',', '.') }}"
+                                            value="{{ number_format($item->price, 0, ',', '.') }}"
                                             onchange="updateTotalPrice({{ $loop->iteration }})">
                                     </td>
                                     <td>
                                         <input class="form-control w-75" type="text"
                                             id="totalPrice_{{ $loop->iteration }}" readonly
-                                            value="{{ number_format($item->item->price * $item->qty, 0, ',', '.') }}">
+                                            value="{{ number_format($item->price * $item->qty, 0, ',', '.') }}">
                                     </td>
                                 </tr>
                             @endforeach
@@ -229,8 +229,8 @@
             $('#delete-form').attr('action', url);
 
             swal({
-                title: "Are you sure?",
-                text: "Want to delete this data?",
+                title: "{{ __('general.are_you_sure') }}",
+                text: "{{ __('general.want_to_delete_this_data') }}",
                 icon: "warning",
                 buttons: true,
                 dangerMode: true,

@@ -6,9 +6,11 @@ use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\Inventory\Stock;
+use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
+use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\Inventory\StockService;
 use App\Services\Master\FleetService;
 use App\Services\Warehouse\MaintenanceService;
@@ -89,7 +91,7 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' data was save succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -150,7 +152,7 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' data was update succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -170,20 +172,33 @@ class MaintenanceController extends Controller
 
     public function deleteMaintenanceDetail($id)
     {
-        $md = MaintenanceDetail::where('id', $id)->first();
+        $md = MaintenanceDetail::where('id', $id)->firstOrFail();
 
-        $stock =  Stock::where('itemCode', $md->itemCode)->first();
+        // Rollback qtyUsed pada PurchaseDetail berdasarkan FIFO
+        $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
+        foreach ($fifos as $fifo) {
+            PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                ->decrement('qtyUsed', $fifo->qty);
+        }
 
+        // Hapus data MaintenanceFifo terkait
+        MaintenanceFifo::where('maintenanceDetailCode', $md->code)->delete();
+
+        // Update stok keluar
+        Stock::where('itemCode', $md->itemCode)
+            ->decrement('stockOut', $md->qty);
+
+        // Hapus transaksi stok
         StockTransaction::where('transactionCode', $md->code)->delete();
 
-        $stock->update([
-            'stockOut' => $stock->stockOut - $md->qty
-        ]);
-
+        // Hapus detail maintenance
+        $maintenanceId = $md->maintenance->id;
         $md->delete();
 
-        return redirect()->route($this->view . 'edit', $md->maintenance->id)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'edit', $maintenanceId)
+            ->with('success', 'Delete Data Success');
     }
+
 
     public function datatable(Request $request)
     {

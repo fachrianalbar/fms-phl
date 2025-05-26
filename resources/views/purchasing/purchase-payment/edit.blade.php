@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -104,7 +111,7 @@
                             </div>
                         </div>
 
-                        <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-md-12">
                                 <label class="form-label" for="userBankCode">User Bank <i
                                         class="icofont icofont-warning-alt text-danger"></i> </label>
@@ -118,7 +125,7 @@
                                     @endforeach
                                 </select>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="col-md-12">
                             <label class="form-label" for="description">Description</label>
@@ -145,7 +152,7 @@
                         <tr>
                             <th>#</th>
                             <th>Code</th>
-                            <th>Item/Part</th>
+                            <th class="text-center">Item/Part</th>
                             <th style="width: 10%">Qty</th>
                             <th>Prices</th>
                             <th>Total Prices</th>
@@ -176,7 +183,7 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <div class="me-5">
+                                    <div class="mx-5">
                                         <input class="form-control" type="text" id="itemName_{{ $loop->iteration }}"
                                             required readonly value="{{ $item->item->name }}">
                                     </div>
@@ -189,12 +196,12 @@
                                 <td>
                                     <input class="form-control w-75" type="text" name="price[]"
                                         id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" readonly required
-                                        value="{{ number_format($item->item->price, 0, ',', '.') }}">
+                                        value="{{ number_format($item->price, 0, ',', '.') }}">
                                 </td>
                                 <td>
                                     <input class="form-control w-75" type="text"
                                         id="totalPrice_{{ $loop->iteration }}" readonly
-                                        value="{{ number_format($item->item->price * $item->receivedQty, 0, ',', '.') }}">
+                                        value="{{ number_format($item->price * $item->receivedQty, 0, ',', '.') }}">
                                 </td>
                             </tr>
                         @endforeach
@@ -250,8 +257,6 @@
     <script>
         $(document).ready(function() {
             $('#dt').DataTable();
-            // Initialize Select2 on the first row
-            $(".js-example-basic-single").select2();
         });
     </script>
 @endpush

@@ -95,15 +95,13 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="latitude">Latitude <i
-                                    class="mdi mdi-information text-danger"></i></label>
+                            <label class="form-label" for="latitude">Latitude </label>
                             <input class="form-control" name="latitude" id="latitude" type="number" step="any"
                                 placeholder="Latitude" value="{{ $data->latitude }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="longitude">Longitude <i
-                                    class="mdi mdi-information text-danger"></i></label>
+                            <label class="form-label" for="longitude">Longitude </label>
                             <input class="form-control" name="longitude" id="longitude" type="number" step="any"
                                 placeholder="longitude" value="{{ $data->longitude }}">
                         </div>

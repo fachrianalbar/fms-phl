@@ -152,11 +152,11 @@
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 2]
+                        "targets": [0]
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 2]
+                        "targets": [0]
                     }
                 ],
                 "order": [

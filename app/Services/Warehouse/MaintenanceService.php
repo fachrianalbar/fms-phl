@@ -57,35 +57,45 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode
         ]);
 
-
-        // 2. Jika ada item yang digunakan dalam maintenance
+        // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
             $filtered = Arr::only($request->all(), ['itemCode', 'qty']);
 
-            for ($i = 0; $i < count($request->itemCode); $i++) {
+            for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $itemCode = $filtered['itemCode'][$i];
-                $requestedQty = (int)$filtered['qty'][$i];
+                $requestedQty = (int) $filtered['qty'][$i];
 
-                // 3. Cek apakah stok cukup berdasarkan FIFO data
+                // Validasi jumlah tidak boleh nol atau negatif
+                if ($requestedQty <= 0) {
+                    throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
+                }
+
+                // 3. Validasi stok FIFO tersedia
                 $totalAvailableQty = PurchaseDetail::where('itemCode', $itemCode)
+                    ->where('status', 1)
                     ->selectRaw('SUM(receivedQty - COALESCE(qtyUsed, 0)) as available')
                     ->value('available') ?? 0;
 
                 if ($totalAvailableQty < $requestedQty) {
-                    // Jika stok tidak cukup, batalkan dan kembalikan pesan error
-                    return response()->json([
-                        'message' => "Stok tidak cukup untuk item $itemCode. Tersedia: $totalAvailableQty, Diminta: $requestedQty"
-                    ], 400);
+                    throw new \Exception("Stok tidak cukup untuk item {$itemCode}. Tersedia: {$totalAvailableQty}, Diminta: {$requestedQty}");
                 }
 
-                // 4. Update FIFO PurchaseDetail: qtyUsed sesuai permintaan
+                // 4. Buat MaintenanceDetail terlebih dahulu
+                $detail = $data->details()->create([
+                    'code' => GenerateCode::generateCode('FMD', true),
+                    'maintenanceCode' => $data->code,
+                    'itemCode' => $itemCode,
+                    'qty' => $requestedQty
+                ]);
+
+                // 5. Alokasikan FIFO dan simpan ke MaintenanceFifo
                 $remainingQty = $requestedQty;
-                $purchases = PurchaseDetail::where('itemCode', $itemCode)
+                $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
                     ->whereColumn('qtyUsed', '<', 'receivedQty')
                     ->orderBy('created_at')
                     ->get();
 
-                foreach ($purchases as $purchase) {
+                foreach ($fifoPurchases as $purchase) {
                     if ($remainingQty <= 0) break;
 
                     $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
@@ -94,63 +104,37 @@ class MaintenanceService
                     $purchase->qtyUsed += $useQty;
                     $purchase->save();
 
+                    MaintenanceFifo::create([
+                        'code' => GenerateCode::generateCode('MF', true),
+                        'maintenanceDetailCode' => $detail->code,
+                        'purchaseDetailCode' => $purchase->code,
+                        'qty' => $useQty
+                    ]);
+
                     $remainingQty -= $useQty;
                 }
 
-                // 5. Update stok global
-                $stock = Stock::where('itemCode', $itemCode)->first();
+                // 6. Update stok keluar
+                Stock::where('itemCode', $itemCode)->increment('stockOut', $requestedQty);
 
-                $stock->update([
-                    'stockOut' => $stock->stockOut + $requestedQty
+                // 7. Buat StockTransaction
+                StockTransaction::create([
+                    'code' => GenerateCode::generateCode('FPD', true),
+                    'itemCode' => $itemCode,
+                    'qty' => $requestedQty,
+                    'transactionCode' => $detail->code,
+                    'date' => $request->date,
+                    'type' => 'OUT',
+                    'transactionType' => 2
                 ]);
-
-                // 6. Buat MaintenanceDetail dan StockTransaction
-                $code = $data->code;
-
-                $md = MaintenanceDetail::where('itemCode', $itemCode)
-                    ->whereHas('maintenance', function ($query) use ($code) {
-                        $query->where('code', $code);
-                    })
-                    ->first();
-
-                if (!$md) {
-                    $detail = $data->details()->create([
-                        'code' => GenerateCode::generateCode('TMD', true),
-                        'maintenanceCode' => $code,
-                        'itemCode' => $itemCode,
-                        'qty' => $requestedQty
-                    ]);
-
-                    StockTransaction::create([
-                        'code' => GenerateCode::generateCode('TPD', true),
-                        'itemCode' => $itemCode,
-                        'qty' => $requestedQty,
-                        'transactionCode' => $detail->code,
-                        'date' => $request->date,
-                        'type' => 'OUT',
-                        'transactionType' => 2
-                    ]);
-                } else {
-                    $md->update([
-                        'qty' => $requestedQty + $md->qty
-                    ]);
-
-                    $stockTransaction = StockTransaction::where('itemCode', $itemCode)
-                        ->where('transactionCode', $md->code)
-                        ->first();
-
-                    if ($stockTransaction) {
-                        $stockTransaction->update([
-                            'qty' => $requestedQty + $stockTransaction->qty
-                        ]);
-                    }
-                }
             }
         }
 
-        // 7. Log aktivitas
+        // 8. Log aktivitas pencatatan
         $this->logActivity($title, $data, 'Create');
     }
+
+
 
 
     public function update($request, $id, $title)
@@ -165,173 +149,148 @@ class MaintenanceService
         ]);
 
         if (isset($request->itemCode)) {
-            $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode']);
+            $itemCodes = $request->itemCode;
+            $qtys = $request->qty;
+            $originalQtys = $request->original_qty;
+            $maintenanceCode = $request->code;
 
-            for ($i = 0; $i < count($filtered['itemCode']); $i++) {
-                $qty = (int)$filtered['qty'][$i];
-                $itemCode = $filtered['itemCode'][$i];
-                $detailCode = $filtered['maintenanceDetailCode'][$i] ?? null;
+            $detailMap = [];
+
+            // STEP 1: Rollback qtyUsed hanya untuk data yang digunakan di maintenance_fifo
+            foreach ($itemCodes as $i => $itemCode) {
+                $md = MaintenanceDetail::where('maintenanceCode', $maintenanceCode)
+                    ->where('itemCode', $itemCode)
+                    ->first();
+
+                if ($md) {
+                    $detailMap[$itemCode] = $md;
+
+                    // Ambil semua fifo terkait detail ini
+                    $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
+
+                    foreach ($fifos as $fifo) {
+                        PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                            ->decrement('qtyUsed', $fifo->qty);
+                    }
+
+                    // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
+                    MaintenanceFifo::where('maintenanceDetailCode', $md->code)
+                        ->update(['qty' => 0]);
+
+                    // Reset stockOut
+                    Stock::where('itemCode', $itemCode)
+                        ->decrement('stockOut', $md->qty);
+                }
+            }
+
+            // Hapus semua FIFO yang qty-nya sudah 0
+            MaintenanceFifo::where('qty', 0)->delete();
+
+            // STEP 2: Alokasi ulang
+            for ($i = 0; $i < count($itemCodes); $i++) {
+                $itemCode = $itemCodes[$i];
+                $qty = (int)$qtys[$i];
+                $originalQty = (int)$originalQtys[$i];
+                // $isLifo = $qty < $originalQty;
 
                 if ($qty <= 0) {
                     throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
                 }
 
-                $stock = Stock::where('itemCode', $itemCode)->firstOrFail();
+                $detail = $detailMap[$itemCode] ?? null;
 
-                if ($detailCode) {
-                    // UPDATE DETAIL LAMA
-                    $md = MaintenanceDetail::where('code', $detailCode)->firstOrFail();
-                    $originalQty = $md->qty;
-                    $oldItemCode = $md->itemCode;
-
-                    // ROLLBACK FIFO: Ambil data lama dari maintenance_fifo
-                    $oldFifos = MaintenanceFifo::where('maintenanceDetailCode', $detailCode)->get();
-                    foreach ($oldFifos as $fifo) {
-                        $purchase = PurchaseDetail::where('code', $fifo->purchaseDetailCode)->first();
-                        if ($purchase) {
-                            $purchase->qtyUsed -= $fifo->qty;
-                            $purchase->save();
-                        }
-                    }
-
-                    // Rollback stockOut
-                    Stock::where('itemCode', $oldItemCode)->decrement('stockOut', $originalQty);
-
-                    // Hapus maintenance_fifo lama
-                    MaintenanceFifo::where('maintenanceDetailCode', $detailCode)->delete();
-
-                    // Validasi stok
-                    $available = PurchaseDetail::where('itemCode', $itemCode)
-                        ->selectRaw('SUM(receivedQty - qtyUsed) as available')
-                        ->value('available');
-
-                    if ($qty > $available) {
-                        throw new \Exception("Qty untuk item {$itemCode} melebihi stok tersedia (FIFO) = {$available}.");
-                    }
-
-                    // Update MaintenanceDetail
-                    $md->update([
-                        'itemCode' => $itemCode,
-                        'qty' => $qty,
-                        'maintenanceCode' => $request->code
-                    ]);
-
-                    // ALOKASI FIFO BARU
-                    $remainingQty = $qty;
-                    $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
-                        ->whereColumn('qtyUsed', '<', 'receivedQty')
-                        ->orderBy('created_at')
-                        ->get();
-
-                    foreach ($fifoPurchases as $purchase) {
-                        if ($remainingQty <= 0) break;
-
-                        $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
-                        $useQty = min($remainingQty, $availableQty);
-
-                        $purchase->qtyUsed += $useQty;
-                        $purchase->save();
-
-                        MaintenanceFifo::create([
-                            'code' => GenerateCode::generateCode('MF', true),
-                            'maintenanceDetailCode' => $detailCode,
-                            'purchaseDetailCode' => $purchase->code,
-                            'qty' => $useQty
-                        ]);
-
-                        $remainingQty -= $useQty;
-                    }
-
-                    Stock::where('itemCode', $itemCode)->increment('stockOut', $qty);
-
-                    StockTransaction::where('transactionCode', $detailCode)->update([
-                        'itemCode' => $itemCode,
-                        'qty' => $qty
-                    ]);
+                if ($detail) {
+                    $detail->update(['qty' => $qty]);
                 } else {
-                    // TAMBAH DETAIL BARU
-                    $available = PurchaseDetail::where('itemCode', $itemCode)
-                        ->selectRaw('SUM(receivedQty - qtyUsed) as available')
-                        ->value('available');
-
-                    if ($qty > $available) {
-                        throw new \Exception("Qty untuk item {$itemCode} melebihi stok tersedia (FIFO) = {$available}.");
-                    }
-
                     $data = $this->getById($id);
-                    $code = $data->code;
-
                     $detail = $data->details()->create([
                         'code' => GenerateCode::generateCode('TMD', true),
-                        'maintenanceCode' => $code,
+                        'maintenanceCode' => $maintenanceCode,
                         'itemCode' => $itemCode,
                         'qty' => $qty
                     ]);
+                }
 
-                    // ALOKASI FIFO BARU
-                    $remainingQty = $qty;
-                    $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
-                        ->whereColumn('qtyUsed', '<', 'receivedQty')
-                        ->orderBy('created_at')
-                        ->get();
+                // Ambil batch dari purchase_detail
+                $purchaseDetails = PurchaseDetail::where('itemCode', $itemCode)
+                    ->where('status', 1)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
 
-                    foreach ($fifoPurchases as $purchase) {
-                        if ($remainingQty <= 0) break;
+                $remainingQty = $qty;
 
-                        $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
-                        $useQty = min($remainingQty, $availableQty);
+                foreach ($purchaseDetails as $purchase) {
+                    if ($remainingQty <= 0) break;
 
-                        $purchase->qtyUsed += $useQty;
-                        $purchase->save();
+                    $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                    if ($availableQty <= 0) continue;
 
-                        MaintenanceFifo::create([
-                            'code' => GenerateCode::generateCode('MF', true),
-                            'maintenanceDetailCode' => $detail->code,
-                            'purchaseDetailCode' => $purchase->code,
-                            'qty' => $useQty
-                        ]);
+                    $useQty = min($remainingQty, $availableQty);
 
-                        $remainingQty -= $useQty;
-                    }
+                    PurchaseDetail::where('code', $purchase->code)
+                        ->increment('qtyUsed', $useQty);
 
-                    Stock::where('itemCode', $itemCode)->increment('stockOut', $qty);
+                    MaintenanceFifo::create([
+                        'code' => GenerateCode::generateCode('MF', true),
+                        'maintenanceDetailCode' => $detail->code,
+                        'purchaseDetailCode' => $purchase->code,
+                        'qty' => $useQty
+                    ]);
 
-                    StockTransaction::create([
-                        'code' => GenerateCode::generateCode('TPD', true),
+                    $remainingQty -= $useQty;
+                }
+
+                Stock::where('itemCode', $itemCode)
+                    ->increment('stockOut', $qty);
+
+                StockTransaction::updateOrCreate(
+                    ['transactionCode' => $detail->code],
+                    [
                         'itemCode' => $itemCode,
                         'qty' => $qty,
-                        'transactionCode' => $detail->code,
                         'date' => $request->date,
                         'type' => 'OUT',
                         'transactionType' => 2
-                    ]);
-                }
+                    ]
+                );
             }
         }
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
 
+
+
+
     public function destroy($id, $title)
     {
+        // Log data sebelum dihapus
         $this->logActivity($title, $this->getById($id), 'Delete');
 
         $data = $this->getById($id);
 
         foreach ($data->details as $item) {
-            // Stock::where('itemCode', $item->item->code)->increment('stockIn', $item->qty);
+            // 1. Rollback FIFO
+            $fifos = MaintenanceFifo::where('maintenanceDetailCode', $item->code)->get();
+            foreach ($fifos as $fifo) {
+                PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                    ->decrement('qtyUsed', $fifo->qty);
+            }
 
-            $stock = Stock::where('itemCode', $item->item->code)->first();
+            // 2. Hapus data FIFO terkait
+            MaintenanceFifo::where('maintenanceDetailCode', $item->code)->delete();
 
-            Stock::where('itemCode', $item->item->code)->update([
-                'stockOut' => $stock->stockOut - $item->qty
-            ]);
+            // 3. Update stok keluar
+            Stock::where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
 
+            // 4. Hapus transaksi stok
             StockTransaction::where('transactionCode', $item->code)->delete();
         }
 
+        // 5. Hapus detail maintenance
         $data->details()->delete();
 
+        // 6. Hapus data maintenance utama
         $this->service->where('id', $id)->delete();
     }
 }

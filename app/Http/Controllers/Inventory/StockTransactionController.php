@@ -161,7 +161,7 @@ class StockTransactionController extends Controller
 
         $mpdf->WriteHTML(
             view($this->view . 'report.transaction-stock-pdf')
-                ->with('data', $data)
+                ->with('data', $data->get())
                 ->with('startDate', $startDate)
                 ->with('endDate', $endDate)
         );

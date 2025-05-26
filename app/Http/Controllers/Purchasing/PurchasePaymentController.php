@@ -62,9 +62,7 @@ class PurchasePaymentController extends Controller
         $totalPrice = 0;
         $totalQty = 0;
         foreach ($data->details as $item) {
-            $itemStock = Item::where('code', $item->itemCode)->first();
-
-            $totalPrice += intval($itemStock->price) * $item->receivedQty;
+            $totalPrice += intval($item->price) * $item->receivedQty;
             $totalQty += $item->receivedQty;
         }
 
@@ -98,17 +96,17 @@ class PurchasePaymentController extends Controller
         }
 
         $totalPrice = 0;
-        foreach ($data->details as $item) {
-            $itemStock = Item::where('code', $item->itemCode)->first();
+        // foreach ($data->details as $item) {
+        //     $itemStock = Item::where('code', $item->itemCode)->first();
 
-            $totalPrice += intval($itemStock->price) * $item->receivedQty;
-        }
+        //     $totalPrice += intval($itemStock->price) * $item->receivedQty;
+        // }
 
-        $liveMutation = LiveMutation::where('userBankCode', $request->userBankCode)->first();
+        // $liveMutation = LiveMutation::where('userBankCode', $request->userBankCode)->first();
 
-        if ($totalPrice > $liveMutation->balance) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Balance is not enough');
-        }
+        // if ($totalPrice > $liveMutation->balance) {
+        //     return redirect()->route($this->view . 'index')->with('fail', 'Balance is not enough');
+        // }
 
         try {
             DB::beginTransaction();
@@ -117,7 +115,7 @@ class PurchasePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' data was update succesfully');
+            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -174,12 +172,10 @@ class PurchasePaymentController extends Controller
                 ->addColumn('totalPrice', function ($row) {
                     $totalPrice = 0;
                     foreach ($row->details as $item) {
-                        $itemStock = Item::where('code', $item->itemCode)->first();
-
                         if ($item->receivedQty) {
-                            $totalPrice += intval($itemStock->price) * $item->receivedQty;
+                            $totalPrice += intval($item->price) * $item->receivedQty;
                         } else {
-                            $totalPrice += intval($itemStock->price) * $item->qty;
+                            $totalPrice += intval($item->price) * $item->qty;
                         }
                     }
 
@@ -229,19 +225,16 @@ class PurchasePaymentController extends Controller
                             }
                         }
                     }
-
-
-
-
-
-
-
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-credit-card"></i></a></li>
-                                    </ul>';
+                    $btn = '<td>
+                                <a href="' . route($this->view . 'edit', $row->id) . '"
+                                class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                                data-bs-toggle="tooltip" title="Payment">
+                                    <i class="mdi mdi-credit-card fs-14 text-primary"></i>
+                                </a>
+                            </td>';
 
                     return $btn;
                 })

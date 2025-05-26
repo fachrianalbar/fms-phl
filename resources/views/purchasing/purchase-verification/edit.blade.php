@@ -148,7 +148,7 @@
 
                                     <td>
                                         <input class="form-control w-50 " type="number" min="0" name="qty[]"
-                                            id="qty_{{ $loop->iteration }}" value="{{ $item->qty }}"
+                                            id="qty_{{ $loop->iteration }}" value="{{ $item->qty }}" readonly
                                             onchange="updateTotalPrice({{ $loop->iteration }})">
                                     </td>
                                     <td>
@@ -221,8 +221,8 @@
             $('#delete-form').attr('action', url);
 
             swal({
-                title: "Are you sure?",
-                text: "Want to delete this data?",
+                title: "{{ __('general.are_you_sure') }}",
+                text: "{{ __('general.want_to_delete_this_data') }}",
                 icon: "warning",
                 buttons: true,
                 dangerMode: true,
