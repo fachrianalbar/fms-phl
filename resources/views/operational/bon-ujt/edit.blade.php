@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @php
@@ -44,7 +44,7 @@
         @include('partials.alert')
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -90,7 +90,8 @@
                             <input type="hidden" name="fleetTypeCode" id="fleetTypeCode"
                                 value="{{ $data->fleetTypeCode }}" readonly>
                             <select class="js-example-basic-single" required="" disabled>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($fleetType as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetTypeCode == $item->code ? 'selected' : '' }}>
@@ -134,7 +135,7 @@
                 </div>
             </div>
             <div class="card-body col-md-12">
-                <table class="display " id="dt-order">
+                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt-order">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -240,7 +241,8 @@
                         <div class="card">
                             <div class="card-body col-md-12">
                                 <div class="row g-3">
-                                    <table class="display " id="dt">
+                                    <table class="table table-bordered dt-responsive table-responsive nowrap"
+                                        id="dt">
                                         <thead>
                                             <tr>
                                                 <th>#</th>
@@ -450,7 +452,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

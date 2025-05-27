@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -15,7 +15,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -34,7 +34,7 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="locationCode">Location Name</label>
                             <select class="js-example-basic-single" name="locationCode" id="locationCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->locationCode == $item->code ? 'selected' : '' }}>{{ $item->name }}

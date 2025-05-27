@@ -86,7 +86,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="activity">Activity</label>
                                     <select class="js-example-basic-single" name="activity" id="activity">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($activity as $item)
                                             <option value="{{ $item }}">
                                                 {{ $item }}</option>
@@ -97,7 +97,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="action">Action</label>
                                     <select class="js-example-basic-single" name="action" id="action">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($action as $item)
                                             <option value="{{ $item }}">
                                                 {{ $item }}</option>
@@ -110,7 +110,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="causer_id">User</label>
                                     <select class="js-example-basic-single" name="causer_id" id="causer_id">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($user as $item)
                                             <option value="{{ $item->id }}">
                                                 {{ $item->name }}</option>
@@ -121,7 +121,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="roleCode">Role</label>
                                     <select class="js-example-basic-single" name="roleCode" id="roleCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($role as $item)
                                             <option value="{{ $item->code }}">
                                                 {{ $item->name }}</option>

@@ -56,7 +56,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Driver Name</label>
                                     <select class="js-example-basic-single" name="driverCode" id="driverCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($driver as $item)
                                             <option value="{{ $item->code }}">{{ $item->name }}</option>
                                         @endforeach
@@ -66,7 +66,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Customer Name</label>
                                     <select class="js-example-basic-single" name="customerCode" id="customerCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($customer as $item)
                                             <option value="{{ $item->code }}">{{ $item->name }}
                                             </option>
@@ -220,7 +220,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

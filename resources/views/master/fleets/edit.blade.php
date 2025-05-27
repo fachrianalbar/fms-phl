@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -14,7 +14,7 @@
         @include('partials.alert')
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -36,7 +36,7 @@
                             <label class="form-label" for="fleetTypeCode">Type <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="form-select" name="fleetTypeCode" id="fleetTypeCode">
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -73,7 +73,7 @@
                         <div class="col-md-6">
                             <label class="form-label" for="fleetBrandCode">Brand</label>
                             <select class="form-select" name="fleetBrandCode" id="fleetBrandCode">
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($brand as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetBrandCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -229,7 +229,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

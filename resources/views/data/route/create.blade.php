@@ -44,7 +44,7 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="customerCode">Customer Name</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -59,7 +59,7 @@
                             <label class="form-label" for="originLocationCode">Origin Location</label>
                             <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                 required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->name }}
@@ -72,7 +72,7 @@
                             <label class="form-label" for="destinationLocationCode">Destination Location</label>
                             <select class="js-example-basic-single" name="destinationLocationCode"
                                 id="destinationLocationCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->name }}
@@ -86,7 +86,7 @@
                         {{-- <div class="col-md-6 position-relative">
                             <label class="form-label" for="fleetTypeCode">Fleet Type Name</label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -102,7 +102,7 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="routeType">Route Type</label>
                             <select class="js-example-basic-single" name="routeType" id="routeType" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($routeType as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -195,7 +195,7 @@
 
         // function locationByCustomer(code) {
         //     loader()
-        //     let html = '<option selected="" disabled="" value="">Choose...</option>'
+        //     let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
 
         //     $('#originLocationCode').html(html)
         //     $('#destinationLocationCode').html(html)

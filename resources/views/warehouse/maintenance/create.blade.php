@@ -51,14 +51,14 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Date <i
+                                <label class="form-label" for="name">{{ __('menu_maintenance.date') }} <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="date" id="datetime-local" type="date" required
                                     placeholder="Order Date" value="{{ now()->toDateString() }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Time</label>
+                                <label class="form-label">{{ __('menu_maintenance.time') }}</label>
                                 <input class="form-control digits" name="time" type="time"
                                     value="{{ now()->setTimezone('Asia/Jakarta')->format('H:i') }}">
                             </div>
@@ -66,10 +66,11 @@
 
                         <div class="row mt-4">
                             <div class="col-md-12">
-                                <label class="form-label" for="fleetCode">Fleet <i
+                                <label class="form-label" for="fleetCode">{{ __('menu_maintenance.fleet') }} <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required>
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($fleet as $item)
                                         <option value="{{ $item->code }}">
                                             {{ $item->plateNumber . ' - ' . $item->type->name }}
@@ -85,7 +86,7 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Detail Maintenance</h4>
+                    <h4>Detail {{ $title }}</h4>
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
@@ -105,7 +106,8 @@
                                 <td>
                                     <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1" required
                                         onchange="loadItemDetails(1)">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                        </option>
                                         @foreach ($stock as $item)
                                             <option value="{{ $item->item->code }}" data-name="{{ $item->item->name }}"
                                                 data-qty="{{ $item->stockIn - $item->stockOut }}">
@@ -136,7 +138,8 @@
             <div class="card">
                 <div class="col-12">
                     <div class="card-body">
-                        <button class="btn btn-primary" id="submit" type="submit">Save Changes</button>
+                        <button class="btn btn-primary" id="submit"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
             </div>
@@ -261,7 +264,7 @@
                             </td>
                             <td>
                                 <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 </select>
                             </td>
                             <td>
@@ -278,7 +281,7 @@
                           </tr>`;
             $('#purchaseDetails').append(newRow);
 
-            let html = '<option selected="" disabled="" value="">Choose...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             dataItem.forEach(i => {
                 html +=

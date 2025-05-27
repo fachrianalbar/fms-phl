@@ -4,7 +4,7 @@
                 <label class="form-label" for="name">Component Name </label>
                 {{-- <input class="form-control" type="text" id="componentName" placeholder="Component Name"> --}}
                 <select class="js-example-basic-single" id="componentName">
-                    <option selected="" disabled="" value="">Choose...</option>
+                    <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                     @foreach ($component as $item)
                         <option value="{{ $item->code }}">{{ $item->name }}</option>
                     @endforeach
@@ -14,7 +14,7 @@
             <div class="col-md-6 position-relative">
                 <label class="form-label" for="fleetDriverCode">Component Type </label>
                 <select class="js-example-basic-single" id="componentType">
-                    <option selected="" disabled="" value="">Choose...</option>
+                    <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                     @foreach ($orderCost as $item)
                         <option value="{{ $item->value }}">{{ $item->value }}</option>
                     @endforeach

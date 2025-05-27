@@ -38,7 +38,7 @@
                             <label class="form-label" for="driverCode">Driver Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" id="driverCode" name="driverCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($driver as $item)
                                     <option value="{{ $item->code }}">{{ $item->code . ' - ' . $item->name }}</option>
                                 @endforeach

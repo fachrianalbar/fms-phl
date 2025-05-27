@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -15,7 +15,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -30,7 +30,7 @@
                             <label class="form-label" for="bankCode">Bank Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="bankCode" id="bankCode" required>
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($bank as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->bankCode == $item->code ? 'selected' : '' }}>
@@ -60,7 +60,7 @@
                             <label class="form-label" for="type">Type <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required>
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 <option value=1 {{ $data->type == 1 ? 'selected' : '' }}>Person</option>
                                 <option value=2 {{ $data->type == 2 ? 'selected' : '' }}>Company</option>
                             </select>

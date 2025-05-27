@@ -15,6 +15,7 @@ use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PurchasePaymentController extends Controller
 {
@@ -32,6 +33,8 @@ class PurchasePaymentController extends Controller
         $this->supplierSvc = $supplierSvc;
         $this->userBankSvc = $userBankSvc;
         $this->title = "Purchase Payment";
+        $this->menuSvc = $menuSvc->getByName("Purchase Payment");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "purchasing.purchase-payment.";
     }
 
@@ -207,7 +210,7 @@ class PurchasePaymentController extends Controller
 
 
                     if (isset($row->purchaseStatus->name)) {
-                        $status = $row->purchaseStatus->name;
+                        $status = Auth::user()->languange == 'id' ? $row->purchaseStatus->nama : $row->purchaseStatus->name;
 
                         if ($row->status == 2) {
                             foreach ($row->details as $item) {

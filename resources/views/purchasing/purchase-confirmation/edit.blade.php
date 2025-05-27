@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -37,7 +37,7 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} Edit Data</h4>
+                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
                     <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
                 </div>
                 <div class="card-body col-md-6">
@@ -52,13 +52,13 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Date </label>
+                                <label class="form-label" for="name">{{ __('menu_purchase.date') }}</label>
                                 <input class="form-control" name="date" type="text" required placeholder="Order Date"
                                     value="{{ $data->date }}" readonly>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Time</label>
+                                <label class="form-label">{{ __('menu_purchase.time') }}</label>
                                 <input class="form-control digits" name="time" type="time"
                                     value="{{ $data->time }}" readonly>
                             </div>
@@ -68,7 +68,8 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="supplierCode">Supplier </label>
                                 <select class="js-example-basic-single" name="supplierCode" id="supplierCode" disabled>
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($supplier as $item)
                                         <option value="{{ $item->code }}"
                                             {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -80,7 +81,7 @@
 
                         <div class="row mt-4">
                             <div class="col-md-12">
-                                <label class="form-label" for="name">Received Date <i
+                                <label class="form-label" for="name">{{ __('menu_purchase.received_date') }}<i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="receivedDate" id="datetime-local" type="date"
                                     value="{{ $data->receivedDate }}" required placeholder="Received Date">
@@ -109,20 +110,20 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Detail Purchasing</h4>
+                    <h4>Detail {{ __('menu_purchase.purchase') }}</h4>
                     <button class="btn btn-primary" type="button" id="check-all">Check All</button>
                 </div>
                 <div class="card-body col-md-12">
                     @include('partials.alert')
-                    <table class="display " id="dt">
+                    <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
                                 <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
-                                <th>Prices</th>
-                                <th>Total Prices</th>
+                                <th>{{ __('menu_purchase.prices') }}</th>
+                                <th>{{ __('menu_purchase.total_prices') }}</th>
                                 {{-- <th>QC</th> --}}
                             </tr>
                         </thead>
@@ -186,7 +187,8 @@
             <div class="card">
                 <div class="col-12">
                     <div class="card-body">
-                        <button class="btn btn-primary" id="submit" type="submit">Confirm Data</button>
+                        <button class="btn btn-primary" id="submit"
+                            type="submit">{{ __('menu_purchase.confirm_data') }}</button>
                     </div>
                 </div>
             </div>
@@ -197,7 +199,8 @@
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Detail Purchase Data</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">Detail {{ __('menu_purchase.purchase') }}
+                                Data</h4>
                             <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
@@ -211,7 +214,8 @@
                                     </div>
 
                                     <div class="col-md-12">
-                                        <label class="form-label" for="itemNameModal">Name</label>
+                                        <label class="form-label"
+                                            for="itemNameModal">{{ __('menu_purchase.name') }}</label>
                                         <input class="form-control" name="itemNameModal" id="itemNameModal"
                                             type="text" readonly placeholder="Name">
                                     </div>
@@ -223,7 +227,8 @@
                                     </div>
 
                                     <div class="col-md-12">
-                                        <label class="form-label" for="receivedQty">Received Qty <i
+                                        <label class="form-label"
+                                            for="receivedQty">{{ __('menu_purchase.received_qty') }}<i
                                                 class="icofont icofont-warning-alt text-danger"></i></label>
                                         <input class="form-control" name="receivedQty" id="receivedQty" type="number"
                                             placeholder="Received Qty">
@@ -238,7 +243,8 @@
                             </div>
                         </div>
                         <div class="modal-footer justify-content-start">
-                            <button class="btn btn-primary" type="submit">Confirm Data</button>
+                            <button class="btn btn-primary"
+                                type="submit">{{ __('menu_purchase.confirm_data') }}</button>
                         </div>
                     </div>
                 </div>

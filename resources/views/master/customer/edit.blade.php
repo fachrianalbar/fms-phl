@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -15,7 +15,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -115,7 +115,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...</option>
+                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
                                 @foreach ($company as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->companyCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -137,7 +137,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...</option>
+                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
                                 <option value="Person" {{ $data->type == 'Person' ? 'selected' : '' }}>
                                     {{ __('menu_customer.person') }}</option>
                                 <option value="Company" {{ $data->type == 'Company' ? 'selected' : '' }}>
@@ -151,7 +151,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="isDo" id="idDo" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...</option>
+                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
                                 <option value=1 {{ $data->isDo == 1 ? 'selected' : '' }}>
                                     {{ __('general.yes') }}</option>
                                 <option value=0 {{ $data->isDo == 0 && $data->isDo != null ? 'selected' : '' }}>

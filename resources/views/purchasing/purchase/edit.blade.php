@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -37,7 +37,7 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} Edit Data</h4>
+                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
                     <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
                 </div>
                 <div class="card-body col-md-6">
@@ -53,14 +53,14 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Date <i
+                                <label class="form-label" for="name">{{ __('menu_purchase.date') }} <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="date" id="datetime-local" type="date" required
                                     placeholder="Order Date" value="{{ $data->date }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Time</label>
+                                <label class="form-label">{{ __('menu_purchase.time') }}</label>
                                 <input class="form-control digits" name="time" type="time"
                                     value="{{ $data->time }}">
                             </div>
@@ -71,7 +71,8 @@
                                 <label class="form-label" for="supplierCode">Supplier <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($supplier as $item)
                                         <option value="{{ $item->code }}"
                                             {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -87,22 +88,22 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Detail Purchasing</h4>
+                    <h4>Detail {{ $title }}</h4>
                     @if ($data->status == 0)
                         <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                     @endif
                 </div>
                 <div class="card-body col-md-12">
                     @include('partials.alert')
-                    <table class="display " id="dt">
+                    <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
                                 <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
-                                <th>Prices</th>
-                                <th>Total Prices</th>
+                                <th>{{ __('menu_purchase.prices') }}</th>
+                                <th>{{ __('menu_purchase.total_prices') }}</th>
                             </tr>
                         </thead>
                         <tbody id="purchaseDetails">
@@ -169,7 +170,8 @@
                 <div class="col-12">
                     <div class="card-body">
                         @if ($data->status == 0)
-                            <button class="btn btn-primary" id="submit" type="submit">Save Changes</button>
+                            <button class="btn btn-primary" id="submit"
+                                type="submit">{{ __('general.save_changes') }}</button>
                         @endif
                     </div>
                 </div>
@@ -238,7 +240,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }
@@ -282,7 +284,7 @@
 
         // Load items based on supplier
         function itemBySupplier(supplierCode) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
             $('#itemCode_1').html(html);
 
 
@@ -347,7 +349,7 @@
         $('#save').on('click', function() {
             let row = $('#purchaseDetails tr').length + 1;
 
-            let options = '<option selected="" disabled="" value="">Choose...</option>';
+            let options = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             // Mengisi options berdasarkan data items
             itemsData.forEach(item => {
@@ -367,7 +369,7 @@
                             </td>
                             <td>
                                 <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 </select>
                             </td>
                             <td>
@@ -389,7 +391,7 @@
             // itemBySupplier($('#supplierCode').val());
 
 
-            // let html = '<option selected="" disabled="" value="">Choose...</option>';
+            // let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             // dataItem.forEach(i => {
             //     html +=

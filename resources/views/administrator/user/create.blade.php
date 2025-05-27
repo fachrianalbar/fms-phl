@@ -41,7 +41,7 @@
                         <label class="form-label" for="roleCode">Role Name <i
                                 class="icofont icofont-warning-alt text-danger"></i></label>
                         <select class="js-example-basic-single" name="roleCode" id="roleCode" required>
-                            <option selected="" disabled="" value="">Choose...</option>
+                            <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             @foreach ($role as $item)
                                 <option value="{{ $item->code }}">{{ $item->name }}</option>
                             @endforeach

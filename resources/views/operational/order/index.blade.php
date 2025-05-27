@@ -58,7 +58,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Plate Number</label>
                                     <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleet as $item)
                                             <option value="{{ $item->plateNumber }}">
                                                 {{ $item->plateNumber }}</option>
@@ -69,7 +69,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Driver Name</label>
                                     <select class="js-example-basic-single" name="driverName" id="driverName">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($driver as $item)
                                             <option value="{{ $item->name }}">{{ $item->name }}</option>
                                         @endforeach
@@ -81,7 +81,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Customer Name</label>
                                     <select class="js-example-basic-single" name="customerName" id="customerName">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($customer as $item)
                                             <option value="{{ $item->name }}">{{ $item->name }}
                                             </option>
@@ -92,7 +92,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Fleet Type Name</label>
                                     <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleetType as $item)
                                             <option value="{{ $item->name }}">{{ $item->name }}
                                             </option>
@@ -130,7 +130,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Destination</label>
                                     <select class="js-example-basic-single" name="destination" id="destination">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($location as $item)
                                             <option value="{{ $item->name }}">{{ $item->name }}
                                             </option>
@@ -141,7 +141,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Order Type</label>
                                     <select class="js-example-basic-single" name="orderTypeCode" id="orderTypeCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($orderType as $item)
                                             <option value="{{ $item->code }}">{{ $item->name }}
                                             </option>
@@ -429,7 +429,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

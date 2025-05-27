@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -15,7 +15,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -35,7 +35,7 @@
                         {{-- <div class="col-md-6 position-relative">
                             <label class="form-label" for="customerCode">Customer Name</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->customerCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -50,7 +50,7 @@
                             <label class="form-label" for="provinceId">Province Name</label>
                             <select class="js-example-basic-single" name="provinceId" id="provinceId"
                                 onchange="cityByProvince(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($province as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->provinceId == $item->id ? 'selected' : '' }}>{{ $item->name }}
@@ -63,7 +63,7 @@
                             <label class="form-label" for="provinceId">City Name</label>
                             <select class="js-example-basic-single" name="cityId" id="cityId"
                                 onchange="districtByCity(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($city as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->cityId == $item->id ? 'selected' : '' }}>
@@ -78,7 +78,7 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="districtId">District Name</label>
                             <select class="js-example-basic-single" name="districtId" id="districtId">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($district as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->districtId == $item->id ? 'selected' : '' }}>{{ $item->name }}
@@ -124,7 +124,7 @@
 
     <script>
         function cityByProvince(id) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>'
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
 
             $('#cityId').html(html)
             $('#districtId').html(html)
@@ -138,7 +138,7 @@
         }
 
         function districtByCity(id) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>'
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
 
             $('#districtId').html(html)
 

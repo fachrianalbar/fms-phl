@@ -50,7 +50,7 @@
                         <label class="form-label" for="customerCode">Customer
                             Name </label>
                         <select class="js-example-basic-single" id="customerCode" disabled>
-                            <option selected="" disabled="" value="">Choose...</option>
+                            <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             @foreach ($customer as $item)
                                 <option value="{{ $item->code }}"
                                     {{ $data->customerCode == $item->code ? 'selected' : '' }}>
@@ -79,7 +79,7 @@
                         <label class="form-label" for="userBankCode"> User Bank
                             <i class="icofont icofont-warning-alt text-danger"></i></label>
                         <select class="js-example-basic-single" name="userBankCode" id="userBankCode" required>
-                            <option selected="" disabled="" value="">Choose...</option>
+                            <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             @foreach ($userBank as $item)
                                 <option value="{{ $item->code }}">
                                     {{ $item->bank->name . ' - ' . $item->accountNumber . ' - ' . $item->accountName }}
@@ -130,7 +130,7 @@
 
             </div>
             <div class="card-body col-md-12">
-                <table class="display " id="dt-order">
+                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt-order">
                     <thead>
                         <tr>
                             <th>No</th>

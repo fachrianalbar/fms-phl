@@ -310,7 +310,7 @@
                     if (willDelete) {
                         $('#delete-form').submit();
                     } else {
-                        swal("Your data is safe!");
+                        swal("{{ __('general.your_data_is_save') }}");
                     }
                 });
             }
@@ -340,7 +340,7 @@
                 const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
                 if (customerCode && routeTypeCode) {
-                    let html = '<option selected="" disabled="" value="">Choose...</option>';
+                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                     $('#originLocationCode').html(html);
 
                     $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
@@ -412,7 +412,7 @@
                 const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
                 if (customerCode && routeTypeCode && originLocationCode) {
-                    let html = '<option selected="" disabled="" value="">Choose...</option>';
+                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                     $('#destinationLocationCode').html(html);
 
                     $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +

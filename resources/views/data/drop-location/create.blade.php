@@ -33,7 +33,7 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="locationCode">Location Name</label>
                             <select class="js-example-basic-single" name="locationCode" id="locationCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach

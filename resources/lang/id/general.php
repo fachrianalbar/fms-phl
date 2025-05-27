@@ -3,6 +3,8 @@
 return [
     'add_data' => 'Tambah Data',
     'add' => 'Tambah',
+    'edit' => 'Ubah',
+    'edit_data' => 'Ubah Data',
     'back_to_list' => 'Kembali',
     'data_was_save_successfully' => 'data berhasil disimpan',
     'choose' => 'Pilih',
@@ -12,6 +14,7 @@ return [
     'data_was_update_succesfully' => 'data berhasil di update',
     'delete_data_success' => 'Hapus Data Berhasil',
     'are_you_sure' => 'Apakah kamu yakin?',
-    'want_to_delete_this_data' => 'Ingin menghapus data ini?'
-
+    'want_to_delete_this_data' => 'Ingin menghapus data ini?',
+    'save_changes' => 'Simpan Perubahan',
+    'your_data_is_save' => 'Data anda aman !'
 ];

@@ -72,7 +72,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Supplier</label>
                                     <select class="js-example-basic-single" name="supplierCode" id="supplierCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($supplier as $item)
                                             <option value="{{ $item->code }}">
                                                 {{ $item->name }}</option>
@@ -96,11 +96,11 @@
                                 <th>#</th>
                                 <th>No</th>
                                 <th>Code</th>
-                                <th>Purchase Date</th>
-                                <th>Received Date</th>
-                                <th>Payment Date</th>
+                                <th>{{ __('menu_purchase.purchase_date') }}</th>
+                                <th>{{ __('menu_purchase.received_date') }}</th>
+                                <th>{{ __('menu_purchase.payment_date') }}</th>
                                 <th>Supplier name</th>
-                                <th>To Wh Name</th>
+                                <th>Warehouse</th>
                                 <th>Total Prices</th>
                                 <th>Status</th>
                             </tr>
@@ -225,7 +225,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

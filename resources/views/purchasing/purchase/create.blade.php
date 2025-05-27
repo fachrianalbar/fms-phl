@@ -51,14 +51,14 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Date <i
+                                <label class="form-label" for="name">{{ __('menu_purchase.date') }}<i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="date" id="datetime-local" type="date" required
                                     placeholder="Order Date" value="{{ now()->toDateString() }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Time</label>
+                                <label class="form-label">{{ __('menu_purchase.time') }}</label>
                                 <input class="form-control digits" name="time" type="time"
                                     value="{{ now()->setTimezone('Asia/Jakarta')->format('H:i') }}">
                             </div>
@@ -69,7 +69,8 @@
                                 <label class="form-label" for="supplierCode">Supplier <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($supplier as $item)
                                         <option value="{{ $item->code }}">{{ $item->name }}</option>
                                     @endforeach
@@ -87,15 +88,15 @@
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
-                    <table class="display " id="dt">
+                    <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Code</th>
                                 <th class="text-center">Item/Part</th>
                                 <th style="width: 10%">Qty</th>
-                                <th>Prices</th>
-                                <th>Total Prices</th>
+                                <th>{{ __('menu_maintenance.prices') }}</th>
+                                <th>{{ __('menu_maintenance.total_prices') }}</th>
                             </tr>
                         </thead>
                         <tbody id="purchaseDetails">
@@ -104,7 +105,8 @@
                                 <td>
                                     <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1" required
                                         onchange="loadItemDetails(1)">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                        </option>
                                         @foreach ($items as $it)
                                             <option value="{{ $it->code }}" data-name="{{ $it->name }}"
                                                 data-price="{{ $it->price }}">
@@ -141,7 +143,8 @@
             <div class="card">
                 <div class="col-12">
                     <div class="card-body">
-                        <button class="btn btn-primary" id="submit" type="submit">Save Changes</button>
+                        <button class="btn btn-primary" id="submit"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
             </div>
@@ -186,7 +189,7 @@
 
         // Load items based on supplier
         function itemBySupplier(supplierCode) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
             $('#itemCode_1').html(html);
 
             $.get("{{ url('ajax/item-by-supplier') }}/" + supplierCode, function(data) {
@@ -284,7 +287,7 @@
         $('#save').on('click', function() {
             let row = $('#purchaseDetails tr').length + 1;
 
-            let options = '<option selected="" disabled="" value="">Choose...</option>';
+            let options = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             // Mengisi options berdasarkan data items
             itemsData.forEach(item => {
@@ -329,7 +332,7 @@
             // itemBySupplier($('#supplierCode').val());
 
 
-            // let html = '<option selected="" disabled="" value="">Choose...</option>';
+            // let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             // dataItem.forEach(i => {
             //     html +=

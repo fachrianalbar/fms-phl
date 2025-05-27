@@ -7,7 +7,7 @@
         <div class="col-md-6 position-relative">
             <label class="form-label" for="componentCode">Cost Component Name</label>
             <select class="js-example-basic-single" name="componentCode" id="componentCode" required="">
-                <option selected="" disabled="" value="">Choose...</option>
+                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 @foreach ($component as $item)
                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                 @endforeach
@@ -22,7 +22,7 @@
             <input type="hidden" name="componentType" value="Amount">
             {{-- <select class="js-example-basic-single" name="`componentType" id="componentType"
                 onchange="toggleFields(this.value)" required="">
-                <option selected="" disabled="" value="">Choose...</option>
+                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 <option value="Amount">Amount</option>
                 <option value="Percentage">Percentage</option>
             </select> --}}

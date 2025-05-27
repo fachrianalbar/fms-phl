@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -38,7 +38,7 @@
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} Edit Data</h4>
+                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
                     <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
                 </div>
                 <div class="card-body col-md-6">
@@ -54,14 +54,14 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Date <i
+                                <label class="form-label" for="name">{{ __('menu_maintenance.date') }} <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="date" id="datetime-local" type="date" required
                                     placeholder="Order Date" value="{{ $data->date }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Time</label>
+                                <label class="form-label">{{ __('menu_maintenance.time') }}</label>
                                 <input class="form-control digits" name="time" type="time"
                                     value="{{ $data->time }}">
                             </div>
@@ -69,10 +69,11 @@
 
                         <div class="row mt-4">
                             <div class="col-md-12">
-                                <label class="form-label" for="fleetCode">Fleet <i
+                                <label class="form-label" for="fleetCode">{{ __('menu_maintenance.fleet') }} <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required>
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($fleet as $item)
                                         <option value="{{ $item->code }}"
                                             {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
@@ -89,12 +90,12 @@
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Detail Maintenance</h4>
+                    <h4>Detail {{ $title }}</h4>
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
                     @include('partials.alert')
-                    <table class="display " id="dt">
+                    <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -119,7 +120,8 @@
 
                                         <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1" required
                                             onchange="loadItemDetails({{ $loop->iteration }})">
-                                            <option selected="" disabled="" value="">Choose...</option>
+                                            <option selected="" disabled="" value="">
+                                                {{ __('general.choose') }}...</option>
 
                                             @foreach ($stock as $item)
                                                 <option value="{{ $item->item->code }}"
@@ -158,7 +160,8 @@
             <div class="card">
                 <div class="col-12">
                     <div class="card-body">
-                        <button class="btn btn-primary" id="submit" type="submit">Save Changes</button>
+                        <button class="btn btn-primary" id="submit"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
             </div>
@@ -230,7 +233,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }
@@ -309,7 +312,7 @@
                             </td>
                             <td>
                                 <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 </select>
                             </td>
                             <td>
@@ -328,7 +331,7 @@
                           </tr>`;
             $('#purchaseDetails').append(newRow);
 
-            let html = '<option selected="" disabled="" value="">Choose...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
             dataItem.forEach(i => {
                 html +=

@@ -27,7 +27,7 @@
                         <label class="form-label" for="userCode">User <i
                                 class="icofont icofont-warning-alt text-danger"></i></label>
                         <select class="js-example-basic-single" name="userCode" id="userCode" required>
-                            <option value="">Choose...</option>
+                            <option value="">{{ __('general.choose') }}...</option>
                             @foreach ($user as $item)
                                 <option value="{{ $item->code }}">{{ $item->username . ' - ' . $item->role->name }}
                                 </option>
@@ -49,7 +49,7 @@
                         </div>
 
                         <select class="js-example-basic-single" name="userBankCode[0]" id="userBankCode" required>
-                            <option value="">Choose...</option>
+                            <option value="">{{ __('general.choose') }}...</option>
                             @foreach ($userBank as $item)
                                 <option value="{{ $item->code }}">
                                     {{ $item->accountNumber . ' - ' . $item->bank->name . ' - ' . $item->accountName }}

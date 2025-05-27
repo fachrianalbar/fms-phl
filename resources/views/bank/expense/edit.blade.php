@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 
@@ -17,7 +17,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -47,7 +47,7 @@
                             <label class="form-label">User Bank <i class="icofont icofont-warning-alt text-danger"></i>
                             </label>
                             <select class="js-example-basic-single" name="userBankCode" id="userBankCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($userBank as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->userBankCode == $item->code ? 'selected' : '' }}>
@@ -61,7 +61,7 @@
                             <label class="form-label" for="driverCode">Driver <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="driverCode" id="driverCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($driver as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->expense->driverCode == $item->code ? 'selected' : '' }}>
@@ -78,7 +78,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="transactionTypeCode" id="transactionTypeCode"
                                 required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 <option value="FTT250403153003"
                                     {{ $data->transactionTypeCode == 'FTT250403153003' ? 'selected' : '' }}>Expense Office
                                 </option>

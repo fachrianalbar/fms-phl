@@ -52,7 +52,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Item</label>
                                     <select class="js-example-basic-single" name="itemCode" id="itemCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($items as $item)
                                             <option value="{{ $item->code }}">
                                                 {{ $item->code . ' - ' . $item->name }}</option>
@@ -203,7 +203,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

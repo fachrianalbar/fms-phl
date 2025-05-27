@@ -52,7 +52,7 @@
                             <label class="form-label">Sender <i class="icofont icofont-warning-alt text-danger"></i>
                             </label>
                             <select class="js-example-basic-single" name="sender" id="sender" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($userBankSender as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->bank->name . ' - ' . $item->accountNumber . ' - ' . $item->accountName }}
@@ -64,7 +64,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Receiver <i class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="receiver" id="receiver" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($userBankReceiver as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->bank->name . ' - ' . $item->accountNumber . ' - ' . $item->accountName }}
@@ -80,7 +80,7 @@
                             </label>
                             <select class="js-example-basic-single" name="transferType" id="transferType"
                                 onchange="showBank(this.value)" required>
-                                <option selected="" disabled="">Choose...</option>
+                                <option selected="" disabled="">{{ __('general.choose') }}...</option>
                                 @foreach ($transferType as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach
@@ -106,7 +106,7 @@
                             <label class="form-label">Bank Pengirim <i class="icofont icofont-warning-alt text-danger"></i>
                             </label>
                             <select class="js-example-basic-single" name="bankSender" id="bankSender" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($bankSender as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->bankName . ' - ' . $item->accountNumber }}
@@ -119,7 +119,7 @@
                             <label class="form-label">Bank Penerima <i class="icofont icofont-warning-alt text-danger"></i>
                             </label>
                             <select class="js-example-basic-single" name="bankReceiver" id="bankReceiver" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             </select>
                         </div>
                     </div> --}}

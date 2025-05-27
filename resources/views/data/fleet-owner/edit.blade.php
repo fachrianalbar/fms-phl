@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -16,7 +16,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -30,7 +30,7 @@
                             <label class="form-label" for="fleetCode">Fleet Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($fleet as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetCode == $item->code ? 'selected' : '' }}>{{ $item->plateNumber }}
@@ -43,7 +43,7 @@
                             <label class="form-label" for="fleetTypeCode">Fleet Type <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($fleetType as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetTypeCode == $item->code ? 'selected' : '' }}>
@@ -56,7 +56,7 @@
                             <label class="form-label" for="driverCode">Driver Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="driverCode" id="driverCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($driver as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->driverCode == $item->code ? 'selected' : '' }}>{{ $item->name }}

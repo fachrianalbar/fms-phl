@@ -51,7 +51,8 @@
                                         class="icofont icofont-warning-alt text-danger"></i></label>
 
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($fleet as $item)
                                         <option value="{{ $item->code }}">
                                             {{ $item->plateNumber }}</option>
@@ -84,7 +85,8 @@
                                 <label class="form-label" for="driverCode">Driver <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="driverCode" id="driverCode" required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($driver as $item)
                                         <option value="{{ $item->code }}">{{ $item->name }}</option>
                                     @endforeach
@@ -107,7 +109,8 @@
                                     Name <i class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                     required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($customer as $item)
                                         <option value="{{ $item->code }}">{{ $item->code . ' - ' . $item->name }}
                                         </option>
@@ -120,7 +123,8 @@
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                     required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                     @foreach ($routeType as $item)
                                         <option value="{{ $item->code }}">{{ $item->name }}</option>
                                     @endforeach
@@ -136,7 +140,8 @@
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                     required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                 </select>
                             </div>
 
@@ -145,7 +150,8 @@
                                         class="icofont icofont-warning-alt text-danger"></i> </label>
                                 <select class="js-example-basic-single" name="destinationLocationCode"
                                     id="destinationLocationCode" required="">
-                                    <option selected="" disabled="" value="">Choose...</option>
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
                                 </select>
                             </div>
                         </div>
@@ -181,7 +187,8 @@
             <div class="card">
                 <div class="col-12">
                     <div class="card-body">
-                        <button class="btn btn-primary" id="save" type="submit">Save Changes</button>
+                        <button class="btn btn-primary" id="save"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
             </div>
@@ -226,7 +233,7 @@
             const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
             if (customerCode && routeTypeCode) {
-                let html = '<option selected="" disabled="" value="">Choose...</option>';
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#originLocationCode').html(html);
 
                 $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
@@ -313,7 +320,7 @@
             const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
             if (customerCode && routeTypeCode && originLocationCode) {
-                let html = '<option selected="" disabled="" value="">Choose...</option>';
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#destinationLocationCode').html(html);
 
                 $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +

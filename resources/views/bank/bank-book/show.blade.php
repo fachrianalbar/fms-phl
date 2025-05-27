@@ -90,7 +90,7 @@
 
             </div>
             <div class="card-body col-md-12">
-                <table class="display " id="dt">
+                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
                     <thead>
                         <tr>
                             <th colspan="5"></th>

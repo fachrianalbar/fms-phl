@@ -36,7 +36,7 @@
                             <label class="form-label" for="fleetTypeCode">Type <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required>
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -69,7 +69,7 @@
                         <div class="col-md-6">
                             <label class="form-label" for="fleetBrandCode">Brand</label>
                             <select class="js-example-basic-single" name="fleetBrandCode" id="fleetBrandCode">
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($brand as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach

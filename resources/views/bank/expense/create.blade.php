@@ -52,7 +52,7 @@
                             <label class="form-label">User Bank <i class="icofont icofont-warning-alt text-danger"></i>
                             </label>
                             <select class="js-example-basic-single" name="userBankCode" id="userBankCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($userBank as $item)
                                     <option value="{{ $item->code }}">
                                         {{ $item->bank->name . ' - ' . $item->accountNumber . ' - ' . $item->accountName }}
@@ -66,7 +66,7 @@
                             <label class="form-label" for="driverCode">Driver <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="driverCode" id="driverCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($driver as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}
                                     </option>
@@ -82,7 +82,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="transactionTypeCode" id="transactionTypeCode"
                                 required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 <option value="FTT250403153003">Expense Office</option>
                                 <option value="FTT250403152955">Expense</option>
 

@@ -57,7 +57,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Plate Number</label>
                                     <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleet as $item)
                                             <option value="{{ $item->plateNumber }}">
                                                 {{ $item->plateNumber }}</option>
@@ -82,7 +82,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Fleet Type Name</label>
                                     <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleetType as $item)
                                             <option value="{{ $item->code }}">{{ $item->name }}
                                             </option>
@@ -260,7 +260,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

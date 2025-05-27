@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @php
@@ -37,7 +37,7 @@
             <div class="col-sm-12">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4>{{ $title }} Edit Data</h4>
+                        <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                         <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -58,7 +58,8 @@
                                             class="icofont icofont-warning-alt text-danger"></i></label>
 
                                     <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                        </option>
                                         @foreach ($fleet as $item)
                                             <option value="{{ $item->code }}"
                                                 {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
@@ -91,7 +92,8 @@
                                             class="icofont icofont-warning-alt text-danger"></i></label>
                                     <select class="js-example-basic-single" name="driverCode" id="driverCode"
                                         required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                        </option>
                                         @foreach ($driver as $item)
                                             <option value="{{ $item->code }}"
                                                 {{ $data->driverCode == $item->code ? 'selected' : '' }}>
@@ -114,7 +116,8 @@
                                         Name <i class="icofont icofont-warning-alt text-danger"></i></label>
                                     <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                         required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...</option>
                                         @foreach ($customer as $item)
                                             <option value="{{ $item->code }}"
                                                 {{ $data->customerCode == $item->code ? 'selected' : '' }}>
@@ -128,7 +131,8 @@
                                             class="icofont icofont-warning-alt text-danger"></i></label>
                                     <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                         required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...</option>
                                         @foreach ($routeType as $item)
                                             <option value="{{ $item->code }}"
                                                 {{ $route->routeTypeCode == $item->code ? 'selected' : '' }}>
@@ -145,7 +149,8 @@
                                             class="icofont icofont-warning-alt text-danger"></i></label>
                                     <select class="js-example-basic-single" name="originLocationCode"
                                         id="originLocationCode" required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...</option>
                                         @foreach ($origin as $item)
                                             <option value="{{ $item->originLocationCode }}"
                                                 {{ $route->originLocationCode == $item->originLocationCode ? 'selected' : '' }}>
@@ -160,7 +165,8 @@
                                             class="icofont icofont-warning-alt text-danger"></i> </label>
                                     <select class="js-example-basic-single" name="destinationLocationCode"
                                         id="destinationLocationCode" required="">
-                                        <option selected="" disabled="" value="">Choose...</option>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...</option>
                                         @foreach ($destination as $item)
                                             <option value="{{ $item->destinationLocationCode }}"
                                                 {{ $route->destinationLocationCode == $item->destinationLocationCode ? 'selected' : '' }}>
@@ -212,7 +218,8 @@
                 <div class="card">
                     <div class="col-12">
                         <div class="card-body ">
-                            <button class="btn btn-primary" id="save" type="submit">Save Changes</button>
+                            <button class="btn btn-primary" id="save"
+                                type="submit">{{ __('general.save_changes') }}</button>
                         </div>
                     </div>
                 </div>
@@ -272,7 +279,7 @@
                     if (willDelete) {
                         $('#delete-form').submit();
                     } else {
-                        swal("Your data is safe!");
+                        swal("{{ __('general.your_data_is_save') }}");
                     }
                 });
             }
@@ -302,7 +309,7 @@
                 const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
                 if (customerCode && routeTypeCode) {
-                    let html = '<option selected="" disabled="" value="">Choose...</option>';
+                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                     $('#originLocationCode').html(html);
 
                     $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
@@ -376,7 +383,7 @@
                 const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
                 if (customerCode && routeTypeCode && originLocationCode) {
-                    let html = '<option selected="" disabled="" value="">Choose...</option>';
+                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                     $('#destinationLocationCode').html(html);
 
                     $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +

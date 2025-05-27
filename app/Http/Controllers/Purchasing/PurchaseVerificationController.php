@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseVerificationController extends Controller
 {
@@ -29,6 +30,8 @@ class PurchaseVerificationController extends Controller
         $this->service = $purchaseVerificationSvc;
         $this->supplierSvc = $supplierSvc;
         $this->title = "Purchase Verification";
+        $this->menuSvc = $menuSvc->getByName("Purchase Verif");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "purchasing.purchase-verification.";
     }
 

@@ -14,6 +14,7 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class PurchaseConfirmationController extends Controller
 {
@@ -28,7 +29,9 @@ class PurchaseConfirmationController extends Controller
     {
         $this->service = $purchaseConfirmationSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = "Purchase Confirmation";
+        $this->title = "Purchase Confirm";
+        $this->menuSvc = $menuSvc->getByName("Purchase Confirm");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "purchasing.purchase-confirmation.";
     }
 

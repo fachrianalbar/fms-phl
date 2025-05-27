@@ -29,7 +29,7 @@
                             <label class="form-label" for="fleetBrandCode">Company Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="name" id="name" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($company as $item)
                                     <option value="{{ $item }}">{{ $item }}</option>
                                 @endforeach

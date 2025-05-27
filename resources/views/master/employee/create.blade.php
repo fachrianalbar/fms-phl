@@ -36,7 +36,7 @@
                             <label class="form-label" for="positionCode">Position Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="positionCode" id="positionCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($position as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -104,7 +104,8 @@
                             <label class="form-label" for="provinceId">Province Name </label>
                             <select class="js-example-basic-single" name="provinceId" id="provinceId"
                                 onchange="cityByProvince(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($province as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                 @endforeach
@@ -115,7 +116,8 @@
                             <label class="form-label" for="provinceId">City Name </label>
                             <select class="js-example-basic-single" name="cityId" id="cityId"
                                 onchange="districtByCity(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                             </select>
                         </div>
                     </div>
@@ -124,7 +126,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="districtId">District Name </label>
                             <select class="js-example-basic-single" name="districtId" id="districtId">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                             </select>
                         </div>
 
@@ -138,7 +141,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="gender">Gender</label>
                             <select class="js-example-basic-single" name="gender" id="gender"="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($gender as $item)
                                     <option value="{{ $item->value }}">{{ $item->value }}</option>
                                 @endforeach
@@ -148,7 +152,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="citizenship">Citizenship</label>
                             <select class="js-example-basic-single" name="citizenship" id="citizenship">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($citizenship as $item)
                                     <option value="{{ $item->value }}">{{ $item->value }}</option>
                                 @endforeach
@@ -175,7 +180,7 @@
 
     <script>
         function cityByProvince(id) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>'
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
 
             $('#cityId').html(html)
             $('#districtId').html(html)
@@ -189,7 +194,7 @@
         }
 
         function districtByCity(id) {
-            let html = '<option selected="" disabled="" value="">Choose...</option>'
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
 
             $('#districtId').html(html)
 

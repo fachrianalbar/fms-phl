@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -26,7 +26,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -116,7 +116,7 @@
 
                 let selectHTML = `
             <select class="js-example-basic-single" name="userBankCode[${num}]" required>
-                <option value="">Choose...</option>
+                <option value="">{{ __('general.choose') }}...</option>
         `;
 
                 data.forEach(function(item) {
@@ -172,7 +172,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }
@@ -198,7 +198,7 @@
                 e.preventDefault(); // stop form submit
                 swal({
                     title: "Warning",
-                    text: "There are duplicate user banks selected. Please choose different banks.",
+                    text: "There are duplicate user banks selected. Please {{ __('general.choose') }} different banks.",
                     icon: "warning",
                 })
                 return

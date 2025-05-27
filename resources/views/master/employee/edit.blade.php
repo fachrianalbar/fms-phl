@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ]);
 
 @push('style')
@@ -16,7 +16,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -37,7 +37,7 @@
                             <label class="form-label" for="positionCode">Position Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="positionCode" id="positionCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($position as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->positionCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -113,7 +113,8 @@
                             <label class="form-label" for="provinceId">Province Name </label>
                             <select class="js-example-basic-single" name="provinceId" id="provinceId"
                                 onchange="cityByProvince(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($province as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->provinceId == $item->id ? 'selected' : '' }}>{{ $item->name }}
@@ -126,7 +127,8 @@
                             <label class="form-label" for="provinceId">City Name </label>
                             <select class="js-example-basic-single" name="cityId" id="cityId"
                                 onchange="districtByCity(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($city as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->cityId == $item->id ? 'selected' : '' }}>{{ $item->name }}
@@ -140,7 +142,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="districtId">District Name </label>
                             <select class="js-example-basic-single" name="districtId" id="districtId">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($district as $item)
                                     <option value="{{ $item->id }}"
                                         {{ $data->districtId == $item->id ? 'selected' : '' }}>{{ $item->name }}
@@ -159,7 +162,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="gender">Gender</label>
                             <select class="js-example-basic-single" name="gender" id="gender">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($gender as $item)
                                     <option value="{{ $item->value }}"
                                         {{ $data->gender == $item->value ? 'selected' : '' }}>{{ $item->value }}</option>
@@ -170,7 +174,8 @@
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="citizenship">Citizenship</label>
                             <select class="js-example-basic-single" name="citizenship" id="citizenship">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
                                 @foreach ($citizenship as $item)
                                     <option value="{{ $item->value }}"
                                         {{ $data->citizenship == $item->value ? 'selected' : '' }}>{{ $item->value }}

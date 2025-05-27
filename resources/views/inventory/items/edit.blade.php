@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -15,7 +15,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -54,7 +54,7 @@
                             <label class="form-label" for="categoryCode">Item Category <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="categoryCode" id="categoryCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($category as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->categoryCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -70,7 +70,7 @@
                             <label class="form-label" for="warehouseCode">Warehouse <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="warehouseCode" id="warehouseCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($warehouse as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->warehouseCode == $item->code ? 'selected' : '' }}>
@@ -83,7 +83,7 @@
                             <label class="form-label" for="supplierCode">Supplier <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($supplier as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -98,7 +98,7 @@
                             <label class="form-label" for="unitCode">Item Unit <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="unitCode" id="unitCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($unit as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->unitCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -111,7 +111,7 @@
                             <label class="form-label" for="itemLocationCode">Item Location <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="itemLocationCode" id="itemLocationCode" required>
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->itemLocationCode == $item->code ? 'selected' : '' }}>{{ $item->name }}

@@ -29,7 +29,7 @@
                             <label class="form-label" for="bankCode">Bank Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="bankCode" id="bankCode" required>
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($bank as $item)
                                     <option value="{{ $item->code }}">{{ $item->bankCode . ' - ' . $item->name }}</option>
                                 @endforeach
@@ -57,7 +57,7 @@
                             <label class="form-label" for="type">Type <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required>
-                                <option value="">Choose...</option>
+                                <option value="">{{ __('general.choose') }}...</option>
                                 <option value=1>Person</option>
                                 <option value=2>Company</option>
                             </select>

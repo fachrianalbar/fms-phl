@@ -32,7 +32,7 @@
                     <div class="col-md-12 position-relative">
                         <label class="form-label" for="type">Type</label>
                         <select class="js-example-basic-single" name="type" id="type" required="">
-                            <option selected="" disabled="" value="">Choose...</option>
+                            <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             @foreach ($type as $item)
                                 <option value="{{ $item->value }}">{{ $item->value }}</option>
                             @endforeach

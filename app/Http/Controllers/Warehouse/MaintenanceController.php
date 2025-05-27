@@ -20,6 +20,8 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
+use Illuminate\Support\Facades\Auth;
+
 
 class MaintenanceController extends Controller
 {
@@ -36,6 +38,8 @@ class MaintenanceController extends Controller
         $this->fleetSvc = $fleetSvc;
         $this->stockSvc = $stockSvc;
         $this->title = "Maintenance";
+        $this->menuSvc = $menuSvc->getByName("Maintenance");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "warehouse.maintenance.";
     }
 

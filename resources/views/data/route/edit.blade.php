@@ -2,7 +2,7 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => 'Edit',
+    'secondSegment' => __('general.edit'),
 ])
 
 @push('style')
@@ -26,7 +26,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Edit Data</h4>
+                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -48,7 +48,7 @@
                             <label class="form-label" for="customerCode">Customer Name</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required=""
                                 onchange="locationByCustomer(this.value)">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->customerCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -65,7 +65,7 @@
                             <label class="form-label" for="originLocationCode">Origin Location</label>
                             <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                 required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->originLocationCode == $item->code ? 'selected' : '' }}>
@@ -79,7 +79,7 @@
                             <label class="form-label" for="destinationLocationCode">Destination Location</label>
                             <select class="js-example-basic-single" name="destinationLocationCode"
                                 id="destinationLocationCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($location as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->destinationLocationCode == $item->code ? 'selected' : '' }}>
@@ -94,7 +94,7 @@
                         {{-- <div class="col-md-6 position-relative">
                             <label class="form-label" for="fleetTypeCode">Fleet Type Name</label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required="">
-                                <option selected="" disabled="" value="">Choose...</option>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->fleetTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -199,7 +199,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }

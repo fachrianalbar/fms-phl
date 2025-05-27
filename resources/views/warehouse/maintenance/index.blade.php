@@ -1,7 +1,7 @@
 @extends('layouts.main', [
     'title' => $title,
     'pageTitle' => $title,
-    'firstSegment' => 'Master',
+    'firstSegment' => 'Warehouse',
     'secondSegment' => $title,
 ])
 
@@ -64,9 +64,9 @@
                         <form id="filterForm" class=" g-3">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Plate Number</label>
+                                    <label class="form-label" for="name">{{ __('menu_maintenance.plate_no') }}</label>
                                     <select class="form-control" name="plateNumber" id="plateNumber">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleet as $item)
                                             <option value="{{ $item->plateNumber }}">
                                                 {{ $item->plateNumber }}</option>
@@ -75,7 +75,8 @@
                                 </div>
 
                                 <div class="col-md-3">
-                                    <label class="form-label" for="name">Maintenance Date</label>
+                                    <label class="form-label"
+                                        for="name">{{ __('menu_maintenance.maintenance_date') }}</label>
                                     <input class="form-control" name="startDate" id="datetime-local" type="date"
                                         placeholder="Start Date">
                                 </div>
@@ -91,7 +92,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Item</label>
                                     <select class="form-control" name="itemCode" id="itemCode">
-                                        <option selected="" value="">Choose...</option>
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($stock as $item)
                                             <option value="{{ $item->itemCode }}">
                                                 {{ $item->itemCode . ' - ' . ($item->item->name ?? '') }}</option>
@@ -114,8 +115,8 @@
                                 <th>#</th>
                                 <th>No</th>
                                 <th>Code</th>
-                                <th>Date</th>
-                                <th>Plate No</th>
+                                <th>{{ __('menu_maintenance.date') }}</th>
+                                <th>{{ __('menu_maintenance.plate_no') }}</th>
                                 <th>Items</th>
                             </tr>
                         </thead>
@@ -265,7 +266,7 @@
                 if (willDelete) {
                     $('#delete-form').submit();
                 } else {
-                    swal("Your data is safe!");
+                    swal("{{ __('general.your_data_is_save') }}");
                 }
             });
         }
