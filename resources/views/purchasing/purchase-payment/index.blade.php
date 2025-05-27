@@ -99,9 +99,9 @@
                                 <th>{{ __('menu_purchase.purchase_date') }}</th>
                                 <th>{{ __('menu_purchase.received_date') }}</th>
                                 <th>{{ __('menu_purchase.payment_date') }}</th>
-                                <th>Supplier name</th>
-                                <th>Warehouse</th>
-                                <th>Total Prices</th>
+                                <th>{{ __('menu_purchase.supplier_name') }}</th>
+                                <th>{{ __('menu_purchase.warehouse') }}</th>
+                                <th>{{ __('menu_purchase.total_prices') }}</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
