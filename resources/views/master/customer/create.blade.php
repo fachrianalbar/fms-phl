@@ -113,7 +113,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 @foreach ($company as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
@@ -138,7 +138,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 <option value="Person">
                                     {{ __('menu_customer.person') }}</option>
                                 <option value="Company">
@@ -152,7 +152,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 <option value=1>
                                     {{ __('general.yes') }}</option>
                                 <option value=0>

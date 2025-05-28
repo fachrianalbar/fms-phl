@@ -9,6 +9,8 @@
     <meta name="description" content="PHL LOGISTIC FMS" />
     <meta name="author" content="Zoyothemes" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
 
     <!-- App favicon -->
     <link rel="shortcut icon" href="{{ asset('assets/images/logo-phl.png') }}">
@@ -146,8 +148,7 @@
 
     <!-- App js -->
     <script src="{{ asset('assets/js/app.js') }}"></script>
-
-
+    <script src="{{ asset('assets/js/sweet-alert/confirm.js') }}"></script>
 
 </body>
 

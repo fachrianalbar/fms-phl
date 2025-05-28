@@ -1,17 +1,9 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Operational\GuestOrderMonitoringController;
 use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 require __DIR__ . '/guest.php';
-
-
-// Route::get('/', function () {
-//     return view('index');
-// })->name("guest.home");
-
 
 Route::middleware(['auth'])->group(function () {
     Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);

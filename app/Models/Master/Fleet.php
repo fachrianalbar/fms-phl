@@ -26,7 +26,8 @@ class Fleet extends Model
         'fleetTypeCode',
         'barcode',
         'vehicleRegistrationNumber',
-        'insurance'
+        'insurance',
+        'fleetCompanyCode',
     ];
 
     public function brand()
@@ -52,5 +53,10 @@ class Fleet extends Model
     public function pictures()
     {
         return $this->hasMany(FleetPicture::class, 'fleetCode', 'code');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(FleetCompany::class, 'fleetCompanyCode', 'code');
     }
 }

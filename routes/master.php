@@ -7,6 +7,7 @@ use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\DueDateController;
 use App\Http\Controllers\Master\EmployeeController;
 use App\Http\Controllers\Master\FleetBrandController;
+use App\Http\Controllers\Master\FleetCompanyController;
 use App\Http\Controllers\Master\FleetController;
 use App\Http\Controllers\Master\FleetTypeController;
 use App\Http\Controllers\Master\LocationController;
@@ -34,9 +35,9 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('bank-receiver', BankReceiverController::class);
     Route::resource('transaction-type', TransactionTypeController::class);
     Route::resource('due-date', DueDateController::class);
+    Route::resource('fleet-company', FleetCompanyController::class);
 });
 // });
-
 Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('position', [PositionController::class, 'datatable'])->name('position');
     Route::get('employee', [EmployeeController::class, 'datatable'])->name('employee');
@@ -52,6 +53,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('bank-receiver', [BankReceiverController::class, 'datatable'])->name('bank-receiver');
     Route::get('transaction-type', [TransactionTypeController::class, 'datatable'])->name('transaction-type');
     Route::get('due-date', [DueDateController::class, 'datatable'])->name('due-date');
+    Route::get('fleet-company', [FleetCompanyController::class, 'datatable'])->name('fleet-company');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {

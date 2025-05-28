@@ -115,7 +115,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="companyCode" id="companyCode" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 @foreach ($company as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->companyCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
@@ -137,7 +137,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 <option value="Person" {{ $data->type == 'Person' ? 'selected' : '' }}>
                                     {{ __('menu_customer.person') }}</option>
                                 <option value="Company" {{ $data->type == 'Company' ? 'selected' : '' }}>
@@ -151,7 +151,7 @@
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="isDo" id="idDo" required="">
                                 <option selected="" disabled="" value="">
-                                    {{ __('general.{{ __('general.choose') }}') }}...</option>
+                                    {{ __('general.choose') }}...</option>
                                 <option value=1 {{ $data->isDo == 1 ? 'selected' : '' }}>
                                     {{ __('general.yes') }}</option>
                                 <option value=0 {{ $data->isDo == 0 && $data->isDo != null ? 'selected' : '' }}>
@@ -162,7 +162,7 @@
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Edit</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>
                     </div>
                 </form>
             </div>
