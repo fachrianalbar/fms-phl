@@ -133,7 +133,7 @@
                 <h4>Order Cost Data</h4>
             </div>
             <div class="card-body col-md-12">
-                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt-order">
+                <table class="table table-striped w-100 nowrap" id="dt-order">
                     <thead>
                         <tr>
                             <th>No</th>
@@ -157,7 +157,7 @@
                 <h4>Maintenance Data</h4>
             </div>
             <div class="card-body col-md-12">
-                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt-maintenance">
+                <table class="table table-striped w-100 nowrap" id="dt-maintenance">
                     <thead>
 
                         <tr>

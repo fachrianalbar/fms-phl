@@ -155,7 +155,7 @@
                 </div>
             </div>
             <div class="card-body col-md-12">
-                <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt-order">
+                <table class="table table-striped w-100 nowrap" id="dt-order">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -263,8 +263,7 @@
                         <div class="card">
                             <div class="card-body col-md-12">
                                 <div class="row g-3">
-                                    <table class="table table-bordered dt-responsive table-responsive nowrap"
-                                        id="dt">
+                                    <table class="table table-striped w-100 nowrap" id="dt">
                                         <thead>
                                             <tr>
                                                 <th>#</th>

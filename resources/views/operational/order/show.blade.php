@@ -160,7 +160,7 @@
                         <div class="tab-content" id="icon-tabContent">
                             @include('operational.order.components.cost-edit')
                         </div> --}}
-                        <table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
+                        <table class="table table-striped w-100 nowrap" id="dt">
                             <thead>
                                 <tr>
                                     <th>No</th>

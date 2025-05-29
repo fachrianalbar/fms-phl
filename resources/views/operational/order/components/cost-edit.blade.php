@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<table class="table table-bordered dt-responsive table-responsive nowrap" id="dt">
+<table class="table table-striped w-100 nowrap" id="dt">
     <thead>
         <tr>
             <th>#</th>
