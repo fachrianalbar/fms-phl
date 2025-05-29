@@ -31,7 +31,7 @@ class FleetBrandService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TFB')
+            'code' => GenerateCode::generateCode('FFB')
         ]);
 
         $this->logActivity($title, $data, 'Create');

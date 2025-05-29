@@ -33,8 +33,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="fleetTypeCode">Type <i
-                                    class="mdi mdi-information text-danger"></i></label>
+                            <label class="form-label" for="fleetTypeCode">Type </label>
                             <select class="form-select" name="fleetTypeCode" id="fleetTypeCode">
                                 <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)

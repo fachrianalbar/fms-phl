@@ -28,6 +28,7 @@ class Fleet extends Model
         'vehicleRegistrationNumber',
         'insurance',
         'fleetCompanyCode',
+        'vehicleRegistrationDueDate'
     ];
 
     public function brand()

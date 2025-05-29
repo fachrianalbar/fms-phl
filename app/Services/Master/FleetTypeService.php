@@ -31,7 +31,7 @@ class FleetTypeService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TFT')
+            'code' => GenerateCode::generateCode('FFT')
         ]);
 
         $this->logActivity($title, $data, 'Create');

@@ -73,7 +73,7 @@ class FleetController extends Controller
         $validator = Validator::make($request->all(), [
             // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
             // 'fleetBrandCode' => 'required',
-            'fleetTypeCode' => 'required',
+            // 'fleetTypeCode' => 'required',
             // 'frameNumber' => 'required',
             // 'engineNumber' => 'required'
         ]);
@@ -133,7 +133,7 @@ class FleetController extends Controller
         $validator = Validator::make($request->all(), [
             // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
             // 'fleetBrandCode' => 'required',
-            'fleetTypeCode' => 'required',
+            // 'fleetTypeCode' => 'required',
             // 'frameNumber' => 'required',
             // 'engineNumber' => 'required'
         ]);
@@ -186,11 +186,47 @@ class FleetController extends Controller
             $data = $this->service->findAll();
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->editColumn('company.name', function ($row) {
+                    $company = '';
+
+                    if (isset($row->company->name)) {
+                        $company = $row->company->name;
+                    }
+
+                    return $company;
+                })
+                ->editColumn('company.address', function ($row) {
+                    $company = '';
+
+                    if (isset($row->company->address)) {
+                        $company = $row->company->address;
+                    }
+
+                    return $company;
+                })
+                ->editColumn('brand.name', function ($row) {
+                    $brand = '';
+
+                    if (isset($row->brand->name)) {
+                        $brand = $row->brand->name;
+                    }
+
+                    return $brand;
+                })
                 ->editColumn('type.name', function ($row) {
                     $type = '';
 
                     if (isset($row->type->name)) {
                         $type = $row->type->name;
+                    }
+
+                    return $type;
+                })
+                ->editColumn('company.type', function ($row) {
+                    $type = '';
+
+                    if (isset($row->company->type)) {
+                        $type = $row->company->type;
                     }
 
                     return $type;
@@ -237,7 +273,7 @@ class FleetController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'barcode', 'insurance', 'type.name', 'vehicleRegistrationNumber'])
+                ->rawColumns(['action', 'barcode', 'insurance', 'type.name', 'brand.name', 'company.name', 'company.address', 'company.type',  'vehicleRegistrationNumber'])
                 ->toJson();
         }
     }

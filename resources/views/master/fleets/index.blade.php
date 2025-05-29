@@ -36,14 +36,15 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Plate Number</th>
-                                <th>Fleet Type</th>
-                                {{-- <th>Year</th> --}}
-                                {{-- <th>Brand</th> --}}
-                                {{-- <th>Type</th> --}}
-                                <th>Barcode</th>
-                                <th>Vehicle Registration</th>
-                                {{-- <th>Insurance</th> --}}
+                                <th>{{ __('menu_fleet.plate_number') }}</th>
+                                <th>{{ __('menu_fleet.vehicle_registration_due_date') }}</th>
+                                <th>{{ __('menu_fleet.company') }}</th>
+                                <th>{{ __('menu_fleet.company_type') }}</th>
+                                <th>{{ __('menu_fleet.address') }}</th>
+                                <th>{{ __('menu_fleet.brand') }}</th>
+                                <th>{{ __('menu_fleet.type') }}</th>
+                                <th>{{ __('menu_fleet.frame_number') }}</th>
+                                <th>{{ __('menu_fleet.engine_number') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -120,21 +121,46 @@
                     {
                         "data": 'plateNumber'
                     },
+                    {
+                        "data": 'vehicleRegistrationDueDate'
+                    },
+                    {
+                        "data": 'company.name'
+                    },
+                    {
+                        "data": 'company.type'
+                    },
+                    {
+                        "data": 'company.address'
+                    },
+                    {
+                        "data": 'brand.name'
+                    },
+                    {
+                        "data": 'type.name'
+                    },
+                    {
+                        "data": 'frameNumber'
+                    },
+                    {
+                        "data": 'engineNumber'
+                    }
+
                     // {
                     //     "data": 'year'
                     // },
                     // {
                     //     "data": 'brand.name'
                     // },
-                    {
-                        "data": 'type.name'
-                    },
-                    {
-                        "data": 'barcode'
-                    },
-                    {
-                        "data": 'vehicleRegistrationNumber'
-                    },
+                    // {
+                    //     "data": 'type.name'
+                    // },
+                    // {
+                    //     "data": 'barcode'
+                    // },
+                    // {
+                    //     "data": 'vehicleRegistrationNumber'
+                    // },
                     // {
                     //     "data": 'insurance'
                     // }
@@ -142,11 +168,11 @@
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 1, 4, 5]
+                        "targets": [0]
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 1, 4, 5]
+                        "targets": [0]
                     }
                 ],
                 "order": [
