@@ -109,7 +109,7 @@
             </div> <!-- content -->
 
             <!-- Footer Start -->
-            <footer class="footer">
+            {{-- <footer class="footer">
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col fs-13 text-muted text-center">
@@ -121,7 +121,7 @@
                         </div>
                     </div>
                 </div>
-            </footer>
+            </footer> --}}
             <!-- end Footer -->
 
         </div>
@@ -141,12 +141,19 @@
     <script src="{{ asset('assets/libs/jquery.counterup/jquery.counterup.min.js') }}"></script>
     <script src="{{ asset('assets/libs/feather-icons/feather.min.js') }}"></script>
 
+
+
     @stack('script')
 
 
 
 
     <!-- App js -->
+    <script>
+        $.extend(true, $.fn.dataTable.defaults, {
+            pageLength: 25
+        });
+    </script>
     <script src="{{ asset('assets/js/app.js') }}"></script>
     <script src="{{ asset('assets/js/sweet-alert/confirm.js') }}"></script>
 
