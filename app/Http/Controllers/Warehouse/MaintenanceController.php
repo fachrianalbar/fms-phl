@@ -238,7 +238,7 @@ class MaintenanceController extends Controller
                     $time = Carbon::parse($row->time)->format('H:i');
                     return $date . ' ' . $time;
                 })
-                ->editColumn('fleet.name', function ($row) {
+                ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
 
                     if (isset($row->fleet->plateNumber)) {

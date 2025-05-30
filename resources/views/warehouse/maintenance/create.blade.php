@@ -90,14 +90,14 @@
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
-                    <table lass="table table-bordered dt-responsive table-responsive nowrap" id="dt">
+                    <table class="table table-sm" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Code</th>
-                                <th class="text-center">Item/Part</th>
-                                <th style="width: 10%">Qty Existing</th>
-                                <th style="width: 10%">Qty</th>
+                                <th>Item/Part</th>
+                                {{-- <th>Item/Part</th> --}}
+                                <th>Qty Existing</th>
+                                <th>Qty</th>
                             </tr>
                         </thead>
                         <tbody id="purchaseDetails">
@@ -116,18 +116,18 @@
                                         @endforeach
                                     </select>
                                 </td>
-                                <td>
+                                {{-- <td>
                                     <div class="mx-5">
                                         <input class="form-control" type="text" id="itemName_1" required readonly>
                                     </div>
+                                </td> --}}
+                                <td>
+                                    <input class="form-control" type="number" name="qty_exist[]" id="qty_exist_1" readonly
+                                        value="0">
                                 </td>
                                 <td>
-                                    <input class="form-control w-50 " type="number" name="qty_exist[]" id="qty_exist_1"
-                                        readonly value="0">
-                                </td>
-                                <td>
-                                    <input class="form-control w-75" type="number" name="qty[]" id="qty_1"
-                                        required min="1" value="1">
+                                    <input class="form-control" type="number" name="qty[]" id="qty_1" required
+                                        min="1" value="1">
                                 </td>
                             </tr>
                         </tbody>
@@ -268,15 +268,10 @@
                                 </select>
                             </td>
                             <td>
-                                <div class="mx-5">
-                                    <input class="form-control" type="text" id="itemName_${row}" required readonly>
-                                </div>
+                                <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control w-50" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
-                            </td>
-                            <td>
-                                <input class="form-control w-75" type="number" name="qty[]" id="qty_${row}" required value="1">
+                                <input class="form-control" type="number" name="qty[]" id="qty_${row}" required value="1">
                             </td>
                           </tr>`;
             $('#purchaseDetails').append(newRow);
