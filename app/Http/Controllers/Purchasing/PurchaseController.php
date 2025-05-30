@@ -158,7 +158,7 @@ class PurchaseController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'code' => 'required',
+            // 'code' => 'required',
             'supplierCode' => 'required',
             'date' => 'required',
             'time' => 'required',

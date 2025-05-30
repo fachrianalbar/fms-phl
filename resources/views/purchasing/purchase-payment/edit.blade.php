@@ -154,9 +154,8 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Code</th>
-                            <th class="text-center">Item/Part</th>
-                            <th style="width: 10%">Qty</th>
+                            <th>Item/Part</th>
+                            <th>Qty</th>
                             <th>{{ __('menu_purchase.prices') }}</th>
                             <th>{{ __('menu_purchase.total_prices') }}</th>
                         </tr>
@@ -186,24 +185,17 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <div class="mx-5">
-                                        <input class="form-control" type="text" id="itemName_{{ $loop->iteration }}"
-                                            required readonly value="{{ $item->item->name }}">
-                                    </div>
-                                </td>
-
-                                <td>
-                                    <input class="form-control w-50 " type="number" min="0" name="qty[]"
+                                    <input class="form-control" type="number" min="0" name="qty[]"
                                         id="qty_{{ $loop->iteration }}" value="{{ $item->receivedQty }}">
                                 </td>
                                 <td>
-                                    <input class="form-control w-75" type="text" name="price[]"
+                                    <input class="form-control" type="text" name="price[]"
                                         id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" readonly required
                                         value="{{ number_format($item->price, 0, ',', '.') }}">
                                 </td>
                                 <td>
-                                    <input class="form-control w-75" type="text"
-                                        id="totalPrice_{{ $loop->iteration }}" readonly
+                                    <input class="form-control" type="text" id="totalPrice_{{ $loop->iteration }}"
+                                        readonly
                                         value="{{ number_format($item->price * $item->receivedQty, 0, ',', '.') }}">
                                 </td>
                             </tr>

@@ -92,9 +92,8 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Code</th>
-                                <th class="text-center">Item/Part</th>
-                                <th style="width: 10%">Qty</th>
+                                <th>Item/Part</th>
+                                <th>Qty</th>
                                 <th>{{ __('menu_maintenance.prices') }}</th>
                                 <th>{{ __('menu_maintenance.total_prices') }}</th>
                             </tr>
@@ -116,22 +115,16 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <div class="mx-5">
-                                        <input class="form-control" type="text" id="itemName_1" required readonly>
-
-                                    </div>
+                                    <input class="form-control" type="number" min="1" name="qty[]" id="qty_1"
+                                        value="1" onchange="updateTotalPrice(1)">
                                 </td>
                                 <td>
-                                    <input class="form-control w-50 " type="number" min="1" name="qty[]"
-                                        id="qty_1" value="1" onchange="updateTotalPrice(1)">
-                                </td>
-                                <td>
-                                    <input class="form-control w-75" type="text" id="price_1"
+                                    <input class="form-control" type="text" id="price_1"
                                         oninput="formatAngka(this)" onchange="updateTotalPrice(1)" name="price[]"
                                         required value="0">
                                 </td>
                                 <td>
-                                    <input class="form-control w-75" type="text" id="totalPrice_1" readonly
+                                    <input class="form-control" type="text" id="totalPrice_1" readonly
                                         value="0">
                                 </td>
                             </tr>
@@ -314,19 +307,13 @@
                              </select>
                          </td>
                          <td>
-                              <div class="mx-5">
-                                  <input class="form-control" type="text" id="itemName_${row}" required readonly>
-                             </div>
-
+                             <input class="form-control" type="number" min="1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
                          </td>
                          <td>
-                             <input class="form-control w-50" type="number" min="1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
+                             <input class="form-control" type="text" id="price_${row}" name="price[]" min="1" onchange="updateTotalPrice(${row})" oninput="formatAngka(this)" required value="0">
                          </td>
                          <td>
-                             <input class="form-control w-75" type="text" id="price_${row}" name="price[]" min="1" onchange="updateTotalPrice(${row})" oninput="formatAngka(this)" required value="0">
-                         </td>
-                         <td>
-                             <input class="form-control w-75" type="text" id="totalPrice_${row}" readonly value="0">
+                             <input class="form-control" type="text" id="totalPrice_${row}" readonly value="0">
                          </td>
                        </tr>`;
 

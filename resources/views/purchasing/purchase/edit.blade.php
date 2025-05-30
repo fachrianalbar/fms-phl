@@ -46,8 +46,8 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="code">Code <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
-                                <input class="form-control" name="code" type="text" required placeholder="Code"
-                                    value="{{ $data->code }}">
+                                <input class="form-control" name="code" type="text" readonly disabled
+                                    placeholder="Code" value="{{ $data->code }}">
                             </div>
                         </div>
 
@@ -99,9 +99,8 @@
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Code</th>
-                                <th class="text-center">Item/Part</th>
-                                <th style="width: 10%">Qty</th>
+                                <th>Item/Part</th>
+                                <th>Qty</th>
                                 <th>{{ __('menu_purchase.prices') }}</th>
                                 <th>{{ __('menu_purchase.total_prices') }}</th>
                             </tr>
@@ -135,27 +134,20 @@
                                             @endforeach
                                         </select>
                                     </td>
-                                    <td>
-                                        <div class="mx-5">
-                                            <input class="form-control" type="text"
-                                                id="itemName_{{ $loop->iteration }}" required readonly
-                                                value="{{ $item->item->name }}">
-                                        </div>
-                                    </td>
 
                                     <td>
-                                        <input class="form-control w-50 " type="number" min="0" name="qty[]"
+                                        <input class="form-control" type="number" min="0" name="qty[]"
                                             id="qty_{{ $loop->iteration }}" value="{{ $item->qty }}"
                                             onchange="updateTotalPrice({{ $loop->iteration }})">
                                     </td>
                                     <td>
-                                        <input class="form-control w-75" type="text" name="price[]"
+                                        <input class="form-control" type="text" name="price[]"
                                             id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" required
                                             value="{{ number_format($item->price, 0, ',', '.') }}"
                                             onchange="updateTotalPrice({{ $loop->iteration }})">
                                     </td>
                                     <td>
-                                        <input class="form-control w-75" type="text"
+                                        <input class="form-control" type="text"
                                             id="totalPrice_{{ $loop->iteration }}" readonly
                                             value="{{ number_format($item->price * $item->qty, 0, ',', '.') }}">
                                     </td>
@@ -373,18 +365,13 @@
                                 </select>
                             </td>
                             <td>
-                                <div class="mx-5">
-                                    <input class="form-control" type="text" id="itemName_${row}" required readonly>
-                                </div>
+                                <input class="form-control" type="number" min="1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
                             </td>
                             <td>
-                                <input class="form-control w-50" type="number" min="1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
+                                <input class="form-control" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this)" value="0">
                             </td>
                             <td>
-                                <input class="form-control w-75" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this)" value="0">
-                            </td>
-                            <td>
-                                <input class="form-control w-75" type="text" id="totalPrice_${row}" readonly value="0">
+                                <input class="form-control" type="text" id="totalPrice_${row}" readonly value="0">
                             </td>
                           </tr>`;
             $('#purchaseDetails').append(newRow);

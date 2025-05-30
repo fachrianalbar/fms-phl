@@ -106,7 +106,7 @@ class PurchaseService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
-            'code' => $request->code,
+            // 'code' => $request->code,
             'supplierCode' => $request->supplierCode,
             'date' => $request->date,
             'time' => $request->time,
