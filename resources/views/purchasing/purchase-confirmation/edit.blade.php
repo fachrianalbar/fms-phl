@@ -115,7 +115,7 @@
                 </div>
                 <div class="card-body col-md-12">
                     @include('partials.alert')
-                    <table class="table table-striped w-100 nowrap" id="dt">
+                    <table class="table table-sm" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
