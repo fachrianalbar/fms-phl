@@ -3,6 +3,7 @@
 namespace App\Models\Inventory;
 
 use App\Models\Master\Unit;
+use App\Models\Purchasing\PurchaseDetail;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,5 +51,10 @@ class Item extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplierCode', 'code');
+    }
+
+    public function latestPurchase()
+    {
+        return $this->hasOne(PurchaseDetail::class, 'itemCode', 'code')->latest();
     }
 }

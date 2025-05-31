@@ -84,7 +84,8 @@
                                 <label class="form-label" for="name">{{ __('menu_purchase.received_date') }}<i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="receivedDate" id="datetime-local" type="date"
-                                    value="{{ $data->receivedDate }}" required placeholder="Received Date">
+                                    value="{{ $data->receivedDate }}" required
+                                    placeholder="{{ __('menu_purchase.received_date') }}">
                             </div>
                         </div>
 

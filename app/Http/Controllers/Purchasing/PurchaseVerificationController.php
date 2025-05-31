@@ -83,7 +83,10 @@ class PurchaseVerificationController extends Controller
 
     public function update(Request $request, string $id)
     {
+        $data = $this->service->getById($id);
+
         $validator = Validator::make($request->all(), [
+            'verifDate' => ['required', 'date', 'after_or_equal:' . $data->date],
             'qty' => ['required', 'array', function ($attribute, $value, $fail) {
                 foreach ($value as $price) {
                     if ($price == 0 || $price == null) {

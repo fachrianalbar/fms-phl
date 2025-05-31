@@ -58,8 +58,7 @@ class PurchaseController extends Controller
     public function create()
     {
         $supplier = $this->supplierSvc->findAll();
-        $items = Item::OrderBy('name', 'asc')->get();
-
+        $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view . 'create')
             ->with('view', $this->view)
@@ -254,6 +253,14 @@ class PurchaseController extends Controller
 
                     return $receivedDate;
                 })
+                ->editColumn('verifDate', function ($row) {
+                    $verifDate = '';
+                    if ($row->verifDate) {
+                        $verifDate =   Carbon::parse($row->verifDate)->format('d-M-Y');
+                    }
+
+                    return $verifDate;
+                })
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
                     if ($row->paymentDate) {
@@ -352,7 +359,7 @@ class PurchaseController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['purchaseDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'purchaseStatus.name', 'paymentDate', 'action'])
+                ->rawColumns(['purchaseDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'purchaseStatus.name', 'paymentDate', 'verifDate', 'action'])
                 ->toJson();
         }
     }

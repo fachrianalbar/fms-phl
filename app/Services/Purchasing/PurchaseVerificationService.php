@@ -52,7 +52,8 @@ class PurchaseVerificationService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
-            'status' => 1
+            'status' => 1,
+            'verifDate' => $request->verifDate
         ]);
 
         if (isset($request->itemCode)) {

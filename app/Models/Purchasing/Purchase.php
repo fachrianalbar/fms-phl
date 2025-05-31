@@ -2,10 +2,10 @@
 
 namespace App\Models\Purchasing;
 
+use App\Models\Bank\UserBank;
 use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
 use App\Models\Master\ConfigBank;
-use App\Models\Master\UserBank;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,7 +31,8 @@ class Purchase extends Model
         'paymentDate',
         'nominal',
         'paymentCode',
-        'userBankCode'
+        'userBankCode',
+        'verifDate'
     ];
 
     public function supplier()

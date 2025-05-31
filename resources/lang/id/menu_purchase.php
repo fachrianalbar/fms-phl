@@ -20,5 +20,6 @@ return [
     'saved_data' => 'Simpan Data',
     'payment_date' => 'Tanggal Pembayaran',
     'description' => 'Deskripsi',
-    'verify_data' => 'Verifikasi Data'
+    'verify_data' => 'Verifikasi Data',
+    'verification_date' => 'Tanggal Verifikasi'
 ];

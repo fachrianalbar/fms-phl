@@ -95,6 +95,16 @@
                             </div>
                         </div> --}}
 
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <label class="form-label" for="name">{{ __('menu_purchase.verification_date') }}<i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="verifDate" id="datetime-local" type="date"
+                                    value="{{ $data->receivedDate }}" required
+                                    placeholder="{{ __('menu_purchase.verification_date') }}">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

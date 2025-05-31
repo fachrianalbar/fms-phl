@@ -19,7 +19,6 @@
         href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
 
     <style>
@@ -108,7 +107,7 @@
                                         </option>
                                         @foreach ($items as $it)
                                             <option value="{{ $it->code }}" data-name="{{ $it->name }}"
-                                                data-price="{{ $it->price }}">
+                                                data-price="{{ $it->latestPurchase->price ?? 0 }}">
                                                 {{ $it->code . ' - ' . $it->name }}
                                             </option>
                                         @endforeach
@@ -119,9 +118,8 @@
                                         value="1" onchange="updateTotalPrice(1)">
                                 </td>
                                 <td>
-                                    <input class="form-control" type="text" id="price_1"
-                                        oninput="formatAngka(this)" onchange="updateTotalPrice(1)" name="price[]"
-                                        required value="0">
+                                    <input class="form-control" type="text" id="price_1" oninput="formatAngka(this)"
+                                        onchange="updateTotalPrice(1)" name="price[]" required value="0">
                                 </td>
                                 <td>
                                     <input class="form-control" type="text" id="totalPrice_1" readonly
@@ -165,8 +163,6 @@
     <!-- dataTables.select -->
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
-    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
-    <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
     <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
@@ -188,7 +184,6 @@
             $('#itemCode_1').html(html);
 
             $.get("{{ url('ajax/item-by-supplier') }}/" + supplierCode, function(data) {
-                dataItem = data;
                 data.forEach(i => {
                     html +=
                         `<option value="${i.code}" data-name="${i.name}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
