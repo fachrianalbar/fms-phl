@@ -45,7 +45,12 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="code">Code <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
-                                <input class="form-control" name="code" type="text" required placeholder="Code">
+                                <!-- Input terlihat (tidak bisa diubah user) -->
+                                <input class="form-control" type="text" placeholder="Code" id="code_display" readonly
+                                    disabled>
+
+                                <!-- Input tersembunyi yang dikirim saat submit -->
+                                <input type="hidden" name="code" id="code_hidden">
                             </div>
                         </div>
 
@@ -170,6 +175,7 @@
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
+    <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
 
     <script>
@@ -180,6 +186,13 @@
 
             dataItem = @json($stock)
 
+            generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
+
+
+        });
+
+        $('input[name="date"]').on('change', function() {
+            generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
         });
 
         // Load item details (name, price)
@@ -217,7 +230,8 @@
                 let qtyInput = parseInt($(this).find('input[name="qty[]"]').val());
                 let qtyExisting = parseInt($(this).find('input[name="qty_exist[]"]').val());
                 let code = $(this).find('select[name="itemCode[]"]').val();
-                let itemName = $(this).find('input[id^="itemName_"]').val(); // Get the item name
+                let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
+                // Get the item name
 
                 if (qtyInput > qtyExisting) {
                     isValid = false;

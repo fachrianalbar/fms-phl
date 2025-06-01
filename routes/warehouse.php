@@ -12,3 +12,7 @@ Route::prefix('warehouse')->name('warehouse.')->group(function () {
 Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('maintenance', [MaintenanceController::class, 'datatable'])->name('maintenance');
 });
+
+Route::prefix('ajax')->name('ajax.')->group(function () {
+    Route::get('maintenance-generate-code', [MaintenanceController::class, 'generateCode'])->name('maintenance-generate-code');
+});

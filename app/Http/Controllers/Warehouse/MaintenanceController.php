@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Warehouse;
 
 use App\Helpers\FilterHelper;
+use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\Inventory\Stock;
@@ -139,7 +140,7 @@ class MaintenanceController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'code' => 'required',
+            // 'code' => 'required',
             'fleetCode' => 'required',
             'date' => 'required',
             'time' => 'required',
@@ -327,5 +328,19 @@ class MaintenanceController extends Controller
         );
 
         return $mpdf->Output('Laporan Maintenance.pdf', 'I');
+    }
+
+    public function generateCode(Request $request)
+    {
+        $date = $request->date;
+
+        $code = GenerateCode::generateCodeAscDate(
+            'MNT',
+            Maintenance::class,
+            'date',
+            $date,
+        );
+
+        return response()->json(['code' => $code]);
     }
 }

@@ -142,7 +142,7 @@ class MaintenanceService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
-            'code' => $request->code,
+            // 'code' => $request->code,
             'date' => $request->date,
             'time' => $request->time,
             'fleetCode' => $request->fleetCode

@@ -44,7 +44,12 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="code">Code <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
-                                <input class="form-control" name="code" type="text" required placeholder="Code">
+                                <!-- Input terlihat (tidak bisa diubah user) -->
+                                <input class="form-control" type="text" placeholder="Code" id="code_display" readonly
+                                    disabled>
+
+                                <!-- Input tersembunyi yang dikirim saat submit -->
+                                <input type="hidden" name="code" id="code_hidden">
                             </div>
                         </div>
 
@@ -118,8 +123,9 @@
                                         value="1" onchange="updateTotalPrice(1)">
                                 </td>
                                 <td>
-                                    <input class="form-control" type="text" id="price_1" oninput="formatAngka(this)"
-                                        onchange="updateTotalPrice(1)" name="price[]" required value="0">
+                                    <input class="form-control" type="text" id="price_1"
+                                        oninput="formatAngka(this)" onchange="updateTotalPrice(1)" name="price[]"
+                                        required value="0">
                                 </td>
                                 <td>
                                     <input class="form-control" type="text" id="totalPrice_1" readonly
@@ -176,7 +182,13 @@
         $(document).ready(function() {
             $('#dt').DataTable();
 
+            generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/purchase-generate-code');
         });
+
+        $('input[name="date"]').on('change', function() {
+            generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/purchase-generate-code');
+        });
+
 
         // Load items based on supplier
         function itemBySupplier(supplierCode) {
@@ -220,8 +232,7 @@
             // Loop through each row to validate quantities
             $('#purchaseDetails tr').each(function() {
                 let code = $(this).find('select[name="itemCode[]"]').val();
-                let itemName = $(this).find('input[id^="itemName_"]').val(); // Get the item name
-
+                let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
 
                 // Check for duplicate codes
                 if (codes.includes(code)) {

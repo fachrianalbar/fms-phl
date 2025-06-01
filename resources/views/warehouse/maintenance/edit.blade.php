@@ -48,7 +48,7 @@
                                 <label class="form-label" for="code">Code <i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="code" type="text" value="{{ $data->code }}"
-                                    required placeholder="Code">
+                                    required placeholder="Code" readonly disabled>
                             </div>
                         </div>
 
@@ -263,7 +263,7 @@
                 let originalQty = parseInt($(this).find('input[name="original_qty[]"]').val()) || 0;
 
                 let code = $(this).find('select[name="itemCode[]"]').val();
-                // let itemName = $(this).find('input[id^="itemName_"]').val(); // Get the item name
+                let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
 
                 let totalAvailable = qtyExisting + originalQty;
 

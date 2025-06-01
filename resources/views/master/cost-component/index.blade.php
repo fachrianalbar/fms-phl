@@ -37,7 +37,7 @@
                                 <th>#</th>
                                 <th>No</th>
                                 <th>Name</th>
-                                <th>Type</th>
+                                {{-- <th>Type</th> --}}
                             </tr>
                         </thead>
                         <tbody>
@@ -93,10 +93,6 @@
                     {
                         "data": 'name'
                     },
-                    {
-                        "data": 'type'
-                    },
-
                 ],
                 "columnDefs": [{
                         "searchable": false,

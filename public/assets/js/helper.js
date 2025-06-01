@@ -31,3 +31,24 @@ function submitForm(id) {
     // Setelah itu form bisa dikirim
     return true; // Return true untuk melanjutkan submit form
 }
+
+function generateCode(
+    dateInputSelector,
+    displaySelector,
+    hiddenSelector,
+    ajaxUrl
+) {
+    let selectedDate = $(dateInputSelector).val();
+
+    $.ajax({
+        url: ajaxUrl,
+        method: "GET",
+        data: {
+            date: selectedDate,
+        },
+        success: function (response) {
+            $(displaySelector).val(response.code);
+            $(hiddenSelector).val(response.code);
+        },
+    });
+}

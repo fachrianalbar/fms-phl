@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
+use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
+use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Services\Inventory\SupplierService;
@@ -367,5 +369,19 @@ class PurchaseController extends Controller
     public function itemBySupplier($supplierCode)
     {
         return Item::where('supplierCode', $supplierCode)->get();
+    }
+
+    public function generateCode(Request $request)
+    {
+        $date = $request->date;
+
+        $code = GenerateCode::generateCodeAscDate(
+            'PO',
+            Purchase::class,
+            'date',
+            $date,
+        );
+
+        return response()->json(['code' => $code]);
     }
 }

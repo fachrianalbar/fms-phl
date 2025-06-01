@@ -29,7 +29,7 @@
                             placeholder="Name">
                     </div>
 
-                    <div class="col-md-12 position-relative">
+                    {{-- <div class="col-md-12 position-relative">
                         <label class="form-label" for="type">Type</label>
                         <select class="js-example-basic-single" name="type" id="type" required="">
                             <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -38,7 +38,7 @@
                             @endforeach
                         </select>
                         <div class="invalid-tooltip">Please select a valid state.</div>
-                    </div>
+                    </div> --}}
 
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">Add</button>

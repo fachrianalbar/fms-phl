@@ -250,7 +250,7 @@
             // Loop through each row to validate quantities
             $('#purchaseDetails tr').each(function() {
                 let code = $(this).find('select[name="itemCode[]"]').val();
-                let itemName = $(this).find('input[id^="itemName_"]').val(); // Get the item name
+                let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
 
 
                 // Check for duplicate codes

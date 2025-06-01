@@ -26,4 +26,5 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('item-by-supplier/{supplierCode}', [PurchaseController::class, 'itemBySupplier'])->name('item-by-supplier');
     Route::get('purchase-detail/{id}', [PurchaseConfirmationController::class, 'purchaseDetail'])->name('purchase-detail');
+    Route::get('purchase-generate-code', [PurchaseController::class, 'generateCode'])->name('purchase-generate-code');
 });

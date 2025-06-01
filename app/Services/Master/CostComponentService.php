@@ -31,7 +31,7 @@ class CostComponentService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'type' => $request->type,
+            // 'type' => $request->type,
             'code' => GenerateCode::generateCode('TCC')
         ]);
 
@@ -44,7 +44,7 @@ class CostComponentService
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,
-            'type' => $request->type,
+            // 'type' => $request->type,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
