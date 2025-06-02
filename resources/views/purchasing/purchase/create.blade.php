@@ -92,14 +92,14 @@
                     <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
                 </div>
                 <div class="card-body col-md-12">
-                    <table class="table table-sm" id="dt">
+                    <table class="table table-sm" id="dt" style="width: 100%">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>Item/Part</th>
-                                <th>Qty</th>
-                                <th>{{ __('menu_maintenance.prices') }}</th>
-                                <th>{{ __('menu_maintenance.total_prices') }}</th>
+                                <th style="width: 5%">#</th>
+                                <th style="width: 50%">Item/Part</th>
+                                <th style="width: 10%">Qty</th>
+                                <th style="width: 15%">{{ __('menu_maintenance.prices') }}</th>
+                                <th style="width: 20%">{{ __('menu_maintenance.total_prices') }}</th>
                             </tr>
                         </thead>
                         <tbody id="purchaseDetails">
@@ -119,8 +119,8 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input class="form-control" type="number" min="1" name="qty[]" id="qty_1"
-                                        value="1" onchange="updateTotalPrice(1)">
+                                    <input class="form-control" type="number" min="1" name="qty[]"
+                                        id="qty_1" value="1" onchange="updateTotalPrice(1)">
                                 </td>
                                 <td>
                                     <input class="form-control" type="text" id="price_1"

@@ -56,6 +56,13 @@ class OrderService
         return $this->service->where('id', $id)->first();
     }
 
+    public function finishOrder($id)
+    {
+        $this->service->where('id', $id)->update([
+            'status' => 3
+        ]);
+    }
+
 
     public function store($request, $title)
     {

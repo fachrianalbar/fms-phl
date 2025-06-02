@@ -16,5 +16,6 @@ class OrderStatus extends Model
     protected $fillable = [
         'code',
         'name',
+        'nama'
     ];
 }

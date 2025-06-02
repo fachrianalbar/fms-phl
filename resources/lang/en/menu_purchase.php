@@ -21,5 +21,5 @@ return [
     'payment_date' => 'Payment Date',
     'description' => 'Description',
     'verify_data' => 'Verify Data',
-    'verification_date' => 'Verification Date'
+    'purchase_due_date' => 'Purchase Payment Due Date'
 ];

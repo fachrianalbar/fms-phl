@@ -30,6 +30,8 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+
 
 class OrderController extends Controller
 {
@@ -411,6 +413,16 @@ class OrderController extends Controller
                     return $material;
                 })
 
+                ->editColumn('status', function ($row) {
+                    $status = '';
+
+                    if (isset($row->orderStatus->name)) {
+                        $status = Auth::user()->languange == 'id' ? $row->orderStatus->nama : $row->orderStatus->name;
+                    }
+
+                    return $status;
+                })
+
                 ->editColumn('route.destinationLocation.name', function ($row) {
                     $destination = '';
 
@@ -481,6 +493,7 @@ class OrderController extends Controller
                 ->addColumn('action', function ($row) {
 
                     $note = '';
+                    $finishOrder = '';
 
 
 
@@ -489,6 +502,14 @@ class OrderController extends Controller
                                 class="btn btn-icon btn-sm bg-info-subtle me-1"
                                 data-bs-toggle="tooltip" title="Note">
                                     <i class="mdi mdi-text-box fs-14 text-info"></i>
+                                </a>';
+                    }
+
+                    if ($row->status == 0) {
+                        $finishOrder =  '<a href="javascript:finishOrder(\'' . $row->id . '\')"
+                                class="btn btn-icon btn-sm bg-success-subtle me-1"
+                                data-bs-toggle="tooltip" title="Finish Order">
+                                    <i class="mdi mdi-check-bold fs-14 text-success"></i>
                                 </a>';
                     }
                     $btn = '<td>
@@ -508,7 +529,8 @@ class OrderController extends Controller
                         data-bs-toggle="tooltip" title="Delete">
                             <i class="mdi mdi-delete fs-14 text-danger"></i>
                         </a>
-                        ' . $note . '                                   
+                        ' . $note . '    
+                        ' . $finishOrder . '                                   
                     </td>';
 
                     return $btn;
@@ -516,9 +538,22 @@ class OrderController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
-                ->rawColumns(['action', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'addCost', 'totalPrice'])
+                ->rawColumns(['action', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'addCost', 'totalPrice'])
                 ->toJson();
         }
+    }
+
+    public function finishOrder(string $id)
+    {
+        $data = $this->service->getById($id);
+
+        if (!$data) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        }
+
+        $this->service->finishOrder($id);
+
+        return redirect()->route($this->view . 'index')->with('success',  __('menu_order.finish_order_was_successfull'));
     }
 
     public function checkNullRelations()
@@ -583,6 +618,7 @@ class OrderController extends Controller
     {
         return Excel::download(new OrderReport($request), 'Order-Report.xlsx');
     }
+
 
     public function deleteCost($id)
     {

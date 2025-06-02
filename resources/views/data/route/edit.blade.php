@@ -24,6 +24,7 @@
 
 @section('content')
     <div class="col-sm-12">
+        @include('partials.alert')
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} {{ __('general.edit_data') }}</h4>

@@ -48,6 +48,8 @@ class RouteService
             );
             $this->logActivity($title, $data, 'Create');
         }
+
+        return $data;
     }
 
     public function update($request, $id, $title)

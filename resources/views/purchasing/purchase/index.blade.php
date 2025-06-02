@@ -99,7 +99,7 @@
                                 <th>No</th>
                                 <th>Code</th>
                                 <th>{{ __('menu_purchase.purchase_date') }}</th>
-                                <th>{{ __('menu_purchase.verification_date') }}</th>
+                                <th>{{ __('menu_purchase.purchase_due_date') }}</th>
                                 <th>{{ __('menu_purchase.received_date') }}</th>
                                 <th>{{ __('menu_purchase.supplier_name') }}</th>
                                 <th>{{ __('menu_purchase.warehouse') }}</th>
@@ -173,7 +173,7 @@
                         "data": 'purchaseDate'
                     },
                     {
-                        "data": 'verifDate'
+                        "data": 'dueDate'
                     },
                     {
                         "data": 'receivedDate'

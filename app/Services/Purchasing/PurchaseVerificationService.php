@@ -53,7 +53,7 @@ class PurchaseVerificationService
 
         $this->service->where('id', $id)->update([
             'status' => 1,
-            'verifDate' => $request->verifDate
+            'dueDate' => $request->dueDate
         ]);
 
         if (isset($request->itemCode)) {

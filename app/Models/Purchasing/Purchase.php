@@ -32,7 +32,7 @@ class Purchase extends Model
         'nominal',
         'paymentCode',
         'userBankCode',
-        'verifDate'
+        'dueDate'
     ];
 
     public function supplier()

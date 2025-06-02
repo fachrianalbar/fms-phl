@@ -171,6 +171,7 @@
                                 <th>Customer Name</th>
                                 <th>Destination</th>
                                 <th>Qty</th>
+                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -226,6 +227,11 @@
     <form id="delete-form" method="post">
         @csrf
         @method('DELETE')
+    </form>
+
+    <form id="finish-order" method="post">
+        @csrf
+        @method('PUT')
     </form>
 @endsection
 
@@ -303,6 +309,9 @@
                     {
                         "data": 'qty'
                     },
+                    {
+                        "data": 'status'
+                    }
 
 
                 ],
@@ -390,6 +399,26 @@
             });
 
         });
+
+        function finishOrder(id) {
+            var url = '{{ route('operational.finish-order', ':id') }}';
+            url = url.replace(':id', id);
+            $('#finish-order').attr('action', url);
+
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "{{ __('menu_order.want_to_finish_this_order') }}",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $('#finish-order').submit();
+                } else {
+                    swal("{{ __('general.your_data_is_save') }}");
+                }
+            });
+        }
 
         function showModal(id) {
             let url = '{{ route('operational.order.show', ':id') }}'

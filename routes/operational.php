@@ -19,7 +19,9 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('not-return-do', NotReturnDoController::class);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::post('cancel-do', [ReturnDoController::class, 'cancelDo'])->name('return-do.cancel-do');
-    Route::put('finish-order/{id}', [OrderMonitoringController::class, 'finishOrder'])->name('finish-order');
+    Route::put('finish-order/{id}', [OrderController::class, 'finishOrder'])->name('finish-order');
+
+    // Route::put('finish-order/{id}', [OrderMonitoringController::class, 'finishOrder'])->name('finish-order');
     Route::get('pdf-down-payment/{id}', [DownPaymentController::class, 'pdfDownPayment'])->name('down-payment.pdf-down-payment');
     Route::resource('bon-ujt', BonUjtController::class);
     Route::put('bon-ujt-detail/{id}', [BonUjtController::class, 'storeBonUjtDetail'])->name('bon-ujt-detail.store');

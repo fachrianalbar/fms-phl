@@ -255,13 +255,13 @@ class PurchaseController extends Controller
 
                     return $receivedDate;
                 })
-                ->editColumn('verifDate', function ($row) {
-                    $verifDate = '';
-                    if ($row->verifDate) {
-                        $verifDate =   Carbon::parse($row->verifDate)->format('d-M-Y');
+                ->editColumn('dueDate', function ($row) {
+                    $dueDate = '';
+                    if ($row->dueDate) {
+                        $dueDate =   Carbon::parse($row->dueDate)->format('d-M-Y');
                     }
 
-                    return $verifDate;
+                    return $dueDate;
                 })
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
