@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderCost extends Model
 {
-    use HasFactory, SoftDeletes, Uuid;
+    use HasFactory, Uuid;
 
     protected $table = 'order_cost';
     public $incrementing = false;
@@ -20,7 +20,6 @@ class OrderCost extends Model
         'componentType',
         'orderCode',
         'nominal',
-        'type',
         'description'
     ];
 

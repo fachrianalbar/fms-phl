@@ -47,7 +47,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Order Code <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <input type="hidden" name="code" value="{{ $data->code }}">
                                     <input class="form-control" type="text" required readonly disabled
                                         value="TO{{ now()->format('ymdHis') }}">
@@ -55,7 +55,7 @@
 
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="fleetCode">Fleet<i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
 
                                     <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
                                         <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -72,14 +72,14 @@
                             <div class="row mt-4">
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Order Date <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <input class="form-control" name="orderDate" id="datetime-local" type="date" required
                                         placeholder="Order Date" value="{{ $data->orderDate }}">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label" for="shipmentNumber">Shipment No <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
                                         required placeholder="Shipment No" value="{{ $data->shipmentNumber }}">
                                 </div>
@@ -89,7 +89,7 @@
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="driverCode">Driver <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="driverCode" id="driverCode"
                                         required="">
                                         <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -113,7 +113,7 @@
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="customerCode">Customer
-                                        Name <i class="icofont icofont-warning-alt text-danger"></i></label>
+                                        Name <i class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                         required="">
                                         <option selected="" disabled="" value="">
@@ -128,7 +128,7 @@
 
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="orderTypeCode">Route Type <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                         required="">
                                         <option selected="" disabled="" value="">
@@ -146,7 +146,7 @@
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="originLocationCode">Origin Location <i
-                                            class="icofont icofont-warning-alt text-danger"></i></label>
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="originLocationCode"
                                         id="originLocationCode" required="">
                                         <option selected="" disabled="" value="">
@@ -162,7 +162,7 @@
 
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="destinationLocationCode">Destination Location <i
-                                            class="icofont icofont-warning-alt text-danger"></i> </label>
+                                            class="mdi mdi-information text-danger"></i> </label>
                                     <select class="js-example-basic-single" name="destinationLocationCode"
                                         id="destinationLocationCode" required="">
                                         <option selected="" disabled="" value="">
@@ -318,7 +318,6 @@
                         });
                         $('#originLocationCode').html(html);
                         // Reinitialize Select2 for origin location dropdown after updating options
-                        $('#originLocationCode').select2();
                     });
                 }
             }
@@ -394,7 +393,6 @@
                             });
                             $('#destinationLocationCode').html(html);
                             // Reinitialize Select2 for destination location dropdown after updating options
-                            $('#destinationLocationCode').select2();
                         });
                 }
             }

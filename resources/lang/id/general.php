@@ -16,5 +16,6 @@ return [
     'are_you_sure' => 'Apakah kamu yakin?',
     'want_to_delete_this_data' => 'Ingin menghapus data ini?',
     'save_changes' => 'Simpan Perubahan',
-    'your_data_is_save' => 'Data anda aman !'
+    'your_data_is_save' => 'Data anda aman !',
+    'save' => 'Simpan'
 ];

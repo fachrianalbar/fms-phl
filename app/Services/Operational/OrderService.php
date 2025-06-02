@@ -93,7 +93,7 @@ class OrderService
         ]);
 
         if (isset($request->nominal)) {
-            $filtered = Arr::only($request->all(), ['componentName', 'componentType', 'nominal']);
+            $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal']);
 
             for ($i = 0; $i < count($request->nominal); $i++) {
 
@@ -102,8 +102,8 @@ class OrderService
                     'componentType' => $filtered['componentName'][$i],
                     'orderCode' => $request->code,
                     'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
-                    'type' => $filtered['componentType'][$i],
-                    // 'description' => $filtered['description'][$i]
+                    // 'type' => $filtered['componentType'][$i],
+                    'description' => $filtered['description'][$i]
                 ]);
 
                 $this->logActivity('Order Cost', $orderCost, 'Create');
@@ -115,6 +115,7 @@ class OrderService
 
     public function update($request, $id, $title)
     {
+        $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $route = Route::where('customerCode', $request->customerCode)
@@ -142,8 +143,11 @@ class OrderService
             // 'fleetTypeCode' => $request->fleetTypeCode
         ]);
 
+
+
         if (isset($request->nominal)) {
-            $filtered = Arr::only($request->all(), ['componentName', 'componentType',  'nominal']);
+            $data->cost()->delete();
+            $filtered = Arr::only($request->all(), ['componentName', 'description',  'nominal']);
 
             for ($i = 0; $i < count($request->nominal); $i++) {
 
@@ -152,8 +156,8 @@ class OrderService
                     'componentType' => $filtered['componentName'][$i],
                     'orderCode' => $request->code,
                     'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
-                    'type' => $filtered['componentType'][$i],
-                    // 'description' => $filtered['description'][$i]
+                    // 'type' => $filtered['componentType'][$i],
+                    'description' => $filtered['description'][$i]
                 ]);
 
                 $this->logActivity('Order Cost', $orderCost, 'Create');

@@ -3,7 +3,6 @@
     <div class="row">
         <div class="col-md-6">
             <label class="form-label" for="name">Component Name </label>
-            {{-- <input class="form-control" type="text" id="componentName" placeholder="Component Name"> --}}
 
             <select class="js-example-basic-single" id="componentName">
                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -13,31 +12,25 @@
             </select>
         </div>
 
-        <div class="col-md-6 position-relative">
-            <label class="form-label" for="fleetDriverCode">Component Type </label>
-            <select class="js-example-basic-single" id="componentType">
-                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                @foreach ($orderCost as $item)
-                    <option value="{{ $item->value }}">{{ $item->value }}</option>
-                @endforeach
-            </select>
+        <div class="col-md-6">
+            <label class="form-label" for="description">Description</label>
+            <input class="form-control" type="text" id="description" placeholder="Description">
         </div>
+
+
     </div>
 
     <div class="row mt-4">
-        {{-- <div class="col-md-6">
-            <label class="form-label" for="description">Description</label>
-            <input class="form-control" type="text" id="description" placeholder="Description">
-        </div> --}}
+
 
         <div class="col-md-6">
             <label class="form-label" for="nominal">Nominal</label>
-            <input class="form-control" type="text" id="nominal" placeholder="Nominal" oninput="formatAngka(this)">
+            <input class="form-control" type="number" id="nominal" placeholder="Nominal">
         </div>
     </div>
 
     <div class="col-12 mb-5">
-        <button class="btn btn-primary" type="button" id="addButton">Add Component</button>
+        <button class="btn btn-primary mb-4" type="button" id="addButton">{{ __('menu_order.add_component') }}</button>
     </div>
 </div>
 
@@ -45,10 +38,10 @@
     <thead>
         <tr>
             <th>#</th>
-            <th>No</th>
+            {{-- <th>No</th> --}}
             <th>Component Name</th>
-            <th>Component Type</th>
-            {{-- <th>Description</th> --}}
+            {{-- <th>Component Type</th> --}}
+            <th>Description</th>
             <th>Nominal</th>
         </tr>
     </thead>
@@ -57,34 +50,10 @@
         @php
             $i = 1;
         @endphp
-        @foreach ($route->routeDetail as $item)
-            <tr>
-                <td></td>
-                <td>{{ $i++ }}</td>
-                <td>{{ $item->costComponent->name }}</td>
-                <td>Mandatory</td>
-                {{-- <td>-</td> --}}
-                <td>
-                    @php
-                        $price = 0;
-                        if ($item->amount != 0) {
-                            $price += $item->amount;
-                        }
-
-                        if ($item->percentage) {
-                            $route = App\Models\Data\Route::where('code', $item->routeCode)->first();
-
-                            $price = $route->price * ($item->percentage / 100);
-                        }
-                    @endphp
-                    {{ 'Rp ' . number_format($price, 0, ',', '.') }}
-                </td>
-            </tr>
-        @endforeach
         @if ($route->routeTypeCode == 'TONASE')
             <tr>
                 <td></td>
-                <td>{{ $i++ }}</td>
+                {{-- <td>{{ $i++ }}</td> --}}
                 <td>Bonus Tonase</td>
                 <td>Bonus</td>
                 {{-- <td>-</td> --}}
@@ -108,19 +77,24 @@
         @foreach ($cost as $item)
             <tr>
                 <td>
-
-                    <ul class="action">
-                        <li class="delete"><a href="javascript:deleteCost('{{ $item->id }}')"><i
-                                    class="icon-trash"></i></a>
-                        </li>
-                    </ul>
-
+                    <a href="javascript:deleteCost('{{ $item->id }}')" class="btn btn-icon btn-sm bg-danger-subtle"
+                        data-bs-toggle="tooltip" title="Delete">
+                        <i class="mdi mdi-delete fs-14 text-danger"></i>
+                    </a>
                 </td>
-                <td>{{ $i++ }}</td>
-                <td>{{ $item->costComponent->name }}</td>
-                <td>{{ $item->type }}</td>
-                {{-- <td>{{ $item->description }}</td> --}}
-                <td>{{ 'Rp ' . number_format($item->nominal, 0, ',', '.') }}</td>
+                {{-- <td>{{ $i++ }}</td> --}}
+                <td>
+                    <input type="hidden" class="form-control" name="componentName[]"
+                        value="{{ $item->costComponent->code }}"> {{ $item->costComponent->name }}
+                </td>
+                <td>
+                    <input class="form-control" name="description[]" value="{{ $item->description }}">
+                </td>
+                <td>
+                    <input class="form-control" name="nominal[]" type="number" min="1"
+                        value="{{ $item->nominal }}">
+                </td>
+
 
             </tr>
         @endforeach
@@ -136,17 +110,33 @@
         const componentName = document.getElementById('componentName').value;
         const componentNameElement = document.getElementById('componentName');
         const componentNameText = componentNameElement.options[componentNameElement.selectedIndex].text;
-        const componentType = document.getElementById('componentType').value;
-        // const description = document.getElementById('description').value;
+        // const componentType = document.getElementById('componentType').value;
+        const description = document.getElementById('description').value;
         const nominal = document.getElementById('nominal').value;
 
         // Validate input fields
-        if (componentName === '' || componentType === '' || nominal === '') {
+        if (componentName === '' || nominal === '') {
             swal({
                 title: "Warning",
                 text: "Please fill in all required fields: Component Name, Component Type, and Nominal.",
                 icon: "warning",
             })
+            return;
+        }
+
+        let isDuplicate = false;
+        document.querySelectorAll('input[name="componentName[]"]').forEach(function(input) {
+            if (input.value === componentName) {
+                isDuplicate = true;
+            }
+        });
+
+        if (isDuplicate) {
+            swal({
+                title: "Duplicate Component",
+                text: "Component already exists in the list.",
+                icon: "warning",
+            });
             return;
         }
 
@@ -157,25 +147,22 @@
 
         newRow.innerHTML = `
          <td>
-        <ul class="action">
-            <li class="delete"><a href="javascript:removeRow(${index})"><i class="icon-trash"></i></a></li>
-        </ul>
-    </td>
-    <td>
-        ${index + 1}
-    </td>
-    <td>
-        <input type="hidden" name="componentName[]" value="${componentName}">
-        ${componentNameText}
-    </td>
-    <td>
-        <input type="hidden" name="componentType[]" value="${componentType}">
-        ${componentType}
-    </td>
-    <td>
-         <input type="hidden" name="nominal[]" value="${nominal}">
-       Rp  ${nominal}
-    </td>
+            <a href="javascript:removeRow(${index})"
+            class="btn btn-icon btn-sm bg-danger-subtle me-1"
+            data-bs-toggle="tooltip" title="Delete">
+                <i class="mdi mdi-delete fs-14 text-danger"></i>
+            </a>
+        </td>
+        <td>
+            <input type="hidden" name="componentName[]" value="${componentName}"> ${componentNameText}
+
+        </td>
+         <td>
+            <input class="form-control"  name="description[]" value="${description}">
+        </td>
+        <td>
+             <input class="form-control"  name="nominal[]" type="number" min=1  value="${nominal}">
+        </td>
    
 `;
 

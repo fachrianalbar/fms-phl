@@ -165,7 +165,6 @@
                                 <th>No</th>
                                 <th>Order Date</th>
                                 <th>Fleet</th>
-                                <th>Fleet Type</th>
                                 <th>Driver</th>
                                 <th>Shipment No</th>
                                 <th>Customer Name</th>
@@ -290,9 +289,6 @@
                     },
                     {
                         "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'fleet.type.name'
                     },
                     {
                         "data": 'driver.name'

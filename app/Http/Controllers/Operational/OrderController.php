@@ -23,6 +23,7 @@ use App\Services\Master\OrderTypeService;
 use App\Services\Master\RouteTypeService;
 use App\Services\Operational\OrderService;
 use App\Services\CompanySettingService;
+use App\Services\Master\CostComponentService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Validator;
@@ -50,6 +51,8 @@ class OrderController extends Controller
     protected $fleetSvc;
     protected $locationSvc;
     protected $companySvc;
+    protected $costComponentSvc;
+
 
     public function __construct(
         OrderService $orderSvc,
@@ -63,7 +66,9 @@ class OrderController extends Controller
         FleetService $fleetSvc,
         LocationService $locationSvc,
         CompanySettingService $companySvc,
-        MenuService $menuSvc
+        MenuService $menuSvc,
+        CostComponentService $costComponentSvc,
+
 
     ) {
         $this->service = $orderSvc;
@@ -79,6 +84,8 @@ class OrderController extends Controller
         $this->fleetSvc = $fleetSvc;
         $this->locationSvc = $locationSvc;
         $this->companySvc = $companySvc;
+        $this->routeTypeSvc = $routeTypeSvc;
+        $this->costComponentSvc = $costComponentSvc;
         $this->totalPrice = 0;
     }
 
@@ -120,7 +127,7 @@ class OrderController extends Controller
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
         $company = $this->companySvc->findAll();
-        $component = CostComponent::whereIn('type', ['Mandatory', 'Non Mandatory'])->get();
+        $component = CostComponent::get();
 
         return view($this->view . 'create')
             ->with('view', $this->view)
@@ -143,6 +150,10 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->page == 'cost-component') {
+            $this->costComponentSvc->store($request, 'Cost Component');
+            return redirect()->back()->with('success', 'Data was saved successfully');
+        }
 
         // dd($request->all());
         $validator = Validator::make($request->all(), [
@@ -186,7 +197,7 @@ class OrderController extends Controller
     {
         $data = $this->service->getById($id);
         $route = Route::where('code', $data->routeCode)->first();
-        $component = CostComponent::whereIn('type', ['Mandatory', 'Non Mandatory'])->get();
+        $component = CostComponent::get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $totalPrice = 0;
         $allowance = 0;
@@ -259,7 +270,7 @@ class OrderController extends Controller
         $destination = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->where('originLocationCode', $route->originLocationCode)->get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->fleetSvc->findAll();
-        $component = CostComponent::whereIn('type', ['Mandatory', 'Non Mandatory'])->get();
+        $component = CostComponent::get();
 
 
         return view($this->view . 'edit')
@@ -432,31 +443,6 @@ class OrderController extends Controller
 
                     return $destination;
                 })
-
-                ->addColumn('cost', function ($row) {
-                    $allowance = 0;
-
-                    if (isset($row->route->routeDetail)) {
-                        $data = $row->route->routeDetail;
-
-                        foreach ($data as $item) {
-                            if ($item->costComponent->type == 'Allowance') {
-                                if ($item->amount != 0) {
-                                    $allowance = $item->amount;
-                                }
-
-                                if ($item->percentage) {
-                                    $route = Route::where('code', $item->routeCode)->first();
-
-                                    $allowance = $route->price * ($item->percentage / 100);
-                                }
-                            }
-                        }
-                        $this->totalPrice = $allowance;
-                    }
-
-                    return '' . number_format($allowance, 0, ',', '.');
-                })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
@@ -475,7 +461,7 @@ class OrderController extends Controller
                     }
                     return '' . 0;
                 })
-                ->addColumn('addCost', function ($row) {
+                ->addColumn('cost', function ($row) {
                     $cost = 0;
                     if (isset($row->cost)) {
                         foreach ($row->cost as $item) {
@@ -538,7 +524,7 @@ class OrderController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
-                ->rawColumns(['action', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'addCost', 'totalPrice'])
+                ->rawColumns(['action', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice'])
                 ->toJson();
         }
     }
@@ -652,7 +638,7 @@ class OrderController extends Controller
         $route = Route::where('customerCode', $customerCode)
             ->where('originLocationCode', $originLocationCode)
             ->where('destinationLocationCode', $destinationLocation)
-            ->with('routeDetail')
+            ->with('routeDetail', 'routeDetail.costComponent')
             ->first();
 
         return $route->routeDetail;

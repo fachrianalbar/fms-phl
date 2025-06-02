@@ -40,7 +40,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label class="form-label" for="name">Order Code <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input type="hidden" name="code" value="TO{{ now()->format('ymdHis') }}">
                                 <input class="form-control" type="text" required placeholder="Name" readonly disabled
                                     value="TO{{ now()->format('ymdHis') }}">
@@ -48,7 +48,7 @@
 
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="fleetCode">Fleet<i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
 
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -64,14 +64,14 @@
                         <div class="row mt-4">
                             <div class="col-md-6">
                                 <label class="form-label" for="name">Order Date <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="orderDate" id="datetime-local" type="date" required
                                     placeholder="Order Date" value="{{ now()->toDateString() }}">
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label" for="shipmentNumber">Shipment No <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
                                     required placeholder="Shipment No">
                             </div>
@@ -83,7 +83,7 @@
 
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="driverCode">Driver <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="driverCode" id="driverCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                     </option>
@@ -106,7 +106,7 @@
                         <div class="row mt-4">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="customerCode">Customer
-                                    Name <i class="icofont icofont-warning-alt text-danger"></i></label>
+                                    Name <i class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -120,7 +120,7 @@
 
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="routeTypeCode">Route Type <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -137,7 +137,7 @@
                         <div class="row mt-4">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="originLocationCode">Origin Location <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -147,7 +147,7 @@
 
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="destinationLocationCode">Destination Location <i
-                                        class="icofont icofont-warning-alt text-danger"></i> </label>
+                                        class="mdi mdi-information text-danger"></i> </label>
                                 <select class="js-example-basic-single" name="destinationLocationCode"
                                     id="destinationLocationCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -163,23 +163,34 @@
                                     max="100" type="number" placeholder="" required>
                             </div>
                         </div>
+
+
                     </div>
                 </div>
             </div>
+
+
 
             <div class="card">
                 <div class="card-body col-md-12">
                     <ul class="nav nav-tabs" id="icon-tab" role="tablist">
                         <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
                                 data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                                aria-selected="true">Additional
+                                aria-selected="true">List
                                 Cost</a></li>
+                        {{-- <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
+                                href="#profile-icon" role="tab" aria-controls="profile-icon"
+                                aria-selected="false">Add
+                                Cost</a>
+                        </li> --}}
 
 
                     </ul>
                     <div class="tab-content" id="icon-tabContent">
 
                         @include('operational.order.components.cost-add')
+                        {{-- @include('operational.order.components.cost-component-add') --}}
+
                     </div>
                 </div>
             </div>
@@ -242,7 +253,6 @@
                     });
                     $('#originLocationCode').html(html);
                     // Reinitialize Select2 for origin location dropdown after updating options
-                    $('#originLocationCode').select2();
                 });
             }
         }
@@ -313,6 +323,40 @@
             }, 1000); // Simulate 1-second delay for the loader
         });
 
+        function checkAndLoadRoute() {
+            const customerCode = $('#customerCode').select2('val');
+            const originLocationCode = $('#originLocationCode').select2('val');
+            const destinationLocationCode = $('#destinationLocationCode').select2('val');
+
+            if (customerCode && originLocationCode && destinationLocationCode) {
+                $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
+                    destinationLocationCode,
+                    function(data) {
+                        const componentList = document.getElementById('component-list');
+                        componentList.innerHTML = '';
+                        index = 0;
+
+                        data.forEach((item, i) => {
+                            let row = `
+                        <tr>
+                            <td>
+                                <a href="javascript:removeRow(${i})"
+                                    class="btn btn-icon btn-sm bg-danger-subtle me-1"
+                                    data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
+                            </td>
+                            <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
+                            <td><input class="form-control" name="description[]" value=""></td>
+                            <td><input class="form-control" name="nominal[]" type="number" min=1  value="${item.amount}"></td>
+                        </tr>`;
+                            componentList.insertAdjacentHTML('beforeend', row);
+                            index++;
+                        });
+                    });
+            }
+        }
+
 
         function checkAndLoadDestinationLocation() {
             const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
@@ -331,7 +375,6 @@
                         });
                         $('#destinationLocationCode').html(html);
                         // Reinitialize Select2 for destination location dropdown after updating options
-                        $('#destinationLocationCode').select2();
                     });
             }
         }
@@ -344,6 +387,10 @@
         // Trigger destination location when origin location is also selected
         $('#originLocationCode').on('select2:select', function() {
             checkAndLoadDestinationLocation();
+        });
+
+        $('#destinationLocationCode').on('select2:select', function() {
+            checkAndLoadRoute();
         });
     </script>
 @endpush

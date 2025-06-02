@@ -165,8 +165,8 @@
                                 <tr>
                                     <th>No</th>
                                     <th>Component Name</th>
-                                    <th>Component Type</th>
-                                    {{-- <th>Description</th> --}}
+                                    {{-- <th>Component Type</th> --}}
+                                    <th>Description</th>
                                     <th>Nominal</th>
                                 </tr>
                             </thead>
@@ -176,35 +176,6 @@
                                     $i = 1;
                                     $totalPrice = 0;
                                 @endphp
-                                @foreach ($route->routeDetail as $item)
-                                    <tr>
-                                        {{-- <td></td> --}}
-                                        <td>{{ $i++ }}</td>
-                                        <td>{{ $item->costComponent->name }}</td>
-                                        <td>Mandatory</td>
-                                        {{-- <td>-</td> --}}
-                                        <td>
-                                            @php
-                                                $price = 0;
-                                                if ($item->amount != 0) {
-                                                    $price += $item->amount;
-                                                }
-
-                                                if ($item->percentage) {
-                                                    $route = App\Models\Data\Route::where(
-                                                        'code',
-                                                        $item->routeCode,
-                                                    )->first();
-
-                                                    $price = $route->price * ($item->percentage / 100);
-                                                }
-
-                                                $totalPrice += $price;
-                                            @endphp
-                                            {{ 'Rp ' . number_format($price, 0, ',', '.') }}
-                                        </td>
-                                    </tr>
-                                @endforeach
                                 @if ($route->routeTypeCode == 'TONASE')
                                     <tr>
                                         {{-- <td></td> --}}
@@ -242,8 +213,8 @@
                                     <tr>
                                         <td>{{ $i++ }}</td>
                                         <td>{{ $item->costComponent->name }}</td>
-                                        <td>{{ $item->type }}</td>
-                                        {{-- <td>{{ $item->description }}</td> --}}
+                                        {{-- <td>{{ $item->type }}</td> --}}
+                                        <td>{{ $item->description }}</td>
                                         <td>{{ 'Rp ' . number_format($item->nominal, 0, ',', '.') }}</td>
 
                                     </tr>

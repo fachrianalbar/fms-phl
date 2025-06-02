@@ -16,5 +16,6 @@ return [
     'are_you_sure' => 'Are you sure?',
     'want_to_delete_this_data' => 'Want to delete this data?',
     'save_changes' => 'Save Changes',
-    'your_data_is_save' => 'Your data is safe !'
+    'your_data_is_save' => 'Your data is safe !',
+    'save' => 'Save'
 ];
