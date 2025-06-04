@@ -30,6 +30,8 @@ class LocationController extends Controller
     {
         $this->service = $locationSvc;
         $this->title = "Location";
+        $this->menuSvc = $menuSvc->getByName("Location");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "master.location.";
         $this->provinceSvc = $provinceSvc;
         $this->customerSvc = $customerSvc;
@@ -110,14 +112,15 @@ class LocationController extends Controller
     public function edit(string $id)
     {
         $data = $this->service->getById($id);
+        if (!$data) {
+            return redirect()->route($this->view . 'index')->with('fail', __('general.data_not_found'));
+        }
         $province = $this->provinceSvc->findAll();
         $customer = $this->customerSvc->findAll();
         $city = $this->citySvc->getByProvince($data->provinceId);
         $district = $this->districtSvc->getByCity($data->cityId);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
-        }
+
 
         return view($this->view . 'edit')
             ->with('view', $this->view)

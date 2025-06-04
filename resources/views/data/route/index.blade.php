@@ -36,13 +36,13 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Name</th>
-                                <th>Customer</th>
-                                <th>Origin</th>
-                                <th>Destination</th>
+                                <th>{{ __('menu_route.name') }}</th>
+                                <th>{{ __('menu_route.customer') }}</th>
+                                <th>{{ __('menu_route.origin') }}</th>
+                                <th>{{ __('menu_route.destination') }}</th>
                                 {{-- <th>Fleet Type</th> --}}
-                                <th>Route Type</th>
-                                <th>Price</th>
+                                <th>{{ __('menu_route.route_type') }}</th>
+                                <th>{{ __('menu_route.price') }}</th>
                             </tr>
                         </thead>
                         <tbody>

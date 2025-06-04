@@ -40,13 +40,13 @@
                     <div class="row">
 
                         <div class="col-md-6">
-                            <label class="form-label" for="name">Name</label>
+                            <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
                             <input class="form-control" name="name" id="name" type="text" required
-                                placeholder="Name" value="{{ $data->name }}">
+                                placeholder="{{ __('menu_route.name') }}" value="{{ $data->name }}">
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="customerCode">Customer Name</label>
+                            <label class="form-label" for="customerCode">{{ __('menu_route.customer') }}</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required=""
                                 onchange="locationByCustomer(this.value)">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -63,7 +63,8 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="originLocationCode">Origin Location</label>
+                            <label class="form-label"
+                                for="originLocationCode">{{ __('menu_route.origin_location') }}</label>
                             <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                 required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -77,7 +78,8 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="destinationLocationCode">Destination Location</label>
+                            <label class="form-label"
+                                for="destinationLocationCode">{{ __('menu_route.destination_location') }}</label>
                             <select class="js-example-basic-single" name="destinationLocationCode"
                                 id="destinationLocationCode" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -105,7 +107,7 @@
                         </div> --}}
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">Route Type</label>
+                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
                             <select class="js-example-basic-single" name="routeType" id="routeType" required="" disabled>
                                 @foreach ($routeType as $item)
                                     <option value="{{ $item->code }}"
@@ -116,16 +118,16 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="pricte">Price</label>
+                            <label class="form-label" for="pricte">{{ __('menu_route.price') }}</label>
                             <input class="form-control" name="price" id="price" oninput="formatAngka(this)"
-                                type="text" required placeholder="Price"
+                                type="text" required placeholder="{{ __('menu_route.price') }}"
                                 value="{{ number_format($data->price, 0, ',', '.') }}">
                         </div>
                     </div>
 
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Edit</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>
                     </div>
                 </form>
             </div>
@@ -137,11 +139,11 @@
             <div class="card-body col-md-12">
                 <ul class="nav nav-tabs" id="icon-tab" role="tablist">
                     <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab" data-bs-toggle="tab"
-                            href="#icon-home" role="tab" aria-controls="icon-home" aria-selected="true"> Route
-                            Detail</a></li>
+                            href="#icon-home" role="tab" aria-controls="icon-home" aria-selected="true">
+                            {{ __('menu_route.route_detail') }}</a></li>
                     <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
-                            href="#profile-icon" role="tab" aria-controls="profile-icon" aria-selected="false">Cost
-                            Component</a></li>
+                            href="#profile-icon" role="tab" aria-controls="profile-icon"
+                            aria-selected="false">{{ __('menu_route.cost_component') }}</a></li>
 
                 </ul>
                 <div class="tab-content" id="icon-tabContent">

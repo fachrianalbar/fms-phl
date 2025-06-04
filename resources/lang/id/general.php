@@ -17,5 +17,8 @@ return [
     'want_to_delete_this_data' => 'Ingin menghapus data ini?',
     'save_changes' => 'Simpan Perubahan',
     'your_data_is_save' => 'Data anda aman !',
-    'save' => 'Simpan'
+    'save' => 'Simpan',
+    'data_not_found' => 'Data tidak ditemukan',
+    'warning' => 'Peringatan'
+
 ];

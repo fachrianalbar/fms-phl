@@ -299,7 +299,7 @@
                     if (qty > 100) {
                         e.preventDefault();
                         swal({
-                            title: "Warning",
+                            title: "{{ __('general.warning') }}",
                             text: "Tonase cannot be higher than 100",
                             icon: "warning",
                         })

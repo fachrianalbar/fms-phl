@@ -5,7 +5,7 @@
     {{-- <input type="hidden" value="{{ $totalPrice }}" name="totalPrice"> --}}
     <div class="row">
         <div class="col-md-6 position-relative">
-            <label class="form-label" for="componentCode">Cost Component Name</label>
+            <label class="form-label" for="componentCode">{{ __('menu_route.cost_component_name') }}</label>
             <select class="js-example-basic-single" name="componentCode" id="componentCode" required="">
                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 @foreach ($component as $item)
@@ -15,9 +15,9 @@
         </div>
 
         <div class="col-md-6" id="amount">
-            <label class="form-label" for="amount">Price</label>
+            <label class="form-label" for="amount">{{ __('menu_route.price') }}</label>
             <input class="form-control" name="amount" id="amounts" oninput="formatAngka(this)" type="text"
-                placeholder="Price" max="{{ $data->price }}">
+                placeholder="{{ __('menu_route.price') }}" max="{{ $data->price }}">
             {{-- <label class="form-label" for="componentType">Cost Component Type</label> --}}
             <input type="hidden" name="componentType" value="Amount">
             {{-- <select class="js-example-basic-single" name="`componentType" id="componentType"
@@ -39,6 +39,6 @@
     </div>
 
     <div class="col-12">
-        <button class="btn btn-primary" type="submit">Add</button>
+        <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
     </div>
 </form>

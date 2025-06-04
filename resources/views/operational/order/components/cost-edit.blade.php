@@ -120,7 +120,7 @@
             // Validate input fields
             if (componentName === '' || nominal === '') {
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: "Please fill in all required fields: Component Name, Component Type, and Nominal.",
                     icon: "warning",
                 })

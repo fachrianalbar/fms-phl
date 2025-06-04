@@ -9,9 +9,9 @@
                     <tr>
                         <th>#</th>
                         <th>No</th>
-                        <th>Cost Component</th>
+                        <th>{{ __('menu_route.cost_component') }}</th>
                         {{-- <th>Component Type</th> --}}
-                        <th>Price</th>
+                        <th>{{ __('menu_route.price') }}</th>
                     </tr>
                 </thead>
                 <tbody>

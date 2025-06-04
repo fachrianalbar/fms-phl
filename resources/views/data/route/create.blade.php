@@ -36,13 +36,13 @@
                     {{-- @csrf --}}
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label" for="name">Name</label>
+                            <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
                             <input class="form-control" name="name" id="name" type="text" required
-                                placeholder="Name">
+                                placeholder="{{ __('menu_route.name') }}">
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="customerCode">Customer Name</label>
+                            <label class="form-label" for="customerCode">{{ __('menu_route.customer') }}</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
@@ -56,7 +56,8 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="originLocationCode">Origin Location</label>
+                            <label class="form-label"
+                                for="originLocationCode">{{ __('menu_route.origin_location') }}</label>
                             <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                 required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -69,7 +70,8 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="destinationLocationCode">Destination Location</label>
+                            <label class="form-label"
+                                for="destinationLocationCode">{{ __('menu_route.destination_location') }}</label>
                             <select class="js-example-basic-single" name="destinationLocationCode"
                                 id="destinationLocationCode" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -100,7 +102,7 @@
                         </div> --}}
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">Route Type</label>
+                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
                             <select class="js-example-basic-single" name="routeType" id="routeType" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($routeType as $item)
@@ -111,7 +113,8 @@
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="button" onclick="addRoute()">Add</button>
+                        <button class="btn btn-primary" type="button"
+                            onclick="addRoute()">{{ __('general.add') }}</button>
                     </div>
                 </form>
             </div>
@@ -125,7 +128,7 @@
                 <div class="card">
 
                     <div class="card-header">
-                        <h4>Added Routes</h4>
+                        <h4>{{ __('menu_route.list_route') }}</h4>
 
                     </div>
 
@@ -134,13 +137,13 @@
                             id="routeTable">
                             <thead>
                                 <tr>
-                                    <th>Actions</th>
-                                    <th>Route Name</th>
-                                    <th>Customer</th>
-                                    <th>Route Type</th>
-                                    <th>Origin</th>
-                                    <th>Destination</th>
-                                    <th>Price</th>
+                                    <th>{{ __('menu_route.action') }}</th>
+                                    <th>{{ __('menu_route.route_name') }}</th>
+                                    <th>{{ __('menu_route.customer') }}</th>
+                                    <th>{{ __('menu_route.route_type') }}</th>
+                                    <th>{{ __('menu_route.origin') }}</th>
+                                    <th>{{ __('menu_route.destination') }}</th>
+                                    <th>{{ __('menu_route.price') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="routeList">
@@ -149,7 +152,7 @@
                         </table>
 
                         <div class="col-12 mt-4">
-                            <button class="btn btn-primary" type="submit">Save</button>
+                            <button class="btn btn-primary" type="submit">{{ __('general.save') }}</button>
                         </div>
                     </div>
 
@@ -235,8 +238,8 @@
             // Check if any input is empty
             if (!validateFormInputs(customerCode, routeTypeCode, originLocationCode, destinationLocationCode)) {
                 swal({
-                    title: "Warning",
-                    text: "Please fill out all fields.",
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.please_fill_out_all_fields') }}",
                     icon: "warning",
                 })
                 return;
@@ -244,8 +247,8 @@
 
             if (origin === destination) {
                 swal({
-                    title: "Warning",
-                    text: "Origin and Destination cannot be the same.",
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.origin_and_destination_cannot_be_the_same') }}",
                     icon: "warning",
                 })
                 return;
@@ -254,8 +257,8 @@
             // Check if price is missing in any existing rows
             if (!validatePrices()) {
                 swal({
-                    title: "Warning",
-                    text: "Please enter price for all added routes.",
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.please_enter_price_for_all_added_routes') }}",
                     icon: "warning",
                 })
                 return;
@@ -264,8 +267,8 @@
             // Check for duplicate route
             if (isDuplicateRoute(customer, routeType, origin, destination)) {
                 swal({
-                    title: "Warning",
-                    text: "This route has already been added.",
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.this_route_has_aiready_been_added') }}",
                     icon: "warning",
                 })
                 return;

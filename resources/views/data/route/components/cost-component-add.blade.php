@@ -4,8 +4,9 @@
             @csrf
             @method('PUT')
             <div class="col-md-12">
-                <label class="form-label" for="name">Name</label>
-                <input class="form-control" name="name" id="name" type="text" required placeholder="Name">
+                <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
+                <input class="form-control" name="name" id="name" type="text" required
+                    placeholder="{{ __('menu_route.name') }}">
             </div>
 
             {{-- <div class="col-md-12 position-relative">
@@ -21,7 +22,7 @@
 
 
             <div class="col-12">
-                <button class="btn btn-primary" type="submit">Add</button>
+                <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
             </div>
         </form>
     </div>

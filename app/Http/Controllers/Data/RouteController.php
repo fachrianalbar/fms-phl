@@ -15,6 +15,8 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
 
 class RouteController extends Controller
 {
@@ -34,10 +36,13 @@ class RouteController extends Controller
         LocationService $locationSvc,
         FleetTypeService $fleetTypeSvc,
         CostComponentService $costComponentSvc,
-        RouteTypeService $routeTypeSvc
+        RouteTypeService $routeTypeSvc,
+        MenuService $menuSvc
     ) {
         $this->service = $routeSvc;
         $this->title = "Route";
+        $this->menuSvc = $menuSvc->getByName("Route");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "data.route.";
         $this->customerSvc = $customerSvc;
         $this->locationSvc = $locationSvc;

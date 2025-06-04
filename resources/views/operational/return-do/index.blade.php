@@ -89,7 +89,7 @@
             if (selectedOrders.length === 0) {
                 event.preventDefault();
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: "Please select at least one item",
                     icon: "warning",
                 });

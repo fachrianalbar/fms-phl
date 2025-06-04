@@ -36,11 +36,11 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Name</th>
+                                <th>{{ __('menu_location.name') }}</th>
                                 {{-- <th>Customer</th> --}}
                                 <th>Latitude</th>
                                 <th>Longitude</th>
-                                <th style="width: 500px">Address</th>
+                                <th style="width: 500px">{{ __('menu_location.address') }}</th>
                             </tr>
                         </thead>
                         <tbody>

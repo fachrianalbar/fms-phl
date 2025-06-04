@@ -298,7 +298,7 @@
 
                 if (shipmentNumber === "") {
                     swal({
-                        title: "Warning",
+                        title: "{{ __('general.warning') }}",
                         text: "Shipment number is required!",
                         icon: "warning",
                     })
@@ -311,7 +311,7 @@
                     success: function(response) {
                         if (!response || response.length === 0) {
                             swal({
-                                title: "Warning",
+                                title: "{{ __('general.warning') }}",
                                 text: "Shipment number not found!",
                                 icon: "warning",
                             })

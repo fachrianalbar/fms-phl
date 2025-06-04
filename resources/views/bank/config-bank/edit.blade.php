@@ -197,7 +197,7 @@
             if (duplicateFound) {
                 e.preventDefault(); // stop form submit
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: "There are duplicate user banks selected. Please {{ __('general.choose') }} different banks.",
                     icon: "warning",
                 })

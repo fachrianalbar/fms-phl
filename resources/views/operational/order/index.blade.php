@@ -386,7 +386,7 @@
                     },
                     error: function() {
                         swal({
-                            title: "Warning",
+                            title: "{{ __('general.warning') }}",
                             text: "An error occurred while checking null relations.",
                             icon: "warning",
                         })

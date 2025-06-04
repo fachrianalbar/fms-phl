@@ -55,8 +55,8 @@
                                     <label class="form-label" for="fleetCode">Fleet</label>
 
 
-                                    <input class="form-control" name="orderDate" id="datetime-local" type="date" readonly
-                                        required placeholder="Order Date" value="{{ $data->fleet->plateNumber }}">
+                                    <input class="form-control" name="orderDate" type="text" readonly required
+                                        placeholder="Order Date" value="{{ $data->fleet->plateNumber }}">
                                 </div>
                             </div>
 
@@ -295,7 +295,7 @@
                     if (qty > 100) {
                         e.preventDefault();
                         swal({
-                            title: "Warning",
+                            title: "{{ __('general.warning') }}",
                             text: "Tonase cannot be higher than 100",
                             icon: "warning",
                         })

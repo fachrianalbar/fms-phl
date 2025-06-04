@@ -26,7 +26,7 @@
                     @method('PUT')
                     <div class="row">
                         <div class="col-md-12">
-                            <label class="form-label" for="name">Name <i
+                            <label class="form-label" for="name">{{ __('menu_location.name') }} <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="Name" value="{{ $data->name }}">
@@ -47,7 +47,7 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="provinceId">Province Name</label>
+                            <label class="form-label" for="provinceId">{{ __('menu_location.province') }}</label>
                             <select class="js-example-basic-single" name="provinceId" id="provinceId"
                                 onchange="cityByProvince(this.value)">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -60,7 +60,7 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="provinceId">City Name</label>
+                            <label class="form-label" for="provinceId">{{ __('menu_location.city') }}</label>
                             <select class="js-example-basic-single" name="cityId" id="cityId"
                                 onchange="districtByCity(this.value)">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -76,7 +76,7 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="districtId">District Name</label>
+                            <label class="form-label" for="districtId">{{ __('menu_location.district') }}</label>
                             <select class="js-example-basic-single" name="districtId" id="districtId">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($district as $item)
@@ -88,7 +88,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="address">Address</label>
+                            <label class="form-label" for="address">{{ __('menu_location.address') }}</label>
                             <textarea class="form-control" name="address" id="address" placeholder=" Address" rows="4">{{ $data->address }}</textarea>
                         </div>
                     </div>
@@ -108,7 +108,7 @@
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Edit</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>
                     </div>
                 </form>
             </div>

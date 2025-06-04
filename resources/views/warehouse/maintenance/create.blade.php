@@ -256,7 +256,7 @@
                 e.preventDefault();
 
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: errorMessage,
                     icon: "warning",
                 })

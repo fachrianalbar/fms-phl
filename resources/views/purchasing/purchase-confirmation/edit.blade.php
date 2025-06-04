@@ -326,7 +326,7 @@
                 e.preventDefault();
 
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: errorMessage,
                     icon: "warning",
                 })
@@ -364,7 +364,7 @@
             } else if (checkedCount <= 0) {
                 e.preventDefault();
                 swal({
-                    title: "Warning",
+                    title: "{{ __('general.warning') }}",
                     text: 'Please select at least one data',
                     icon: "warning",
                 })
