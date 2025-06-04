@@ -148,9 +148,6 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode
         ]);
 
-
-        dd($request->all());
-
         if (isset($request->itemCode)) {
             $itemCodes = $request->itemCode;
             $qtys = $request->qty;
