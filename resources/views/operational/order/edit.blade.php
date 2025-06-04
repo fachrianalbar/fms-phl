@@ -208,9 +208,15 @@
                                     aria-selected="true">Additional
                                     Cost</a>
                             </li>
+                            <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs"
+                                    data-bs-toggle="tab" href="#profile-icon" role="tab"
+                                    aria-controls="profile-icon" aria-selected="false">Add
+                                    Cost</a>
+                            </li>
                         </ul>
                         <div class="tab-content" id="icon-tabContent">
                             @include('operational.order.components.cost-edit')
+                            @include('operational.order.components.cost-component-add')
                         </div>
                     </div>
                 </div>

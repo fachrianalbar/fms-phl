@@ -1,7 +1,7 @@
 <div class="tab-pane fade show active" id="icon-home" role="tabpanel" aria-labelledby="icon-home-tab">
 
     <div class="card-body col-md-12 mt-3">
-        @include('partials.alert')
+        {{-- @include('partials.alert') --}}
 
         <div class="">
             <table class="table table-striped w-100 nowrap" id="dt">

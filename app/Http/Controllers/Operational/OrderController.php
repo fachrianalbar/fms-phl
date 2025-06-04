@@ -152,7 +152,9 @@ class OrderController extends Controller
     {
         if ($request->page == 'cost-component') {
             $this->costComponentSvc->store($request, 'Cost Component');
-            return redirect()->back()->with('success', 'Data was saved successfully');
+            if ($request->ajax()) {
+                return response()->json(['message' => 'Data was saved successfully']);
+            }
         }
 
         // dd($request->all());

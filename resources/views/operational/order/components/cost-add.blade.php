@@ -1,7 +1,4 @@
     <div class="tab-pane fade show active" id="icon-home" role="tabpanel" aria-labelledby="icon-home-tab">
-
-
-
         <div class="row g-3 mt-3">
             <div class="row">
                 <div class="col-md-6">
@@ -39,7 +36,8 @@
 
                 <div class="col-md-6">
                     <label class="form-label" for="nominal">Nominal</label>
-                    <input class="form-control" type="text" id="nominal" placeholder="Nominal">
+                    <input class="form-control" type="text" id="nominal" placeholder="Nominal"
+                        oninput="formatAngka(this)">
                 </div>
             </div>
 
@@ -158,7 +156,7 @@
             <input class="form-control"  name="description[]" value="${description}">
         </td>
         <td>
-             <input class="form-control"  name="nominal[]" type="number" min=1 readonly value="${nominal}">
+             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1  value="${nominal}">
         </td>
        
     `;

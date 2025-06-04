@@ -4,7 +4,7 @@
             @csrf
             <div class="col-md-12">
                 <label class="form-label" for="name">Name</label>
-                <input class="form-control" name="name" id="name" type="text" required placeholder="Name">
+                <input class="form-control" name="name" id="name" type="text" placeholder="Name">
             </div>
 
             {{-- <div class="col-md-12 position-relative">
@@ -19,44 +19,67 @@
             </div> --}}
 
             <div class="col-12 mt-4">
-                <button class="btn btn-primary" id="submit-cost-component">{{ __('general.add') }}</button>
+                <button class="btn btn-primary" type="button"
+                    id="submit-cost-component">{{ __('general.add') }}</button>
             </div>
             </form>
         </div>
     </div>
 
     <script>
-        $('#submit-cost-component').on('click', function(e) {
-            e.preventDefault(); // Hindari submit biasa
+        document.addEventListener('DOMContentLoaded', function() {
+            const submitBtn = document.getElementById('submit-cost-component');
 
-            const container = $('#ajax-cost-component-form');
-            const actionUrl = container.data('action');
-            const name = $('#cost-name').val();
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function(e) {
+                    e.preventDefault(); // Hindari submit form
 
-            $.ajax({
-                url: actionUrl,
-                method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    name: name,
-                },
-                success: function(response) {
-                    swal({
-                        title: 'Success',
-                        text: 'Component added successfully!',
-                        icon: 'success',
-                    });
+                    const container = document.getElementById('ajax-cost-component-form');
+                    const actionUrl = container.getAttribute('data-action');
+                    const nameInput = document.getElementById('name');
+                    const name = nameInput.value.trim();
 
-                    // Reset field (optional)
-                    $('#cost-name').val('');
-                },
-                error: function(xhr) {
-                    swal({
-                        title: 'Error',
-                        text: xhr.responseJSON?.message || 'Failed to add component.',
-                        icon: 'error',
-                    });
-                }
-            });
+                    fetch(actionUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({
+                                name: name
+                            })
+                        })
+                        .then(response => {
+                            if (!response.ok) throw response;
+                            return response.json();
+                        })
+                        .then(data => {
+                            swal({
+                                title: "Success",
+                                text: "Component added successfully!",
+                                icon: "success",
+                                timer: 1000,
+                                buttons: false
+                            });
+                            nameInput.value = ''; // Kosongkan input
+
+                            setTimeout(function() {
+                                window.location.reload();
+                            }, 1000);
+                        })
+                        .catch(async (error) => {
+                            let errMsg = 'Failed to add component.';
+                            try {
+                                const errData = await error.json();
+                                errMsg = errData.message || errMsg;
+                            } catch (e) {
+                                // fallback kalau error response bukan JSON
+                                errMsg = 'Unexpected error occurred.';
+                            }
+                            alert(errMsg);
+                        });
+                });
+            }
         });
     </script>

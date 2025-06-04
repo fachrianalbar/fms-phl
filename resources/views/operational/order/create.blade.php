@@ -178,18 +178,18 @@
                                 data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
                                 aria-selected="true">List
                                 Cost</a></li>
-                        {{-- <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
+                        <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
                                 href="#profile-icon" role="tab" aria-controls="profile-icon"
                                 aria-selected="false">Add
                                 Cost</a>
-                        </li> --}}
+                        </li>
 
 
                     </ul>
                     <div class="tab-content" id="icon-tabContent">
 
                         @include('operational.order.components.cost-add')
-                        {{-- @include('operational.order.components.cost-component-add') --}}
+                        @include('operational.order.components.cost-component-add')
 
                     </div>
                 </div>
@@ -348,7 +348,9 @@
                             </td>
                             <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
                             <td><input class="form-control" name="description[]" value=""></td>
-                            <td><input class="form-control" name="nominal[]" type="number" min=1  value="${item.amount}"></td>
+                             <td>
+             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1  value="${formatNumber(item.amount)}">
+        </td>
                         </tr>`;
                             componentList.insertAdjacentHTML('beforeend', row);
                             index++;
@@ -377,6 +379,10 @@
                         // Reinitialize Select2 for destination location dropdown after updating options
                     });
             }
+        }
+
+        function formatNumber(number) {
+            return new Intl.NumberFormat('id-ID').format(number);
         }
 
         // Trigger origin location when both customer and route type are selected
