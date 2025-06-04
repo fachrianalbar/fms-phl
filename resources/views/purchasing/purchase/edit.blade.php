@@ -345,7 +345,10 @@
 
             // Mengisi options berdasarkan data items
             itemsData.forEach(item => {
-                options += `<option value="${item.code}" data-name="${item.name}" data-price="${item.price}">
+                console.log(item);
+                const price = item.latest_purchase?.price ?? 0;
+
+                options += `<option value="${item.code}" data-name="${item.name}" data-price="${price}">
                         ${item.code} - ${item.name}
                     </option>`;
             });

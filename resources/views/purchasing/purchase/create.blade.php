@@ -267,6 +267,8 @@
             itemPrice = Intl.NumberFormat('id-ID').format(Math.round(itemPrice))
 
 
+
+
             $(`#itemName_${row}`).val(itemName);
             $(`#price_${row}`).val(itemPrice);
             updateTotalPrice(row);
@@ -281,6 +283,7 @@
             totalPrice = Intl.NumberFormat('id-ID').format(Math.round(totalPrice))
 
 
+
             $(`#totalPrice_${row}`).val(totalPrice);
         }
 
@@ -292,7 +295,8 @@
 
             // Mengisi options berdasarkan data items
             itemsData.forEach(item => {
-                options += `<option value="${item.code}" data-name="${item.name}" data-price="${item.price}">
+                const price = item.latest_purchase?.price ?? 0;
+                options += `<option value="${item.code}" data-name="${item.name}" data-price="${price}">
                         ${item.code} - ${item.name}
                     </option>`;
             });

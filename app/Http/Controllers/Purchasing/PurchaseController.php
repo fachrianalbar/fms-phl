@@ -141,7 +141,7 @@ class PurchaseController extends Controller
         }
 
         $supplier = $this->supplierSvc->findAll();
-        $items = Item::OrderBy('name', 'asc')->get();
+        $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view . 'edit')
             ->with('view', $this->view)
