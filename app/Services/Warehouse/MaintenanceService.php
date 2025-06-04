@@ -148,6 +148,9 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode
         ]);
 
+
+        dd($request->all());
+
         if (isset($request->itemCode)) {
             $itemCodes = $request->itemCode;
             $qtys = $request->qty;
@@ -155,11 +158,14 @@ class MaintenanceService
             $maintenanceCode = $request->code;
 
             $detailMap = [];
+            $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode']);
+
 
             // STEP 1: Rollback qtyUsed hanya untuk data yang digunakan di maintenance_fifo
             foreach ($itemCodes as $i => $itemCode) {
-                $md = MaintenanceDetail::where('maintenanceCode', $maintenanceCode)
-                    ->where('itemCode', $itemCode)
+                $detailCode = $filtered['maintenanceDetailCode'][$i] ?? null;
+
+                $md = MaintenanceDetail::where('code', $detailCode)
                     ->first();
 
                 if ($md) {
