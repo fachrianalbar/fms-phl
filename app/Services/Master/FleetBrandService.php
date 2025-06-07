@@ -34,6 +34,7 @@ class FleetBrandService
             'code' => GenerateCode::generateCode('FFB')
         ]);
 
+
         $this->logActivity($title, $data, 'Create');
     }
 
