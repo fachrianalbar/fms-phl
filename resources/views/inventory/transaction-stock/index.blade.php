@@ -79,8 +79,8 @@
                                     <select class="js-example-basic-single" name="itemCode" id="itemCode">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($data as $item)
-                                            <option value="{{ $item->itemCode }}">
-                                                {{ $item->itemCode . ' - ' . ($item->item->name ?? '') }}
+                                            <option value="{{ $item->code }}">
+                                                {{ $item->code . ' - ' . ($item->name ?? '') }}
                                             </option>
                                         @endforeach
                                     </select>

@@ -20,4 +20,6 @@ yarn-error.log
 /.vscode
 /db_tft.sql
 .DS_Store
+/storage/app/mpdf-temp/
+
 
