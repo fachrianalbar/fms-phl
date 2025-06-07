@@ -349,7 +349,7 @@
                             <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
                             <td><input class="form-control" name="description[]" value=""></td>
                              <td>
-             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1  value="${formatNumber(item.amount)}">
+             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
         </td>
                         </tr>`;
                             componentList.insertAdjacentHTML('beforeend', row);

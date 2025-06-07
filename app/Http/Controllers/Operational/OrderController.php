@@ -482,6 +482,8 @@ class OrderController extends Controller
 
                     $note = '';
                     $finishOrder = '';
+                    $delete = '';
+                    $edit = '';
 
 
 
@@ -499,6 +501,18 @@ class OrderController extends Controller
                                 data-bs-toggle="tooltip" title="Finish Order">
                                     <i class="mdi mdi-check-bold fs-14 text-success"></i>
                                 </a>';
+
+                        $edit =  '<a href="' . route($this->view . 'edit', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                        data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>';
+
+                        $delete = ' <a href="javascript:deleteData(\'' . $row->id . '\')"
+                        class="btn btn-icon btn-sm bg-danger-subtle me-1"
+                        data-bs-toggle="tooltip" title="Delete">
+                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                        </a>';
                     }
                     $btn = '<td>
                       <a href="' . route($this->view . 'show-order', $row->id) . '"
@@ -506,17 +520,8 @@ class OrderController extends Controller
                         data-bs-toggle="tooltip" title="Show">
                             <i class="mdi mdi-eye fs-14 text-success"></i>
                         </a>
-                        <a href="' . route($this->view . 'edit', $row->id) . '"
-                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                        data-bs-toggle="tooltip" title="Edit">
-                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-                        </a>
-
-                        <a href="javascript:deleteData(\'' . $row->id . '\')"
-                        class="btn btn-icon btn-sm bg-danger-subtle me-1"
-                        data-bs-toggle="tooltip" title="Delete">
-                            <i class="mdi mdi-delete fs-14 text-danger"></i>
-                        </a>
+                        ' . $edit . '    
+                        ' . $delete . '    
                         ' . $note . '    
                         ' . $finishOrder . '                                   
                     </td>';

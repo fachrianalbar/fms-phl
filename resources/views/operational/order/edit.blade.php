@@ -221,14 +221,17 @@
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="col-12">
-                        <div class="card-body ">
-                            <button class="btn btn-primary" id="save"
-                                type="submit">{{ __('general.save_changes') }}</button>
+                @if ($data->status == 0)
+                    <div class="card">
+                        <div class="col-12">
+                            <div class="card-body ">
+                                <button class="btn btn-primary" id="save"
+                                    type="submit">{{ __('general.save_changes') }}</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
+
             </div>
         </form>
         <form id="delete-form" method="post">

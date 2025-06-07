@@ -94,7 +94,7 @@
                         </td>
                         <td>
                             <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
-                                min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
+                                readonly min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
                         </td>
 
 
