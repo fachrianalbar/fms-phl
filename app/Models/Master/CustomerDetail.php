@@ -7,16 +7,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Company extends Model
+class CustomerDetail extends Model
 {
     use HasFactory, Uuid, SoftDeletes;
 
-    protected $table = 'company';
+    protected $table = 'customer_detail';
     public $incrementing = false;
 
     protected $fillable = [
         'code',
-        'name',
-        'format'
+        'label',
+        'customerCode',
     ];
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customerCode', 'code');
+    }
 }

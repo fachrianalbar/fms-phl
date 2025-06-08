@@ -1,22 +1,27 @@
 <?php
 
-namespace App\Models\Master;
+namespace App\Models\Operational;
 
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Company extends Model
+class OrderTax extends Model
 {
     use HasFactory, Uuid, SoftDeletes;
 
-    protected $table = 'company';
+    protected $table = 'order_tax';
     public $incrementing = false;
 
     protected $fillable = [
         'code',
-        'name',
-        'format'
+        'description',
+        'orderCode',
     ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'orderCode', 'code');
+    }
 }

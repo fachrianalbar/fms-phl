@@ -1,31 +1,31 @@
 <?php
 
-namespace App\Http\Controllers\Finance;
+namespace App\Http\Controllers\Operational;
 
 use App\Http\Controllers\Controller;
-use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
-use Illuminate\Support\Facades\Auth;
+use App\Services\Operational\OrderTaxService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
-class VendorPaymentController extends Controller
+
+class OrderTaxController extends Controller
 {
     protected $service;
     protected $title;
     protected $view;
     protected $menuSvc;
 
-    public function __construct(VendorPaymentService $vendorPaymentSvc, MenuService $menuSvc)
+    public function __construct(OrderTaxService $orderTaxSvc, MenuService $menuSvc)
     {
-        $this->service = $vendorPaymentSvc;
-        $this->title = "Vendor Payment";
-        $this->menuSvc = $menuSvc->getByName("Vendor Payment");
+        $this->service = $orderTaxSvc;
+        $this->title = "Order Tax";
+        $this->menuSvc = $menuSvc->getByName("Order Tax");
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "finance.vendor-payment.";
+        $this->view = "operational.order-tax.";
     }
 
     /**
@@ -40,17 +40,11 @@ class VendorPaymentController extends Controller
 
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'amount' => 'required',
-            'date' => 'required'
-        ]);
-        if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
-        }
         try {
             DB::beginTransaction();
 
             $this->service->store($request, $this->title);
+
             DB::commit();
 
             return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
@@ -127,7 +121,7 @@ class VendorPaymentController extends Controller
 
                     if ($row->status == 3) {
                         $badgeClass = 'primary';
-                    } elseif ($row->status == 6) {
+                    } elseif ($row->status == 7) {
                         $badgeClass = 'success';
                     }
 

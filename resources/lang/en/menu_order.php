@@ -3,5 +3,19 @@
 return [
     'want_to_finish_this_order' => 'Want To Finish This Order?',
     'finish_order_was_successfull' => 'Finish order was successfull',
-    'add_component' => 'Tambah Komponen'
+    'add_component' => 'Tambah Komponen',
+    'order_date' => 'Order Date',
+    'plate_number' => 'Plate Number',
+    'driver' => 'Driver',
+    'shipment_no' => 'Shipment No',
+    'customer' => 'Customer',
+    'origin' => 'Origin',
+    'destination' => 'Destination',
+    'route_type' => 'Route Type',
+    'notes' => 'Notes',
+    'list_cost' => 'List Cost',
+    'component_name' => 'Component Name',
+    'description' => 'Description',
+    'add_cost' => 'Add Cost',
+    'name' => 'Name'
 ];

@@ -7,6 +7,7 @@ use App\Http\Controllers\Operational\NotReturnDoController;
 use App\Http\Controllers\Operational\OrderController;
 use App\Http\Controllers\Operational\OrderMonitoringController;
 use App\Http\Controllers\Operational\OrderOfficeController;
+use App\Http\Controllers\Operational\OrderTaxController;
 use App\Http\Controllers\Operational\ReturnDoController;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('monitoring-order', OrderMonitoringController::class);
     Route::resource('return-do', ReturnDoController::class);
     Route::resource('not-return-do', NotReturnDoController::class);
+    Route::resource('order-tax', OrderTaxController::class);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::post('cancel-do', [ReturnDoController::class, 'cancelDo'])->name('return-do.cancel-do');
     Route::put('finish-order/{id}', [OrderController::class, 'finishOrder'])->name('finish-order');
@@ -46,6 +48,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('order-monitoring', [OrderMonitoringController::class, 'datatable'])->name('order-monitoring');
     Route::get('not-return-do', [NotReturnDoController::class, 'datatable'])->name('not-return-do');
     Route::get('return-do', [ReturnDoController::class, 'datatable'])->name('return-do');
+    Route::get('order-tax', [OrderTaxController::class, 'datatable'])->name('order-tax');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {

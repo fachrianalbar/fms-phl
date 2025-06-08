@@ -1,7 +1,7 @@
 @extends('layouts.main', [
     'title' => $title,
     'pageTitle' => $title,
-    'firstSegment' => 'Finance',
+    'firstSegment' => 'Operational',
     'secondSegment' => $title,
 ])
 
@@ -34,13 +34,13 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>{{ __('menu_vendor_payment.order_date') }}</th>
-                                <th>{{ __('menu_vendor_payment.plate_number') }}</th>
-                                <th>{{ __('menu_vendor_payment.driver') }}</th>
-                                <th>{{ __('menu_vendor_payment.shipment_no') }}</th>
-                                <th>{{ __('menu_vendor_payment.customer') }}</th>
-                                <th>{{ __('menu_vendor_payment.origin') }}</th>
-                                <th>{{ __('menu_vendor_payment.destination') }}</th>
+                                <th>{{ __('menu_order_tax.order_date') }}</th>
+                                <th>{{ __('menu_order_tax.plate_number') }}</th>
+                                <th>{{ __('menu_order_tax.driver') }}</th>
+                                <th>{{ __('menu_order_tax.shipment_no') }}</th>
+                                <th>{{ __('menu_order_tax.customer') }}</th>
+                                <th>{{ __('menu_order_tax.origin') }}</th>
+                                <th>{{ __('menu_order_tax.destination') }}</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -52,15 +52,15 @@
             </div>
         </div>
 
-        <form class="row g-3" method="post" action="{{ route($view . 'store') }}" onsubmit="return submitForm('amount')">
+        <form class="row g-3" method="post" action="{{ route($view . 'store') }}">
             @csrf
-            <div class="modal fade bd-example-modal-lg" id="payment-modal" tabindex="-1" role="dialog"
+            <div class="modal fade bd-example-modal-lg" id="tax-modal" tabindex="-1" role="dialog"
                 aria-labelledby="myLargeModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
                     <div class="modal-content">
                         <input type="hidden" name="orderCode" id="orderCode">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">{{ __('menu_vendor_payment.payment_data') }}
+                            <h4 class="modal-title" id="myLargeModalLabel">{{ $title }} Modal
                             </h4>
                             <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
@@ -68,26 +68,12 @@
                         <div class="card">
                             <div class="card-body col-md-12">
                                 <div class="row g-3">
-                                    <div class="col-md-12">
-                                        <label class="form-label"
-                                            for="itemNameModal">{{ __('menu_vendor_payment.payment_date') }}</label>
-                                        <input class="form-control" name="date" id="date" type="date"
-                                            placeholder="{{ __('menu_vendor_payment.payment_date') }}" required>
-                                    </div>
 
                                     <div class="col-md-12">
                                         <label class="form-label"
-                                            for="amount">{{ __('menu_vendor_payment.amount') }}</label>
-                                        <input class="form-control" name="amount" id="amount" type="text"
-                                            oninput="formatAngka(this)"
-                                            placeholder="{{ __('menu_vendor_payment.amount') }}" required>
-                                    </div>
-
-                                    <div class="col-md-12">
-                                        <label class="form-label"
-                                            for="description">{{ __('menu_vendor_payment.description') }}</label>
+                                            for="description">{{ __('menu_order_tax.description') }}</label>
                                         <textarea class="form-control" name="description" id="description" rows="3"
-                                            placeholder="{{ __('menu_vendor_payment.description') }}"></textarea>
+                                            placeholder="{{ __('menu_order_tax.description') }}"></textarea>
                                     </div>
                                 </div>
 
@@ -143,7 +129,7 @@
                 "serverSide": true,
                 "destroy": true,
                 "ajax": {
-                    "url": "{{ route('dt.vendor-payment') }}",
+                    "url": "{{ route('dt.order-tax') }}",
                 },
                 "columns": [{
                         "data": 'action'
@@ -173,7 +159,7 @@
                     },
                     {
                         "data": 'status'
-                    }
+                    },
                 ],
                 "columnDefs": [{
                         "searchable": false,
@@ -191,8 +177,7 @@
         });
 
         function showModal(id) {
-            console.log(id);
-            $('#payment-modal').modal('show');
+            $('#tax-modal').modal('show');
             $('#orderCode').val(id);
         }
     </script>

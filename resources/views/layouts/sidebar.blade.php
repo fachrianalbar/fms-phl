@@ -43,8 +43,8 @@
                     <ul class="nav-second-level">
                         @foreach ($children as $child)
                             <li>
-                                <a href="{{ url('/' . $child->url) }}"
-                                    class="tp-link">{{ auth()->user()->languange == 'id' ? $child->nama : $child->name }}</a>
+                                <a href="{{ url('/' . $child->url) }}" class="tp-link"> <span class="h4">- </span>
+                                    {{ auth()->user()->languange == 'id' ? $child->nama : $child->name }}</a>
                             </li>
                         @endforeach
                     </ul>

@@ -176,8 +176,7 @@
                     <ul class="nav nav-tabs" id="icon-tab" role="tablist">
                         <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
                                 data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                                aria-selected="true">List
-                                Cost</a></li>
+                                aria-selected="true">{{ __('menu_order.name') }}</a></li>
                         <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
                                 href="#profile-icon" role="tab" aria-controls="profile-icon"
                                 aria-selected="false">Add

@@ -27,7 +27,7 @@ class VendorPaymentService
     {
         return $this->order->whereHas('fleet.company', function ($q) {
             $q->where('type', 'External');
-        })->whereIn('status', [3])->get();
+        })->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation'])->whereIn('status', [3, 6])->get();
     }
 
     public function store($request, $title)

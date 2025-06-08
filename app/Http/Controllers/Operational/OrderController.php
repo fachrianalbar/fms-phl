@@ -73,6 +73,8 @@ class OrderController extends Controller
     ) {
         $this->service = $orderSvc;
         $this->title = "Order";
+        $this->menuSvc = $menuSvc->getByName("Order");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "operational.order.";
         $this->materialSvc = $materialSvc;
         $this->fleetDriverSvc = $fleetDriverSvc;
