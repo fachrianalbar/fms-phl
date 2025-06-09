@@ -14,4 +14,5 @@ return [
     'type' => 'Type',
     'is_do' => 'Is Do?',
     'person' => 'Person',
+    'name' => 'Name'
 ];

@@ -115,7 +115,6 @@ class CustomerController extends Controller
 
         $company = $this->companySvc->findAll();
 
-
         return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('company', $company)
@@ -165,7 +164,15 @@ class CustomerController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'index')->with('success', __('general.delete_data_success'));
+    }
+
+    public function deleteCustomerDetail($id)
+    {
+
+        $this->service->deleteCustomerDetail($id);
+
+        return redirect()->back()->with('success', __('general.delete_data_success'));
     }
 
     public function datatable(Request $request)

@@ -45,4 +45,9 @@ class Customer extends Model
     {
         return $this->belongsTo(Company::class, 'companyCode', 'code');
     }
+
+    public function details()
+    {
+        return $this->hasMany(CustomerDetail::class, 'customerCode', 'code');
+    }
 }

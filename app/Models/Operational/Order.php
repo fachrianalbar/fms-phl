@@ -44,7 +44,8 @@ class Order extends Model
         'companyCode',
         'estimatedTime',
         'distance',
-        'returnDate'
+        'returnDate',
+        'is_order_tax'
     ];
 
     public function customer()

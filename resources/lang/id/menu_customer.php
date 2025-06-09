@@ -13,6 +13,6 @@ return [
     'phone' => 'Nomor Telepon',
     'type' => 'Tipe',
     'is_do' => 'Apakah Do?',
-    'person' => 'Perorangan'
-
+    'person' => 'Perorangan',
+    'name' => 'Nama'
 ];

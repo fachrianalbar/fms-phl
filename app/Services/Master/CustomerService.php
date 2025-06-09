@@ -4,17 +4,22 @@ namespace App\Services\Master;
 
 use App\Helpers\GenerateCode;
 use App\Models\Master\Customer;
+use App\Models\Master\CustomerDetail;
 use App\Traits\LogActivity;
+use Illuminate\Support\Arr;
+
 
 class CustomerService
 {
     use LogActivity;
 
     protected $service;
+    protected $customerDetail;
 
-    public function __construct(Customer $customer)
+    public function __construct(Customer $customer, CustomerDetail $customerDetail)
     {
         $this->service = $customer;
+        $this->customerDetail = $customerDetail;
     }
 
     public function findAll()
@@ -24,7 +29,7 @@ class CustomerService
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->first();
+        return $this->service->where('id', $id)->with(['details'])->first();
     }
 
     public function getByCode($code)
@@ -80,6 +85,23 @@ class CustomerService
             // 'telegramUsername' => $request->telegramUsername
         ]);
 
+        $data = $this->getById($id);
+
+
+        if (isset($request->nameDetail)) {
+            $filtered = Arr::only($request->all(), ['nameDetail']);
+
+            $this->customerDetail->where('customerCode', $data->code)->delete();
+
+            for ($i = 0; $i < count($request->nameDetail); $i++) {
+                $dataDetail = $this->customerDetail->create([
+                    'code' => GenerateCode::generateCode('FCD', true),
+                    'name' => $filtered['nameDetail'][$i],
+                    'customerCode' => $data->code
+                ]);
+                $this->logActivity('Customer Detail', $dataDetail, 'Create');
+            }
+        }
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
 
@@ -88,5 +110,14 @@ class CustomerService
         $this->logActivity($title, $this->getById($id), 'Delete');
 
         $this->service->where('id', $id)->delete();
+    }
+
+    public function deleteCustomerDetail($id)
+    {
+        $dataDetail = $this->customerDetail->where('id', $id)->first();
+
+        $this->logActivity('Customer Detail', $dataDetail, 'Delete');
+
+        $dataDetail->delete();
     }
 }

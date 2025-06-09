@@ -28,6 +28,7 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleet-brand', FleetBrandController::class);
     Route::resource('unit', UnitController::class);
     Route::resource('customer', CustomerController::class);
+    Route::delete('customer-detail/{id}', [CustomerController::class, 'deleteCustomerDetail'])->name('customer-detail.destroy');
     Route::resource('cost-component', CostComponentController::class);
     Route::resource('location', LocationController::class);
     Route::resource('material', MaterialController::class);

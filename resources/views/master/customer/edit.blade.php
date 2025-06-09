@@ -9,19 +9,29 @@
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
+
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
+    <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
 
-            </div>
-            <div class="card-body col-md-12">
-                <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+
+                </div>
+                <div class="card-body col-md-12">
                     @csrf
                     @method('PUT')
                     <div class="row mt-4">
@@ -154,23 +164,134 @@
                                     {{ __('general.choose') }}...</option>
                                 <option value=1 {{ $data->isDo == 1 ? 'selected' : '' }}>
                                     {{ __('general.yes') }}</option>
-                                <option value=0 {{ $data->isDo == 0 && $data->isDo != null ? 'selected' : '' }}>
+                                <option value=0 {{ $data->isDo == 0 || $data->isDo != null ? 'selected' : '' }}>
                                     {{ __('general.no') }}</option>
 
                             </select>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="col-12">
-                        <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>{{ $title }} Detail Data</h4>
+
+                    <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
+
+
+                </div>
+
+                <div class="card-body col-md-12">
+                    @include('partials.alert')
+                    <table class="table table-sm" id="dt">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th style="width: 90%">{{ __('menu_customer.name') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customerDetails">
+
+
+                            @if (isset($data->details))
+                                @foreach ($data->details as $item)
+                                    <tr>
+                                        <td>
+                                            <a href="javascript:deleteCustomerDetail('{{ $item->id }}')"
+                                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                                title="Delete">
+                                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                            </a>
+                                        </td>
+
+                                        <td>
+                                            <input class="form-control" name="nameDetail[]" type="text"
+                                                style="width: 500px" value="{{ $item->name }}">
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td></td>
+                                    <td>
+                                        <input type="text" class="form-control" name="nameDetail[]"
+                                            style="width: 500px">
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="card">
+                <div class="col-12">
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="submit"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
-    </div>
+    </form>
+    <form id="delete-form" method="post">
+        @csrf
+        @method('DELETE')
+    </form>
+
 @endsection
 
 @push('script')
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+
+
+    <script>
+        $('#save').on('click', function() {
+            let row = $('#customerDetails tr').length + 1;
+
+            let newRow = `<tr>
+                            <td class="remove-btn">
+                                  <a href="javascript:removeDetailRow(${row})"
+                                class="btn btn-icon btn-sm bg-danger-subtle"
+                                data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
+
+                            </td>
+                             <td>
+                                    <input type="text" class="form-control" name="nameDetail[]" id="nameDetail_${row}" style="width: 500px">
+                            </td>
+                          </tr>`;
+            $('#customerDetails').append(newRow);
+        });
+
+        function removeDetailRow(row) {
+            $(`#nameDetail_${row}`).closest('tr').remove();
+        }
+
+        function deleteCustomerDetail(id) {
+            var url = '{{ route('master.customer-detail.destroy', ':id') }}';
+            url = url.replace(':id', id);
+
+            $('#delete-form').attr('action', url);
+
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "{{ __('general.want_to_delete_this_data') }}",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $('#delete-form').submit();
+                } else {
+                    swal("{{ __('general.your_data_is_save') }}");
+                }
+            });
+        }
+    </script>
 @endpush
