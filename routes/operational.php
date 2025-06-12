@@ -29,6 +29,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::put('bon-ujt-detail/{id}', [BonUjtController::class, 'storeBonUjtDetail'])->name('bon-ujt-detail.store');
     Route::delete('bon-ujt-detail/{id}', [BonUjtController::class, 'destroyBonUjtDetail'])->name('bon-ujt-detail.destroy');
     Route::resource('order', OrderController::class);
+    Route::post('store-order-tax', [OrderController::class, 'storeOrderTax'])->name('order.store-order-tax');
     Route::get('/order/{id}/detail', [OrderController::class, 'showOrder'])->name('order.show-order');
     Route::get('check-order-null-relation', [OrderController::class, 'checkNullRelations'])->name('order.check-null-relation');
     Route::get('excel-order', [OrderController::class, 'excelOrder'])->name('order.excel-order');

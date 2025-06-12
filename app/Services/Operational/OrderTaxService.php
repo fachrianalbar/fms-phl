@@ -22,7 +22,7 @@ class OrderTaxService
 
     public function findAll()
     {
-        return $this->order->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus'])->whereIn('status', [3, 7])->get();
+        return $this->order->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus'])->where('is_order_tax', 1)->get();
     }
 
     public function store($request, $title)

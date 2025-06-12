@@ -173,4 +173,9 @@ class OrderService
 
         $this->service->where('id', $id)->delete();
     }
+
+    public function storeOrderTax($selectedOrders)
+    {
+        $this->service->whereIn('code', $selectedOrders)->update(['is_order_tax' => 1]);
+    }
 }

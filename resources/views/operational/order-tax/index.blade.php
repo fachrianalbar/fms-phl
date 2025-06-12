@@ -41,7 +41,6 @@
                                 <th>{{ __('menu_order_tax.customer') }}</th>
                                 <th>{{ __('menu_order_tax.origin') }}</th>
                                 <th>{{ __('menu_order_tax.destination') }}</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -156,9 +155,6 @@
                     },
                     {
                         "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'status'
                     },
                 ],
                 "columnDefs": [{

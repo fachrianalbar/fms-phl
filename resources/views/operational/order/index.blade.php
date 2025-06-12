@@ -17,7 +17,6 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
@@ -32,6 +31,8 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="accordion-item ">
 
+
+
                         <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
                             data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                             <i class="mdi mdi-magnify fs-14 text-dark"></i>
@@ -43,6 +44,10 @@
                         class="btn btn-icon btn-sm bg-success-subtle" id="export-data">
                         <i class="mdi mdi-file-excel fs-14 text-success"></i>
                     </a>
+
+                    <button type="button" class="btn btn-icon btn-sm bg-info-subtle" id="modal-tax-btn">
+                        <i class="mdi mdi-book-check fs-14 text-info"></i>
+                    </button>
 
                     <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
                 </div>
@@ -221,6 +226,49 @@
             </div>
         </div>
 
+        <form method="post" action="{{ route($view . 'store-order-tax') }}">
+            @csrf
+            <div class="modal fade bd-example-modal-xl" id="modal-tax" tabindex="-1" role="dialog"
+                aria-labelledby="myLargeModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h4 class="modal-title" id="myLargeModalLabel">Data Order Tax</h4>
+                            <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                        </div>
+                        <div class="card">
+                            <div class="card-body col-md-12">
+                                <div class="row g-3">
+                                    <table class="table table-striped w-100 nowrap" id="dt-order-tax">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>No</th>
+                                                <th>Order Date</th>
+                                                <th>Fleet</th>
+                                                <th>Driver</th>
+                                                <th>Shipment No</th>
+                                                <th>Customer Name</th>
+                                                <th>Destination</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-start">
+                            <button type="submit" id="saveOrderTax" class="btn btn-primary">Save</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+
 
     </div>
     <form id="delete-form" method="post">
@@ -253,11 +301,16 @@
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
-    <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
     <script>
+        let selectedOrders = [];
+
+        $('#modal-tax-btn').on('click', function() {
+            $('#modal-tax').modal('show');
+        });
+
+
         $(document).ready(function() {
             const table = $('#dt').DataTable({
                 "processing": true,
@@ -325,6 +378,63 @@
                 ]
             })
 
+            const tableTax = $('#dt-order-tax').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "destroy": true,
+                "ajax": {
+                    "url": "{{ route('dt.order') }}",
+                    "data": function(d) {
+                        d.is_order_tax = 0;
+                    }
+                },
+                "columns": [{
+                        "data": 'actionTax'
+                    },
+                    {
+                        "data": 'DT_RowIndex'
+                    },
+                    {
+                        "data": 'orderDate'
+                    },
+                    {
+                        "data": 'fleet.plateNumber'
+                    },
+                    {
+                        "data": 'driver.name'
+                    },
+                    {
+                        "data": "shipmentNumber"
+                    },
+                    {
+                        "data": 'customer.name'
+                    },
+                    {
+                        "data": 'route.destinationLocation.name'
+                    },
+
+
+                ],
+                "columnDefs": [{
+                        "searchable": false,
+                        "targets": [0, 1]
+                    },
+                    {
+                        "orderable": false,
+                        "targets": [0, 1]
+                    }
+                ],
+                "order": [
+                    [2, 'desc']
+                ]
+            })
+
+            // $('#modal-tax-btn').click(function() {
+            //     console.log("andi");
+            //     $('#modal-tax').modal('show');
+            // });
+
+
             // Event untuk form filter
             $('#filterForm').on('submit', function(e) {
                 e.preventDefault();
@@ -336,6 +446,49 @@
 
 
                 table.ajax.reload(); // Reload DataTable dengan filter baru
+            });
+
+            // Event handler untuk checkbox
+            $(document).on('change', '.order-checkbox', function() {
+                const orderId = $(this).val();
+                if ($(this).is(':checked')) {
+                    if (!selectedOrders.includes(orderId)) {
+                        selectedOrders.push(orderId);
+                    }
+                } else {
+                    selectedOrders = selectedOrders.filter(id => id !== orderId);
+                }
+
+            });
+
+            $('#saveOrderTax').click(function(e) {
+                // Get all checkboxes
+                if (selectedOrders.length === 0) {
+                    event.preventDefault();
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: "Please select at least one item",
+                        icon: "warning",
+                    });
+                    return;
+                }
+
+                // Tambahkan array ke form
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: 'selectedOrders',
+                    value: JSON.stringify(selectedOrders)
+                }).appendTo('form');
+            });
+
+            // Simpan state saat DataTable di-reload (misalnya saat pindah halaman)
+            $('#dt-order-tax').on('draw.dt', function() {
+                $('.order-checkbox').each(function() {
+                    const orderId = $(this).val();
+                    if (selectedOrders.includes(orderId)) {
+                        $(this).prop('checked', true);
+                    }
+                });
             });
 
             $('#check-null').on('click', function() {

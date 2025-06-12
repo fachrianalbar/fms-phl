@@ -363,9 +363,7 @@ class BonUjtController extends Controller
 
     public function storeBonUjtDetail(Request $request, $id)
     {
-
         $selectedOrders = json_decode($request->input('selectedOrders'), true);
-
 
         $validator = Validator::make($request->all(), [
             'order' => 'required',

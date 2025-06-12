@@ -111,39 +111,12 @@ class OrderTaxController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
-                ->editColumn('status', function ($row) {
-                    $statusText = '';
-                    $badgeClass = 'primary';
-
-                    if (isset($row->orderStatus->name)) {
-                        $statusText = Auth::user()->languange == 'id' ? $row->orderStatus->nama : $row->orderStatus->name;
-                    }
-
-                    if ($row->status == 3) {
-                        $badgeClass = 'primary';
-                    } elseif ($row->status == 7) {
-                        $badgeClass = 'success';
-                    }
-
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
-                })
                 ->addColumn('action', function ($row) {
                     $btn = '';
 
-
-                    if ($row->status == 3) {
-                        $btn = ' <td>
-                            <a href="javascript:showModal(\'' . $row->code . '\')"
-                                class="btn btn-icon btn-sm bg-success-subtle me-1"
-                                data-bs-toggle="tooltip" title="Action">
-                                    <i class="mdi mdi-check-bold fs-14 text-success"></i>
-                             </a>
-                            </td>';
-                    }
-
                     return $btn;
                 })
-                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status'])
+                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name'])
                 ->toJson();
         }
     }

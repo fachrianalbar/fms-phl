@@ -119,19 +119,13 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>No</th>
-                                                <th>Shipment No</th>
                                                 <th>Order Date</th>
-                                                <th>Origin</th>
+                                                <th>Fleet</th>
+                                                <th>Driver</th>
+                                                <th>Shipment No</th>
+                                                <th>Customer Name</th>
                                                 <th>Destination</th>
-                                                <th>Plate No</th>
-                                                <th>Fleet Type</th>
-                                                <th>Order Type</th>
-                                                {{-- <th>Allowance</th> --}}
-                                                {{-- <th>Qty</th>
-                                                <th>Cost</th>
-                                                <th>Tonase</th>
-                                                <th>Add Cost</th> --}}
-                                                <th>Total Cost</th>
+                                                <th>Qty</th>
                                             </tr>
                                         </thead>
                                         <tbody>

@@ -33,7 +33,6 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 
-
 class OrderController extends Controller
 {
     protected $service;
@@ -67,8 +66,7 @@ class OrderController extends Controller
         LocationService $locationSvc,
         CompanySettingService $companySvc,
         MenuService $menuSvc,
-        CostComponentService $costComponentSvc,
-
+        CostComponentService $costComponentSvc
 
     ) {
         $this->service = $orderSvc;
@@ -343,6 +341,10 @@ class OrderController extends Controller
         if ($request->ajax()) {
             $data = $this->service->datatable();
 
+            if ($request->has('is_order_tax')) {
+                $data->where('is_order_tax', $request->is_order_tax);
+            }
+
             // Definisikan kolom filter dengan alias
             $filters = [
                 'fleet_plateNumber' => $request->plateNumber,
@@ -478,8 +480,6 @@ class OrderController extends Controller
                 ->addColumn('totalPrice', function () {
                     return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
-
-
                 ->addColumn('action', function ($row) {
 
                     $note = '';
@@ -533,7 +533,12 @@ class OrderController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
-                ->rawColumns(['action', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice'])
+                ->addColumn('actionTax', function ($row) {
+                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+
+                    return $btn;
+                })
+                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice'])
                 ->toJson();
         }
     }
@@ -651,5 +656,33 @@ class OrderController extends Controller
             ->first();
 
         return $route->routeDetail;
+    }
+
+    public function storeOrderTax(Request $request)
+    {
+        $selectedOrders = json_decode($request->input('selectedOrders'), true);
+
+        $validator = Validator::make($request->all(), [
+            'order' => 'required',
+        ]);
+
+
+        if ($validator->fails()) {
+            return redirect()->back()->with('fail', $validator->errors()->all()[0]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->service->storeOrderTax($selectedOrders);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
     }
 }
