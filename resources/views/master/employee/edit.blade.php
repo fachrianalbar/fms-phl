@@ -2,8 +2,8 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => __('general.edit'),
-]);
+    'secondSegment' => __('general.add'),
+])
 
 @push('style')
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
@@ -16,7 +16,7 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
+                <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
@@ -200,4 +200,34 @@
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+
+    <script>
+        function cityByProvince(id) {
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
+
+            $('#cityId').html(html)
+            $('#districtId').html(html)
+
+            $.get("{{ url('ajax/city-by-province') }}/" + id, function(data) {
+                data.forEach(i => {
+                    html += '<option value="' + i.id + '">' + i.name + '</option>'
+                });
+                $('#cityId').html(html)
+            })
+        }
+
+        function districtByCity(id) {
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>'
+
+            $('#districtId').html(html)
+
+            $.get("{{ url('ajax/district-by-city') }}/" + id, function(data) {
+
+                data.forEach(i => {
+                    html += '<option value="' + i.id + '">' + i.name + '</option>'
+                });
+                $('#districtId').html(html)
+            })
+        }
+    </script>
 @endpush
