@@ -198,6 +198,7 @@ class OrderController extends Controller
     public function showOrder(string $id)
     {
         $data = $this->service->getById($id);
+        $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
         $route = Route::where('code', $data->routeCode)->first();
         $component = CostComponent::get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
@@ -245,6 +246,7 @@ class OrderController extends Controller
             ->with('component', $component)
             ->with('orderCost', OrderCostType::cases())
             ->with('cost', $cost)
+            ->with('customerDetailOrder', $customerDetailOrder)
             ->with('title', $this->title);
     }
 
@@ -273,7 +275,7 @@ class OrderController extends Controller
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->fleetSvc->findAll();
         $component = CostComponent::get();
-
+        $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
 
         return view($this->view . 'edit')
             ->with('view', $this->view)
@@ -293,6 +295,7 @@ class OrderController extends Controller
             ->with('component', $component)
             ->with('fleet', $fleet)
             ->with('company', $company)
+            ->with('customerDetailOrder', $customerDetailOrder)
             ->with('data', $data);
     }
 

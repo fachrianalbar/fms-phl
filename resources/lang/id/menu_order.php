@@ -17,5 +17,7 @@ return [
     'component_name' => 'Nama Komponen',
     'description' => 'Deskripsi',
     'add_cost' => 'Tambah Biaya',
-    'name' => 'Nama'
+    'name' => 'Nama',
+    'customer_detail_data' => 'Pelanggan Detail Data'
+
 ];

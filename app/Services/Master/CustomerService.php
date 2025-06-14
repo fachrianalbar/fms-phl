@@ -120,4 +120,9 @@ class CustomerService
 
         $dataDetail->delete();
     }
+
+    public function customerDetail($code)
+    {
+        return $this->customerDetail->where('customerCode', $code)->get();
+    }
 }

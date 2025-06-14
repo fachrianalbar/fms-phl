@@ -225,6 +225,27 @@
                         <h4>Total: Rp {{ number_format($totalPrice, 0, ',', '.') }} </h4>
                     </div>
                 </div>
+
+
+                @if ($customerDetailOrder->count() > 0)
+                    <div class="card" id="card-customer-detail">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h4> {{ __('menu_order.customer_detail_data') }}</h4>
+
+                        </div>
+                        <div class="card-body col-md-6">
+                            @foreach ($customerDetailOrder as $item)
+                                <div class="mb-3">
+                                    <label for="{{ $item->customerDetail->name }}"
+                                        class="form-label">{{ $item->customerDetail->name }}</label>
+                                    <input type="text" class="form-control" readonly
+                                        placeholder="{{ $item->customerDetail->name }}" value="{{ $item->value }}">
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
             </div>
         </form>
         <form id="delete-form" method="post">

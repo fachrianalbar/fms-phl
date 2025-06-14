@@ -167,12 +167,18 @@ class CustomerController extends Controller
         return redirect()->route($this->view . 'index')->with('success', __('general.delete_data_success'));
     }
 
+
+
     public function deleteCustomerDetail($id)
     {
-
         $this->service->deleteCustomerDetail($id);
 
         return redirect()->back()->with('success', __('general.delete_data_success'));
+    }
+
+    public function customerDetail($code)
+    {
+        return $this->service->customerDetail($code);
     }
 
     public function datatable(Request $request)

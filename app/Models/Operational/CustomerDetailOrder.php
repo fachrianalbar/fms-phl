@@ -3,6 +3,7 @@
 namespace App\Models\Operational;
 
 use App\Models\Master\Customer;
+use App\Models\Master\CustomerDetail;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,21 +11,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerDetailOrder extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, Uuid;
 
-    protected $table = 'customer_detail';
+    protected $table = 'customer_detail_order';
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'value',
         'orderCode',
-        'customerCode',
+        'customerDetailCode',
     ];
 
-    public function customer()
+    public function customerDetail()
     {
-        return $this->belongsTo(Customer::class, 'customerCode', 'code');
+        return $this->belongsTo(CustomerDetail::class, 'customerDetailCode', 'code');
     }
 
     public function order()

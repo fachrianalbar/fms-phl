@@ -171,6 +171,18 @@
 
 
 
+            <div class="card d-none" id="card-customer-detail">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4> {{ __('menu_order.customer_detail_data') }}</h4>
+
+                </div>
+                <div class="card-body col-md-6">
+
+                </div>
+            </div>
+
+
+
             <div class="card">
                 <div class="card-body col-md-12">
                     <ul class="nav nav-tabs" id="icon-tab" role="tablist">
@@ -182,8 +194,6 @@
                                 aria-selected="false">Add
                                 Cost</a>
                         </li>
-
-
                     </ul>
                     <div class="tab-content" id="icon-tabContent">
 
@@ -396,6 +406,47 @@
 
         $('#destinationLocationCode').on('select2:select', function() {
             checkAndLoadRoute();
+        });
+
+        $('#customerCode').on('change', function() {
+            let customerCode = $(this).val();
+
+            if (customerCode) {
+                $.get("/ajax/customer-detail/" + customerCode, function(data) {
+                    const $detailCard = $('#card-customer-detail');
+                    const $cardBody = $detailCard.find('.card-body');
+                    $cardBody.empty(); // Bersihkan isinya
+
+                    if (data.length > 0) {
+                        $detailCard.removeClass('d-none');
+
+                        // Disable input #notes
+                        $('#notes').prop('disabled', true);
+
+                        data.forEach(item => {
+                            let html = `
+                        <input type="hidden" name="customerDetailCode[]" value="${item.code}">
+                        <div class="mb-3">
+                            <label class="form-label">${item.name} <i class="mdi mdi-information text-danger"></i></label>
+                            <input class="form-control" name="value[]" type="text" required placeholder="${item.name}">
+                        </div>`;
+                            $cardBody.append(html);
+                        });
+                    } else {
+                        $detailCard.addClass('d-none');
+                        $cardBody.empty();
+
+                        // Enable input #notes
+                        $('#notes').prop('disabled', false);
+                    }
+                });
+            } else {
+                $('#card-customer-detail').addClass('d-none');
+                $('#card-customer-detail .card-body').empty();
+
+                // Enable input #notes
+                $('#notes').prop('disabled', false);
+            }
         });
     </script>
 @endpush

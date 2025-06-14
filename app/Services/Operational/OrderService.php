@@ -4,6 +4,7 @@ namespace App\Services\Operational;
 
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
+use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Traits\LogActivity;
@@ -15,18 +16,22 @@ class OrderService
     use LogActivity;
 
     protected $service;
+    protected $customerDetailOrder;
+    protected $orderCost;
+    protected $route;
 
-    public function __construct(Order $order)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route)
     {
         $this->service = $order;
+        $this->customerDetailOrder = $customerDetailOrder;
+        $this->orderCost = $orderCost;
+        $this->route = $route;
     }
 
     public function findAll()
     {
         return $this->service->with([
-            // 'fleetDriver.fleet',
             'driver',
-            // 'fleetDriver.employee',
             'customer',
             'route.destinationLocation',
             'material',
@@ -41,7 +46,6 @@ class OrderService
         return $this->service->with([
             'fleetDriver.fleet',
             'driver',
-            // 'fleetDriver.employee',
             'customer',
             'route.destinationLocation',
             'material',
@@ -63,51 +67,18 @@ class OrderService
         ]);
     }
 
-
     public function store($request, $title)
     {
-        $route = Route::where('customerCode', $request->customerCode)
-            ->where('originLocationCode', $request->originLocationCode)
-            ->where('destinationLocationCode', $request->destinationLocationCode)
-            ->where('routeTypeCode', $request->routeTypeCode)
-            ->first();
-
-        $data = $this->service->create([
-            'code' =>  $request->code,
-            'shipmentNumber' => $request->shipmentNumber,
-            'orderDate' => $request->orderDate,
-            // 'shipmentNumber' => $request->shipmentNumber,
-            'orderDate' => $request->orderDate,
-            'materialCode' => $request->materialCode,
-            'notes' => $request->notes,
-            'sto' => $request->sto,
-            'salesOrder' => $request->salesOrder,
-            'fleetCode' => $request->fleetCode,
-            'driverCode' => $request->driverCode,
-            'routeCode' => $route->code,
-            'qty' => $request->qty,
-            'routeCode' => $route->code,
-            'orderTypeCode' => $request->orderTypeCode,
-            'customerCode' => $request->customerCode,
-            // 'fleetTypeCode' => $request->fleetTypeCode
-        ]);
+        $data = $this->service->create(
+            array_merge(['code' => $request->code], $this->buildOrderData($request))
+        );
 
         if (isset($request->nominal)) {
-            $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal']);
+            $this->storeOrderCost($request);
+        }
 
-            for ($i = 0; $i < count($request->nominal); $i++) {
-
-                $orderCost = OrderCost::create([
-                    'code' => GenerateCode::generateCode('TOC', true),
-                    'componentType' => $filtered['componentName'][$i],
-                    'orderCode' => $request->code,
-                    'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
-                    // 'type' => $filtered['componentType'][$i],
-                    'description' => $filtered['description'][$i]
-                ]);
-
-                $this->logActivity('Order Cost', $orderCost, 'Create');
-            }
+        if (isset($request->customerDetailCode)) {
+            $this->storeCustomerDetailOrder($request);
         }
 
         $this->logActivity($title, $data, 'Create');
@@ -118,50 +89,18 @@ class OrderService
         $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $route = Route::where('customerCode', $request->customerCode)
-            ->where('originLocationCode', $request->originLocationCode)
-            ->where('destinationLocationCode', $request->destinationLocationCode)
-            ->where('routeTypeCode', $request->routeTypeCode)
-            ->first();
-
-        $this->service->where('id', $id)->update([
-            'shipmentNumber' => $request->shipmentNumber,
-            'orderDate' => $request->orderDate,
-            // 'shipmentNumber' => $request->shipmentNumber,
-            'orderDate' => $request->orderDate,
-            'materialCode' => $request->materialCode,
-            'notes' => $request->notes,
-            'sto' => $request->sto,
-            'salesOrder' => $request->salesOrder,
-            'fleetCode' => $request->fleetCode,
-            'driverCode' => $request->driverCode,
-            'routeCode' => $route->code,
-            'qty' => $request->qty,
-            'routeCode' => $route->code,
-            'orderTypeCode' => $request->orderTypeCode,
-            'customerCode' => $request->customerCode,
-            // 'fleetTypeCode' => $request->fleetTypeCode
-        ]);
-
-
+        $this->service->where('id', $id)->update(
+            $this->buildOrderData($request)
+        );
 
         if (isset($request->nominal)) {
             $data->cost()->delete();
-            $filtered = Arr::only($request->all(), ['componentName', 'description',  'nominal']);
+            $this->storeOrderCost($request);
+        }
 
-            for ($i = 0; $i < count($request->nominal); $i++) {
-
-                $orderCost = OrderCost::create([
-                    'code' => GenerateCode::generateCode('TOC', true),
-                    'componentType' => $filtered['componentName'][$i],
-                    'orderCode' => $request->code,
-                    'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
-                    // 'type' => $filtered['componentType'][$i],
-                    'description' => $filtered['description'][$i]
-                ]);
-
-                $this->logActivity('Order Cost', $orderCost, 'Create');
-            }
+        if (isset($request->customerDetailCode)) {
+            $this->customerDetailOrder->where('orderCode', $data->code)->delete();
+            $this->storeCustomerDetailOrder($request);
         }
 
         $this->logActivity($title, $this->getById($id), 'After Update');
@@ -177,5 +116,69 @@ class OrderService
     public function storeOrderTax($selectedOrders)
     {
         $this->service->whereIn('code', $selectedOrders)->update(['is_order_tax' => 1]);
+    }
+
+    public function getCustomerDetailOrder($orderCode)
+    {
+        return $this->customerDetailOrder->where('orderCode', $orderCode)->with(['customerDetail'])->get();
+    }
+
+    private function storeOrderCost($request)
+    {
+        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal']);
+
+        for ($i = 0; $i < count($request->nominal); $i++) {
+
+            $orderCost = $this->orderCost->create([
+                'code' => GenerateCode::generateCode('TOC', true),
+                'componentType' => $filtered['componentName'][$i],
+                'orderCode' => $request->code,
+                'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
+                'description' => $filtered['description'][$i]
+            ]);
+
+            $this->logActivity('Order Cost', $orderCost, 'Create');
+        }
+    }
+
+    private function storeCustomerDetailOrder($request)
+    {
+        $filtered = Arr::only($request->all(), ['customerDetailCode', 'value']);
+
+        for ($i = 0; $i < count($request->customerDetailCode); $i++) {
+
+            $customerDetailOrder = $this->customerDetailOrder->create([
+                'code' => GenerateCode::generateCode('FCDO', true),
+                'customerDetailCode' => $filtered['customerDetailCode'][$i],
+                'value' => $filtered['value'][$i],
+                'orderCode' =>  $request->code
+            ]);
+
+            $this->logActivity('Customer Detail Order', $customerDetailOrder, 'Create');
+        }
+    }
+
+    private function buildOrderData($request)
+    {
+        $route = $this->route->where('customerCode', $request->customerCode)
+            ->where('originLocationCode', $request->originLocationCode)
+            ->where('destinationLocationCode', $request->destinationLocationCode)
+            ->where('routeTypeCode', $request->routeTypeCode)
+            ->first();
+
+        return [
+            'shipmentNumber' => $request->shipmentNumber,
+            'orderDate' => $request->orderDate,
+            'materialCode' => $request->materialCode,
+            'notes' => $request->notes,
+            'sto' => $request->sto,
+            'salesOrder' => $request->salesOrder,
+            'fleetCode' => $request->fleetCode,
+            'driverCode' => $request->driverCode,
+            'routeCode' => $route->code,
+            'qty' => $request->qty,
+            'orderTypeCode' => $request->orderTypeCode,
+            'customerCode' => $request->customerCode,
+        ];
     }
 }
