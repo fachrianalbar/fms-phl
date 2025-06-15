@@ -212,10 +212,10 @@
                                     value="{{ $item->customerDetailCode }}">
 
                                 <div class="mb-3">
-                                    <label for="{{ $item->customerDetail->name }}"
-                                        class="form-label">{{ $item->customerDetail->name }}</label>
+                                    <label for="{{ $item->customerDetail?->name }}"
+                                        class="form-label">{{ $item->customerDetail?->name }}</label>
                                     <input type="text" class="form-control"
-                                        placeholder="{{ $item->customerDetail->name }}" name="value[]"
+                                        placeholder="{{ $item->customerDetail?->name }}" name="value[]"
                                         value="{{ $item->value }}">
                                 </div>
                             @endforeach

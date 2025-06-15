@@ -2,12 +2,10 @@
 
 namespace App\Models\Operational;
 
-use App\Models\Master\Customer;
 use App\Models\Master\CustomerDetail;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CustomerDetailOrder extends Model
 {

@@ -5,6 +5,7 @@ namespace App\Services\Master;
 use App\Helpers\GenerateCode;
 use App\Models\Master\Customer;
 use App\Models\Master\CustomerDetail;
+use App\Models\Operational\CustomerDetailOrder;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
 
@@ -15,11 +16,13 @@ class CustomerService
 
     protected $service;
     protected $customerDetail;
+    protected $customerDetailOrder;
 
-    public function __construct(Customer $customer, CustomerDetail $customerDetail)
+    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder)
     {
         $this->service = $customer;
         $this->customerDetail = $customerDetail;
+        $this->customerDetailOrder = $customerDetailOrder;
     }
 
     public function findAll()
@@ -114,9 +117,11 @@ class CustomerService
 
     public function deleteCustomerDetail($id)
     {
-        $dataDetail = $this->customerDetail->where('id', $id)->first();
+        $dataDetail = $this->customerDetail->where('id', $id)->with(['customerDetailOrders'])->first();
 
         $this->logActivity('Customer Detail', $dataDetail, 'Delete');
+
+        $this->customerDetailOrder->where('customerDetailCode', $dataDetail->code)->delete();
 
         $dataDetail->delete();
     }

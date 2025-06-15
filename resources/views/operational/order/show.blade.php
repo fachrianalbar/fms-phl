@@ -236,10 +236,10 @@
                         <div class="card-body col-md-6">
                             @foreach ($customerDetailOrder as $item)
                                 <div class="mb-3">
-                                    <label for="{{ $item->customerDetail->name }}"
-                                        class="form-label">{{ $item->customerDetail->name }}</label>
+                                    <label for="{{ $item->customerDetail?->name }}"
+                                        class="form-label">{{ $item->customerDetail?->name }}</label>
                                     <input type="text" class="form-control" readonly
-                                        placeholder="{{ $item->customerDetail->name }}" value="{{ $item->value }}">
+                                        placeholder="{{ $item->customerDetail?->name }}" value="{{ $item->value }}">
                                 </div>
                             @endforeach
                         </div>
