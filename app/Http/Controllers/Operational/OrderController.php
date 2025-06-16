@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Operational;
 use App\Enums\OrderCostType;
 use App\Exports\OrderReport;
 use App\Helpers\FilterHelper;
+use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\CostComponent;
 use App\Models\Master\Location;
+use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Services\Data\FleetDriverService;
 use App\Services\Master\CustomerService;
@@ -124,7 +126,7 @@ class OrderController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
-        $driver = $this->driverSvc->findAll();
+        $driver = $this->driverSvc->findDriver();
         $fleet = $this->fleetSvc->findAll();
         $company = $this->companySvc->findAll();
         $component = CostComponent::get();
@@ -267,7 +269,7 @@ class OrderController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
-        $driver = $this->driverSvc->findAll();
+        $driver = $this->driverSvc->findDriver();
         $company = $this->companySvc->findAll();
         $route = Route::where('code', $data->routeCode)->first();
         $origin = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->get();
@@ -687,5 +689,21 @@ class OrderController extends Controller
 
             return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
+    }
+
+    public function generateCode(Request $request)
+    {
+        $date = $request->date;
+
+
+        $code = GenerateCode::generateCodeAscDate(
+            'ORD',
+            Order::class,
+            'orderDate',
+            $date,
+        );
+
+
+        return response()->json(['code' => $code]);
     }
 }

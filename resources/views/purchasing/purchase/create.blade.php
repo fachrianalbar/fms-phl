@@ -173,8 +173,6 @@
     <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
 
-
-
     <script>
         let dataItem;
         let itemsData = @json($items);

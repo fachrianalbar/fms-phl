@@ -6,7 +6,9 @@
 ])
 
 @push('style')
-    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 @endpush
 
 @section('content')
@@ -26,15 +28,15 @@
                     @method('PUT')
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label" for="plateNumber">Plate Number <i
+                            <label class="form-label" for="plateNumber">{{ __('menu_fleet.plate_number') }}<i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="plateNumber" id="plateNumber" type="text" required
-                                placeholder="Plate Number" value="{{ $data->plateNumber }}">
+                                placeholder="{{ __('menu_fleet.plate_number') }}" value="{{ $data->plateNumber }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="fleetTypeCode">Type </label>
-                            <select class="form-select" name="fleetTypeCode" id="fleetTypeCode">
+                            <label class="form-label" for="fleetTypeCode">{{ __('menu_fleet.type') }} </label>
+                            <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode">
                                 <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
                                     <option value="{{ $item->code }}"
@@ -43,34 +45,32 @@
                                 @endforeach
                             </select>
                         </div>
-
-
                     </div>
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="engineNumber">Engine Number</label>
+                            <label class="form-label" for="engineNumber">{{ __('menu_fleet.engine_number') }}</label>
                             <input class="form-control" name="engineNumber" id="engineNumber" type="text"
-                                placeholder="Engine Number" value="{{ $data->engineNumber }}">
+                                placeholder="{{ __('menu_fleet.engine_number') }}" value="{{ $data->engineNumber }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="frameNumber">Frame Number</label>
+                            <label class="form-label" for="frameNumber">{{ __('menu_fleet.frame_number') }}</label>
                             <input class="form-control" name="frameNumber" id="frameNumber" type="text"
-                                placeholder="Frame Number" value="{{ $data->frameNumber }}">
+                                placeholder="{{ __('menu_fleet.frame_number') }}" value="{{ $data->frameNumber }}">
                         </div>
                     </div>
 
                     <div class="row mt-4">
 
                         <div class="col-md-6">
-                            <label class="form-label" for="year">Year</label>
-                            <input class="form-control" name="year" id="year" type="number" placeholder="Year"
-                                value="{{ $data->year }}">
+                            <label class="form-label" for="year">{{ __('menu_fleet.year') }}</label>
+                            <input class="form-control" name="year" id="year" type="number"
+                                placeholder="{{ __('menu_fleet.year') }}" value="{{ $data->year }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="fleetBrandCode">Brand</label>
+                            <label class="form-label" for="fleetBrandCode">{{ __('menu_fleet.brand') }}</label>
                             <select class="form-select" name="fleetBrandCode" id="fleetBrandCode">
                                 <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($brand as $item)
@@ -92,9 +92,8 @@
                                 <label class="form-label" for="barcode">Barcode</label>
                                 @if (isset($data->barcode))
                                     <a class="font-weight-bold text-primary"
-                                        onclick="showModal('{{ url('storage/fleet/barcode', $data->barcode) }}', 'Barcode Image')"
-                                        href="#">See
-                                        Image</a>
+                                        onclick="showModal('{{ url('storage/fleet/barcode', $data->barcode) }}', '{{ __('menu_fleet.barcode_image') }}')"
+                                        href="#">{{ __('menu_fleet.see_image') }}</a>
                                 @endif
                             </div>
                             <input class="form-control" id="barcode" name="barcode" type="file"
@@ -104,13 +103,12 @@
 
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between">
-                                <label class="form-label" for="vehicleRegistrationNumber">Vehicle Registration
-                                    Number</label>
+                                <label class="form-label"
+                                    for="vehicleRegistrationNumber">{{ __('menu_fleet.vehicle_registration_number') }}</label>
                                 @if (isset($data->vehicleRegistrationNumber))
                                     <a class="font-weight-bold text-primary"
                                         onclick="showModal('{{ url('storage/fleet/vehicleRegistrationNumber', $data->vehicleRegistrationNumber) }}', 'STNK Image')"
-                                        href="#">See
-                                        Image</a>
+                                        href="#">{{ __('menu_fleet.see_image') }}</a>
                                 @endif
                             </div>
                             <input class="form-control" name="vehicleRegistrationNumber" id="vehicleRegistrationNumber"
@@ -127,19 +125,18 @@
                             <div class="col-md-6">
                                 <div class="d-flex justify-content-between align-items-center">
 
-                                    <label class="form-label" for="fleetPicture">Vehicle</label>
+                                    <label class="form-label" for="fleetPicture">{{ __('menu_fleet.vehicle') }}</label>
 
                                     <button id="addInputFile" type="button"
                                         class="btn btn-sm btn-info  font-weight-bold mb-2" href="#"
-                                        target="_blank"><i class="fa fa-plus"></i></button>
+                                        target="_blank"><i class="mdi mdi-plus"></i></button>
                                 </div>
 
                                 @forelse ($data->pictures as $item)
                                     <div class="d-flex justify-content-end">
                                         <a class="font-weight-bold text-primary float-right"
                                             onclick="showModal('{{ url('storage/fleet/fleetPicture', $item->fleetPicture) }}', 'Fleet Image')"
-                                            href="#">See
-                                            Image</a>
+                                            href="#">{{ __('menu_fleet.see_image') }}</a>
                                     </div>
 
                                     <div class="d-flex justify-content-between align-items-center gap-1">
@@ -150,7 +147,7 @@
                                         @if ($loop->iteration != 1)
                                             <button type="button" onclick="deleteFleetPicture('{{ $item->id }}')"
                                                 class="btn btn-sm btn-danger mt-2">
-                                                <i class="fa fa-trash"></i>
+                                                <i class="mdi mdi-delete"></i>
                                             </button>
                                         @endif
 
@@ -167,11 +164,59 @@
 
                                 </div>
                             </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="driverCode">{{ __('menu_fleet.driver') }} <i
+                                        class="mdi mdi-information text-danger"></i></label>
+                                <select class="js-example-basic-single" name="driverCode" id="driverCode" required>
+                                    <option value="">{{ __('general.choose') }}...</option>
+                                    @foreach ($driver as $item)
+                                        <option value="{{ $item->code }}"
+                                            {{ $item->code == $data->driverCode ? 'selected' : '' }}>{{ $item->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="barcodeNumber">{{ __('menu_fleet.barcode_number') }}</label>
+                            <input class="form-control" name="barcodeNumber" id="barcodeNumber" type="text"
+                                placeholder="{{ __('menu_fleet.barcode_number') }}" value="{{ $data->barcodeNumber }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label"
+                                for="frameNumber">{{ __('menu_fleet.vehicle_registration_due_date') }}</label>
+                            <input class="form-control"
+                                placeholder="{{ __('menu_fleet.vehicle_registration_due_date') }}"
+                                name="vehicleRegistrationDueDate" id="datetime-local" type="date"
+                                value="{{ $data->vehicleRegistrationDueDate }}">
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="fleetCompanyCode">{{ __('menu_fleet.company') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="fleetCompanyCode" id="fleetCompanyCode"
+                                required>
+                                <option value="">{{ __('general.choose') }}...</option>
+                                @foreach ($company as $item)
+                                    <option value="{{ $item->code }}"
+                                        {{ $item->code == $data->fleetCompanyCode ? 'selected' : '' }}>{{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Edit</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>
                     </div>
                 </form>
             </div>
@@ -182,7 +227,7 @@
             <div class="modal-dialog modal-xl" style="padding-left: 100px">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="modalTitle">Image Data</h4>
+                        <h4 class="modal-title" id="modalTitle">{{ __('menu_fleet.image_data') }}</h4>
                         <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
                             aria-label="Close"></button>
                     </div>
@@ -208,6 +253,7 @@
 @push('script')
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
 
 
@@ -253,7 +299,7 @@
             <input type="file" class="form-control mr-2" name="newFleetPicture[${num}]">
             <div>
                     <button type="button" onclick="removeFile(${num})" class="btn btn-sm btn-danger mt-2">
-                        <i class="fa fa-trash"></i>
+                        <i class="mdi mdi-delete"></i>
                     </button>
                 </div>
             `

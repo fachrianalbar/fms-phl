@@ -39,11 +39,12 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Order Code <i
-                                        class="mdi mdi-information text-danger"></i></label>
-                                <input type="hidden" name="code" value="TO{{ now()->format('ymdHis') }}">
-                                <input class="form-control" type="text" required placeholder="Name" readonly disabled
-                                    value="TO{{ now()->format('ymdHis') }}">
+                                <label class="form-label" for="code">Code <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" type="text" placeholder="Code" id="code_display" readonly
+                                    disabled>
+
+                                <input type="hidden" name="code" id="code_hidden">
                             </div>
 
                             <div class="col-md-6 position-relative">
@@ -246,7 +247,14 @@
         $(document).ready(function() {
             $('#dt').DataTable({})
 
+            generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
+                '/ajax/order-generate-code');
         })
+
+        $('input[name="orderDate"]').on('change', function() {
+            generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
+                '/ajax/order-generate-code');
+        });
 
         function checkAndLoadOriginLocation() {
             const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value

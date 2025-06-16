@@ -48,7 +48,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Order Code</label>
                                     <input class="form-control" type="text" required readonly
-                                        value="TO{{ now()->format('ymdHis') }}">
+                                        value="{{ $data->code }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">

@@ -66,6 +66,10 @@ class FleetService
             'fleetTypeCode' => $request->fleetTypeCode,
             'vehicleRegistrationNumber' => $vehicleRegistrationNumber,
             'barcode' => $barcode,
+            'barcodeNumber' => $request->barcodeNumber,
+            'vehicleRegistrationDueDate' => $request->vehicleRegistrationDueDate,
+            'driverCode' => $request->driverCode,
+            'fleetCompanyCode' => $request->fleetCompanyCode,
             'code' => GenerateCode::generateCode('FMSF')
         ]);
 
@@ -82,7 +86,7 @@ class FleetService
                     Storage::putFileAs($path, $file, $fleetPicture);
 
                     FleetPicture::create([
-                        'code' => GenerateCode::generateCode('FFP'),
+                        'code' => GenerateCode::generateCode('FFP', true),
                         'fleetCode' => $data->code,
                         'fleetPicture' => $fleetPicture
                     ]);
@@ -123,7 +127,7 @@ class FleetService
 
                 // Insert data baru ke database
                 FleetPicture::create([
-                    'code' => GenerateCode::generateCode('FFP'),
+                    'code' => GenerateCode::generateCode('FFP', true),
                     'fleetCode' => $data->code,
                     'fleetPicture' => $newFileName,
                 ]);
@@ -143,7 +147,7 @@ class FleetService
                     Storage::putFileAs($path, $file, $newFleetPicture);
 
                     FleetPicture::create([
-                        'code' => GenerateCode::generateCode('FFP'),
+                        'code' => GenerateCode::generateCode('FFP', true),
                         'fleetCode' => $data->code,
                         'fleetPicture' => $newFleetPicture,
                     ]);
@@ -191,12 +195,12 @@ class FleetService
             'fleetBrandCode' => $request->fleetBrandCode,
             'fleetTypeCode' => $request->fleetTypeCode,
             'vehicleRegistrationNumber' => $vehicleRegistrationNumber,
+            'barcodeNumber' => $request->barcodeNumber,
+            'vehicleRegistrationDueDate' => $request->vehicleRegistrationDueDate,
             'barcode' => $barcode,
+            'driverCode' => $request->driverCode,
+            'fleetCompanyCode' => $request->fleetCompanyCode,
         ]);
-
-
-
-
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }

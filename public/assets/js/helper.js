@@ -40,6 +40,8 @@ function generateCode(
 ) {
     let selectedDate = $(dateInputSelector).val();
 
+    console.log(selectedDate);
+
     $.ajax({
         url: ajaxUrl,
         method: "GET",

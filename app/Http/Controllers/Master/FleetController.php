@@ -7,7 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\CompanySetting;
 use App\Models\Master\FleetPicture;
+use App\Services\Master\CompanyService;
+use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetBrandService;
+use App\Services\Master\FleetCompanyService;
 use App\Services\Master\FleetService;
 use App\Services\Master\FleetTypeService;
 use Illuminate\Http\Request;
@@ -24,15 +27,19 @@ class FleetController extends Controller
     protected $service;
     protected $fleetBrandSvc;
     protected $fleetTypeSvc;
+    protected $driverSvc;
+    protected $fleetCompanySvc;
     protected $title;
     protected $view;
     protected $menuSvc;
 
-    public function __construct(FleetService $fleetSvc, FleetBrandService $fleetBrandSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
+    public function __construct(FleetService $fleetSvc, FleetBrandService $fleetBrandSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc, EmployeeService $driverSvc, FleetCompanyService $fleetCompanySvc)
     {
         $this->service = $fleetSvc;
         $this->fleetBrandSvc = $fleetBrandSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
+        $this->driverSvc = $driverSvc;
+        $this->fleetCompanySvc = $fleetCompanySvc;
         $this->title = "Fleet";
         $this->menuSvc = $menuSvc->getByName("Fleet");
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
@@ -57,11 +64,15 @@ class FleetController extends Controller
     {
         $brand = $this->fleetBrandSvc->findAll();
         $type = $this->fleetTypeSvc->findAll();
+        $driver = $this->driverSvc->findDriver();
+        $company = $this->fleetCompanySvc->findAll();
 
         return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('type', $type)
+            ->with('driver', $driver)
+            ->with('company', $company)
             ->with('brand', $brand);
     }
 
@@ -112,6 +123,8 @@ class FleetController extends Controller
 
         $brand = $this->fleetBrandSvc->findAll();
         $type = $this->fleetTypeSvc->findAll();
+        $driver = $this->driverSvc->findDriver();
+        $company = $this->fleetCompanySvc->findAll();
 
         if (!$data) {
             return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
@@ -122,6 +135,8 @@ class FleetController extends Controller
             ->with('title', $this->title)
             ->with('data', $data)
             ->with('type', $type)
+            ->with('driver', $driver)
+            ->with('company', $company)
             ->with('brand', $brand);
     }
 

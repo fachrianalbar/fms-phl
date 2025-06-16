@@ -25,15 +25,15 @@
                     @csrf
                     <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label" for="plateNumber">Plate Number <i
+                            <label class="form-label" for="plateNumber">{{ __('menu_fleet.plate_number') }} <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="plateNumber" id="plateNumber" type="text"
-                                placeholder="Plate Number">
+                                placeholder="{{ __('menu_fleet.plate_number') }}">
                         </div>
 
 
                         <div class="col-md-6">
-                            <label class="form-label" for="fleetTypeCode">Type</label>
+                            <label class="form-label" for="fleetTypeCode">{{ __('menu_fleet.type') }}</label>
                             <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required>
                                 <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($type as $item)
@@ -46,27 +46,28 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="engineNumber">Engine Number</label>
+                            <label class="form-label" for="engineNumber">{{ __('menu_fleet.engine_number') }}</label>
                             <input class="form-control" name="engineNumber" id="engineNumber" type="text"
-                                placeholder="Engine Number">
+                                placeholder="{{ __('menu_fleet.engine_number') }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="frameNumber">Frame Number</label>
+                            <label class="form-label" for="frameNumber">{{ __('menu_fleet.frame_number') }}</label>
                             <input class="form-control" name="frameNumber" id="frameNumber" type="text"
-                                placeholder="Frame Number">
+                                placeholder="{{ __('menu_fleet.frame_number') }}">
                         </div>
                     </div>
 
                     <div class="row mt-4">
 
                         <div class="col-md-6">
-                            <label class="form-label" for="year">Year</label>
-                            <input class="form-control" name="year" id="year" type="number" placeholder="Year">
+                            <label class="form-label" for="year">{{ __('menu_fleet.year') }}</label>
+                            <input class="form-control" name="year" id="year" type="number"
+                                placeholder="{{ __('menu_fleet.year') }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="fleetBrandCode">Brand</label>
+                            <label class="form-label" for="fleetBrandCode">{{ __('menu_fleet.brand') }}</label>
                             <select class="js-example-basic-single" name="fleetBrandCode" id="fleetBrandCode">
                                 <option value="">{{ __('general.choose') }}...</option>
                                 @foreach ($brand as $item)
@@ -88,8 +89,8 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="vehicleRegistrationNumber">Vehicle Registration Number
-                                (STNK)</label>
+                            <label class="form-label"
+                                for="vehicleRegistrationNumber">{{ __('menu_fleet.vehicle_registration_number') }}</label>
                             <input class="form-control" name="vehicleRegistrationNumber" id="vehicleRegistrationNumber"
                                 type="file" accept=".jpg, .jpeg, .png">
                         </div>
@@ -99,7 +100,7 @@
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between align-items-center">
 
-                                <label class="form-label" for="fleetPicture">Vehicle</label>
+                                <label class="form-label" for="fleetPicture">{{ __('menu_fleet.vehicle') }}</label>
 
                                 <button id="addInputFile" type="button"
                                     class="btn btn-icon btn-sm btn-sm btn-info font-weight-bold mb-2" href="#"
@@ -114,10 +115,54 @@
 
                             </div>
                         </div>
+
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="driverCode">{{ __('menu_fleet.driver') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="driverCode" id="driverCode" required>
+                                <option value="">{{ __('general.choose') }}...</option>
+                                @foreach ($driver as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="barcodeNumber">{{ __('menu_fleet.barcode_number') }}</label>
+                            <input class="form-control" name="barcodeNumber" id="barcodeNumber" type="text"
+                                placeholder="{{ __('menu_fleet.barcode_number') }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label"
+                                for="frameNumber">{{ __('menu_fleet.vehicle_registration_due_date') }}</label>
+                            <input class="form-control"
+                                placeholder="{{ __('menu_fleet.vehicle_registration_due_date') }}"
+                                name="vehicleRegistrationDueDate" id="datetime-local" type="date">
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="fleetCompanyCode">{{ __('menu_fleet.company') }} <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="fleetCompanyCode" id="fleetCompanyCode"
+                                required>
+                                <option value="">{{ __('general.choose') }}...</option>
+                                @foreach ($company as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Add</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
                     </div>
             </div>
             </form>

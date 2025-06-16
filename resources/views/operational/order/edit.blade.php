@@ -48,9 +48,8 @@
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">Order Code <i
                                             class="mdi mdi-information text-danger"></i></label>
-                                    <input type="hidden" name="code" value="{{ $data->code }}">
                                     <input class="form-control" type="text" required readonly disabled
-                                        value="TO{{ now()->format('ymdHis') }}">
+                                        value="{{ $data->code }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">

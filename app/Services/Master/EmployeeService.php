@@ -22,6 +22,11 @@ class EmployeeService
         return $this->service->with(['position'])->get();
     }
 
+    public function findDriver()
+    {
+        return $this->service->where('positionCode', 'KP_240823034043')->with(['position'])->get();
+    }
+
     public function getById($id)
     {
         return $this->service->where('id', $id)->first();

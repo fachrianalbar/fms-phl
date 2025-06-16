@@ -28,7 +28,9 @@ class Fleet extends Model
         'vehicleRegistrationNumber',
         'insurance',
         'fleetCompanyCode',
-        'vehicleRegistrationDueDate'
+        'vehicleRegistrationDueDate',
+        'driverCode',
+        'barcodeNumber'
     ];
 
     public function brand()
@@ -59,5 +61,10 @@ class Fleet extends Model
     public function company()
     {
         return $this->belongsTo(FleetCompany::class, 'fleetCompanyCode', 'code');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(Employee::class, 'driverCode', 'code');
     }
 }
