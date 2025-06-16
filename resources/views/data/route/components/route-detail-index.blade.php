@@ -19,9 +19,6 @@
                         $totalPrice = 0;
                     @endphp
                     @foreach ($data->routeDetail as $item)
-                        @if ($item->costComponent->type == 'Allowance Office' && auth()->user()->roleCode != 'SPRADMIN')
-                            @continue;
-                        @endif
                         <tr>
                             <td>
                                 <a href="javascript:deleteCostComponent('{{ $item->id }}')"
