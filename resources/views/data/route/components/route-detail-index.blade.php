@@ -34,7 +34,7 @@
                                     </ul> --}}
                             </td>
                             <td>{{ $loop->iteration }}</td>
-                            <td>{{ $item->costComponent->name }}</td>
+                            <td>{{ $item->costComponent?->name }}</td>
                             {{-- <td>{{ $item->type }} =
                                 {{ $item->type == 'Amount' ? number_format($item->amount, 0, ',', '.') : $item->percentage . '%' }}
                             </td> --}}
