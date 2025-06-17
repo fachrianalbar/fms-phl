@@ -69,7 +69,6 @@ class OrderService
 
     public function store($request, $title)
     {
-        dd($request->all());
         $data = $this->service->create(
             array_merge(['code' => $request->code], $this->buildOrderData($request))
         );
