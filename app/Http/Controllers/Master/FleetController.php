@@ -6,6 +6,7 @@ use App\Helpers\GetTokenHelper;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\CompanySetting;
+use App\Models\Master\Fleet;
 use App\Models\Master\FleetPicture;
 use App\Services\Master\CompanyService;
 use App\Services\Master\EmployeeService;
@@ -291,5 +292,12 @@ class FleetController extends Controller
                 ->rawColumns(['action', 'barcode', 'insurance', 'type.name', 'brand.name', 'company.name', 'company.address', 'company.type',  'vehicleRegistrationNumber'])
                 ->toJson();
         }
+    }
+
+    public function fleetDriver($code)
+    {
+        $fleetDriver = Fleet::where('code', $code)->first();
+
+        return $fleetDriver->driverCode;
     }
 }

@@ -66,10 +66,11 @@ class FleetService
             'fleetTypeCode' => $request->fleetTypeCode,
             'vehicleRegistrationNumber' => $vehicleRegistrationNumber,
             'barcode' => $barcode,
-            'barcodeNumber' => $request->barcodeNumber,
             'vehicleRegistrationDueDate' => $request->vehicleRegistrationDueDate,
             'driverCode' => $request->driverCode,
             'fleetCompanyCode' => $request->fleetCompanyCode,
+            'vehicleTax' => $request->vehicleTax,
+            'vehicleKir' => $request->vehicleKir,
             'code' => GenerateCode::generateCode('FMSF')
         ]);
 
@@ -200,6 +201,8 @@ class FleetService
             'barcode' => $barcode,
             'driverCode' => $request->driverCode,
             'fleetCompanyCode' => $request->fleetCompanyCode,
+            'vehicleTax' => $request->vehicleTax,
+            'vehicleKir' => $request->vehicleKir,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

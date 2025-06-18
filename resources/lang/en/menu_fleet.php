@@ -17,5 +17,7 @@ return [
     'vehicle' => 'Vehicle',
     'driver' => 'Driver',
     'barcode_number' => 'Barcode Number',
-    'image_data' => 'Image Data'
+    'image_data' => 'Image Data',
+    'vehicle_tax' => 'Vehicle Tax',
+    'vehicle_kir' => 'Vehicle Kir'
 ];

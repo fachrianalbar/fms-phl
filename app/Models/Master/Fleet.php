@@ -30,7 +30,9 @@ class Fleet extends Model
         'fleetCompanyCode',
         'vehicleRegistrationDueDate',
         'driverCode',
-        'barcodeNumber'
+        'barcodeNumber',
+        'vehicleTax',
+        'vehicleKir'
     ];
 
     public function brand()

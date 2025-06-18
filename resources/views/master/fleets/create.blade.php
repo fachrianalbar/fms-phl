@@ -131,10 +131,11 @@
                     </div>
 
                     <div class="row mt-4">
+
                         <div class="col-md-6">
-                            <label class="form-label" for="barcodeNumber">{{ __('menu_fleet.barcode_number') }}</label>
-                            <input class="form-control" name="barcodeNumber" id="barcodeNumber" type="text"
-                                placeholder="{{ __('menu_fleet.barcode_number') }}">
+                            <label class="form-label" for="vehicleTax">{{ __('menu_fleet.vehicle_tax') }}</label>
+                            <input class="form-control" placeholder="{{ __('menu_fleet.vehicle_tax') }}"
+                                name="vehicleTax" id="datetime-local" type="date">
                         </div>
 
                         <div class="col-md-6">
@@ -147,6 +148,12 @@
                     </div>
 
                     <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="vehicleKir">{{ __('menu_fleet.vehicle_kir') }}</label>
+                            <input class="form-control" placeholder="{{ __('menu_fleet.vehicle_kir') }}"
+                                name="vehicleKir" id="datetime-local" type="date">
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label" for="fleetCompanyCode">{{ __('menu_fleet.company') }} <i
                                     class="mdi mdi-information text-danger"></i></label>

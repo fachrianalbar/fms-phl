@@ -81,16 +81,22 @@
 
 
                         <div class="row mt-4">
+                            <input type="hidden" name="driverCode" id="driverCodeHidden">
 
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="driverCode">Driver <i
-                                        class="mdi mdi-information text-danger"></i></label>
-                                <select class="js-example-basic-single" name="driverCode" id="driverCode" required="">
+
+                                <div id="driverLabelWrapper">
+                                    <label class="form-label" for="driverCode" id="driverLabel">
+                                        Driver <i class="mdi mdi-information text-danger"></i>
+                                    </label>
+                                </div>
+
+
+
+                                <select class="js-example-basic-single" id="driverCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                     </option>
-                                    @foreach ($driver as $item)
-                                        <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                    @endforeach
+
                                 </select>
                             </div>
 
@@ -244,7 +250,10 @@
 
 
     <script>
+        const drivers = @json($driver);
+
         $(document).ready(function() {
+
             $('#dt').DataTable({})
 
             generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
@@ -414,6 +423,133 @@
 
         $('#destinationLocationCode').on('select2:select', function() {
             checkAndLoadRoute();
+        });
+
+        $('#fleetCode').on('change', function() {
+            let fleetcode = $(this).val();
+
+            if (fleetcode) {
+                $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
+                    const defaultDriverLabel = `
+                        <label class="form-label" for="driverCode" id="driverLabel">
+                            Driver <i class="mdi mdi-information text-danger"></i>
+                        </label>
+                    `;
+
+                    $('#driverCode').prop('disabled', false); // Aktifkan select
+                    $('#driverCode').val(''); // Kosongkan value
+                    $('#driverCode').find('option:gt(0)').remove(); // Hapus semua option kecuali pertama
+                    $('#driverCodeHidden').val(''); // Kosongkan hidden input
+                    $('#driverLabelWrapper').html(defaultDriverLabel);
+
+
+                    if (data) {
+                        $('#driverCode').find('option:gt(0)').remove();
+
+                        let matchedDriver = drivers.find(driver => driver.code === data);
+
+                        if (matchedDriver) {
+                            $('#driverCode').append(
+                                `<option value="${matchedDriver.code}" selected>${matchedDriver.name}</option>`
+                            );
+
+                            $('#driverCodeHidden').val(matchedDriver.code);
+
+                            $('#driverCode').attr('disabled', true);
+
+                            $('#driverLabelWrapper').html(`
+                                <div class="d-flex justify-content-between" id="driverLabelContainer">
+                                    <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
+                                    <div>
+                                        <label class="form-label" for="driverCode">Is Leave? </label>
+                                        <input type="checkbox" class="form-check-input" name="isLeave">
+                                    </div>
+                                </div>
+                            `);
+                        } else {
+                            // Kalau fleetCode kosong (select dikosongin)
+                            $('#driverCode').prop('disabled', false).val('');
+                            $('#driverCode').find('option:gt(0)').remove();
+                            $('#driverCodeHidden').val('');
+                            $('#driverLabelWrapper').html(defaultDriverLabel);
+                        }
+                    }
+                });
+            }
+        });
+
+        // Pasang event listener pakai event delegation
+        $(document).on('change', 'input[name="isLeave"]', function() {
+            if ($(this).is(':checked')) {
+                // Enable select
+                $('#driverCode').prop('disabled', false);
+
+                // Kosongkan dulu select dan isi ulang semua data driver
+                $('#driverCode').find('option:gt(0)').remove(); // Hapus semua kecuali placeholder
+
+                // Tambahkan semua driver dari variabel global
+                drivers.forEach(driver => {
+                    $('#driverCode').append(
+                        `<option value="${driver.code}">${driver.name}</option>`
+                    );
+                });
+
+                $('#driverCodeHidden').val('');
+            } else {
+                // Checkbox di-uncheck → kembali ke kondisi seperti saat memilih fleetCode
+
+                let fleetcode = $('#fleetCode').val();
+
+                if (fleetcode) {
+                    const defaultDriverLabel = `
+                        <label class="form-label" for="driverCode" id="driverLabel">
+                            Driver <i class="mdi mdi-information text-danger"></i>
+                        </label>
+                    `;
+                    $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
+                        // Reset kondisi
+                        $('#driverCode').prop('disabled', false);
+                        $('#driverCode').val('');
+                        $('#driverCode').find('option:gt(0)').remove();
+                        $('#driverCodeHidden').val('');
+                        $('#driverLabelWrapper').html(defaultDriverLabel);
+
+                        if (data) {
+                            let matchedDriver = drivers.find(driver => driver.code === data);
+
+                            if (matchedDriver) {
+                                $('#driverCode').append(
+                                    `<option value="${matchedDriver.code}" selected>${matchedDriver.name}</option>`
+                                );
+
+                                $('#driverCodeHidden').val(matchedDriver.code);
+                                $('#driverCode').attr('disabled', true);
+
+                                $('#driverLabelWrapper').html(`
+                            <div class="d-flex justify-content-between" id="driverLabelContainer">
+                                <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
+                                <div>
+                                    <label class="form-label" for="driverCode">Is Leave? </label>
+                                    <input type="checkbox" class="form-check-input" name="isLeave">
+                                </div>
+                            </div>
+                        `);
+                            }
+                        }
+                    });
+                } else {
+                    // Jika fleetCode kosong
+                    $('#driverCode').prop('disabled', false);
+                    $('#driverCode').val('');
+                    $('#driverCode').find('option:gt(0)').remove();
+                    $('#driverCodeHidden').val('');
+                    $('#driverLabelWrapper').html(defaultDriverLabel);
+                }
+            }
+        });
+
+        $('#driverCode').on('change', function() {
+            $('#driverCodeHidden').val($(this).val());
         });
 
         $('#customerCode').on('change', function() {

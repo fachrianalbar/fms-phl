@@ -17,5 +17,7 @@ return [
     'vehicle' => 'Kendaraan',
     'driver' => 'Sopir',
     'barcode_number' => 'Nomor Barcode',
-    'image_data' => 'Data Gambar'
+    'image_data' => 'Data Gambar',
+    'vehicle_tax' => 'Pajak Kendaraan',
+    'vehicle_kir' => 'Kir Kendaraan'
 ];
