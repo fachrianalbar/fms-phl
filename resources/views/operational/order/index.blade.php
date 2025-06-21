@@ -162,8 +162,8 @@
 
             <div class="card-body">
                 @include('partials.alert')
-                <div class="table-responsive ">
-                    <table class="table table-order table-bordered dt-responsive table-responsive nowrap" id="dt">
+                <div class="table-responsive custom-scrollbar">
+                    <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
