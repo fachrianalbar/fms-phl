@@ -45,7 +45,7 @@ class CustomerService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('FC'),
+            'code' => $request->code,
             'picName' => $request->picName,
             'nickname' => $request->nickname,
             'email' => $request->email,
