@@ -8,6 +8,7 @@ use App\Models\Master\CustomerDetail;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 
 class CustomerService
@@ -70,6 +71,7 @@ class CustomerService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
+            'code' => $request->code,
             'name' => $request->name,
             'picName' => $request->picName,
             'nickname' => $request->nickname,
@@ -112,6 +114,12 @@ class CustomerService
     {
         $this->logActivity($title, $this->getById($id), 'Delete');
 
+        $data = $this->getById($id);
+
+        $this->service->where('id', $id)->update([
+            'code' => $data->code . '-del-' . Str::random(3)
+        ]);
+
         $this->service->where('id', $id)->delete();
     }
 
@@ -129,5 +137,10 @@ class CustomerService
     public function customerDetail($code)
     {
         return $this->customerDetail->where('customerCode', $code)->get();
+    }
+
+    public function customerCompanyFormat($code)
+    {
+        return $this->service->where('code', $code)->with(['company'])->first();
     }
 }

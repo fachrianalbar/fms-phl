@@ -48,7 +48,7 @@
                             </div>
 
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="fleetCode">Fleet<i
+                                <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}<i
                                         class="mdi mdi-information text-danger"></i></label>
 
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
@@ -64,17 +64,17 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6">
-                                <label class="form-label" for="name">Order Date <i
+                                <label class="form-label" for="name">{{ __('menu_order.order_date') }} <i
                                         class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="orderDate" id="datetime-local" type="date" required
-                                    placeholder="Order Date" value="{{ now()->toDateString() }}">
+                                    placeholder="{{ __('menu_order.order_date') }}" value="{{ now()->toDateString() }}">
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label" for="shipmentNumber">Shipment No <i
+                                <label class="form-label" for="shipmentNumber">{{ __('menu_order.shipment_no') }} <i
                                         class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
-                                    required placeholder="Shipment No">
+                                    required placeholder="{{ __('menu_order.shipment_no') }}" readonly>
                             </div>
                         </div>
 
@@ -87,7 +87,7 @@
 
                                 <div id="driverLabelWrapper">
                                     <label class="form-label" for="driverCode" id="driverLabel">
-                                        Driver <i class="mdi mdi-information text-danger"></i>
+                                        {{ __('menu_order.driver') }} <i class="mdi mdi-information text-danger"></i>
                                     </label>
                                 </div>
 
@@ -102,7 +102,7 @@
 
 
                             <div class="col-md-6">
-                                <label class="form-label" for="notes">Notes </label>
+                                <label class="form-label" for="notes">{{ __('menu_order.notes') }} </label>
                                 <input class="form-control" name="notes" id="notes" type="text"
                                     placeholder="Notes">
                             </div>
@@ -112,8 +112,8 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="customerCode">Customer
-                                    Name <i class="mdi mdi-information text-danger"></i></label>
+                                <label class="form-label" for="customerCode">{{ __('menu_order.customer') }}<i
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -126,7 +126,7 @@
                             </div>
 
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="routeTypeCode">Route Type <i
+                                <label class="form-label" for="routeTypeCode">{{ __('menu_order.route_type') }} <i
                                         class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                     required="">
@@ -143,8 +143,8 @@
 
                         <div class="row mt-4">
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="originLocationCode">Origin Location <i
-                                        class="mdi mdi-information text-danger"></i></label>
+                                <label class="form-label" for="originLocationCode">{{ __('menu_order.origin_location') }}
+                                    <i class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="originLocationCode" id="originLocationCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -153,8 +153,9 @@
                             </div>
 
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="destinationLocationCode">Destination Location <i
-                                        class="mdi mdi-information text-danger"></i> </label>
+                                <label class="form-label"
+                                    for="destinationLocationCode">{{ __('menu_order.destination_location') }}
+                                    <i class="mdi mdi-information text-danger"></i> </label>
                                 <select class="js-example-basic-single" name="destinationLocationCode"
                                     id="destinationLocationCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -198,8 +199,7 @@
                                 aria-selected="true">{{ __('menu_order.name') }}</a></li>
                         <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
                                 href="#profile-icon" role="tab" aria-controls="profile-icon"
-                                aria-selected="false">Add
-                                Cost</a>
+                                aria-selected="false">{{ __('menu_order.add_cost') }}</a>
                         </li>
                     </ul>
                     <div class="tab-content" id="icon-tabContent">
@@ -554,6 +554,10 @@
 
         $('#customerCode').on('change', function() {
             let customerCode = $(this).val();
+
+            $.get("/ajax/order-shipment-format/" + customerCode, function(data) {
+                $('#shipmentNumber').val(data);
+            });
 
             if (customerCode) {
                 $.get("/ajax/customer-detail/" + customerCode, function(data) {

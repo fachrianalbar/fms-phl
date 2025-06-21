@@ -18,6 +18,15 @@ return [
     'description' => 'Deskripsi',
     'add_cost' => 'Tambah Biaya',
     'name' => 'Nama',
-    'customer_detail_data' => 'Pelanggan Detail Data'
+    'customer_detail_data' => 'Pelanggan Detail Data',
+    'notes' => 'Catatan',
+    'origin_location' => 'Lokasi Asal',
+    'destination_location' => 'Lokasi Tujuan',
+    'order_code' => 'Kode Pesanan',
+    'cost' => 'Biaya',
+    'order_type' => 'Tipe Pesanan',
+    'order_tax' => 'Pajak Pesanan',
+    'fleet_type' => 'Tipe Kendaraan',
+    'additional_cost' => 'Tambahan Biaya'
 
 ];

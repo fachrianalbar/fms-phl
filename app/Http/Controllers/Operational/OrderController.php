@@ -706,4 +706,11 @@ class OrderController extends Controller
 
         return response()->json(['code' => $code]);
     }
+
+    public function shipmentFormat($customerCode)
+    {
+        $data = $this->service->shipmentFormat($customerCode);
+
+        return $data;
+    }
 }

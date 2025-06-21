@@ -35,7 +35,14 @@
                     @csrf
                     @method('PUT')
                     <div class="row mt-4">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
+                            <label class="form-label" for="code">Code <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <input class="form-control" name="code" id="code" type="text" required
+                                placeholder="Code" value="{{ $data->code }}">
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label" for="name">Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required

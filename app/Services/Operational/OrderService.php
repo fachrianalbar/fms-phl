@@ -4,6 +4,7 @@ namespace App\Services\Operational;
 
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
+use App\Models\Master\Customer;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
@@ -19,13 +20,15 @@ class OrderService
     protected $customerDetailOrder;
     protected $orderCost;
     protected $route;
+    protected $customer;
 
-    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer)
     {
         $this->service = $order;
         $this->customerDetailOrder = $customerDetailOrder;
         $this->orderCost = $orderCost;
         $this->route = $route;
+        $this->customer = $customer;
     }
 
     public function findAll()
@@ -70,7 +73,7 @@ class OrderService
     public function store($request, $title)
     {
         $data = $this->service->create(
-            array_merge(['code' => $request->code], $this->buildOrderData($request))
+            array_merge(['code' => $request->code, 'shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
         );
 
         if (isset($request->nominal)) {
@@ -167,7 +170,6 @@ class OrderService
             ->first();
 
         return [
-            'shipmentNumber' => $request->shipmentNumber,
             'orderDate' => $request->orderDate,
             'materialCode' => $request->materialCode,
             'notes' => $request->notes,
@@ -180,5 +182,16 @@ class OrderService
             'orderTypeCode' => $request->orderTypeCode,
             'customerCode' => $request->customerCode,
         ];
+    }
+
+    public function shipmentFormat($customerCode)
+    {
+        $customer = $this->customer->where('code', $customerCode)->with(['company'])->first();
+
+        $orderCustomerCount = $this->service->where('customerCode', $customerCode)->orderBy('created_at', 'DESC')->whereYear('created_at', now()->year)->count();
+        $increment = str_pad($orderCustomerCount + 1, 5, '0', STR_PAD_LEFT);
+
+
+        return $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
     }
 }

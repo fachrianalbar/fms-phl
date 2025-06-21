@@ -46,79 +46,88 @@
                         <div class="row g-3">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Order Code</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.order_code') }}</label>
                                     <input class="form-control" type="text" required readonly
                                         value="{{ $data->code }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="fleetCode">Fleet</label>
+                                    <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}</label>
 
 
-                                    <input class="form-control" name="orderDate" type="text" readonly required
-                                        placeholder="Order Date" value="{{ $data->fleet->plateNumber }}">
+                                    <input class="form-control" name="fleetCode" type="text" readonly required
+                                        placeholder="{{ __('menu_order.plate_number') }}"
+                                        value="{{ $data->fleet->plateNumber }}">
                                 </div>
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Order Date</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
                                     <input class="form-control" name="orderDate" type="text" readonly required
-                                        placeholder="Order Date" value="{{ $data->orderDate }}">
+                                        placeholder="{{ __('menu_order.order_date') }}" value="{{ $data->orderDate }}">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="shipmentNumber">Shipment No</label>
+                                    <label class="form-label"
+                                        for="shipmentNumber">{{ __('menu_order.shipment_no') }}</label>
                                     <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
-                                        readonly required placeholder="Shipment No" value="{{ $data->shipmentNumber }}">
+                                        readonly required placeholder="{{ __('menu_order.shipment_no') }}"
+                                        value="{{ $data->shipmentNumber }}">
                                 </div>
 
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="driverCode">Driver</label>
+                                    <label class="form-label" for="driverCode">{{ __('menu_order.driver') }}</label>
                                     <input class="form-control" name="driverCode" id="driverCode" type="text" readonly
-                                        required placeholder="Shipment No" value="{{ $data->driver->name }}">
+                                        required placeholder="{{ __('menu_order.driver') }}"
+                                        value="{{ $data->driver->name }}">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="notes">Notes</label>
+                                    <label class="form-label" for="notes">{{ __('menu_order.notes') }}</label>
                                     <input class="form-control" name="notes" id="notes" type="text" readonly
-                                        placeholder="Notes" value="{{ $data->notes }}">
+                                        placeholder="{{ __('menu_order.notes') }}" value="{{ $data->notes }}">
                                 </div>
 
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="customerCode">Customer
-                                        Name </label>
+                                    <label class="form-label" for="customerCode">{{ __('menu_order.customer') }} </label>
                                     <input class="form-control" name="customerCode" id="customerCode" type="text"
-                                        readonly placeholder="Customer" value="{{ $data->customer->name }}">
+                                        readonly placeholder="{{ __('menu_order.customer') }}"
+                                        value="{{ $data->customer->name }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="orderTypeCode">Route Type</label>
+                                    <label class="form-label"
+                                        for="orderTypeCode">{{ __('menu_order.route_type') }}</label>
                                     <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
-                                        readonly placeholder="Route Type" value="{{ $route->routeType->name }}">
+                                        readonly placeholder="{{ __('menu_order.route_type') }}"
+                                        value="{{ $route->routeType->name }}">
                                 </div>
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="originLocationCode">Origin Location</label>
+                                    <label class="form-label"
+                                        for="originLocationCode">{{ __('menu_order.origin_location') }}</label>
                                     <input class="form-control" name="originLocationCode" id="originLocationCode"
-                                        type="text" readonly placeholder="Origin Location"
+                                        type="text" readonly placeholder="{{ __('menu_order.origin_location') }}"
                                         value="{{ $route->originLocation->name }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="destinationLocationCode">Destination Location
+                                    <label class="form-label"
+                                        for="destinationLocationCode">{{ __('menu_order.destination_location') }}
                                     </label>
                                     <input class="form-control" name="destinationLocationCode"
                                         id="destinationLocationCode" type="text" readonly
-                                        placeholder="Origin Location" value="{{ $route->destinationLocation->name }}">
+                                        placeholder="{{ __('menu_order.destination_location') }}"
+                                        value="{{ $route->destinationLocation->name }}">
                                 </div>
                             </div>
 
@@ -147,7 +156,7 @@
 
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4>{{ $title }} Cost Data</h4>
+                        <h4>{{ $title }} {{ __('menu_order.cost') }} Data</h4>
                     </div>
                     <div class="card-body col-md-12">
                         {{-- <ul class="nav nav-tabs" id="icon-tab" role="tablist">
@@ -164,9 +173,9 @@
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Component Name</th>
+                                    <th>{{ __('menu_order.component_name') }}</th>
                                     {{-- <th>Component Type</th> --}}
-                                    <th>Description</th>
+                                    <th>{{ __('menu_order.description') }}</th>
                                     <th>Nominal</th>
                                 </tr>
                             </thead>

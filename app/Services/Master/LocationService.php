@@ -26,17 +26,12 @@ class LocationService
 
     public function findAll()
     {
-        return $this->service->with(['province', 'city', 'district', 'customer'])->get();
+        return $this->service->with(['province', 'city', 'district'])->get();
     }
 
     public function getById($id)
     {
         return $this->service->where('id', $id)->first();
-    }
-
-    public function getByCustomer($customer)
-    {
-        return $this->service->where('customerCode', $customer)->get();
     }
 
     public function store($request, $title)

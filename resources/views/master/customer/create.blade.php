@@ -24,7 +24,7 @@
                 <form class="row g-3" method="post" action="{{ route($view . 'store') }}">
                     @csrf
                     <div class="row mt-4">
-                        <div class="col-md-12">
+                        <div class="col-md-6">
                             <label class="form-label" for="name">{{ __('menu_customer.name') }} <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required

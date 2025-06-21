@@ -20,7 +20,6 @@ class Location extends Model
     protected $fillable = [
         'code',
         'name',
-        'customerCode',
         'provinceId',
         'cityId',
         'districtId',
@@ -37,11 +36,6 @@ class Location extends Model
     public function dropLocations()
     {
         return $this->hasMany(DropLocation::class, 'locationCode', 'code');
-    }
-
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class, 'customerCode', 'code');
     }
 
     public function province()

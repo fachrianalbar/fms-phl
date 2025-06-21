@@ -59,4 +59,5 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('route-by-customer/{customerCode}/{originLocationCode}/{destinationLocationCode}', [OrderController::class, 'routeCustomer'])->name('route-by-customer');
     Route::get('down-payment-data/{id}', [DownPaymentController::class, 'data'])->name('down-payment-data');
     Route::get('order-generate-code', [OrderController::class, 'generateCode'])->name('order-generate-code');
+    Route::get('order-shipment-format/{customerCode}', [OrderController::class, 'shipmentFormat'])->name('order-shipment-format');
 });

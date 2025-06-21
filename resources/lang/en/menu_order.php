@@ -18,5 +18,14 @@ return [
     'description' => 'Description',
     'add_cost' => 'Add Cost',
     'name' => 'Name',
-    'customer_detail_data' => 'Customer Detail Data'
+    'customer_detail_data' => 'Customer Detail Data',
+    'notes' => 'Notes',
+    'origin_location' => 'Origin Location',
+    'destination_location' => 'Destination Location',
+    'order_code' => 'Order Code',
+    'cost' => 'Cost',
+    'order_type' => 'Order Type',
+    'order_tax' => 'Order Tax',
+    'fleet_type' => 'Fleet Type',
+    'additional_cost' => 'Additional Cost'
 ];

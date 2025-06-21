@@ -211,4 +211,9 @@ class CustomerController extends Controller
                 ->toJson();
         }
     }
+
+    public function customerCompanyFormat($code)
+    {
+        return $this->service->customerCompanyFormat($code);
+    }
 }

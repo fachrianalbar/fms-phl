@@ -61,7 +61,7 @@
                         <form id="filterForm" class=" g-3">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Plate Number</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.plate_number') }}</label>
                                     <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleet as $item)
@@ -72,7 +72,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Driver Name</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.driver') }}</label>
                                     <select class="js-example-basic-single" name="driverName" id="driverName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($driver as $item)
@@ -84,7 +84,7 @@
 
                             <div class="row mt-4">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Customer Name</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.customer') }}</label>
                                     <select class="js-example-basic-single" name="customerName" id="customerName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($customer as $item)
@@ -95,7 +95,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Fleet Type Name</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.fleet_type') }}</label>
                                     <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleetType as $item)
@@ -108,13 +108,13 @@
 
                             <div class="row mt-4">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Shipment Number</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.shipment_no') }}</label>
                                     <input class="form-control" name="shipmentNumber" type="text"
                                         placeholder="Shipment Number">
                                 </div>
 
                                 <div class="col-md-3">
-                                    <label class="form-label" for="name">Order Date</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
                                     <input class="form-control" name="startDate" id="datetime-local" type="date"
                                         placeholder="Start Date">
                                 </div>
@@ -133,7 +133,7 @@
                                 </div> --}}
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Destination</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.destination') }}</label>
                                     <select class="js-example-basic-single" name="destination" id="destination">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($location as $item)
@@ -144,7 +144,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Order Type</label>
+                                    <label class="form-label" for="name">{{ __('menu_order.order_type') }}</label>
                                     <select class="js-example-basic-single" name="orderTypeCode" id="orderTypeCode">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($orderType as $item)
@@ -168,13 +168,12 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Order Date</th>
-                                <th>Fleet</th>
-                                <th>Driver</th>
-                                <th>Shipment No</th>
-                                <th>Customer Name</th>
-                                <th>Destination</th>
-                                <th>Qty</th>
+                                <th>{{ __('menu_order.order_date') }}</th>
+                                <th>{{ __('menu_order.plate_number') }}</th>
+                                <th>{{ __('menu_order.driver') }}</th>
+                                <th>{{ __('menu_order.shipment_no') }}</th>
+                                <th>{{ __('menu_order.customer') }}</th>
+                                <th>{{ __('menu_order.destination') }}</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -233,7 +232,7 @@
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Data Order Tax</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">Data {{ __('menu_order.order_tax') }}</h4>
                             <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
@@ -245,12 +244,12 @@
                                             <tr>
                                                 <th>#</th>
                                                 <th>No</th>
-                                                <th>Order Date</th>
-                                                <th>Fleet</th>
-                                                <th>Driver</th>
-                                                <th>Shipment No</th>
-                                                <th>Customer Name</th>
-                                                <th>Destination</th>
+                                                <th>{{ __('menu_order.order_date') }}</th>
+                                                <th>{{ __('menu_order.plate_number') }}</th>
+                                                <th>{{ __('menu_order.driver') }}</th>
+                                                <th>{{ __('menu_order.shipment_no') }}</th>
+                                                <th>{{ __('menu_order.customer') }}</th>
+                                                <th>{{ __('menu_order.destination') }}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -261,7 +260,8 @@
                             </div>
                         </div>
                         <div class="modal-footer justify-content-start">
-                            <button type="submit" id="saveOrderTax" class="btn btn-primary">Save</button>
+                            <button type="submit" id="saveOrderTax"
+                                class="btn btn-primary">{{ __('general.save') }}</button>
                         </div>
                     </div>
                 </div>
@@ -354,9 +354,6 @@
                     },
                     {
                         "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'qty'
                     },
                     {
                         "data": 'status'

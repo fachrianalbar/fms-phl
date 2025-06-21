@@ -46,14 +46,15 @@
                         <div class="row g-3">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Order Code <i
+                                    <label class="form-label" for="name">{{ __('menu_order.order_code') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
+                                    <input type="hidden" name="code" value="{{ $data->code }}">
                                     <input class="form-control" type="text" required readonly disabled
                                         value="{{ $data->code }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="fleetCode">Fleet<i
+                                    <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}<i
                                             class="mdi mdi-information text-danger"></i></label>
 
                                     <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
@@ -70,24 +71,25 @@
 
                             <div class="row mt-4">
                                 <div class="col-md-6">
-                                    <label class="form-label" for="name">Order Date <i
+                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <input class="form-control" name="orderDate" id="datetime-local" type="date" required
-                                        placeholder="Order Date" value="{{ $data->orderDate }}">
+                                        placeholder="{{ __('menu_order.order_date') }}" value="{{ $data->orderDate }}">
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="shipmentNumber">Shipment No <i
+                                    <label class="form-label" for="shipmentNumber">{{ __('menu_order.shipment_no') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
-                                        required placeholder="Shipment No" value="{{ $data->shipmentNumber }}">
+                                        required placeholder="{{ __('menu_order.shipment_no') }}"
+                                        value="{{ $data->shipmentNumber }}">
                                 </div>
 
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="driverCode">Driver <i
+                                    <label class="form-label" for="driverCode">{{ __('menu_order.driver') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="driverCode" id="driverCode"
                                         required="">
@@ -102,17 +104,17 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="notes">Notes</label>
+                                    <label class="form-label" for="notes">{{ __('menu_order.notes') }}</label>
                                     <input class="form-control" name="notes" id="notes" type="text"
-                                        placeholder="Notes" value="{{ $data->notes }}">
+                                        placeholder="{{ __('menu_order.notes') }}" value="{{ $data->notes }}">
                                 </div>
 
                             </div>
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="customerCode">Customer
-                                        Name <i class="mdi mdi-information text-danger"></i></label>
+                                    <label class="form-label" for="customerCode">{{ __('menu_order.customer') }} <i
+                                            class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                         required="">
                                         <option selected="" disabled="" value="">
@@ -126,7 +128,7 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="orderTypeCode">Route Type <i
+                                    <label class="form-label" for="orderTypeCode">{{ __('menu_order.route_type') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                         required="">
@@ -144,7 +146,8 @@
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="originLocationCode">Origin Location <i
+                                    <label class="form-label"
+                                        for="originLocationCode">{{ __('menu_order.origin_location') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="originLocationCode"
                                         id="originLocationCode" required="">
@@ -160,7 +163,8 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="destinationLocationCode">Destination Location <i
+                                    <label class="form-label"
+                                        for="destinationLocationCode">{{ __('menu_order.destination_location') }}<i
                                             class="mdi mdi-information text-danger"></i> </label>
                                     <select class="js-example-basic-single" name="destinationLocationCode"
                                         id="destinationLocationCode" required="">
@@ -227,13 +231,12 @@
                         <ul class="nav nav-tabs" id="icon-tab" role="tablist">
                             <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
                                     data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                                    aria-selected="true">Additional
-                                    Cost</a>
+                                    aria-selected="true">{{ __('menu_order.additional_cost') }}</a>
                             </li>
                             <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs"
                                     data-bs-toggle="tab" href="#profile-icon" role="tab"
-                                    aria-controls="profile-icon" aria-selected="false">Add
-                                    Cost</a>
+                                    aria-controls="profile-icon"
+                                    aria-selected="false">{{ __('menu_order.add_cost') }}</a>
                             </li>
                         </ul>
                         <div class="tab-content" id="icon-tabContent">
