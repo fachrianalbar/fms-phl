@@ -5,7 +5,8 @@
                     <label class="form-label" for="name">{{ __('menu_order.component_name') }} </label>
                     {{-- <input class="form-control" type="text" id="componentName" placeholder="Component Name"> --}}
                     <select class="js-example-basic-single" id="componentName">
-                        <option selected="" disabled="" value="">Choose...</option>
+                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                        </option>
                         @foreach ($component as $item)
                             <option value="{{ $item->code }}">{{ $item->name }}</option>
                         @endforeach
