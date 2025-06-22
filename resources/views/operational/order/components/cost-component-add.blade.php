@@ -3,8 +3,9 @@
         <div id="ajax-cost-component-form" class="row g-3" data-action="{{ route($view . 'store') }}?page=cost-component">
             @csrf
             <div class="col-md-12">
-                <label class="form-label" for="name">Name</label>
-                <input class="form-control" name="name" id="name" type="text" placeholder="Name">
+                <label class="form-label" for="name">{{ __('menu_order.name') }}</label>
+                <input class="form-control" name="name" id="name" type="text"
+                    placeholder="{{ __('menu_order.name') }}">
             </div>
 
             {{-- <div class="col-md-12 position-relative">

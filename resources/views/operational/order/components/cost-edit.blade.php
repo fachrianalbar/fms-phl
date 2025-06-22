@@ -4,7 +4,7 @@
             @include('partials.alert')
             <div class="row">
                 <div class="col-md-6">
-                    <label class="form-label" for="name">Component Name </label>
+                    <label class="form-label" for="name">{{ __('menu_order.component_name') }} </label>
 
                     <select class="js-example-basic-single" id="componentName">
                         <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -15,8 +15,9 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label" for="description">Description</label>
-                    <input class="form-control" type="text" id="description" placeholder="Description">
+                    <label class="form-label" for="description">{{ __('menu_order.description') }}</label>
+                    <input class="form-control" type="text" id="description"
+                        placeholder="{{ __('menu_order.description') }}">
                 </div>
             </div>
 
@@ -41,9 +42,9 @@
                 <tr>
                     <th>#</th>
                     {{-- <th>No</th> --}}
-                    <th>Component Name</th>
+                    <th>{{ __('menu_order.component_name') }}</th>
                     {{-- <th>Component Type</th> --}}
-                    <th>Description</th>
+                    <th>{{ __('menu_order.description') }}</th>
                     <th>Nominal</th>
                 </tr>
             </thead>

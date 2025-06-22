@@ -2,7 +2,7 @@
         <div class="row g-3 mt-3">
             <div class="row">
                 <div class="col-md-6">
-                    <label class="form-label" for="name">Component Name </label>
+                    <label class="form-label" for="name">{{ __('menu_order.component_name') }} </label>
                     {{-- <input class="form-control" type="text" id="componentName" placeholder="Component Name"> --}}
                     <select class="js-example-basic-single" id="componentName">
                         <option selected="" disabled="" value="">Choose...</option>
@@ -13,8 +13,9 @@
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label" for="description">Description</label>
-                    <input class="form-control" type="text" id="description" placeholder="Description">
+                    <label class="form-label" for="description">{{ __('menu_order.description') }}</label>
+                    <input class="form-control" type="text" id="description"
+                        placeholder="{{ __('menu_order.description') }}">
                 </div>
 
                 {{-- <div class="col-md-6 position-relative">
@@ -50,10 +51,10 @@
         <table class="table table-striped w-100 nowrap" id="dt">
             <thead>
                 <tr>
-                    <th style="width: 5%">Action</th>
-                    <th style="width: 40%">Component Name</th>
+                    <th style="width: 5%">{{ __('menu_order.component_name') }}</th>
+                    <th style="width: 40%">{{ __('menu_order.component_name') }}</th>
                     {{-- <th>Component Type</th> --}}
-                    <th style="width: 40%">Description</th>
+                    <th style="width: 40%">{{ __('menu_order.description') }}</th>
                     <th style="width: 15%">Nominal</th>
                 </tr>
             </thead>
