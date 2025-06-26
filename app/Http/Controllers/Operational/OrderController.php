@@ -127,7 +127,7 @@ class OrderController extends Controller
         $routeType = $this->routeTypeSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
         $driver = $this->driverSvc->findDriver();
-        $fleet = $this->fleetSvc->findAll();
+        $fleet = $this->service->getFleet();
         $company = $this->companySvc->findAll();
         $component = CostComponent::get();
 
@@ -275,7 +275,7 @@ class OrderController extends Controller
         $origin = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->get();
         $destination = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->where('originLocationCode', $route->originLocationCode)->get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
-        $fleet = $this->fleetSvc->findAll();
+        $fleet = $this->service->getFleet($data->fleetCode);
         $component = CostComponent::get();
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
 

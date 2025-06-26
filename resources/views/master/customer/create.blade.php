@@ -24,27 +24,28 @@
                 <form class="row g-3" method="post" action="{{ route($view . 'store') }}">
                     @csrf
                     <div class="row mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label" for="code">Code <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="code" id="code" type="text" required
                                 placeholder="Code">
                         </div>
 
+
+                    </div>
+
+                    <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="name">{{ __('menu_customer.name') }} <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="{{ __('menu_customer.name') }}">
                         </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label" for="nickname">{{ __('menu_customer.nickname') }}</label>
                             <input class="form-control" name="nickname" id="nickname" type="text"
                                 placeholder="{{ __('menu_customer.nickname') }}">
-                        </div>
+                        </div> --}}
 
                         <div class="col-md-6">
                             <label class="form-label" for="email">Email</label>

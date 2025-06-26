@@ -5,6 +5,7 @@ namespace App\Services\Operational;
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
 use App\Models\Master\Customer;
+use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
@@ -21,14 +22,16 @@ class OrderService
     protected $orderCost;
     protected $route;
     protected $customer;
+    protected $fleet;
 
-    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet)
     {
         $this->service = $order;
         $this->customerDetailOrder = $customerDetailOrder;
         $this->orderCost = $orderCost;
         $this->route = $route;
         $this->customer = $customer;
+        $this->fleet = $fleet;
     }
 
     public function findAll()
@@ -193,5 +196,16 @@ class OrderService
 
 
         return $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+    }
+
+    public function getFleet($fleet = null)
+    {
+        $fleetArr = $this->service->where('status', 0)->pluck('fleetCode')->toArray();
+
+        if ($fleet) {
+            $fleetArr = $this->service->where('status', 0)->where('fleetCode', '!=', $fleet)->pluck('fleetCode')->toArray();
+        }
+
+        return $this->fleet->whereNotIn('code', $fleetArr)->get();
     }
 }
