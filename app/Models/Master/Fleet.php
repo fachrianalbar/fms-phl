@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\Bank\BankAccount;
 use App\Models\Operational\Order;
 use App\Models\Warehouse\Maintenance;
 use App\Traits\Uuid;
@@ -32,7 +33,7 @@ class Fleet extends Model
         'driverCode',
         'barcodeNumber',
         'vehicleTax',
-        'vehicleKir'
+        'vehicleKir',
     ];
 
     public function brand()
@@ -68,5 +69,10 @@ class Fleet extends Model
     public function driver()
     {
         return $this->belongsTo(Employee::class, 'driverCode', 'code');
+    }
+
+    public function bank()
+    {
+        return $this->belongsTo(BankAccount::class, 'bankCode', 'code');
     }
 }

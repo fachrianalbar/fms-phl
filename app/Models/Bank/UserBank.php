@@ -20,6 +20,7 @@ class UserBank extends Model
         'accountName',
         'type',
         'bankCode',
+        'accountNUmber',
         'balance'
     ];
 

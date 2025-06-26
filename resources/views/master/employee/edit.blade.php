@@ -186,6 +186,30 @@
 
                     </div>
 
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="bankCode">Bank</label>
+                            <select class="js-example-basic-single" name="bankCode" id="bankCode">
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
+                                @foreach ($bank as $item)
+                                    <option value="{{ $item->code }}"
+                                        {{ $data->bankCode == $item->code ? 'selected' : '' }}>
+                                        {{ $item->bankCode }} - {{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="accountNumber">Account Number </label>
+                            <input class="form-control" name="accountNumber" id="accountNumber" type="number"
+                                placeholder="Account Number" value="{{ $data->accountNumber }}">
+                        </div>
+
+                    </div>
+
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">Edit</button>
                     </div>

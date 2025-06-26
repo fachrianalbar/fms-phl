@@ -50,4 +50,9 @@ class Customer extends Model
     {
         return $this->hasMany(CustomerDetail::class, 'customerCode', 'code');
     }
+
+    public function pic()
+    {
+        return $this->hasMany(CustomerPic::class, 'customerCode', 'code');
+    }
 }

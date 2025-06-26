@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Enums\Citizenship;
 use App\Enums\Gender;
 use App\Http\Controllers\Controller;
+use App\Services\Bank\BankAccountService;
 use App\Services\MenuService;
 use App\Services\Master\CityService;
 use App\Services\Master\DistrictService;
@@ -28,8 +29,9 @@ class EmployeeController extends Controller
     protected $provinceSvc;
     protected $citySvc;
     protected $districtSvc;
+    protected $bankSvc;
 
-    public function __construct(EmployeeService $employeeSvc, PositionService $positionSvc, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
+    public function __construct(EmployeeService $employeeSvc, PositionService $positionSvc, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc, BankAccountService $bankSvc)
     {
         $this->service = $employeeSvc;
         $this->title = "Employee";
@@ -38,6 +40,7 @@ class EmployeeController extends Controller
         $this->provinceSvc = $provinceSvc;
         $this->citySvc = $citySvc;
         $this->districtSvc = $districtSvc;
+        $this->bankSvc = $bankSvc;
     }
 
     /**
@@ -57,10 +60,13 @@ class EmployeeController extends Controller
     {
         $position = $this->positionSvc->findAll();
         $province = $this->provinceSvc->findAll();
+        $bank = $this->bankSvc->findAll();
+
         return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('province', $province)
+            ->with('bank', $bank)
             ->with('gender', Gender::cases())
             ->with('citizenship', Citizenship::cases())
             ->with('position', $position);
@@ -115,6 +121,8 @@ class EmployeeController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
+        $bank = $this->bankSvc->findAll();
+
         return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
@@ -124,6 +132,7 @@ class EmployeeController extends Controller
             ->with('citizenship', Citizenship::cases())
             ->with('province', $province)
             ->with('city', $city)
+            ->with('bank', $bank)
             ->with('district', $district);
     }
 

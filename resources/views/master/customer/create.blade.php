@@ -41,28 +41,14 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="picName">{{ __('menu_customer.pic_name') }}</label>
-                            <input class="form-control" name="picName" id="picName" type="text"
-                                placeholder="{{ __('menu_customer.pic_name') }}">
-                        </div>
-
-                        <div class="col-md-6">
                             <label class="form-label" for="nickname">{{ __('menu_customer.nickname') }}</label>
                             <input class="form-control" name="nickname" id="nickname" type="text"
                                 placeholder="{{ __('menu_customer.nickname') }}">
                         </div>
-                    </div>
 
-
-                    <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="email">Email</label>
                             <input class="form-control" name="email" id="email" type="email" placeholder="Email">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="phone">Phone</label>
-                            <input class="form-control" name="phone" id="phone" type="number" placeholder="Phone">
                         </div>
                     </div>
 
@@ -169,6 +155,55 @@
                         </div>
                     </div>
 
+                    <div class="row mt-4">
+                        <div class="d-flex justify-content-between col-md-6">
+                            <label class="form-label" for="picName">{{ __('menu_customer.pic_data') }}</label>
+
+                            <button id="addInputFile" type="button" class="btn btn-sm btn-info mb-2  font-weight-bold"
+                                href="#" target="_blank"><i class="mdi mdi-plus"></i></button>
+
+                        </div>
+
+
+                        <div>
+                            <div class="row g-1">
+                                <div class="col-md-3">
+                                    <input class="form-control" id="picName" type="text"
+                                        placeholder="{{ __('menu_customer.pic_name') }}" name="picName[0]">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <input class="form-control" id="phone" type="number" placeholder="Phone"
+                                        name="phone[0]">
+                                </div>
+                            </div>
+                        </div>
+
+
+
+                        <div id="listInputFile">
+                            {{-- <div class="row g-1 mt-4">
+                                <div class="col-md-3">
+                                    <input class="form-control" name="picName[]" id="picName" type="text"
+                                        placeholder="{{ __('menu_customer.pic_name') }}" value="{{ $data->picName }}">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <input class="form-control" name="phone[]" id="phone" type="number"
+                                        placeholder="Phone" value="{{ $data->phone }}">
+                                </div>
+
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-sm btn-danger mt-1">
+                                        <i class="mdi mdi-delete"></i>
+                                    </button>
+                                </div>
+
+                            </div> --}}
+
+                        </div>
+                    </div>
+
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
                     </div>
@@ -181,4 +216,47 @@
 @push('script')
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+
+    <script>
+        const addInputFile = document.getElementById("addInputFile");
+        const listInputFile = document.getElementById("listInputFile");
+
+
+        let inputFileCount = document.querySelectorAll("input[name^='picName']").length;
+        console.log(inputFileCount);
+
+        addInputFile.addEventListener('click', () => {
+            listInputFile.appendChild(addFile(inputFileCount));
+            inputFileCount++;
+        })
+
+        function addFile(num) {
+            const div = document.createElement('div');
+            div.classList.add('row', 'g-1', 'mt-4',
+                `file${num}`)
+            div.innerHTML = `
+             <div class="col-md-3">
+                <input class="form-control" name="picName[${num}]"  type="text" required
+                    placeholder="{{ __('menu_customer.pic_name') }}" >
+            </div>
+
+            <div class="col-md-3">
+                <input class="form-control" name="phone[${num}]"  type="number" required
+                    placeholder="Phone" >
+            </div>
+
+            <div class="col-md-1">
+                <button type="button" onclick="removeFile(${num})" class="btn btn-sm btn-danger mt-1">
+                    <i class="mdi mdi-delete"></i>
+                </button>
+            </div>
+            `
+            return div;
+        }
+
+        function removeFile(num) {
+            let content = document.querySelector(`.file${num}`);
+            content.remove();
+        }
+    </script>
 @endpush

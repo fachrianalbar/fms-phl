@@ -127,8 +127,6 @@ class CustomerController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $data = $this->service->getById($id);
-
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             // 'email' => [Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
@@ -215,5 +213,12 @@ class CustomerController extends Controller
     public function customerCompanyFormat($code)
     {
         return $this->service->customerCompanyFormat($code);
+    }
+
+    public function deleteCustomerPic($id)
+    {
+        $this->service->deleteCustomerPic($id);
+
+        return redirect()->back()->with('success', __('general.delete_data_success'));
     }
 }

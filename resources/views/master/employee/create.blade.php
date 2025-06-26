@@ -140,7 +140,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="gender">Gender</label>
-                            <select class="js-example-basic-single" name="gender" id="gender"="">
+                            <select class="js-example-basic-single" name="gender" id="gender">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($gender as $item)
@@ -158,6 +158,27 @@
                                     <option value="{{ $item->value }}">{{ $item->value }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="bankCode">Bank</label>
+                            <select class="js-example-basic-single" name="bankCode" id="bankCode">
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
+                                @foreach ($bank as $item)
+                                    <option value="{{ $item->code }}">
+                                        {{ $item->bankCode }} - {{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="accountNumber">Account Number </label>
+                            <input class="form-control" name="accountNumber" id="accountNumber" type="number"
+                                placeholder="Account Number">
                         </div>
 
                     </div>

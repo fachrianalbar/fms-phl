@@ -36,7 +36,9 @@ class Employee extends Model
         'address',
         'birthPlace',
         'gender',
-        'citizenship'
+        'citizenship',
+        'bankCode',
+        'accountNumber'
     ];
 
     public function position()

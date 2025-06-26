@@ -27,17 +27,23 @@
                     @method('PUT')
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="codes">Code <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="code" id="code" type="text" required
-                                placeholder="Code" value="{{ $data->code }}">
-                        </div>
-
-                        <div class="col-md-6">
                             <label class="form-label" for="name">Item Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="Item Name" value="{{ $data->name }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="unitCode">Item Unit <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="unitCode" id="unitCode" required>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($unit as $item)
+                                    <option value="{{ $item->code }}"
+                                        {{ $data->unitCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
 
                     </div>
@@ -94,18 +100,7 @@
                     </div>
 
                     <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="unitCode">Item Unit <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="unitCode" id="unitCode" required>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                                @foreach ($unit as $item)
-                                    <option value="{{ $item->code }}"
-                                        {{ $data->unitCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+
 
                         {{-- <div class="col-md-6">
                             <label class="form-label" for="itemLocationCode">Item Location <i

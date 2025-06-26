@@ -14,5 +14,7 @@ return [
     'type' => 'Tipe',
     'is_do' => 'Apakah Do?',
     'person' => 'Perorangan',
-    'name' => 'Nama'
+    'name' => 'Nama',
+    'pic_data' => 'Data Pic'
+
 ];

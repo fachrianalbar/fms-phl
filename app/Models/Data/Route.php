@@ -26,6 +26,7 @@ class Route extends Model
         'destinationLocationCode',
         'fleetTypeCode',
         'price',
+        'priceVendor',
         'routeTypeCode'
     ];
 

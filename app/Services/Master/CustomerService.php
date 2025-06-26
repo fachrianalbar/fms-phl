@@ -5,6 +5,7 @@ namespace App\Services\Master;
 use App\Helpers\GenerateCode;
 use App\Models\Master\Customer;
 use App\Models\Master\CustomerDetail;
+use App\Models\Master\CustomerPic;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
@@ -18,12 +19,14 @@ class CustomerService
     protected $service;
     protected $customerDetail;
     protected $customerDetailOrder;
+    protected $customerPic;
 
-    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder)
+    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic)
     {
         $this->service = $customer;
         $this->customerDetail = $customerDetail;
         $this->customerDetailOrder = $customerDetailOrder;
+        $this->customerPic = $customerPic;
     }
 
     public function findAll()
@@ -33,7 +36,7 @@ class CustomerService
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->with(['details'])->first();
+        return $this->service->where('id', $id)->with(['details', 'pic'])->first();
     }
 
     public function getByCode($code)
@@ -46,10 +49,10 @@ class CustomerService
         $data = $this->service->create([
             'name' => $request->name,
             'code' => $request->code,
-            'picName' => $request->picName,
+            // 'picName' => $request->picName,
             'nickname' => $request->nickname,
             'email' => $request->email,
-            'phone' => $request->phone,
+            // 'phone' => $request->phone,
             'address1' => $request->address1,
             'address2' => $request->address2,
             'npwp' => $request->npwp,
@@ -63,6 +66,10 @@ class CustomerService
             // 'telegramUsername' => $request->telegramUsername
         ]);
 
+        if (isset($request->picName)) {
+            $this->storeCustomerPic($request);
+        }
+
         $this->logActivity($title, $data, 'Create');
     }
 
@@ -73,10 +80,10 @@ class CustomerService
         $this->service->where('id', $id)->update([
             'code' => $request->code,
             'name' => $request->name,
-            'picName' => $request->picName,
+            // 'picName' => $request->picName,
             'nickname' => $request->nickname,
             'email' => $request->email,
-            'phone' => $request->phone,
+            // 'phone' => $request->phone,
             'address1' => $request->address1,
             'address2' => $request->address2,
             'npwp' => $request->npwp,
@@ -91,6 +98,11 @@ class CustomerService
         ]);
 
         $data = $this->getById($id);
+
+        if (isset($request->picName)) {
+            $data->pic()->delete();
+            $this->storeCustomerPic($request);
+        }
 
 
         if (isset($request->nameDetail)) {
@@ -134,6 +146,15 @@ class CustomerService
         $dataDetail->delete();
     }
 
+    public function deleteCustomerPic($id)
+    {
+        $dataPic = $this->customerPic->where('id', $id)->first();
+
+        $this->logActivity('Customer Pic', $dataPic, 'Delete');
+
+        $dataPic->delete();
+    }
+
     public function customerDetail($code)
     {
         return $this->customerDetail->where('customerCode', $code)->get();
@@ -142,5 +163,22 @@ class CustomerService
     public function customerCompanyFormat($code)
     {
         return $this->service->where('code', $code)->with(['company'])->first();
+    }
+
+    public function storeCustomerPic($request)
+    {
+        $filtered = Arr::only($request->all(), ['picName', 'phone']);
+
+        for ($i = 0; $i < count($request->picName); $i++) {
+
+            $customerPic = $this->customerPic->create([
+                'code' => GenerateCode::generateCode('FCP', true),
+                'picName' => $filtered['picName'][$i],
+                'phone' => $filtered['phone'][$i],
+                'customerCode' =>  $request->code
+            ]);
+
+            $this->logActivity('Customer Pic', $customerPic, 'Create');
+        }
     }
 }
