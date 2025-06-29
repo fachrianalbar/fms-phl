@@ -120,7 +120,7 @@
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="invoiceAddress">Billing Address</label>
-                            <textarea class="form-control" placeholder="Billing Address" rows="4" disabled readonly>{{ $data->billingAddress }}</textarea>
+                            <textarea class="form-control" placeholder="Billing Address" rows="4" disabled readonly>{{ $data->customer->billingAddress }}</textarea>
 
                         </div>
 
