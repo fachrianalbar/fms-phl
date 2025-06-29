@@ -98,8 +98,8 @@
 
                         <div class="row">
                             <div class="col-md-6">
-                                <label class="form-label" for="invoiceAddress">Billing Address </label>
-                                <textarea class="form-control" placeholder="Billing Address" disabled rows="4" readonly></textarea>
+                                <label class="form-label" for="billingAddress">Billing Address </label>
+                                <textarea class="form-control" placeholder="Billing Address" disabled id="billingAddress" rows="4" readonly></textarea>
 
                             </div>
 
@@ -356,7 +356,7 @@
             $.get("{{ url('ajax/customer-invoice') }}/" + customerCode, function(data) {
                 $('#picName').val(data.picName)
                 $('#picPhone').val(data.phone)
-                $('#invoiceAddress').val(data.billingAddress)
+                $('#billingAddress').val(data.billingAddress)
 
                 data.pic.forEach((item, i) => {
                     if (item.picName && item.phone) {
