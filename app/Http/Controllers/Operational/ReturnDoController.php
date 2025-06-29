@@ -44,7 +44,8 @@ class ReturnDoController extends Controller
 
             Order::whereIn('code', $selectedOrders)->update([
                 'status' => 3,
-                'returnDate' => null
+                'returnDate' => null,
+                'returnDescription' => null
             ]);
 
             DB::commit();

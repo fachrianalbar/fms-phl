@@ -41,7 +41,7 @@ class CustomerService
 
     public function getByCode($code)
     {
-        return $this->service->where('code', $code)->first();
+        return $this->service->where('code', $code)->with(['pic'])->first();
     }
 
     public function store($request, $title)
@@ -53,8 +53,8 @@ class CustomerService
             // 'nickname' => $request->nickname,
             'email' => $request->email,
             // 'phone' => $request->phone,
-            'address1' => $request->address1,
-            'address2' => $request->address2,
+            'officeAddress' => $request->officeAddress,
+            'billingAddress' => $request->billingAddress,
             'npwp' => $request->npwp,
             'accountNumber' => $request->accountNumber,
             'ppn' => $request->ppn,
@@ -84,8 +84,8 @@ class CustomerService
             // 'nickname' => $request->nickname,
             'email' => $request->email,
             // 'phone' => $request->phone,
-            'address1' => $request->address1,
-            'address2' => $request->address2,
+            'officeAddress' => $request->officeAddress,
+            'billingAddress' => $request->billingAddress,
             'npwp' => $request->npwp,
             'accountNumber' => $request->accountNumber,
             'ppn' => $request->ppn,

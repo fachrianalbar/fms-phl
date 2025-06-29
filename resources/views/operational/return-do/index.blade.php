@@ -46,7 +46,6 @@
                                 <th>Fleet</th>
                                 <th>Fleet Type</th>
                                 <th>Driver</th>
-                                <th>Notes</th>
                                 <th>Return Date</th>
                             </tr>
                         </thead>
@@ -167,9 +166,7 @@
                     {
                         "data": 'driver.name'
                     },
-                    {
-                        "data": 'notes'
-                    },
+
                     {
                         "data": 'returnDate'
                     }

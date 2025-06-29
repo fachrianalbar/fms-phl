@@ -20,8 +20,8 @@
 @endpush
 
 @section('content')
-    <div class="col-sm-12">
-        <form class="card" method="POST" action="{{ route('operational.not-return-do.confirm-do') }}">
+    <form class="col-sm-12" method="POST" action="{{ route('operational.not-return-do.confirm-do') }}">
+        <div class="card">
             @csrf
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
@@ -46,7 +46,6 @@
                                 <th>Fleet</th>
                                 <th>Fleet Type</th>
                                 <th>Driver</th>
-                                <th>Notes</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -55,8 +54,40 @@
                     </table>
                 </div>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <div class="modal fade bd-example-modal-lg" id="do-modal" tabindex="-1" role="dialog"
+            aria-labelledby="myLargeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="myLargeModalLabel">Not Return Data</h4>
+                        <button class="btn-close py-0" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body col-md-12">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label" for="returnDate">Date <i
+                                            class="mdi mdi-information text-danger"></i></label>
+                                    <input class="form-control" name="returnDate" id="returnDate" type="date" required
+                                        placeholder="Date">
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label" for="description">Description </label>
+                                    <textarea class="form-control" name="returnDescription" id="description" placeholder="Description" rows="4"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer justify-content-start">
+                            <button class="btn btn-primary" type="submit">Save Data</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
 @endsection
 
 @push('script')
@@ -101,6 +132,12 @@
                 name: 'selectedOrders',
                 value: JSON.stringify(selectedOrders)
             }).appendTo('form');
+
+            event.preventDefault();
+
+            $('#do-modal').modal('show');
+
+
         });
 
         $(document).ready(function() {
@@ -166,9 +203,6 @@
                     {
                         "data": 'driver.name'
                     },
-                    {
-                        "data": 'notes'
-                    }
 
 
                 ],

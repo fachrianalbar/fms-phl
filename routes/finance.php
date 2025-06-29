@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Finance\InvoiceController;
 use App\Http\Controllers\Finance\InvoicePaymentController;
+use App\Http\Controllers\Finance\OrderPaymentController;
 use App\Http\Controllers\Finance\VendorPaymentController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +10,7 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::resource('invoice-payment', InvoicePaymentController::class);
     Route::resource('invoice', InvoiceController::class);
     Route::resource('vendor-payment', VendorPaymentController::class);
+    Route::resource('order-payment', OrderPaymentController::class);
     Route::put('invoice-detail/{id}', [InvoiceController::class, 'storeInvoiceDetail'])->name('invoice-detail.store');
     Route::delete('invoice-detail/{id}', [InvoiceController::class, 'destroyInvoiceDetail'])->name('invoice-detail.destroy');
     Route::get('pdf-invoice/{id}', [InvoiceController::class, 'pdfInvoice'])->name('invoice.pdf-invoice');

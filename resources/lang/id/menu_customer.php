@@ -15,6 +15,7 @@ return [
     'is_do' => 'Apakah Do?',
     'person' => 'Perorangan',
     'name' => 'Nama',
-    'pic_data' => 'Data Pic'
-
+    'pic_data' => 'Data Pic',
+    'office_address' => 'Alamat Kantor',
+    'billing_address' => 'Alamat Penagihan'
 ];

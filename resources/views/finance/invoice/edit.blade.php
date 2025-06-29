@@ -47,7 +47,7 @@
                     <div class="row">
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="customerCode">Customer
-                                Name <i class="icofont icofont-warning-alt text-danger"></i></label>
+                                Name <i class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required=""
                                 disabled>
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
@@ -119,9 +119,8 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="invoiceAddress">Invoice Address To </label>
-                            <textarea class="form-control" name="invoiceAddress" id="invoiceAddress" placeholder="Invoice Address To"
-                                rows="4" readonly>{{ $data->address1 }}</textarea>
+                            <label class="form-label" for="invoiceAddress">Billing Address</label>
+                            <textarea class="form-control" placeholder="Billing Address" rows="4" disabled readonly>{{ $data->billingAddress }}</textarea>
 
                         </div>
 
@@ -131,6 +130,31 @@
                             <textarea class="form-control" name="notes" id="notes" placeholder="Notes" rows="4" required>{{ $data->notes }}</textarea>
                         </div>
                     </div>
+
+
+                    @if (isset($data->customer->pic))
+                        <div id="picContainer">
+                            <label class="form-label" for="picName">Data Pic </label>
+
+                            <div id="listPic">
+                                @foreach ($data->customer->pic as $item)
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <input class="form-control" type="text" readonly
+                                                value="{{ $item->picName }}" placeholder="To Pic Name" disabled>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input class="form-control" type="text" readonly
+                                                value="{{ $item->phone }}" placeholder="To Pic Phone Number" disabled>
+                                        </div>
+                                    </div>
+                                @endforeach
+
+                            </div>
+
+                        </div>
+                    @endif
+
 
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">Edit</button>
@@ -144,8 +168,8 @@
                 <h4>Order Data</h4>
 
                 <div class="d-flex gap-5">
-                    <a target="_blank" href="{{ route($view . 'pdf-invoice', $data->id) }}" class="btn btn-danger"><i
-                            class="icofont icofont-file-pdf"></i></a>
+                    <a target="_blank" href="{{ route($view . 'pdf-invoice', $data->id) }}"
+                        class="btn btn-icon btn-sm bg-danger-subtle"><i class="mdi mdi-file fs-14 text-danger"></i></a>
 
                     @if ($status == 0)
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"

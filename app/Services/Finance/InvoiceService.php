@@ -31,7 +31,7 @@ class InvoiceService
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->with(['details', 'customer', 'payments'])->first();
+        return $this->service->where('id', $id)->with(['details', 'customer', 'payments', 'customer.pic'])->first();
     }
 
     public function getOrder()

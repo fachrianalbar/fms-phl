@@ -55,15 +55,16 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="address1"> {{ __('menu_customer.address') }} 1</label>
-                            <textarea class="form-control" name="address1" id="address1" placeholder=" {{ __('menu_customer.address') }} 1"
-                                rows="4"></textarea>
+                            <label class="form-label" for="officeAddress"> {{ __('menu_customer.office_address') }} </label>
+                            <textarea class="form-control" name="officeAddress" id="officeAddress"
+                                placeholder=" {{ __('menu_customer.office_address') }}" rows="4"></textarea>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="address2">{{ __('menu_customer.address') }} 2</label>
-                            <textarea class="form-control" name="address2" id="address2" placeholder=" {{ __('menu_customer.address') }} 2"
-                                rows="4"></textarea>
+                            <label class="form-label"
+                                for="billingAddress">{{ __('menu_customer.billing_address') }}</label>
+                            <textarea class="form-control" name="billingAddress" id="billingAddress"
+                                placeholder=" {{ __('menu_customer.billing_address') }}" rows="4"></textarea>
                         </div>
                     </div>
 

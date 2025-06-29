@@ -39,7 +39,7 @@
                         <div class="row">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="customerCode">Customer
-                                    Name <i class="icofont icofont-warning-alt text-danger"></i></label>
+                                    Name <i class="mdi mdi-information text-danger"></i></label>
                                 <select class="js-example-basic-single" name="customerCode" id="customerCode"
                                     required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -53,7 +53,7 @@
 
                             <div class="col-md-6">
                                 <label class="form-label" for="invoiceNumber">Invoice Number <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="invoiceNumber" id="invoiceNumber" type="text" required
                                     placeholder="Invoice Number">
                             </div>
@@ -62,7 +62,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <label class="form-label" for="receiptNumber">Receipt Number <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="receiptNumber" id="receiptNumber" type="text" required
                                     placeholder="Receipt Number">
                             </div>
@@ -77,7 +77,7 @@
                         <div class="row mt-4">
                             <div class="col-md-6">
                                 <label class="form-label" for="name">Invoice Date <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="invoiceDate" id="datetime-local" type="date" required
                                     placeholder="Invoice Date" value="{{ now()->toDateString() }}">
                             </div>
@@ -93,34 +93,31 @@
                             <hr>
                         </div>
 
-                        <div class="row ">
-                            <div class="col-md-6">
-                                <label class="form-label" for="picName">To Pic Name </label>
-                                <input class="form-control" name="picName" id="picName" type="text" readonly
-                                    placeholder="To Pic Name">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label" for="picPhone">To Pic Phone Number</label>
-                                <input class="form-control" name="picPhone" id="picPhone" type="text" readonly
-                                    placeholder="To Pic Phone Number">
-                            </div>
-                        </div>
 
 
-                        <div class="row mt-4">
+
+                        <div class="row">
                             <div class="col-md-6">
-                                <label class="form-label" for="invoiceAddress">Invoice Address To </label>
-                                <textarea class="form-control" name="invoiceAddress" id="invoiceAddress" placeholder="Invoice Address To"
-                                    rows="4" readonly></textarea>
+                                <label class="form-label" for="invoiceAddress">Billing Address </label>
+                                <textarea class="form-control" placeholder="Billing Address" disabled rows="4" readonly></textarea>
 
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label" for="notes">Notes <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                        class="mdi mdi-information text-danger"></i></label>
                                 <textarea class="form-control" name="notes" id="notes" placeholder="Notes" rows="4" required></textarea>
                             </div>
+                        </div>
+
+                        <div class="d-none" id="picContainer">
+                            <label class="form-label" for="picName">Data Pic </label>
+
+                            <div id="listPic">
+
+
+                            </div>
+
                         </div>
 
 
@@ -349,14 +346,50 @@
 
         function customerInvoice() {
             const customerCode = $('#customerCode').select2('val');
+            const listPic = document.getElementById('listPic');
+            const picContainer = document.getElementById('picContainer');
+            listPic.innerHTML = '';
+
+            let hasValidData = false;
+
 
             $.get("{{ url('ajax/customer-invoice') }}/" + customerCode, function(data) {
                 $('#picName').val(data.picName)
                 $('#picPhone').val(data.phone)
-                $('#invoiceAddress').val(data.address1)
+                $('#invoiceAddress').val(data.billingAddress)
+
+                data.pic.forEach((item, i) => {
+                    if (item.picName && item.phone) {
+                        console.log("andi");
+                        hasValidData = true;
+
+                        const html = `
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <input class="form-control" type="text" readonly value="${item.picName}" placeholder="To Pic Name" disabled>
+                                </div>
+                                <div class="col-md-6">
+                                    <input class="form-control" type="text" readonly value="${item.phone}" placeholder="To Pic Phone Number" disabled>
+                                </div>
+                            </div>
+                        `;
+
+                        listPic.innerHTML += html;
+                    }
+                })
+
+                if (hasValidData) {
+                    picContainer.classList.remove('d-none');
+                } else {
+                    picContainer.classList.add('d-none');
+                }
             });;
 
+
+
         }
+
+
 
         $('#customerCode').on('change', function() {
             $('body').append(`

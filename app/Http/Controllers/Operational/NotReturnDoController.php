@@ -45,7 +45,8 @@ class NotReturnDoController extends Controller
 
             Order::whereIn('code', $selectedOrders)->update([
                 'status' => 4,
-                'returnDate' => Carbon::now('Asia/Jakarta')
+                'returnDate' => $request->returnDate,
+                'returnDescription' => $request->returnDescription
             ]);
 
             DB::commit();

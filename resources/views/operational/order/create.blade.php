@@ -48,8 +48,8 @@
                             </div>
 
                             <div class="col-md-6 position-relative">
-                                <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}<i
-                                        class="mdi mdi-information text-danger"></i></label>
+                                <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}
+                                    <i class="mdi mdi-information text-danger"></i></label>
 
                                 <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
@@ -318,7 +318,7 @@
                 // Show the correct field based on the selection after 1 second (simulating processing time)
                 if (selectedType === 'TONASE') {
                     $('#qtyLabel').html(
-                        'Tonase <i class="icofont icofont-warning-alt text-danger"></i>'
+                        'Tonase <i class="mdi mdi-information text-danger"></i>'
                     ); // Update the label with icon
                     $('#qty').attr('placeholder', 'Enter Tonase'); // Update placeholder
                     $('#qty').val(1); // Set default value to 1
@@ -326,7 +326,7 @@
                     $('#qtyField').removeClass('d-none'); // Show the field
                 } else if (selectedType === 'TRIP') {
                     $('#qtyLabel').html(
-                        'Ritase <i class="icofont icofont-warning-alt text-danger"></i>'
+                        'Ritase <i class="mdi mdi-information text-danger"></i>'
                     ); // Update the label with icon
                     $('#qty').attr('placeholder', 'Enter Ritase'); // Update placeholder
                     $('#qty').val(1); // Set default value to 1
@@ -334,7 +334,7 @@
                     $('#qtyField').removeClass('d-none'); // Show the field
                 } else if (selectedType == 'KUBIKASE') {
                     $('#qtyLabel').html(
-                        'Kubikase <i class="icofont icofont-warning-alt text-danger"></i>'
+                        'Kubikase <i class="mdi mdi-information text-danger"></i>'
                     ); // Update the label with icon
                     $('#qty').attr('placeholder', 'Enter Kubikase'); // Update placeholder
                     $('#qty').val(1); // Set default value to 1

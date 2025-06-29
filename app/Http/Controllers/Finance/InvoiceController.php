@@ -241,7 +241,7 @@ class InvoiceController extends Controller
                             <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
                             class="btn btn-icon btn-sm bg-success-subtle me-1"
                             data-bs-toggle="tooltip" title="Print PDF">
-                                <i class="mdi mdi-file-pdf fs-14 text-success"></i>
+                                <i class="mdi mdi-file fs-14 text-success"></i>
                             </a>
 
                             <a href="' . route($this->view . 'edit', $row->id) . '"
