@@ -127,6 +127,7 @@ class CustomerController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        dd($request->all());
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             // 'email' => [Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
