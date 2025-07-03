@@ -108,10 +108,13 @@ class BankBookController extends Controller
 
 
                 ->addColumn('action', function ($row) {
-                    $btn = '<ul class="action">
-                                        <li><a href="' . route($this->view . 'show', $row->userBankCode) . '"><i class="icon-book"></i></a></li>
-
-                                    </ul>';
+                    $btn = '<td>
+                                    <a href="' . route($this->view . 'show', $row->userBankCode) . '"
+                                class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                                data-bs-toggle="tooltip" title="Edit">
+                                    <i class="mdi mdi-book-account fs-14 text-primary"></i>
+                                </a>
+                            </td>';
 
                     return $btn;
                 })

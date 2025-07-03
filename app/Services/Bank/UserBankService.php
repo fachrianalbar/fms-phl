@@ -52,7 +52,7 @@ class UserBankService
             'accountName' => $request->accountName,
             'bankCode' => $request->bankCode,
             'type' => $request->type,
-            'balance' => (int)$request->balance,
+            // 'balance' => (int)$request->balance,
             'accountNumber' => $request->accountNumber,
         ]);
 
@@ -65,15 +65,17 @@ class UserBankService
         ]);
 
         if ((int)$request->balance != 0) {
-            Mutation::create([
+            $mutation = Mutation::create([
                 'code' => GenerateCode::generateCode('FMT'),
                 'userBankCode' => $data->code,
                 'nominal' => (int)$request->balance,
                 'type' => 'In',
                 'date' => Carbon::now(),
                 'description' => 'New Balance',
-                'transactionTypeCode' => 'FTT250305192008',
+                'transactionTypeCode' => 'FTT250306114179',
             ]);
+
+            $this->logActivity('Mutation', $mutation, 'Create');
         }
 
         $this->logActivity($title, $data, 'Create');

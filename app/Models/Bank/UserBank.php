@@ -21,7 +21,7 @@ class UserBank extends Model
         'type',
         'bankCode',
         'accountNUmber',
-        'balance'
+        // 'balance'
     ];
 
     public function bank()

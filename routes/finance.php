@@ -20,9 +20,11 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('invoice', [InvoiceController::class, 'datatable'])->name('invoice');
     Route::get('invoice-payment', [InvoicePaymentController::class, 'datatable'])->name('invoice-payment');
     Route::get('vendor-payment', [VendorPaymentController::class, 'datatable'])->name('vendor-payment');
+    Route::get('order-payment', [OrderPaymentController::class, 'datatable'])->name('order-payment');
     Route::get('invoice-order', [InvoiceController::class, 'datatableOrder'])->name('invoice-order');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('customer-invoice/{customerCode}', [InvoiceController::class, 'customerInvoice'])->name('customer-finance');
+    Route::get('order-detail-payment/{orderCode}', [OrderPaymentController::class, 'orderDetailPayment'])->name('order-detail-payment');
 });

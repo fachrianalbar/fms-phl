@@ -4,6 +4,8 @@ namespace App\Models\Operational;
 
 use App\Models\Data\FleetDriver;
 use App\Models\Data\Route;
+use App\Models\Finance\OrderPayment;
+use App\Models\Finance\OrderPaymentHistory;
 use App\Models\Master\Customer;
 use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
@@ -92,5 +94,15 @@ class Order extends Model
     public function orderStatus()
     {
         return $this->belongsTo(OrderStatus::class, 'status', 'code');
+    }
+
+    public function orderPayment()
+    {
+        return $this->hasOne(OrderPayment::class, 'orderCode', 'code');
+    }
+
+    public function orderPaymentHistory()
+    {
+        return $this->hasMany(OrderPaymentHistory::class, 'orderCode', 'code');
     }
 }

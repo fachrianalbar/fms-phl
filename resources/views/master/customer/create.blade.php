@@ -134,7 +134,7 @@
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
                                     {{ __('general.choose') }}...</option>
-                                <option value="Person">
+                                <option value="Individual">
                                     {{ __('menu_customer.person') }}</option>
                                 <option value="Company">
                                     {{ __('menu_customer.company') }}</option>

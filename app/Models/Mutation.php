@@ -26,6 +26,7 @@ class Mutation extends Model
         'nominal',
         'type',
         'transactionTypeCode',
+        'transactionCode'
     ];
 
     public function userBank()

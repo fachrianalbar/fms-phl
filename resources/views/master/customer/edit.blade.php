@@ -156,7 +156,7 @@
                             <select class="js-example-basic-single" name="type" id="type" required="">
                                 <option selected="" disabled="" value="">
                                     {{ __('general.choose') }}...</option>
-                                <option value="Person" {{ $data->type == 'Person' ? 'selected' : '' }}>
+                                <option value="Individual" {{ $data->type == 'Individual' ? 'selected' : '' }}>
                                     {{ __('menu_customer.person') }}</option>
                                 <option value="Company" {{ $data->type == 'Company' ? 'selected' : '' }}>
                                     {{ __('menu_customer.company') }}</option>

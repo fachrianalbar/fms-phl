@@ -18,33 +18,52 @@ class ReturnDoService
 
     public function findAll()
     {
-        return $this->service->whereIn('status', [4, 5])->with([
-            'fleetDriver.fleet',
-            'driver',
-            // 'fleetDriver.employee',
-            'customer',
-            'route.originLocation',
-            'route.destinationLocation',
-            'material',
-            'route.routeDetail',
-            'fleet',
-            'fleet.type'
-        ])->get();
+        return $this->service
+            ->whereHas('customer', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('isDo', 1)
+                        ->whereIn('status', [4, 5]);
+                })->orWhere(function ($q) {
+                    $q->where('isDo', 0)
+                        ->whereIn('status', [3, 4, 5]);
+                });
+            })
+            ->with([
+                'fleetDriver.fleet',
+                'driver',
+                'customer',
+                'route.originLocation',
+                'route.destinationLocation',
+                'material',
+                'route.routeDetail',
+                'fleet',
+                'fleet.type'
+            ])
+            ->get();
     }
 
     public function datatable()
     {
-        return $this->service->whereIn('status', [4, 5])->with([
-            'fleetDriver.fleet',
-            'driver',
-            // 'fleetDriver.employee',
-            'customer',
-            'route.originLocation',
-            'route.destinationLocation',
-            'material',
-            'route.routeDetail',
-            'fleet',
-            'fleet.type'
-        ])->orderBy('order.created_at', 'desc');
+        return $this->service
+            ->whereHas('customer', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('isDo', 1)
+                        ->whereIn('status', [4, 5]);
+                })->orWhere(function ($q) {
+                    $q->where('isDo', 0)
+                        ->whereIn('status', [3, 4, 5]);
+                });
+            })
+            ->with([
+                'fleetDriver.fleet',
+                'driver',
+                'customer',
+                'route.originLocation',
+                'route.destinationLocation',
+                'material',
+                'route.routeDetail',
+                'fleet',
+                'fleet.type'
+            ])->orderBy('order.created_at', 'desc');
     }
 }
