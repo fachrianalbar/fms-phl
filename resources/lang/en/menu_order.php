@@ -28,5 +28,6 @@ return [
     'order_tax' => 'Order Tax',
     'fleet_type' => 'Fleet Type',
     'additional_cost' => 'Additional Cost',
-    'action' => 'Action'
+    'action' => 'Action',
+    'is_leave' => 'Is Leave?'
 ];

@@ -461,7 +461,7 @@
                                 <div class="d-flex justify-content-between" id="driverLabelContainer">
                                     <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
                                     <div>
-                                        <label class="form-label" for="driverCode">Is Leave? </label>
+                                        <label class="form-label" for="driverCode">{{ __('menu_order.is_leave') }} </label>
                                         <input type="checkbox" class="form-check-input" name="isLeave">
                                     </div>
                                 </div>
@@ -529,7 +529,7 @@
                             <div class="d-flex justify-content-between" id="driverLabelContainer">
                                 <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
                                 <div>
-                                    <label class="form-label" for="driverCode">Is Leave? </label>
+                                    <label class="form-label" for="driverCode">{{ __('menu_order.is_leave') }} </label>
                                     <input type="checkbox" class="form-check-input" name="isLeave">
                                 </div>
                             </div>

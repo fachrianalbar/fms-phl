@@ -45,9 +45,9 @@
                                 <th>{{ __('menu_vendor_payment.customer') }}</th>
                                 <th>{{ __('menu_vendor_payment.origin') }}</th>
                                 <th>{{ __('menu_vendor_payment.destination') }}</th>
-                                <th>Cost</th>
+                                <th>{{ __('menu_order_payment.cost') }}</th>
                                 <th>PPH</th>
-                                <th>Payment Amount</th>
+                                <th>{{ __('menu_order_payment.payment_amount') }}</th>
                                 <th>Total</th>
                                 <th>Status</th>
                             </tr>
@@ -79,7 +79,8 @@
                                 <div class="row g-3">
 
                                     <div class="col-md-12">
-                                        <label class="form-label" for="cost">Cost</label>
+                                        <label class="form-label"
+                                            for="cost">{{ __('menu_order_payment.cost') }}</label>
                                         <input type="hidden" name="cost" id="costHidden">
                                         <input class="form-control" id="cost" type="text" placeholder="Cost"
                                             readonly disabled>
@@ -93,7 +94,8 @@
                                     </div>
 
                                     <div class="col-md-12">
-                                        <label class="form-label" for="payment">Payment</label>
+                                        <label class="form-label"
+                                            for="payment">{{ __('menu_order_payment.payment') }}</label>
                                         <input class="form-control" id="payment" type="text" placeholder="Payment"
                                             readonly disabled>
                                     </div>
@@ -107,12 +109,13 @@
 
                                     <div class="col-md-12">
 
-                                        <label class="form-label" for="userBankCode">User Bank <i
+                                        <label class="form-label"
+                                            for="userBankCode">{{ __('menu_order_payment.user_bank') }} <i
                                                 class="mdi mdi-information text-danger"></i></label>
 
 
                                         <select class="js-example-basic" name="userBankCode" id="userBankCode" required>
-                                            <option value="">Choose...</option>
+                                            <option value="">{{ __('general.choose') }}...</option>
                                             @foreach ($userBank as $item)
                                                 <option value="{{ $item->code }}">
                                                     {{ $item->accountNumber . ' - ' . $item->bank->name . ' - ' . $item->accountName }}
@@ -127,11 +130,13 @@
 
 
                                     <div class="col-md-12">
-                                        <label class="form-label" for="itemNameModal">Payment Date <i
-                                                class="mdi mdi-information text-danger"></i></label>
+                                        <label class="form-label"
+                                            for="itemNameModal">{{ __('menu_order_payment.payment_date') }}
+                                            <i class="mdi mdi-information text-danger"></i></label>
                                         <input class="form-control" name="date" id="date" type="date"
                                             placeholder="Payment Date" required>
                                     </div>
+
                                     {{-- 
                                     <div class="col-md-12">
                                         <label class="form-label"
@@ -142,11 +147,12 @@
                                     </div> --}}
 
                                     <div class="col-md-12" id="payment-type-container">
-                                        <label class="form-label" for="type"> Payment Type <i
+                                        <label class="form-label" for="type">
+                                            {{ __('menu_order_payment.payment_date') }} <i
                                                 class="mdi mdi-information text-danger"></i></label>
                                         <select class="js-example-basic" name="type" id="type" required="">
                                             <option selected="" disabled="" value="">
-                                                Choose...</option>
+                                                {{ __('general.choose') }}...</option>
                                             <option value="Full">
                                                 Full</option>
                                             <option value="Dp">
@@ -156,10 +162,12 @@
                                     </div>
 
                                     <div class="col-md-12 d-none">
-                                        <label class="form-label" for="paymentAmount">Payment Amount <i
-                                                class="mdi mdi-information text-danger"></i></label>
+                                        <label class="form-label"
+                                            for="paymentAmount">{{ __('menu_order_payment.payment_amount') }}
+                                            <i class="mdi mdi-information text-danger"></i></label>
                                         <input class="form-control" name="paymentAmount" id="paymentAmount"
-                                            type="text" placeholder="Payment Amount" oninput="formatAngka(this)">
+                                            type="text" placeholder="{{ __('menu_order_payment.payment_amount') }}"
+                                            oninput="formatAngka(this)">
                                     </div>
 
                                     <div class="col-md-12">

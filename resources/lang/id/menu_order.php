@@ -28,5 +28,6 @@ return [
     'order_tax' => 'Pajak Pesanan',
     'fleet_type' => 'Tipe Kendaraan',
     'additional_cost' => 'Tambahan Biaya',
-    'action' => 'Aksi'
+    'action' => 'Aksi',
+    'is_leave' => 'Apakah Cuti?'
 ];
