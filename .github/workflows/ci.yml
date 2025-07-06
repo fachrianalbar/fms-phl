@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script_stop: true
           script: |
-            cd var/www/html/fms-phl
+            cd /var/www/html/fms-phl
             git pull
 
       #       composer install --no-dev --optimize-autoloader
