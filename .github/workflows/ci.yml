@@ -72,14 +72,20 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           debug: true
           script: |
-            bash -lc '
-              cd ${{ secrets.DEPLOY_PATH }}
-              echo "Shell: $SHELL"
+            cd ${{ secrets.DEPLOY_PATH }}
+            {
+              echo "Git user:"
               whoami
+              echo "Current dir:"
               pwd
+              echo "Git status:"
               git status
+              echo "Git pull:"
               git pull origin main
-            '
+            } &> /tmp/github-output.log
+
+            echo "--- Deployment Output ---"
+            cat /tmp/github-output.log
 
       #       composer install --no-dev --optimize-autoloader
       #
