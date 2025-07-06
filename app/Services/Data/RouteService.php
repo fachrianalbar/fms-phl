@@ -42,7 +42,7 @@ class RouteService
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
                     'price' => (int)$filtered['price'][$i],
-                    'priceVendor' => (int)$filtered['priceVendor'][$i],
+                    // 'vendorPrice' => (int)$filtered['vendorPrice'][$i],
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
                     'code' => GenerateCode::generateCode('TR')
                 ]
@@ -55,6 +55,7 @@ class RouteService
 
     public function update($request, $id, $title)
     {
+        // dd($request->all());
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
@@ -64,7 +65,7 @@ class RouteService
             'destinationLocationCode' => $request->destinationLocationCode,
             // 'fleetTypeCode' => $request->fleetTypeCode,
             'price' => (int)$request->price,
-            'priceVendor' => (int)$request->priceVendor,
+            'vendorPrice' => (int)$request->vendorPrice,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

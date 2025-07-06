@@ -36,13 +36,14 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>{{ __('menu_route.name') }}</th>
+                                {{-- <th>{{ __('menu_route.name') }}</th> --}}
                                 <th>{{ __('menu_route.customer') }}</th>
                                 <th>{{ __('menu_route.origin') }}</th>
                                 <th>{{ __('menu_route.destination') }}</th>
                                 {{-- <th>Fleet Type</th> --}}
                                 <th>{{ __('menu_route.route_type') }}</th>
                                 <th>{{ __('menu_route.price') }}</th>
+                                <th>{{ __('menu_route.vendor_price') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -96,9 +97,6 @@
                         "data": 'DT_RowIndex'
                     },
                     {
-                        "data": 'name'
-                    },
-                    {
                         "data": 'customer.name'
                     },
                     {
@@ -116,15 +114,18 @@
                     {
                         "data": 'price'
                     },
+                    {
+                        "data": 'vendorPrice'
+                    },
 
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 5]
+                        "targets": [0]
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 5]
+                        "targets": [0]
                     }
                 ],
                 "order": [

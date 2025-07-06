@@ -18,5 +18,7 @@ return [
     'destination_location' => 'Lokasi Tujuan',
     'route_detail' => 'Detail Rute',
     'cost_component' => 'Biaya Komponen',
-    'cost_component_name' => 'Nama Biaya Komponen'
+    'cost_component_name' => 'Nama Biaya Komponen',
+    'vendor_price' => 'Harga Vendor',
+    'vendor_price_validation' => 'Harga rute vendor tidak boleh lebih dari harga rute'
 ];

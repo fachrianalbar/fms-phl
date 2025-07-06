@@ -62,3 +62,18 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
         run: php artisan test
+
+      - name: Deploy to Server via SSH
+        if: success()
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}
+            git pull
+      #       composer install --no-dev --optimize-autoloader
+      #
+      #       php artisan config:cache
+      #       php artisan route:cache

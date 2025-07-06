@@ -86,7 +86,7 @@ class RouteController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            // 'name' => 'required',
             'customerCode' => 'required',
             'originLocationCode' => 'required',
             'destinationLocationCode' => 'required',
@@ -166,7 +166,7 @@ class RouteController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'name' => 'required',
+            // 'name' => 'required',
             'customerCode' => 'required',
             'originLocationCode' => 'required',
             'destinationLocationCode' => 'required',
@@ -214,7 +214,10 @@ class RouteController extends Controller
             $data = $this->service->findAll();
             return Datatables::of($data)
                 ->addIndexColumn()
-                ->addColumn('price', function ($row) {
+                ->editColumn('price', function ($row) {
+                    return 'Rp ' .  number_format($row->price, 0, ',', '.');
+                })
+                ->editColumn('vendorPrice', function ($row) {
                     return 'Rp ' .  number_format($row->price, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
@@ -234,7 +237,7 @@ class RouteController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'price', 'vendorPrice'])
                 ->toJson();
         }
     }

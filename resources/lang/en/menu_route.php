@@ -18,6 +18,7 @@ return [
     'destination_location' => 'Destination Location',
     'route_detail' => 'Route Detail',
     'cost_component' => 'Cost Component',
-    'cost_component_name' => 'Cost Component Name'
-
+    'cost_component_name' => 'Cost Component Name',
+    'vendor_price' => 'Vendor Price',
+    'vendor_price_validation' => 'Vendor price cannot be greater than the price'
 ];

@@ -35,17 +35,27 @@
                 <form class="row g-3" id="routeForm" onsubmit="return submitForm('price')">
                     {{-- @csrf --}}
                     <div class="row">
-                        <div class="col-md-6">
+                        {{-- <div class="col-md-6">
                             <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="{{ __('menu_route.name') }}">
-                        </div>
+                        </div> --}}
 
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="customerCode">{{ __('menu_route.customer') }}</label>
                             <select class="js-example-basic-single" name="customerCode" id="customerCode" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
+                            <select class="js-example-basic-single" name="routeType" id="routeType" required="">
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($routeType as $item)
                                     <option value="{{ $item->code }}">{{ $item->name }}</option>
                                 @endforeach
                             </select>
@@ -101,15 +111,7 @@
                                 oninput="formatAngka(this)" required placeholder="Price">
                         </div> --}}
 
-                        <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
-                            <select class="js-example-basic-single" name="routeType" id="routeType" required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                                @foreach ($routeType as $item)
-                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+
                     </div>
 
                     <div class="col-12">
@@ -138,7 +140,7 @@
                             <thead>
                                 <tr>
                                     <th>{{ __('menu_route.action') }}</th>
-                                    <th>{{ __('menu_route.route_name') }}</th>
+                                    {{-- <th>{{ __('menu_route.route_name') }}</th> --}}
                                     <th>{{ __('menu_route.customer') }}</th>
                                     <th>{{ __('menu_route.route_type') }}</th>
                                     <th>{{ __('menu_route.origin') }}</th>
@@ -218,7 +220,7 @@
 
         function addRoute() {
             // Get values from form inputs
-            let name = document.getElementById('name');
+            // let name = document.getElementById('name');
             let customerCode = document.getElementById('customerCode');
             let routeTypeCode = document.getElementById('routeType');
             let originLocationCode = document.getElementById('originLocationCode');
@@ -229,7 +231,7 @@
             let origin = originLocationCode.options[originLocationCode.selectedIndex].text;
             let destination = destinationLocationCode.options[destinationLocationCode.selectedIndex].text;
 
-            let nameValue = name.value;
+            // let nameValue = name.value;
             let customerValue = customerCode.options[customerCode.selectedIndex].value;
             let routeTypeValue = routeTypeCode.options[routeTypeCode.selectedIndex].value;
             let originValue = originLocationCode.options[originLocationCode.selectedIndex].value;
@@ -275,7 +277,7 @@
             }
 
             routeData.push({
-                name: nameValue,
+                // name: nameValue,
                 customer: customer,
                 routeType: routeType,
                 origin: origin,
@@ -305,10 +307,6 @@
                                 <i class="mdi mdi-delete fs-14 text-danger"></i>
                          </a>
                          
-                    </td>
-                     <td>
-                        <input type="hidden" name="name[]" value="${route.name}">
-                        ${route.name}
                     </td>
                   
                     <td>
