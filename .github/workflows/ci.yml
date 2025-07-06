@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           debug: true
           script: |
-            cd ${{ secrets.DEPLOY_PATH }}
+            cd /var/www/html/fms-phl
             {
               echo "Git user:"
               whoami
