@@ -70,6 +70,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
+          debug: true
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             echo "Git user:"
@@ -80,7 +81,6 @@ jobs:
             git status
             echo "Git pull:"
             git pull origin main
-          debug: true
 
       #       composer install --no-dev --optimize-autoloader
       #
