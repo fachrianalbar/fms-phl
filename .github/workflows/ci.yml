@@ -64,28 +64,16 @@ jobs:
         run: php artisan test
 
       - name: Deploy to Server via SSH
-        if: success()
-        uses: appleboy/ssh-action@v1.0.0
+        if: ${{ success() }}
+        uses: appleboy/ssh-action@v1.2.1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          debug: true
+          script_stop: true
           script: |
-            cd /var/www/html/fms-phl
-            {
-              echo "Git user:"
-              whoami
-              echo "Current dir:"
-              pwd
-              echo "Git status:"
-              git status
-              echo "Git pull:"
-              git pull origin main
-            } &> /tmp/github-output.log
-
-            echo "--- Deployment Output ---"
-            cat /tmp/github-output.log
+            cd var/www/html/fms-phl
+            git pull
 
       #       composer install --no-dev --optimize-autoloader
       #
