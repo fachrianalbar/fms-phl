@@ -280,11 +280,7 @@ class FleetController extends Controller
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
+        <input class="fleet-checkbox" type="checkbox" name="fleet[]" data-id="' . $row->id . '" value="' . $row->id . '">
     </td>';
 
                     return $btn;
@@ -299,5 +295,22 @@ class FleetController extends Controller
         $fleetDriver = Fleet::where('code', $code)->first();
 
         return $fleetDriver->driverCode;
+    }
+
+    public function destroyMultiple(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+
+            $this->service->destroyMultiple($request, $this->title);
+
+            DB::commit();
+
+            return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
     }
 }

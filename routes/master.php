@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Route;
 // Route::middleware(['access'])->group(function () {
 Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleets', FleetController::class);
+    Route::delete('destroy-multiple-fleets', [FleetController::class, 'destroyMultiple'])->name('fleets.destroy-multiple');
     Route::delete('fleet-picture/{id}', [FleetController::class, 'deleteFleetPicture'])->name('fleet-picture.destroy');
     Route::resource('position', PositionController::class);
     Route::resource('employee', EmployeeController::class);

@@ -23,12 +23,22 @@
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                {{-- <h4>{{ $title }} Data</h4> --}}
+                <h4>{{ $title }} Data</h4>
 
-                <h4>{{ $title }} Andi</h4>
+                <div class="d-flex gap-2">
+                    <form action="{{ route($view . 'destroy-multiple') }}" method="POST" id="form-hapus-data">
+                        @csrf
+                        @method('DELETE')
+
+                        <button type="submit" class="btn btn-danger" id="btn-hapus-data">
+                            {{ __('general.delete_data') }}
+                        </button>
+                    </form>
+
+                    <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+                </div>
 
 
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
 
             </div>
             <div class="card-body">
@@ -107,6 +117,8 @@
     <script src="../assets/js/sweet-alert/sweetalert.min.js"></script>
 
     <script>
+        let selectedFleets = [];
+
         $(document).ready(function() {
             $('#dt').DataTable({
                 "processing": true,
@@ -163,6 +175,69 @@
                     [2, 'asc']
                 ]
             })
+
+            $('#btn-hapus-data').on('click', function(e) {
+                e.preventDefault(); // Selalu prevent agar bisa dikontrol via swal
+                const form = $('#form-hapus-data');
+
+                if (selectedFleets.length === 0) {
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: "{{ __('menu_fleet.delete_validation') }}",
+                        icon: "warning",
+                    });
+                } else {
+                    swal({
+                        title: "{{ __('general.are_you_sure') }}",
+                        text: "{{ __('general.want_to_delete_this_data') }}",
+                        icon: "warning",
+                        buttons: true,
+                        dangerMode: true,
+                    }).then((willDelete) => {
+                        if (willDelete) {
+                            // Bersihkan input sebelumnya
+                            form.find('input[name="fleet[]"]').remove();
+
+                            // Tambahkan input hidden untuk setiap ID
+                            selectedFleets.forEach(function(id) {
+                                $('<input>').attr({
+                                    type: 'hidden',
+                                    name: 'fleet[]',
+                                    value: id
+                                }).appendTo(form);
+                            });
+
+                            form.submit(); // Lanjut submit setelah konfirmasi
+                        } else {
+                            swal("{{ __('general.your_data_is_save') }}");
+                        }
+                    });
+                }
+            });
+
+
+
+            $(document).on('change', '.fleet-checkbox', function() {
+                const fleetId = $(this).val();
+
+                if ($(this).is(':checked')) {
+                    if (!selectedFleets.includes(fleetId)) {
+                        selectedFleets.push(fleetId);
+                    }
+                } else {
+                    selectedFleets = selectedFleets.filter(id => id !== fleetId);
+                }
+            });
+
+            $('#dt').on('draw.dt', function() {
+                $('.fleet-checkbox').each(function() {
+                    const fleetId = $(this).val();
+                    if (selectedFleets.includes(fleetId)) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            });
+
         });
 
         function showModal(imageUrl) {

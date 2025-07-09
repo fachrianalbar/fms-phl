@@ -19,6 +19,7 @@ return [
     'your_data_is_save' => 'Data anda aman !',
     'save' => 'Simpan',
     'data_not_found' => 'Data tidak ditemukan',
-    'warning' => 'Peringatan'
+    'warning' => 'Peringatan',
+    'delete_data' => 'Hapus Data'
 
 ];

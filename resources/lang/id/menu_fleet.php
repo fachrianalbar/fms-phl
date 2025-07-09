@@ -19,5 +19,6 @@ return [
     'barcode_number' => 'Nomor Barcode',
     'image_data' => 'Data Gambar',
     'vehicle_tax' => 'Pajak Kendaraan',
-    'vehicle_kir' => 'Kir Kendaraan'
+    'vehicle_kir' => 'Kir Kendaraan',
+    'delete_validation' => 'Silakan pilih minimal satu data untuk dihapus.'
 ];

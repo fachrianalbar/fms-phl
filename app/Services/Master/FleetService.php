@@ -214,4 +214,13 @@ class FleetService
 
         $this->service->where('id', $id)->delete();
     }
+
+    public function destroyMultiple($request, $title)
+    {
+        foreach ($request->fleet as $item) {
+            $this->logActivity($title, $this->getById($item), 'Delete');
+
+            $this->service->where('id', $item)->delete();
+        }
+    }
 }

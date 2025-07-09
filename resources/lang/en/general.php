@@ -19,5 +19,6 @@ return [
     'your_data_is_save' => 'Your data is safe !',
     'save' => 'Save',
     'data_not_found' => 'Data not found',
-    'warning' => 'Warning'
+    'warning' => 'Warning',
+    'delete_data' => 'Delete Data'
 ];
