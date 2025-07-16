@@ -41,9 +41,10 @@
                                 <th>{{ __('menu_route.origin') }}</th>
                                 <th>{{ __('menu_route.destination') }}</th>
                                 {{-- <th>Fleet Type</th> --}}
-                                <th>{{ __('menu_route.route_type') }}</th>
+                                <th>{{ __('menu_route.load_type') }}</th>
                                 <th>{{ __('menu_route.price') }}</th>
                                 <th>{{ __('menu_route.vendor_price') }}</th>
+                                <th>{{ __('menu_route.personal_vendor_price') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,6 +117,9 @@
                     },
                     {
                         "data": 'vendorPrice'
+                    },
+                    {
+                        "data": 'personalVendorPrice'
                     },
 
                 ],

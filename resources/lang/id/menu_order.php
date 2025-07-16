@@ -11,7 +11,7 @@ return [
     'customer' => 'Pelanggan',
     'origin' => 'Asal',
     'destination' => 'Tujuan',
-    'route_type' => 'Tipe Rute',
+    'load_type' => 'Tipe Muatan',
     'notes' => 'Catatan',
     'list_cost' => 'Daftar Biaya',
     'component_name' => 'Nama Komponen',

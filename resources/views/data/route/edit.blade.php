@@ -34,7 +34,7 @@
             </div>
             <div class="card-body col-md-12">
                 <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}"
-                    onsubmit="return submitFormRoute('price', 'vendorPrice')">
+                    onsubmit="return submitFormRoute('price', 'vendorPrice', 'personalVendorPrice')">
                     @csrf
                     @method('PUT')
                     <div class="row">
@@ -59,7 +59,7 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
+                            <label class="form-label" for="routeType">{{ __('menu_route.load_type') }}</label>
                             <select class="js-example-basic-single" name="routeType" id="routeType" required="" disabled>
                                 @foreach ($routeType as $item)
                                     <option value="{{ $item->code }}"
@@ -105,19 +105,6 @@
                     </div>
 
                     <div class="row mt-4">
-                        {{-- <div class="col-md-6 position-relative">
-                            <label class="form-label" for="fleetTypeCode">Fleet Type Name</label>
-                            <select class="js-example-basic-single" name="fleetTypeCode" id="fleetTypeCode" required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                                @foreach ($type as $item)
-                                    <option value="{{ $item->code }}"
-                                        {{ $data->fleetTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div> --}}
-
-
 
                         <div class="col-md-6">
                             <label class="form-label" for="price">{{ __('menu_route.price') }}</label>
@@ -131,6 +118,19 @@
                             <input class="form-control" name="vendorPrice" id="vendorPrice" oninput="formatAngka(this)"
                                 type="text" required placeholder="{{ __('menu_route.vendor_price') }}"
                                 value="{{ number_format($data->vendorPrice, 0, ',', '.') }}">
+                        </div>
+
+
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label"
+                                for="personalVendorPrice">{{ __('menu_route.personal_vendor_price') }}</label>
+                            <input class="form-control" name="personalVendorPrice" id="personalVendorPrice"
+                                oninput="formatAngka(this)" type="text" required
+                                placeholder="{{ __('menu_route.personal_vendor_price') }}"
+                                value="{{ number_format($data->personalVendorPrice, 0, ',', '.') }}">
                         </div>
 
 
@@ -218,13 +218,15 @@
             });
         }
 
-        function submitFormRoute(priceId, vendorPriceId) {
+        function submitFormRoute(priceId, vendorPriceId, personalVendorPriceId) {
             const priceInput = document.getElementById(priceId);
             const vendorPriceInput = document.getElementById(vendorPriceId);
+            const personalVendorPriceInput = document.getElementById(personalVendorPriceId);
 
             // Hapus titik pemisah ribuan
             const price = parseInt(priceInput.value.replace(/\./g, '')) || 0;
             const vendorPrice = parseInt(vendorPriceInput.value.replace(/\./g, '')) || 0;
+            const personalVendorPrice = parseInt(personalVendorPriceInput.value.replace(/\./g, '')) || 0;
 
             // Validasi vendorPrice tidak boleh lebih besar dari price
             if (vendorPrice > price) {
@@ -233,13 +235,23 @@
                     text: "{{ __('menu_route.vendor_price_validation') }}",
                     icon: "warning",
                 })
-                return;
+                return false;
+            }
+
+            if (personalVendorPrice > price) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.personal_vendor_price_validation') }}",
+                    icon: "warning",
+                })
+                return false;
             }
 
 
             // Set nilai input ke angka asli tanpa titik
             priceInput.value = price;
             vendorPriceInput.value = vendorPrice;
+            personalVendorPriceInput.value = personalVendorPrice;
 
             return true; // Lanjutkan submit
         }

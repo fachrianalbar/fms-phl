@@ -19,7 +19,7 @@ class CostComponentService
 
     public function findAll()
     {
-        return $this->service->get();
+        return $this->service->orderBy('name', 'asc')->get();
     }
 
     public function getById($id)

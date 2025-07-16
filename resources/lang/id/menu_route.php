@@ -5,7 +5,7 @@ return [
     'customer' => 'Pelanggan',
     'origin' => 'Asal',
     'destination' => 'Tujuan',
-    'route_type' => 'Tipe Rute',
+    'load_type' => 'Tipe Muatan',
     'route_name' => 'Nama Rute',
     'price' => 'Harga',
     'list_route' => 'Daftar Rute',
@@ -20,5 +20,7 @@ return [
     'cost_component' => 'Biaya Komponen',
     'cost_component_name' => 'Nama Biaya Komponen',
     'vendor_price' => 'Harga Vendor',
-    'vendor_price_validation' => 'Harga rute vendor tidak boleh lebih dari harga rute'
+    'personal_vendor_price' => 'Harga Vendor Pribadi',
+    'vendor_price_validation' => 'Harga rute vendor tidak boleh lebih dari harga rute',
+    'personal_vendor_price_validation' => 'Harga rute vendor pribadi tidak boleh lebih dari harga rute'
 ];

@@ -5,7 +5,7 @@ return [
     'customer' => 'Customer',
     'origin' => 'Origin',
     'destination' => 'Destination',
-    'route_type' => 'Time',
+    'load_type' => 'Load Type',
     'route_name' => 'Route Name',
     'price' => 'Price',
     'list_route' => 'List Route',
@@ -20,5 +20,7 @@ return [
     'cost_component' => 'Cost Component',
     'cost_component_name' => 'Cost Component Name',
     'vendor_price' => 'Vendor Price',
-    'vendor_price_validation' => 'Vendor price cannot be greater than the price'
+    'personal_vendor_price' => 'Personal Vendor Price',
+    'vendor_price_validation' => 'Vendor price cannot be greater than the price',
+    'personal_vendor_price_validation' => 'Personal vendor price cannot be greater than the price'
 ];

@@ -218,7 +218,10 @@ class RouteController extends Controller
                     return 'Rp ' .  number_format($row->price, 0, ',', '.');
                 })
                 ->editColumn('vendorPrice', function ($row) {
-                    return 'Rp ' .  number_format($row->price, 0, ',', '.');
+                    return 'Rp ' .  number_format($row->vendorPrice, 0, ',', '.');
+                })
+                ->editColumn('personalVendorPrice', function ($row) {
+                    return 'Rp ' .  number_format($row->personalVendorPrice, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
@@ -237,7 +240,7 @@ class RouteController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'price', 'vendorPrice'])
+                ->rawColumns(['action', 'price', 'vendorPrice', 'personalVendorPrice'])
                 ->toJson();
         }
     }

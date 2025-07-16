@@ -104,9 +104,9 @@
 
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label"
-                                        for="orderTypeCode">{{ __('menu_order.route_type') }}</label>
+                                        for="orderTypeCode">{{ __('menu_order.load_type') }}</label>
                                     <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.route_type') }}"
+                                        readonly placeholder="{{ __('menu_order.load_type') }}"
                                         value="{{ $route->routeType->name }}">
                                 </div>
                             </div>

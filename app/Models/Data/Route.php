@@ -27,7 +27,8 @@ class Route extends Model
         'fleetTypeCode',
         'price',
         'vendorPrice',
-        'routeTypeCode'
+        'routeTypeCode',
+        'personalVendorPrice'
     ];
 
     public function customer()

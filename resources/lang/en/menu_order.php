@@ -11,7 +11,7 @@ return [
     'customer' => 'Customer',
     'origin' => 'Origin',
     'destination' => 'Destination',
-    'route_type' => 'Route Type',
+    'load_type' => 'Load Type',
     'notes' => 'Notes',
     'list_cost' => 'List Cost',
     'component_name' => 'Component Name',

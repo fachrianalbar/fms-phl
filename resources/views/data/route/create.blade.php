@@ -52,7 +52,7 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">{{ __('menu_route.route_type') }}</label>
+                            <label class="form-label" for="routeType">{{ __('menu_route.load_type') }}</label>
                             <select class="js-example-basic-single" name="routeType" id="routeType" required="">
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($routeType as $item)
@@ -142,7 +142,7 @@
                                     <th>{{ __('menu_route.action') }}</th>
                                     {{-- <th>{{ __('menu_route.route_name') }}</th> --}}
                                     <th>{{ __('menu_route.customer') }}</th>
-                                    <th>{{ __('menu_route.route_type') }}</th>
+                                    <th>{{ __('menu_route.load_type') }}</th>
                                     <th>{{ __('menu_route.origin') }}</th>
                                     <th>{{ __('menu_route.destination') }}</th>
                                     <th>{{ __('menu_route.price') }}</th>

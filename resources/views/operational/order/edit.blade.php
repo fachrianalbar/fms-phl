@@ -128,7 +128,7 @@
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="orderTypeCode">{{ __('menu_order.route_type') }} <i
+                                    <label class="form-label" for="orderTypeCode">{{ __('menu_order.load_type') }} <i
                                             class="mdi mdi-information text-danger"></i></label>
                                     <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
                                         required="">
