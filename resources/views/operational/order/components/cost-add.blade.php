@@ -52,7 +52,7 @@
         <table class="table table-striped w-100 nowrap" id="dt">
             <thead>
                 <tr>
-                    <th style="width: 5%">{{ __('menu_order.component_name') }}</th>
+                    <th style="width: 5%">#</th>
                     <th style="width: 40%">{{ __('menu_order.component_name') }}</th>
                     {{-- <th>Component Type</th> --}}
                     <th style="width: 40%">{{ __('menu_order.description') }}</th>
