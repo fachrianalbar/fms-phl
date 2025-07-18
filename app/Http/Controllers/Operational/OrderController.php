@@ -271,9 +271,10 @@ class OrderController extends Controller
         $fleetType = $this->fleetTypeSvc->findAll();
         $driver = $this->driverSvc->findDriver();
         $company = $this->companySvc->findAll();
-        $route = Route::where('code', $data->routeCode)->first();
-        $origin = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->get();
-        $destination = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->where('originLocationCode', $route->originLocationCode)->get();
+        $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
+        // $route = Route::where('code', $data->routeCode)->first();
+        // $origin = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->get();
+        // $destination = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->where('originLocationCode', $route->originLocationCode)->get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->service->getFleet($data->fleetCode);
         $component = CostComponent::get();
@@ -289,8 +290,8 @@ class OrderController extends Controller
             ->with('routeType', $routeType)
             ->with('fleetType', $fleetType)
             ->with('driver', $driver)
-            ->with('origin', $origin)
-            ->with('destination', $destination)
+            // ->with('origin', $origin)
+            // ->with('destination', $destination)
             ->with('route', $route)
             ->with('cost', $cost)
             ->with('orderCost', OrderCostType::cases())
@@ -633,6 +634,16 @@ class OrderController extends Controller
         return redirect()->route($this->view . 'edit', $cost->order->id)->with('success', 'Delete Data Success');
     }
 
+    public function routeOrder($customerCode, $routeTypeCode)
+    {
+        $route = Route::where('customerCode', $customerCode)
+            ->where('routeTypeCode', $routeTypeCode)
+            ->with(['routeDetail', 'originLocation', 'destinationLocation'])
+            ->get();
+
+        return $route;
+    }
+
     public function originCustomer($customerCode, $routeTypeCode)
     {
         $originLocationArr = Route::where('customerCode', $customerCode)
@@ -652,11 +663,9 @@ class OrderController extends Controller
         return Location::whereIn('code', $destinationLocationArr)->get();
     }
 
-    public function routeCustomer($customerCode, $originLocationCode, $destinationLocation)
+    public function routeOrderDetail($routeCode)
     {
-        $route = Route::where('customerCode', $customerCode)
-            ->where('originLocationCode', $originLocationCode)
-            ->where('destinationLocationCode', $destinationLocation)
+        $route = Route::where('code', $routeCode)
             ->with('routeDetail', 'routeDetail.costComponent')
             ->first();
 

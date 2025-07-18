@@ -166,11 +166,11 @@ class OrderService
 
     private function buildOrderData($request)
     {
-        $route = $this->route->where('customerCode', $request->customerCode)
-            ->where('originLocationCode', $request->originLocationCode)
-            ->where('destinationLocationCode', $request->destinationLocationCode)
-            ->where('routeTypeCode', $request->routeTypeCode)
-            ->first();
+        // $route = $this->route->where('customerCode', $request->customerCode)
+        //     ->where('originLocationCode', $request->originLocationCode)
+        //     ->where('destinationLocationCode', $request->destinationLocationCode)
+        //     ->where('routeTypeCode', $request->routeTypeCode)
+        //     ->first();
 
         return [
             'orderDate' => $request->orderDate,
@@ -180,7 +180,7 @@ class OrderService
             'salesOrder' => $request->salesOrder,
             'fleetCode' => $request->fleetCode,
             'driverCode' => $request->driverCode,
-            'routeCode' => $route->code,
+            'routeCode' => $request->routeData,
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
             'customerCode' => $request->customerCode,

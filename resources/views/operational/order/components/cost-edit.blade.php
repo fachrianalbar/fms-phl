@@ -53,7 +53,7 @@
                 @php
                     $i = 1;
                 @endphp
-                @if ($route->routeTypeCode == 'TONASE')
+                @if ($data->route->routeTypeCode == 'TONASE')
                     <tr>
                         <td></td>
                         {{-- <td>{{ $i++ }}</td> --}}

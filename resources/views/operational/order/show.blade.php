@@ -111,7 +111,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-4">
+                            {{-- <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label"
                                         for="originLocationCode">{{ __('menu_order.origin_location') }}</label>
@@ -129,9 +129,16 @@
                                         placeholder="{{ __('menu_order.destination_location') }}"
                                         value="{{ $route->destinationLocation->name }}">
                                 </div>
-                            </div>
+                            </div> --}}
 
                             <div class="row mt-4">
+
+                                <div class="col-md-6 position-relative">
+                                    <label class="form-label" for="routeData">{{ __('menu_order.route') }}</label>
+                                    <input class="form-control" name="routeData" id="routeData" type="text" readonly
+                                        placeholder="{{ __('menu_order.route') }}"
+                                        value="{{ $data->route->name . ' (' . ($data->route->originLocation->name ?? '') . ($data->route->destinationLocation ? ' - ' . $data->route->destinationLocation->name : '') . ')' }}">
+                                </div>
                                 @php
                                     $label = '';
 

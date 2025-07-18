@@ -29,5 +29,6 @@ return [
     'fleet_type' => 'Fleet Type',
     'additional_cost' => 'Additional Cost',
     'action' => 'Action',
-    'is_leave' => 'Is Leave?'
+    'is_leave' => 'Is Leave?',
+    'route' => 'Route'
 ];

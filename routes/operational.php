@@ -53,10 +53,11 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
+    Route::get('route-order/{customerCode}/{routeTypeCode}', [OrderController::class, 'routeOrder'])->name('route-order');
     Route::get('origin-by-customer/{customerCode}/{routeTypeCode}', [OrderController::class, 'originCustomer'])->name('origin-by-customer');
     Route::get('destination-by-customer/{customerCode}/{routeTypeCode}/{originLocationCode}', [OrderController::class, 'destinationCustomer'])->name('destination-by-customer');
     Route::get('destination-by-customer/{customerCode}/{routeTypeCode}/{originLocationCode}', [OrderController::class, 'destinationCustomer'])->name('destination-by-customer');
-    Route::get('route-by-customer/{customerCode}/{originLocationCode}/{destinationLocationCode}', [OrderController::class, 'routeCustomer'])->name('route-by-customer');
+    Route::get('route-order-detail/{routeCode}', [OrderController::class, 'routeOrderDetail'])->name('route-order-detail');
     Route::get('down-payment-data/{id}', [DownPaymentController::class, 'data'])->name('down-payment-data');
     Route::get('order-generate-code', [OrderController::class, 'generateCode'])->name('order-generate-code');
     Route::get('order-shipment-format/{customerCode}', [OrderController::class, 'shipmentFormat'])->name('order-shipment-format');

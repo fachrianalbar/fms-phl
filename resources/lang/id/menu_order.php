@@ -29,5 +29,6 @@ return [
     'fleet_type' => 'Tipe Kendaraan',
     'additional_cost' => 'Tambahan Biaya',
     'action' => 'Aksi',
-    'is_leave' => 'Apakah Cuti?'
+    'is_leave' => 'Apakah Cuti?',
+    'route' => 'Rute'
 ];

@@ -136,7 +136,7 @@
                                             {{ __('general.choose') }}...</option>
                                         @foreach ($routeType as $item)
                                             <option value="{{ $item->code }}"
-                                                {{ $route->routeTypeCode == $item->code ? 'selected' : '' }}>
+                                                {{ $data->route->routeTypeCode == $item->code ? 'selected' : '' }}>
                                                 {{ $item->name }}
                                             </option>
                                         @endforeach
@@ -144,7 +144,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-4">
+                            {{-- <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label"
                                         for="originLocationCode">{{ __('menu_order.origin_location') }} <i
@@ -178,9 +178,9 @@
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
+                            </div> --}}
 
-                            <div class="row mt-4">
+                            <div class="row ">
                                 @php
                                     $label = '';
 
@@ -192,6 +192,23 @@
                                         $label = 'Kubik';
                                     }
                                 @endphp
+
+                                <div class="col-md-6 position-relative">
+                                    <label class="form-label" for="routeData">{{ __('menu_order.route') }}<i
+                                            class="mdi mdi-information text-danger"></i> </label>
+                                    <select class="js-example-basic-single" name="routeData" id="routeData"
+                                        required="">
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...</option>
+                                        @foreach ($route as $item)
+                                            <option value="{{ $item->code }}"
+                                                {{ $item->code == $data->routeCode ? 'selected' : '' }}>
+                                                {{ $item->name . ' (' . ($item->originLocation->name ?? '') . ($item->destinationLocation ? ' - ' . $item->destinationLocation->name : '') . ')' }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
                                 <div class="col-md-6 position-relative " id="qtyField">
                                     <label class="form-label" id="qtyLabel" for="qty">{{ $label }}</label>
                                     <input class="form-control" name="qty" id="qty" step="any"
@@ -432,23 +449,77 @@
             }
 
 
-            function checkAndLoadRoute() {
-                const customerCode = $('#customerCode').select2('val');
-                const originLocationCode = $('#originLocationCode').select2('val');
-                const destinationLocationCode = $('#destinationLocationCode').select2('val');
+            // function checkAndLoadRoute() {
+            //     const customerCode = $('#customerCode').select2('val');
+            //     const originLocationCode = $('#originLocationCode').select2('val');
+            //     const destinationLocationCode = $('#destinationLocationCode').select2('val');
 
-                if (customerCode && originLocationCode && destinationLocationCode) {
-                    $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
-                        destinationLocationCode,
+            //     if (customerCode && originLocationCode && destinationLocationCode) {
+            //         $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
+            //             destinationLocationCode,
+            //             function(data) {
+
+            //             });
+            //     }
+            // }
+
+            function checkAndLoadRoute() {
+                const routeData = $('#routeData').select2('val');
+
+                if (routeData) {
+                    $.get("{{ url('ajax/route-order-detail') }}/" + routeData,
                         function(data) {
+                            const componentList = document.getElementById('component-list');
+                            componentList.innerHTML = '';
+                            index = 0;
+
+                            data.forEach((item, i) => {
+                                let row = `
+                        <tr>
+                            <td>
+                                <a href="javascript:removeRow(${i})"
+                                    class="btn btn-icon btn-sm bg-danger-subtle me-1"
+                                    data-bs-toggle="tooltip" title="Delete">
+                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                </a>
+                            </td>
+                            <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
+                            <td><input class="form-control" name="description[]" value=""></td>
+                             <td>
+             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
+        </td>
+                        </tr>`;
+                                componentList.insertAdjacentHTML('beforeend', row);
+                                index++;
+                            });
+                        });
+                }
+            }
+
+            function checkAndLoadRouteOrder() {
+                const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
+                const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+
+                if (customerCode && routeTypeCode) {
+                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
+                    $('#originLocationCode').html(html);
+
+                    $.get("{{ url('ajax/route-order') }}/" + customerCode + "/" + routeTypeCode, function(data) {
+                        console.log(data);
+                        data.forEach(i => {
+                            html +=
+                                `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name})</option>`;
 
                         });
+                        $('#routeData').html(html);
+                        // Reinitialize Select2 for origin location dropdown after updating options
+                    });
                 }
             }
 
             // Trigger origin location when both customer and route type are selected
             $('#customerCode, #routeTypeCode').on('change', function() {
-                checkAndLoadOriginLocation();
+                checkAndLoadRouteOrder();
             });
 
             // Trigger destination location when origin location is also selected
@@ -456,7 +527,7 @@
                 checkAndLoadDestinationLocation();
             });
 
-            $('#destinationLocationCode').on('select2:select', function() {
+            $('#routeData').on('select2:select', function() {
                 checkAndLoadRoute();
             });
 
