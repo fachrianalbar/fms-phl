@@ -39,11 +39,11 @@
                     @method('PUT')
                     <div class="row">
 
-                        {{-- <div class="col-md-6">
+                        <div class="col-md-6">
                             <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="{{ __('menu_route.name') }}" value="{{ $data->name }}">
-                        </div> --}}
+                        </div>
 
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="customerCode">{{ __('menu_route.customer') }}</label>
@@ -58,16 +58,7 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeType">{{ __('menu_route.load_type') }}</label>
-                            <select class="js-example-basic-single" name="routeType" id="routeType" required="" disabled>
-                                @foreach ($routeType as $item)
-                                    <option value="{{ $item->code }}"
-                                        {{ $data->routeTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+
 
 
                     </div>
@@ -106,6 +97,17 @@
 
                     <div class="row mt-4">
 
+                        <div class="col-md-6 position-relative">
+                            <label class="form-label" for="routeType">{{ __('menu_route.load_type') }}</label>
+                            <select class="js-example-basic-single" name="routeType" id="routeType" required="" disabled>
+                                @foreach ($routeType as $item)
+                                    <option value="{{ $item->code }}"
+                                        {{ $data->routeTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div class="col-md-6">
                             <label class="form-label" for="price">{{ __('menu_route.price') }}</label>
                             <input class="form-control" name="price" id="price" oninput="formatAngka(this)"
@@ -113,6 +115,12 @@
                                 value="{{ number_format($data->price, 0, ',', '.') }}">
                         </div>
 
+
+
+
+                    </div>
+
+                    <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="vendorPrice">{{ __('menu_route.vendor_price') }}</label>
                             <input class="form-control" name="vendorPrice" id="vendorPrice" oninput="formatAngka(this)"
@@ -120,10 +128,6 @@
                                 value="{{ number_format($data->vendorPrice, 0, ',', '.') }}">
                         </div>
 
-
-                    </div>
-
-                    <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label"
                                 for="personalVendorPrice">{{ __('menu_route.personal_vendor_price') }}</label>

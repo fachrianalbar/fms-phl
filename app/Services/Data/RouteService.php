@@ -37,14 +37,14 @@ class RouteService
 
             $data = $this->service->create(
                 [
-                    // 'name' => $filtered['name'][$i],
+                    'name' => $filtered['name'][$i],
                     'customerCode' => $filtered['customerCode'][$i],
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
                     'price' => (int)$filtered['price'][$i],
                     // 'vendorPrice' => (int)$filtered['vendorPrice'][$i],
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
-                    'code' => GenerateCode::generateCode('TR')
+                    'code' => GenerateCode::generateCode('TR', true)
                 ]
             );
             $this->logActivity($title, $data, 'Create');
@@ -59,7 +59,7 @@ class RouteService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update([
-            // 'name' => $request->name,
+            'name' => $request->name,
             'customerCode' => $request->customerCode,
             'originLocationCode' => $request->originLocationCode,
             'destinationLocationCode' => $request->destinationLocationCode,

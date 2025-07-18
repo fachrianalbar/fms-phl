@@ -36,7 +36,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                {{-- <th>{{ __('menu_route.name') }}</th> --}}
+                                <th>{{ __('menu_route.name') }}</th>
                                 <th>{{ __('menu_route.customer') }}</th>
                                 <th>{{ __('menu_route.origin') }}</th>
                                 <th>{{ __('menu_route.destination') }}</th>
@@ -96,6 +96,9 @@
                     },
                     {
                         "data": 'DT_RowIndex'
+                    },
+                    {
+                        "data": 'name'
                     },
                     {
                         "data": 'customer.name'
