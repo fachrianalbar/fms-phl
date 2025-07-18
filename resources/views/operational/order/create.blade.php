@@ -164,7 +164,7 @@
                             </div>
                         </div> --}}
 
-                        <div class="row mt-4">
+                        <div class="row">
 
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="routeData">{{ __('menu_order.route') }}
