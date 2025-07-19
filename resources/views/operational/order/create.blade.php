@@ -179,7 +179,7 @@
                             <div class="col-md-6 position-relative d-none" id="qtyField">
                                 <label class="form-label" id="qtyLabel" for="qty"></label>
                                 <input class="form-control" name="qty" id="qty" step="any" min="1"
-                                    max="100" type="number" placeholder="" required>
+                                    type="number" placeholder="" required>
                             </div>
                         </div>
 
@@ -318,19 +318,19 @@
         $('#save').click(function(e) {
             const routeTypeCode = $('#routeTypeCode').select2('val');
 
-            if (routeTypeCode === 'TONASE') {
-                const qty = $('#qty').val();
+            // if (routeTypeCode === 'TONASE') {
+            //     const qty = $('#qty').val();
 
-                if (qty > 100) {
-                    e.preventDefault();
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "Tonase cannot be higher than 100",
-                        icon: "warning",
-                    })
-                    return;
-                }
-            }
+            //     if (qty > 100) {
+            //         e.preventDefault();
+            //         swal({
+            //             title: "{{ __('general.warning') }}",
+            //             text: "Tonase cannot be higher than 100",
+            //             icon: "warning",
+            //         })
+            //         return;
+            //     }
+            // }
 
         });
 

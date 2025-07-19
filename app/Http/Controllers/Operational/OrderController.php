@@ -280,6 +280,7 @@ class OrderController extends Controller
         $component = CostComponent::get();
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
 
+
         return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)

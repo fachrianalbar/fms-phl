@@ -53,13 +53,13 @@
                 @php
                     $i = 1;
                 @endphp
-                @if ($data->route->routeTypeCode == 'TONASE')
+                {{-- @if ($data->route->routeTypeCode == 'TONASE')
                     <tr>
                         <td></td>
-                        {{-- <td>{{ $i++ }}</td> --}}
+                        <td>{{ $i++ }}</td>
                         <td>Bonus Tonase</td>
                         <td>Bonus</td>
-                        {{-- <td>-</td> --}}
+                        <td>-</td>
                         <td>
                             @php
                                 $bonus = 0;
@@ -76,7 +76,7 @@
 
                         </td>
                     </tr>
-                @endif
+                @endif --}}
                 @foreach ($cost as $item)
                     <tr>
                         <td>

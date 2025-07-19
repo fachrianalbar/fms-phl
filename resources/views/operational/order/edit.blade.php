@@ -212,8 +212,8 @@
                                 <div class="col-md-6 position-relative " id="qtyField">
                                     <label class="form-label" id="qtyLabel" for="qty">{{ $label }}</label>
                                     <input class="form-control" name="qty" id="qty" step="any"
-                                        min="1" max="100" min="1" type="number"
-                                        value="{{ $data->qty }}" placeholder="" required>
+                                        min="1" min="1" type="number" value="{{ $data->qty }}"
+                                        placeholder="" required>
                                 </div>
                             </div>
                         </div>
@@ -311,7 +311,7 @@
 
                 const selectedType = $('#routeTypeCode').select2('val');
 
-                loadQty(selectedType)
+                // loadQty(selectedType)
             });
 
             function deleteCost(id) {
@@ -341,15 +341,15 @@
                 if (routeTypeCode === 'TONASE') {
                     const qty = $('#qty').val();
 
-                    if (qty > 100) {
-                        e.preventDefault();
-                        swal({
-                            title: "{{ __('general.warning') }}",
-                            text: "Tonase cannot be higher than 100",
-                            icon: "warning",
-                        })
-                        return;
-                    }
+                    // if (qty > 100) {
+                    //     e.preventDefault();
+                    //     swal({
+                    //         title: "{{ __('general.warning') }}",
+                    //         text: "Tonase cannot be higher than 100",
+                    //         icon: "warning",
+                    //     })
+                    //     return;
+                    // }
                 }
 
             });
@@ -417,6 +417,7 @@
                 const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
 
                 console.log(selectedType);
+                console.log('andi');
 
                 setTimeout(function() {
 

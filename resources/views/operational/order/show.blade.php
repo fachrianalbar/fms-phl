@@ -153,8 +153,8 @@
                                 <div class="col-md-6 position-relative " id="qtyField">
                                     <label class="form-label" id="qtyLabel" for="qty">{{ $label }}</label>
                                     <input class="form-control" name="qty" id="qty" step="any"
-                                        min="1" max="100" min="1" type="number"
-                                        value="{{ $data->qty }}" placeholder="" required>
+                                        min="1" min="1" type="number" value="{{ $data->qty }}"
+                                        placeholder="" required>
                                 </div>
                             </div>
                         </div>
@@ -192,13 +192,13 @@
                                     $i = 1;
                                     $totalPrice = 0;
                                 @endphp
-                                @if ($route->routeTypeCode == 'TONASE')
+                                {{-- @if ($route->routeTypeCode == 'TONASE')
                                     <tr>
-                                        {{-- <td></td> --}}
+                                        <td></td>
                                         <td>{{ $i++ }}</td>
                                         <td>Bonus Tonase</td>
                                         <td>Bonus</td>
-                                        {{-- <td>-</td> --}}
+                                        <td>-</td>
                                         <td>
                                             @php
                                                 $bonus = 0;
@@ -221,7 +221,7 @@
 
                                         </td>
                                     </tr>
-                                @endif
+                                @endif --}}
                                 @foreach ($cost as $item)
                                     @php
                                         $totalPrice += $item->nominal;
@@ -326,19 +326,19 @@
             $('#save').click(function(e) {
                 const routeTypeCode = $('#routeTypeCode').select2('val');
 
-                if (routeTypeCode === 'TONASE') {
-                    const qty = $('#qty').val();
+                // if (routeTypeCode === 'TONASE') {
+                //     const qty = $('#qty').val();
 
-                    if (qty > 100) {
-                        e.preventDefault();
-                        swal({
-                            title: "{{ __('general.warning') }}",
-                            text: "Tonase cannot be higher than 100",
-                            icon: "warning",
-                        })
-                        return;
-                    }
-                }
+                //     if (qty > 100) {
+                //         e.preventDefault();
+                //         swal({
+                //             title: "{{ __('general.warning') }}",
+                //             text: "Tonase cannot be higher than 100",
+                //             icon: "warning",
+                //         })
+                //         return;
+                //     }
+                // }
 
             });
 
