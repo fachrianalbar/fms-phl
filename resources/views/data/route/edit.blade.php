@@ -41,8 +41,16 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
-                            <input class="form-control" name="name" id="name" type="text" required
-                                placeholder="{{ __('menu_route.name') }}" value="{{ $data->name }}">
+                            {{-- <input class="form-control" name="name" id="name" type="text" required
+                                placeholder="{{ __('menu_route.name') }}" value="{{ $data->name }}"> --}}
+
+                            <select class="js-example-basic-single" name="name" id="name" required="">
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                <option value="Tronton" {{ $data->name == 'Tronton' ? 'selected' : '' }}>Tronton</option>
+                                <option value="Engkel" {{ $data->name == 'Engkel' ? 'selected' : '' }}>Engkel</option>
+                                <option value="Colt Diesel" {{ $data->name == 'Colt Diesel' ? 'selected' : '' }}>Colt
+                                    Diesel</option>
+                            </select>
                         </div>
 
                         <div class="col-md-6 position-relative">

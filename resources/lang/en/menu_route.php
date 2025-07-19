@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'name' => 'Name',
+    'name' => 'Fleet Type',
     'customer' => 'Customer',
     'origin' => 'Origin',
     'destination' => 'Destination',

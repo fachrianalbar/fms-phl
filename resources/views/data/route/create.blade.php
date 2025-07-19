@@ -38,8 +38,15 @@
                     <div class="row">
                         <div class="col-md-12">
                             <label class="form-label" for="name">{{ __('menu_route.name') }}</label>
-                            <input class="form-control" name="name" id="name" type="text" required
-                                placeholder="{{ __('menu_route.name') }}">
+                            {{-- <input class="form-control" name="name" id="name" type="text" required
+                                placeholder="{{ __('menu_route.name') }}"> --}}
+
+                            <select class="js-example-basic-single" name="name" id="name" required="">
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                <option value="Tronton">Tronton</option>
+                                <option value="Engkel">Engkel</option>
+                                <option value="Colt Diesel">Colt Diesel</option>
+                            </select>
                         </div>
                     </div>
 

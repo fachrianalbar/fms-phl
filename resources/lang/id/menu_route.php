@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'name' => 'Nama',
+    'name' => 'Jenis Kendaraan',
     'customer' => 'Pelanggan',
     'origin' => 'Asal',
     'destination' => 'Tujuan',
