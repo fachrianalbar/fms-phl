@@ -30,5 +30,6 @@ return [
     'additional_cost' => 'Additional Cost',
     'action' => 'Action',
     'is_leave' => 'Is Leave?',
-    'route' => 'Route'
+    'route' => 'Route',
+    'route_price' => 'Route Price'
 ];

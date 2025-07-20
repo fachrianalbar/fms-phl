@@ -48,7 +48,8 @@ class Order extends Model
         'distance',
         'returnDate',
         'is_order_tax',
-        'returnDescription'
+        'returnDescription',
+        'routeAmount'
     ];
 
     public function customer()

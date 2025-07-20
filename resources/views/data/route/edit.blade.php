@@ -50,6 +50,13 @@
                                 <option value="Engkel" {{ $data->name == 'Engkel' ? 'selected' : '' }}>Engkel</option>
                                 <option value="Colt Diesel" {{ $data->name == 'Colt Diesel' ? 'selected' : '' }}>Colt
                                     Diesel</option>
+                                <option value="Engkel 1000" {{ $data->name == 'Engkel 1000' ? 'selected' : '' }}>Engkel
+                                    1000
+                                </option>
+                                <option value="Engkel 1500" {{ $data->name == 'Engkel 1500' ? 'selected' : '' }}>Engkel
+                                    1500
+                                </option>
+
                             </select>
                         </div>
 

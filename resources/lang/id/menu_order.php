@@ -30,5 +30,7 @@ return [
     'additional_cost' => 'Tambahan Biaya',
     'action' => 'Aksi',
     'is_leave' => 'Apakah Cuti?',
-    'route' => 'Rute'
+    'route' => 'Rute',
+    'route_price' => 'Harga Rute'
+
 ];

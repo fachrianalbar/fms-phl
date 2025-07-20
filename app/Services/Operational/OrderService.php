@@ -96,7 +96,7 @@ class OrderService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update(
-            $this->buildOrderData($request)
+            $this->buildOrderData($request, true)
         );
 
         if (isset($request->nominal)) {
@@ -164,13 +164,10 @@ class OrderService
         }
     }
 
-    private function buildOrderData($request)
+    private function buildOrderData($request, $isUpdate = false)
     {
-        // $route = $this->route->where('customerCode', $request->customerCode)
-        //     ->where('originLocationCode', $request->originLocationCode)
-        //     ->where('destinationLocationCode', $request->destinationLocationCode)
-        //     ->where('routeTypeCode', $request->routeTypeCode)
-        //     ->first();
+        $route = $this->route->where('code', $request->routeData)
+            ->first();
 
         return [
             'orderDate' => $request->orderDate,
@@ -183,6 +180,7 @@ class OrderService
             'routeCode' => $request->routeData,
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
+            'routeAmount' => $isUpdate ? (int)$request->routeAmount : $route->price,
             'customerCode' => $request->customerCode,
         ];
     }

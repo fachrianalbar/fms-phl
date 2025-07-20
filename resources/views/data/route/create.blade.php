@@ -46,6 +46,8 @@
                                 <option value="Tronton">Tronton</option>
                                 <option value="Engkel">Engkel</option>
                                 <option value="Colt Diesel">Colt Diesel</option>
+                                <option value="Engkel 1000">Engkel 1000</option>
+                                <option value="Engkel 1500">Engkel 1500</option>
                             </select>
                         </div>
                     </div>
