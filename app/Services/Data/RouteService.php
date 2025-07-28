@@ -66,6 +66,7 @@ class RouteService
             // 'fleetTypeCode' => $request->fleetTypeCode,
             'price' => (int)$request->price,
             'vendorPrice' => (int)$request->vendorPrice,
+            'routeTypeCode' => $request->routeType,
             'personalVendorPrice' => (int)$request->personalVendorPrice,
         ]);
 

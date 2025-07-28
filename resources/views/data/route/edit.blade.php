@@ -114,7 +114,7 @@
 
                         <div class="col-md-6 position-relative">
                             <label class="form-label" for="routeType">{{ __('menu_route.load_type') }}</label>
-                            <select class="js-example-basic-single" name="routeType" id="routeType" required="" disabled>
+                            <select class="js-example-basic-single" name="routeType" id="routeType" required="">
                                 @foreach ($routeType as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->routeTypeCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
