@@ -143,9 +143,9 @@
                         </div>
 
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="type"> {{ __('menu_customer.is_do') }} <i
+                            <label class="form-label" for="isDo"> {{ __('menu_customer.is_do') }} <i
                                     class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="type" id="type" required="">
+                            <select class="js-example-basic-single" name="isDo" id="isDo" required="">
                                 <option selected="" disabled="" value="">
                                     {{ __('general.choose') }}...</option>
                                 <option value=1>
