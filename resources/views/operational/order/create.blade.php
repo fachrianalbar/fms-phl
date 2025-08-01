@@ -119,7 +119,8 @@
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                     </option>
                                     @foreach ($customer as $item)
-                                        <option value="{{ $item->code }}">{{ $item->code . ' - ' . $item->name }}
+                                        <option value="{{ $item->code }}" data-id="{{ $item->id }}">
+                                            {{ $item->code . ' - ' . $item->name }}
                                         </option>
                                     @endforeach
                                 </select>`
@@ -297,12 +298,14 @@
         function checkAndLoadRouteOrder() {
             const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
             const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+            let customerId = $('#customerCode option:selected').data('id');
+
 
             if (customerCode && routeTypeCode) {
                 let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#originLocationCode').html(html);
 
-                $.get("{{ url('ajax/route-order') }}/" + customerCode + "/" + routeTypeCode, function(data) {
+                $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
                     console.log(data);
                     data.forEach(i => {
                         html +=
@@ -620,13 +623,14 @@
 
         $('#customerCode').on('change', function() {
             let customerCode = $(this).val();
+            let customerId = $('#customerCode option:selected').data('id');
 
-            $.get("/ajax/order-shipment-format/" + customerCode, function(data) {
+            $.get("/ajax/order-shipment-format/" + customerId, function(data) {
                 $('#shipmentNumber').val(data);
             });
 
             if (customerCode) {
-                $.get("/ajax/customer-detail/" + customerCode, function(data) {
+                $.get("/ajax/customer-detail/" + customerId, function(data) {
                     const $detailCard = $('#card-customer-detail');
                     const $cardBody = $detailCard.find('.card-body');
                     $cardBody.empty(); // Bersihkan isinya

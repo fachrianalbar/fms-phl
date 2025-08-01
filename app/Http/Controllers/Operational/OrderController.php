@@ -11,6 +11,7 @@ use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\CostComponent;
+use App\Models\Master\Customer;
 use App\Models\Master\Location;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
@@ -635,9 +636,10 @@ class OrderController extends Controller
         return redirect()->route($this->view . 'edit', $cost->order->id)->with('success', 'Delete Data Success');
     }
 
-    public function routeOrder($customerCode, $routeTypeCode)
+    public function routeOrder($customerId, $routeTypeCode)
     {
-        $route = Route::where('customerCode', $customerCode)
+        $customer = Customer::where('id', $customerId)->first();
+        $route = Route::where('customerCode', $customer->code)
             ->where('routeTypeCode', $routeTypeCode)
             ->with(['routeDetail', 'originLocation', 'destinationLocation'])
             ->get();
@@ -717,9 +719,9 @@ class OrderController extends Controller
         return response()->json(['code' => $code]);
     }
 
-    public function shipmentFormat($customerCode)
+    public function shipmentFormat($id)
     {
-        $data = $this->service->shipmentFormat($customerCode);
+        $data = $this->service->shipmentFormat($id);
 
         return $data;
     }
