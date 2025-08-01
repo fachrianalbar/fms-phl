@@ -167,12 +167,13 @@
 
                             <div class="col-md-6">
                                 <label class="form-label" for="driverCode">{{ __('menu_fleet.driver') }} <i
-                                        class="mdi mdi-information text-danger"></i></label>
+                                        class="mdi mdi-information text-danger" id="driver-required-icon"></i></label>
                                 <select class="js-example-basic-single" name="driverCode" id="driverCode" required>
                                     <option value="">{{ __('general.choose') }}...</option>
                                     @foreach ($driver as $item)
                                         <option value="{{ $item->code }}"
                                             {{ $item->code == $data->driverCode ? 'selected' : '' }}>{{ $item->name }}
+                                            ({{ $item->position->name }})
                                         </option>
                                     @endforeach
                                 </select>
@@ -215,6 +216,7 @@
                                 @foreach ($company as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $item->code == $data->fleetCompanyCode ? 'selected' : '' }}>{{ $item->name }}
+                                        ({{ $item->type }})
                                     </option>
                                 @endforeach
                             </select>
@@ -261,6 +263,30 @@
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
 
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function() {
+            $('#fleetCompanyCode').on('change', function() {
+                var selectedOption = $(this).find('option:selected');
+                var companyType = selectedOption.data('type');
+
+                if (companyType === 'External') {
+                    $('#driverCode').removeAttr('required');
+                    $('#driver-required-icon').hide();
+                } else if (companyType === 'Internal') {
+                    $('#driverCode').attr('required', true);
+                    $('#driver-required-icon').show();
+                } else {
+                    // Optional: if no option selected or unknown type
+                    $('#driverCode').removeAttr('required');
+                    $('#driver-required-icon').hide();
+                }
+            });
+
+            // Trigger once on load if needed
+            $('#fleetCompanyCode').trigger('change');
+        });
+    </script>
 
 
     <script>
