@@ -62,7 +62,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('city-by-province/{id}', [LocationController::class, 'cityByProvince'])->name('city-by-province');
     Route::get('district-by-city/{id}', [LocationController::class, 'districtByCity'])->name('district-by-city');
-    Route::get('customer-detail/{code}', [CustomerController::class, 'customerDetail'])->name('customer-detail');
+    Route::get('customer-detail/{customerId}', [CustomerController::class, 'customerDetail'])->name('customer-detail');
     Route::get('fleet-driver/{code}', [FleetController::class, 'fleetDriver'])->name('fleet-driver');
     Route::get('customer-company-format/{code}', [CustomerController::class, 'customerCompanyFormat'])->name('customer-company-format');
 });

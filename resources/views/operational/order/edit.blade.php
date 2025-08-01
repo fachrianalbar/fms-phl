@@ -117,7 +117,7 @@
                                     <option selected="" disabled="" value="">
                                         {{ __('general.choose') }}...</option>
                                     @foreach ($customer as $item)
-                                        <option value="{{ $item->code }}"
+                                        <option value="{{ $item->code }}" data-id="{{ $item->id }}"
                                             {{ $data->customerCode == $item->code ? 'selected' : '' }}>
                                             {{ $item->code . ' - ' . $item->name }}</option>
                                     @endforeach
@@ -434,7 +434,6 @@
             const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
 
             console.log(selectedType);
-            console.log('andi');
 
             setTimeout(function() {
 
@@ -517,12 +516,14 @@
         function checkAndLoadRouteOrder() {
             const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
             const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+            let customerId = $('#customerCode option:selected').data('id');
+
 
             if (customerCode && routeTypeCode) {
                 let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#originLocationCode').html(html);
 
-                $.get("{{ url('ajax/route-order') }}/" + customerCode + "/" + routeTypeCode, function(data) {
+                $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
                     console.log(data);
                     data.forEach(i => {
                         html +=
@@ -551,9 +552,11 @@
 
         $('#customerCode').on('change', function() {
             let customerCode = $(this).val();
+            let customerId = $('#customerCode option:selected').data('id');
+
 
             if (customerCode) {
-                $.get("/ajax/customer-detail/" + customerCode, function(data) {
+                $.get("/ajax/customer-detail/" + customerId, function(data) {
                     const $detailCard = $('#card-customer-detail');
                     const $cardBody = $detailCard.find('.card-body');
                     $cardBody.empty(); // Bersihkan isinya

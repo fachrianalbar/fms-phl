@@ -174,9 +174,9 @@ class CustomerController extends Controller
         return redirect()->back()->with('success', __('general.delete_data_success'));
     }
 
-    public function customerDetail($code)
+    public function customerDetail($customerId)
     {
-        return $this->service->customerDetail($code);
+        return $this->service->customerDetail($customerId);
     }
 
     public function datatable(Request $request)

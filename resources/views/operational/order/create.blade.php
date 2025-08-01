@@ -622,6 +622,7 @@
         });
 
         $('#customerCode').on('change', function() {
+
             let customerCode = $(this).val();
             let customerId = $('#customerCode option:selected').data('id');
 
@@ -629,8 +630,10 @@
                 $('#shipmentNumber').val(data);
             });
 
+
             if (customerCode) {
                 $.get("/ajax/customer-detail/" + customerId, function(data) {
+                    console.log(data);
                     const $detailCard = $('#card-customer-detail');
                     const $cardBody = $detailCard.find('.card-body');
                     $cardBody.empty(); // Bersihkan isinya

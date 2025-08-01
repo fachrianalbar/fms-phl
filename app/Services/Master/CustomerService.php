@@ -155,9 +155,10 @@ class CustomerService
         $dataPic->delete();
     }
 
-    public function customerDetail($code)
+    public function customerDetail($customerId)
     {
-        return $this->customerDetail->where('customerCode', $code)->get();
+        $customer = $this->service->where('id', $customerId)->first();
+        return $this->customerDetail->where('customerCode', $customer->code)->get();
     }
 
     public function customerCompanyFormat($code)
