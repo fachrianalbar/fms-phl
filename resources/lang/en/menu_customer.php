@@ -12,7 +12,7 @@ return [
     'nickname' => 'Nickname',
     'phone' => 'Phone',
     'type' => 'Type',
-    'is_do' => 'Is Do?',
+    'is_do' => 'Is print?',
     'person' => 'Person',
     'name' => 'Name',
     'pic_data' => 'Pic Data',

@@ -12,7 +12,7 @@ return [
     'nickname' => 'Nama Panggilan',
     'phone' => 'Nomor Telepon',
     'type' => 'Tipe',
-    'is_do' => 'Apakah Do?',
+    'is_do' => 'Langsung di cetak?',
     'person' => 'Perorangan',
     'name' => 'Nama',
     'pic_data' => 'Data Pic',
