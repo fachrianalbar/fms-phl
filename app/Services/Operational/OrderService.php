@@ -11,6 +11,8 @@ use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+
 
 
 class OrderService
@@ -115,6 +117,17 @@ class OrderService
     public function destroy($id, $title)
     {
         $this->logActivity($title, $this->getById($id), 'Delete');
+
+        $data = $this->getById($id);
+
+        $this->customerDetailOrder->where('orderCode', $data->code)->delete();
+
+        $this->orderCost->where('orderCode', $data->code)->delete();
+
+        $this->service->where('id', $id)->update([
+            'code' => $data->code . '-del-' . Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3)
+        ]);
 
         $this->service->where('id', $id)->delete();
     }

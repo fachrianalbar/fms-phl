@@ -80,13 +80,9 @@
                                 @endforeach
                             </select>
                         </div>
-
-
-
                     </div>
 
                     <div class="row mt-4">
-
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between">
                                 <label class="form-label" for="barcode">Barcode</label>
@@ -113,11 +109,7 @@
                             </div>
                             <input class="form-control" name="vehicleRegistrationNumber" id="vehicleRegistrationNumber"
                                 type="file" accept=".jpg, .jpeg, .png">
-
                         </div>
-
-
-
                     </div>
 
                     <div class="row mt-4">
