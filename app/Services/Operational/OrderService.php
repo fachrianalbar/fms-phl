@@ -189,7 +189,7 @@ class OrderService
     {
         $customer = $this->customer->where('id', $id)->with(['company'])->first();
 
-        $orderCustomerCount = $this->service->where('id', $id)->orderBy('created_at', 'DESC')->whereYear('created_at', now()->year)->count();
+        $orderCustomerCount = $this->service->where('customerCode', $customer->code)->orderBy('created_at', 'DESC')->whereYear('created_at', now()->year)->count();
         $increment = str_pad($orderCustomerCount + 1, 5, '0', STR_PAD_LEFT);
 
 
