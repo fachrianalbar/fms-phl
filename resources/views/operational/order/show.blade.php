@@ -160,18 +160,15 @@
 
                             <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="customerCode">Material </label>
-                                    <input class="form-control" name="customerCode" id="customerCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.customer') }}"
-                                        value="{{ $data->customer->name }}">
+                                    <label class="form-label" for="materialCode">Material </label>
+                                    <input class="form-control" name="materialCode" id="materialCode" type="text"
+                                        readonly placeholder="Material" value="{{ $data->material->name ?? '' }}">
                                 </div>
 
                                 <div class="col-md-6 position-relative">
-                                    <label class="form-label"
-                                        for="orderTypeCode">{{ __('menu_order.load_type') }}</label>
+                                    <label class="form-label" for="orderTypeCode">Unit</label>
                                     <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.load_type') }}"
-                                        value="{{ $route->routeType->name }}">
+                                        readonly placeholder="Unit" value="{{ $data->unit->name ?? '' }}">
                                 </div>
                             </div>
 
@@ -179,8 +176,7 @@
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="customerCode">Material Qty </label>
                                     <input class="form-control" name="customerCode" id="customerCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.customer') }}"
-                                        value="{{ $data->materialQty }}">
+                                        readonly placeholder="Material Qty" value="{{ $data->materialQty }}">
                                 </div>
 
 
