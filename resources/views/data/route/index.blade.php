@@ -37,6 +37,7 @@
                                 <th>#</th>
                                 <th>No</th>
                                 <th>{{ __('menu_route.name') }}</th>
+                                <th>{{ __('menu_route.description') }}</th>
                                 <th>{{ __('menu_route.customer') }}</th>
                                 <th>{{ __('menu_route.origin') }}</th>
                                 <th>{{ __('menu_route.destination') }}</th>
@@ -99,6 +100,9 @@
                     },
                     {
                         "data": 'name'
+                    },
+                    {
+                        "data": 'description'
                     },
                     {
                         "data": 'customer.name'

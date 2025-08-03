@@ -155,6 +155,15 @@
 
                     </div>
 
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="description">{{ __('menu_route.description') }}
+                            </label>
+                            <input class="form-control" name="description" id="description" type="text"
+                                placeholder="{{ __('menu_route.description') }}" value="{{ $data->description }}">
+                        </div>
+                    </div>
+
 
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>

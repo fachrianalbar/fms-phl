@@ -68,6 +68,7 @@ class RouteService
             'vendorPrice' => (int)$request->vendorPrice,
             'routeTypeCode' => $request->routeType,
             'personalVendorPrice' => (int)$request->personalVendorPrice,
+            'description' => $request->description
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
