@@ -27,6 +27,7 @@ use App\Services\Master\RouteTypeService;
 use App\Services\Operational\OrderService;
 use App\Services\CompanySettingService;
 use App\Services\Master\CostComponentService;
+use App\Services\Master\UnitService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Validator;
@@ -54,6 +55,7 @@ class OrderController extends Controller
     protected $locationSvc;
     protected $companySvc;
     protected $costComponentSvc;
+    protected $unitSvc;
 
 
     public function __construct(
@@ -69,7 +71,8 @@ class OrderController extends Controller
         LocationService $locationSvc,
         CompanySettingService $companySvc,
         MenuService $menuSvc,
-        CostComponentService $costComponentSvc
+        CostComponentService $costComponentSvc,
+        UnitService $unitSvc
 
     ) {
         $this->service = $orderSvc;
@@ -89,6 +92,7 @@ class OrderController extends Controller
         $this->companySvc = $companySvc;
         $this->routeTypeSvc = $routeTypeSvc;
         $this->costComponentSvc = $costComponentSvc;
+        $this->unitSvc = $unitSvc;
         $this->totalPrice = 0;
     }
 
@@ -103,6 +107,7 @@ class OrderController extends Controller
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
+        $unit = $this->unitSvc->findAll();
 
 
         return view($this->view . 'index')
@@ -113,6 +118,7 @@ class OrderController extends Controller
             ->with('location', $location)
             ->with('fleetType', $fleetType)
             ->with('orderType', $orderType)
+            ->with('unit', $unit)
             ->with('title', $this->title);
     }
 
@@ -131,6 +137,8 @@ class OrderController extends Controller
         $fleet = $this->service->getFleet();
         $company = $this->companySvc->findAll();
         $component = CostComponent::get();
+        $unit = $this->unitSvc->findAll();
+
 
         return view($this->view . 'create')
             ->with('view', $this->view)
@@ -145,6 +153,7 @@ class OrderController extends Controller
             ->with('component', $component)
             ->with('fleet', $fleet)
             ->with('company', $company)
+            ->with('unit', $unit)
             ->with('title', $this->title);
     }
 
@@ -280,6 +289,8 @@ class OrderController extends Controller
         $fleet = $this->service->getFleet($data->fleetCode);
         $component = CostComponent::get();
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
+        $unit = $this->unitSvc->findAll();
+
 
 
         return view($this->view . 'edit')
@@ -301,6 +312,7 @@ class OrderController extends Controller
             ->with('fleet', $fleet)
             ->with('company', $company)
             ->with('customerDetailOrder', $customerDetailOrder)
+            ->with('unit', $unit)
             ->with('data', $data);
     }
 

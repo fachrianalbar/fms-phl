@@ -45,7 +45,8 @@ class OrderService
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
+            'unit'
         ])->orderBy('created_at', 'desc')->get();
     }
 
@@ -59,7 +60,8 @@ class OrderService
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
+            'unit'
         ])->orderBy('created_at', 'desc');
     }
 
@@ -195,6 +197,8 @@ class OrderService
             'orderTypeCode' => $request->orderTypeCode,
             'routeAmount' => $isUpdate ? (int)$request->routeAmount : $route->price,
             'customerCode' => $request->customerCode,
+            'unitCode' => $request->unitCode,
+            'materialQty' => $request->materialQty
         ];
     }
 
