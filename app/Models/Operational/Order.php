@@ -11,6 +11,7 @@ use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
 use App\Models\Master\Material;
 use App\Models\Master\OrderType;
+use App\Models\Master\Unit;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,6 +31,8 @@ class Order extends Model
         'shipmentDate',
         'customerCode',
         'materialCode',
+        'unitCode',
+        'materialQty',
         'notes',
         'salesOrder',
         'sto',
@@ -105,5 +108,10 @@ class Order extends Model
     public function orderPaymentHistory()
     {
         return $this->hasMany(OrderPaymentHistory::class, 'orderCode', 'code');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class, 'unitCode', 'code');
     }
 }

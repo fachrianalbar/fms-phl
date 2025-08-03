@@ -127,11 +127,6 @@
                             </div>
 
                             <div class="row mt-4">
-                                {{-- <div class="col-md-6">
-                                    <label class="form-label" for="name">Origin</label>
-                                    <input class="form-control" name="origin" type="text" placeholder="Origin">
-                                </div> --}}
-
                                 <div class="col-md-6">
                                     <label class="form-label" for="name">{{ __('menu_order.destination') }}</label>
                                     <select class="js-example-basic-single" name="destination" id="destination">
@@ -173,6 +168,7 @@
                                 <th>{{ __('menu_order.driver') }}</th>
                                 <th>{{ __('menu_order.shipment_no') }}</th>
                                 <th>{{ __('menu_order.customer') }}</th>
+                                <th>Material</th>
                                 <th>{{ __('menu_order.destination') }}</th>
                                 <th>Status</th>
                             </tr>
@@ -351,6 +347,9 @@
                     },
                     {
                         "data": 'customer.name'
+                    },
+                    {
+                        "data": 'material.name'
                     },
                     {
                         "data": 'route.destinationLocation.name'

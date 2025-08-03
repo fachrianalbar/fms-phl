@@ -184,7 +184,39 @@
                             </div>
                         </div>
 
+                        <div class="row mt-4">
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="materialCode">Material</label>
+                                <select class="js-example-basic-single" name="materialCode" id="materialCode">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                    @foreach ($material as $item)
+                                        <option value="{{ $item->code }}">
+                                            {{ $item->name }}
+                                        </option>
+                                    @endforeach
+                                </select>`
+                            </div>
 
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="unitCode">Unit </label>
+                                <select class="js-example-basic-single" name="unitCode" id="unitCode">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                    @foreach ($unit as $item)
+                                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label" for="materialQty">Material Qty </label>
+                                <input class="form-control" name="materialQty" id="materialQty" type="number"
+                                    min="1" placeholder="Material Qty">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -157,6 +157,34 @@
                                         placeholder="" required>
                                 </div>
                             </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6 position-relative">
+                                    <label class="form-label" for="customerCode">Material </label>
+                                    <input class="form-control" name="customerCode" id="customerCode" type="text"
+                                        readonly placeholder="{{ __('menu_order.customer') }}"
+                                        value="{{ $data->customer->name }}">
+                                </div>
+
+                                <div class="col-md-6 position-relative">
+                                    <label class="form-label"
+                                        for="orderTypeCode">{{ __('menu_order.load_type') }}</label>
+                                    <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
+                                        readonly placeholder="{{ __('menu_order.load_type') }}"
+                                        value="{{ $route->routeType->name }}">
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6 position-relative">
+                                    <label class="form-label" for="customerCode">Material Qty </label>
+                                    <input class="form-control" name="customerCode" id="customerCode" type="text"
+                                        readonly placeholder="{{ __('menu_order.customer') }}"
+                                        value="{{ $data->materialQty }}">
+                                </div>
+
+
+                            </div>
                         </div>
                     </div>
                 </div>
