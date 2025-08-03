@@ -31,17 +31,25 @@ class RouteDetailService
     {
         $routeData = json_decode($request->routeData);
 
+        // Loop untuk memastikan kode unik
+        do {
+            $code = GenerateCode::generateCode('TRD');
+            $exists = $this->service->where('code', $code)->first();
+        } while ($exists);
+
+        // Simpan data dengan kode unik
         $data = $this->service->create([
             'type' => $request->componentType,
             'amount' => (int)$request->amount,
             'percentage' => $request->percentage,
             'componentCode' => $request->componentCode,
             'routeCode' => $routeData->code,
-            'code' => GenerateCode::generateCode('TRD')
+            'code' => $code
         ]);
 
         $this->logActivity($title, $data, 'Create');
     }
+
 
     public function update($request, $id, $title)
     {
