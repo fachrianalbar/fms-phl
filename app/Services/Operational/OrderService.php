@@ -206,12 +206,25 @@ class OrderService
     {
         $customer = $this->customer->where('id', $id)->with(['company'])->first();
 
-        $orderCustomerCount = $this->service->where('customerCode', $customer->code)->orderBy('created_at', 'DESC')->whereYear('created_at', now()->year)->count();
-        $increment = str_pad($orderCustomerCount + 1, 5, '0', STR_PAD_LEFT);
+        // Ambil shipmentNumber terakhir milik customer yang bersangkutan di tahun berjalan
+        $lastShipment = $this->service
+            ->where('customerCode', $customer->code)
+            ->whereYear('created_at', now()->year)
+            ->orderByDesc('created_at')
+            ->first();
 
+        // Default increment = 1 jika belum ada shipment sebelumnya
+        $lastNumber = 0;
+
+        if ($lastShipment && preg_match('/\/(\d{5})\//', $lastShipment->shipmentNumber, $matches)) {
+            $lastNumber = (int) $matches[1];
+        }
+
+        $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
 
         return $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
     }
+
 
     public function getFleet($fleet = null)
     {
