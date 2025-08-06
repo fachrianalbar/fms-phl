@@ -341,7 +341,7 @@
                     console.log(data);
                     data.forEach(i => {
                         html +=
-                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name})</option>`;
+                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
 
                     });
                     $('#routeData').html(html);

@@ -199,7 +199,7 @@
                                     @foreach ($route as $item)
                                         <option value="{{ $item->code }}"
                                             {{ $item->code == $data->routeCode ? 'selected' : '' }}>
-                                            {{ $item->name . ' (' . ($item->originLocation->name ?? '') . ($item->destinationLocation ? ' - ' . $item->destinationLocation->name : '') . ')' }}
+                                            {{ $item->name . ' (' . ($item->originLocation->name ?? '') . ($item->destinationLocation ? ' - ' . $item->destinationLocation->name : '') . ') - ' . $item->description }}
                                         </option>
                                     @endforeach
                                 </select>
