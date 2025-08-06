@@ -48,6 +48,12 @@
                                 <option value="Colt Diesel">Colt Diesel</option>
                                 <option value="Engkel 1000">Engkel 1000</option>
                                 <option value="Engkel 1500">Engkel 1500</option>
+                                <option value="Engkel kurang 20 ton">Engkel kurang 20 ton</option>
+                                <option value="Engkel lebih 20 ton">Engkel lebih 20 ton</option>
+                                <option value="Tronton kurang 30 ton">Tronton kurang 30 ton</option>
+                                <option value="Tronton lebih 30 ton">Tronton lebih 30 ton</option>
+
+
                             </select>
                         </div>
                     </div>
