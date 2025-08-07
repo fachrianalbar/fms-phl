@@ -9,6 +9,7 @@ use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Operational\OrderMaterial;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -25,8 +26,9 @@ class OrderService
     protected $route;
     protected $customer;
     protected $fleet;
+    protected $orderMaterial;
 
-    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial)
     {
         $this->service = $order;
         $this->customerDetailOrder = $customerDetailOrder;
@@ -34,6 +36,7 @@ class OrderService
         $this->route = $route;
         $this->customer = $customer;
         $this->fleet = $fleet;
+        $this->orderMaterial = $orderMaterial;
     }
 
     public function findAll()
@@ -91,11 +94,17 @@ class OrderService
             $this->storeCustomerDetailOrder($request);
         }
 
+        if (isset($request->materialCode)) {
+            $this->storeOrderMaterial($request);
+        }
+
         $this->logActivity($title, $data, 'Create');
     }
 
     public function update($request, $id, $title)
     {
+
+
         $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
@@ -113,6 +122,13 @@ class OrderService
             $this->storeCustomerDetailOrder($request);
         }
 
+        if (isset($request->materialCode)) {
+            $data->orderMaterial()->delete();
+            $this->storeOrderMaterial($request);
+        }
+
+
+
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
 
@@ -125,6 +141,8 @@ class OrderService
         $this->customerDetailOrder->where('orderCode', $data->code)->delete();
 
         $this->orderCost->where('orderCode', $data->code)->delete();
+
+        $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
             'code' => $data->code . '-del-' . Str::random(3),
@@ -162,6 +180,25 @@ class OrderService
         }
     }
 
+    private function storeOrderMaterial($request)
+    {
+        $filtered = Arr::only($request->all(), ['materialCode', 'unitCode', 'materialQty']);
+
+
+        for ($i = 0; $i < count($request->materialCode); $i++) {
+
+            $orderMaterial = $this->orderMaterial->create([
+                'code' => GenerateCode::generateCode('FOM', true),
+                'orderCode' => $request->code,
+                'materialCode' => $filtered['materialCode'][$i],
+                'unitCode' => $filtered['unitCode'][$i],
+                'materialQty' => (int)$filtered['materialQty'][$i],
+            ]);
+
+            $this->logActivity('Order Material', $orderMaterial, 'Create');
+        }
+    }
+
     private function storeCustomerDetailOrder($request)
     {
         $filtered = Arr::only($request->all(), ['customerDetailCode', 'value']);
@@ -186,7 +223,7 @@ class OrderService
 
         return [
             'orderDate' => $request->orderDate,
-            'materialCode' => $request->materialCode,
+            // 'materialCode' => $request->materialCode,
             'notes' => $request->notes,
             'sto' => $request->sto,
             'salesOrder' => $request->salesOrder,
@@ -197,8 +234,8 @@ class OrderService
             'orderTypeCode' => $request->orderTypeCode,
             'routeAmount' => $isUpdate ? (int)$request->routeAmount : $route->price,
             'customerCode' => $request->customerCode,
-            'unitCode' => $request->unitCode,
-            'materialQty' => $request->materialQty
+            // 'unitCode' => $request->unitCode,
+            // 'materialQty' => $request->materialQty
         ];
     }
 
@@ -222,5 +259,14 @@ class OrderService
         }
 
         return $this->fleet->whereNotIn('code', $fleetArr)->get();
+    }
+
+    public function deleteOrderMaterial($id)
+    {
+        $data = $this->orderMaterial->where('id', $id)->first();
+
+        $this->logActivity('Order Material', $data, 'Delete');
+
+        $data->delete();
     }
 }

@@ -114,4 +114,9 @@ class Order extends Model
     {
         return $this->belongsTo(Unit::class, 'unitCode', 'code');
     }
+
+    public function orderMaterial()
+    {
+        return $this->hasMany(OrderMaterial::class, 'orderCode', 'code');
+    }
 }

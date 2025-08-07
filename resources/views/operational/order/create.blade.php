@@ -21,6 +21,13 @@
         href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -184,7 +191,7 @@
                             </div>
                         </div>
 
-                        <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="materialCode">Material</label>
                                 <select class="js-example-basic-single" name="materialCode" id="materialCode">
@@ -216,9 +223,66 @@
                                 <input class="form-control" name="materialQty" id="materialQty" type="number"
                                     min="1" placeholder="Material Qty">
                             </div>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Material Data</h4>
+
+                    <button class="btn btn-primary" type="button"
+                        id="add-material">{{ __('general.add_data') }}</button>
+
+
+                </div>
+
+                <div class="card-body col-md-12">
+                    <table class="table table-sm" id="dt">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Material</th>
+                                <th>Unit</th>
+                                <th>Material Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialForm">
+                            <tr>
+                                <td class="remove-btn"></td>
+                                <td>
+                                    <select class="js-example-basic-single" name="materialCode[]" id="materialCode_1"d>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($material as $item)
+                                            <option value="{{ $item->code }}">
+                                                {{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>`
+                                </td>
+                                <td>
+                                    <select class="js-example-basic-single" name="unitCode[]" id="unitCode_1">
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($unit as $item)
+                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="form-control" name="materialQty[]" id="materialQty_1" type="number"
+                                        min="1" placeholder="Material Qty">
+                                </td>
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
 
 
@@ -232,8 +296,6 @@
 
                 </div>
             </div>
-
-
 
             <div class="card">
                 <div class="card-body col-md-12">
@@ -349,6 +411,66 @@
                 });
             }
         }
+
+        $('#add-material').on('click', function() {
+            let row = $('#materialForm tr').length + 1;
+            console.log(row);
+
+            let newRow = `
+        <tr>
+            <td class="remove-btn">
+                <a href="javascript:removeDetailRow(${row})"
+                    class="btn btn-icon btn-sm bg-danger-subtle"
+                    data-bs-toggle="tooltip" title="Delete">
+                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                </a>
+            </td>
+            <td>
+                <select class="form-control js-example-basic-single" name="materialCode[]" id="materialCode_${row}" >
+                    <option selected disabled value="">
+                        {{ __('general.choose') }}...
+                    </option>
+                    @foreach ($material as $item)
+                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <select class="form-control js-example-basic-single" name="unitCode[]" id="unitCode_${row}" >
+                    <option selected disabled value="">
+                        {{ __('general.choose') }}...
+                    </option>
+                    @foreach ($unit as $item)
+                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number" 
+                    min="1" placeholder="Material Qty">
+            </td>
+        </tr>
+    `;
+
+            $('#materialForm').append(newRow);
+
+            // Reinitialize select2 (jika pakai select2)
+            $(`#materialCode_${row}`).select2();
+            $(`#unitCode_${row}`).select2();
+        });
+
+
+        function removeDetailRow(row) {
+            $(`#materialCode_${row}`).closest('tr').remove();
+        }
+
+        $(document).on('click', '.remove-btn', function() {
+            if ($('#materialForm tr').length > 1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
 
         $('#save').click(function(e) {
             const routeTypeCode = $('#routeTypeCode').select2('val');

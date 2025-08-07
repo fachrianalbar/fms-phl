@@ -323,7 +323,6 @@
         @csrf
         @method('DELETE')
     </form>
-
 @endsection
 
 @push('script')

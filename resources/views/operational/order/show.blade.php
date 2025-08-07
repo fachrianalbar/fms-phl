@@ -158,7 +158,7 @@
                                 </div>
                             </div>
 
-                            <div class="row mt-4">
+                            {{-- <div class="row mt-4">
                                 <div class="col-md-6 position-relative">
                                     <label class="form-label" for="materialCode">Material </label>
                                     <input class="form-control" name="materialCode" id="materialCode" type="text"
@@ -180,9 +180,47 @@
                                 </div>
 
 
-                            </div>
+                            </div> --}}
                         </div>
                     </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4>Material Data</h4>
+
+
+                    </div>
+
+                    <div class="card-body col-md-12">
+                        <table class="table table-sm" id="dt-material">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Material</th>
+                                    <th>Unit</th>
+                                    <th>Material Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody id="materialForm">
+                                @if (isset($data->orderMaterial))
+                                    @foreach ($data->orderMaterial as $ordm)
+                                        <tr>
+
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ $ordm->material->name }}</td>
+                                            <td>{{ $ordm->unit->name }}</td>
+                                            <td>{{ $ordm->materialQty }}</td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+
+
+
+                            </tbody>
+                        </table>
+                    </div>
+
                 </div>
 
                 <div class="card">
@@ -490,5 +528,7 @@
             });
 
             $('#dt').DataTable()
+
+            $('#dt-material').DataTable()
         </script>
     @endpush

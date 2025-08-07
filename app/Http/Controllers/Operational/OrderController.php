@@ -737,4 +737,11 @@ class OrderController extends Controller
 
         return $data;
     }
+
+    public function deleteOrderMaterial($id)
+    {
+        $this->service->deleteOrderMaterial($id);
+
+        return redirect()->back()->with('success', __('general.delete_data_success'));
+    }
 }

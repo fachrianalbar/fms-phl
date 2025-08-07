@@ -1,7 +1,6 @@
     <div class="tab-pane fade show active" id="icon-home" role="tabpanel" aria-labelledby="icon-home-tab">
 
         <div class="row g-3 mt-3">
-            @include('partials.alert')
             <div class="row">
                 <div class="col-md-6">
                     <label class="form-label" for="name">{{ __('menu_order.component_name') }} </label>

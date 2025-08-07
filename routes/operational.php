@@ -36,6 +36,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('office-order', OrderOfficeController::class);
     Route::get('pdf-bon-ujt/{id}', [BonUjtController::class, 'pdfBonUjt'])->name('bon-ujt.pdf-bon-ujt');
     Route::delete('order-cost/{id}', [OrderController::class, 'deleteCost'])->name('order-cost.destroy');
+    Route::delete('order-material/{id}', [OrderController::class, 'deleteOrderMaterial'])->name('order-material.destroy');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
