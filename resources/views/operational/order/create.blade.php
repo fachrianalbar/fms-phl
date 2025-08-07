@@ -403,7 +403,7 @@
                     console.log(data);
                     data.forEach(i => {
                         html +=
-                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name})</option>`;
+                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
 
                     });
                     $('#routeData').html(html);
@@ -802,8 +802,8 @@
                             let html = `
                         <input type="hidden" name="customerDetailCode[]" value="${item.code}">
                         <div class="mb-3">
-                            <label class="form-label">${item.name} <i class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="value[]" type="text" required placeholder="${item.name}">
+                            <label class="form-label">${item.name} </label>
+                            <input class="form-control" name="value[]" type="text" placeholder="${item.name}">
                         </div>`;
                             $cardBody.append(html);
                         });

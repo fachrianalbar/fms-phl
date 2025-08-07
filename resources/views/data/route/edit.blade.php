@@ -56,6 +56,18 @@
                                 <option value="Engkel 1500" {{ $data->name == 'Engkel 1500' ? 'selected' : '' }}>Engkel
                                     1500
                                 </option>
+                                <option value="Engkel kurang 20 ton"
+                                    {{ $data->name == 'Engkel kurang 20 ton' ? 'selected' : '' }}>
+                                    Engkel kurang 20 ton</option>
+                                <option value="Engkel lebih 20 ton"
+                                    {{ $data->name == 'Engkel lebih 20 ton' ? 'selected' : '' }}>
+                                    Engkel lebih 20 ton</option>
+                                <option value="Tronton kurang 30 ton"
+                                    {{ $data->name == 'Tronton kurang 30 ton' ? 'selected' : '' }}>
+                                    Tronton kurang 30 ton</option>
+                                <option value="Tronton lebih 30 ton"
+                                    {{ $data->name == 'Tronton lebih 30 ton' ? 'selected' : '' }}>
+                                    Tronton lebih 30 ton</option>
 
                             </select>
                         </div>

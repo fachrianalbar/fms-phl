@@ -15,15 +15,23 @@ class GenerateCode
         }
     }
 
-    public static function generateCodeAscDate($prefix, $modelClass, $dateColumn = 'date', $date = null)
+    public static function generateCodeAscDate($prefix, $modelClass, $dateColumn = 'date', $date = null, $codeColumn = 'code')
     {
         $carbonDate = $date ? Carbon::parse($date) : Carbon::now();
         $codeDate = $carbonDate->format('ymd');
 
         $count = $modelClass::whereDate($dateColumn, $carbonDate->toDateString())->count();
 
-        $increment = str_pad($count + 1, 5, '0', STR_PAD_LEFT);
+        do {
+            $increment = str_pad($count + 1, 5, '0', STR_PAD_LEFT);
+            $code = "{$prefix}-{$codeDate}{$increment}";
 
-        return "{$prefix}-{$codeDate}{$increment}";
+            // Cek apakah kode sudah ada di database
+            $exists = $modelClass::where($codeColumn, $code)->exists();
+
+            $count++;
+        } while ($exists);
+
+        return $code;
     }
 }

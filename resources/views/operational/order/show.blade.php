@@ -137,7 +137,7 @@
                                     <label class="form-label" for="routeData">{{ __('menu_order.route') }}</label>
                                     <input class="form-control" name="routeData" id="routeData" type="text" readonly
                                         placeholder="{{ __('menu_order.route') }}"
-                                        value="{{ $data->route->name . ' (' . ($data->route->originLocation->name ?? '') . ($data->route->destinationLocation ? ' - ' . $data->route->destinationLocation->name : '') . ')' }}">
+                                        value="{{ $data->route->name . ' (' . ($data->route->originLocation->name ?? '') . ($data->route->destinationLocation ? ' - ' . $data->route->destinationLocation->name : '') . ') - ' . $data->route->description }}">
                                 </div>
                                 @php
                                     $label = '';
