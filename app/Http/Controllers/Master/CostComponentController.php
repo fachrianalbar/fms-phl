@@ -145,6 +145,12 @@ class CostComponentController extends Controller
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
+
+        <a href="javascript:showModal(\'' . $row->id . '\')"
+            class="btn btn-icon btn-sm bg-success-subtle me-1"
+            data-bs-toggle="tooltip" title="Note">
+                <i class="mdi mdi-currency-usd fs-14 text-success"></i>
+        </a>
         <a href="' . route($this->view . 'edit', $row->id) . '"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
