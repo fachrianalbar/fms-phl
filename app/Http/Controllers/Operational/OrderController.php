@@ -217,24 +217,24 @@ class OrderController extends Controller
         $totalPrice = 0;
         $allowance = 0;
 
-        if (isset($data->route->routeDetail)) {
-            $dataRoute = $data->route->routeDetail;
+        // if (isset($data->route->routeDetail)) {
+        //     $dataRoute = $data->route->routeDetail;
 
-            foreach ($dataRoute as $item) {
-                if ($item->costComponent->type == 'Allowance') {
-                    if ($item->amount != 0) {
-                        $allowance = $item->amount;
-                    }
+        //     foreach ($dataRoute as $item) {
+        //         if ($item->costComponent->type == 'Allowance') {
+        //             if ($item->amount != 0) {
+        //                 $allowance = $item->amount;
+        //             }
 
-                    if ($item->percentage) {
-                        $route = Route::where('code', $item->routeCode)->first();
+        //             if ($item->percentage) {
+        //                 $route = Route::where('code', $item->routeCode)->first();
 
-                        $allowance = $route->price * ($item->percentage / 100);
-                    }
-                }
-            }
-            $totalPrice = $allowance;
-        }
+        //                 $allowance = $route->price * ($item->percentage / 100);
+        //             }
+        //         }
+        //     }
+        //     $totalPrice = $allowance;
+        // }
 
         $bonus = TonaseBonus::where('min', '<=', $data->qty)->where('max', '>=', $data->qty)->first();
 
