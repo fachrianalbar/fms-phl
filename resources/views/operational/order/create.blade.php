@@ -245,7 +245,9 @@
                                 <th>#</th>
                                 <th>Material</th>
                                 <th>Unit</th>
-                                <th>Material Qty</th>
+                                <th>Qty</th>
+                                <th>Unit2</th>
+                                <th>Qty2</th>
                             </tr>
                         </thead>
                         <tbody id="materialForm">
@@ -275,8 +277,25 @@
                                 </td>
                                 <td>
                                     <input class="form-control" name="materialQty[]" id="materialQty_1" type="number"
-                                        min="1" placeholder="Material Qty">
+                                        min="1" placeholder="Qty">
                                 </td>
+
+                                </td>
+                                <td>
+                                    <select class="js-example-basic-single" name="unitCode2[]" id="unitCode2_1">
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($unit as $item)
+                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="form-control" name="materialQty2[]" id="materialQty2_1" type="number"
+                                        min="1" placeholder="Qty">
+                                </td>
+
 
                             </tr>
                         </tbody>
@@ -446,8 +465,23 @@
                 </select>
             </td>
             <td>
-                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number" 
-                    min="1" placeholder="Material Qty">
+                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number"
+                    min="1" placeholder="Qty">
+            </td>
+
+            <td>
+                <select class="form-control js-example-basic-single" name="unitCode2[]" id="unitCode2_${row}" >
+                    <option selected disabled value="">
+                        {{ __('general.choose') }}...
+                    </option>
+                    @foreach ($unit as $item)
+                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <input class="form-control" name="materialQty2[]" id="materialQty2_${row}" type="number"
+                    min="1" placeholder="Qty">
             </td>
         </tr>
     `;
@@ -457,6 +491,8 @@
             // Reinitialize select2 (jika pakai select2)
             $(`#materialCode_${row}`).select2();
             $(`#unitCode_${row}`).select2();
+            $(`#materialCode2_${row}`).select2();
+            $(`#unitCode2_${row}`).select2();
         });
 
 

@@ -182,7 +182,7 @@ class OrderService
 
     private function storeOrderMaterial($request)
     {
-        $filtered = Arr::only($request->all(), ['materialCode', 'unitCode', 'materialQty']);
+        $filtered = Arr::only($request->all(), ['materialCode', 'unitCode', 'materialQty', 'unitCode2', 'materialQty2']);
 
 
         for ($i = 0; $i < count($request->materialCode); $i++) {
@@ -193,6 +193,8 @@ class OrderService
                 'materialCode' => $filtered['materialCode'][$i],
                 'unitCode' => $filtered['unitCode'][$i],
                 'materialQty' => (int)$filtered['materialQty'][$i],
+                'unitCode2' => $filtered['unitCode2'][$i],
+                'materialQty2' => (int)$filtered['materialQty2'][$i]
             ]);
 
             $this->logActivity('Order Material', $orderMaterial, 'Create');

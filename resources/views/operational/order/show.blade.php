@@ -199,7 +199,9 @@
                                     <th>No</th>
                                     <th>Material</th>
                                     <th>Unit</th>
-                                    <th>Material Qty</th>
+                                    <th>Qty</th>
+                                    <th>Unit 2</th>
+                                    <th>Qty 2</th>
                                 </tr>
                             </thead>
                             <tbody id="materialForm">
@@ -208,9 +210,11 @@
                                         <tr>
 
                                             <td>{{ $loop->iteration }}</td>
-                                            <td>{{ $ordm->material->name }}</td>
-                                            <td>{{ $ordm->unit->name }}</td>
+                                            <td>{{ $ordm->material->name ?? '' }}</td>
+                                            <td>{{ $ordm->unit->name ?? '' }}</td>
                                             <td>{{ $ordm->materialQty }}</td>
+                                            <td>{{ $ordm->unit2->name ?? '' }}</td>
+                                            <td>{{ $ordm->materialQty2 }}</td>
                                         </tr>
                                     @endforeach
                                 @endif

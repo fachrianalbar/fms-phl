@@ -20,7 +20,9 @@ class OrderMaterial extends Model
         'orderCode',
         'materialCode',
         'unitCode',
-        'materialQty'
+        'materialQty',
+        'unitCode2',
+        'materialQty2'
     ];
 
     public function order()
@@ -36,5 +38,10 @@ class OrderMaterial extends Model
     public function unit()
     {
         return $this->belongsTo(Unit::class, 'unitCode', 'code');
+    }
+
+    public function unit2()
+    {
+        return $this->belongsTo(Unit::class, 'unitCode2', 'code');
     }
 }

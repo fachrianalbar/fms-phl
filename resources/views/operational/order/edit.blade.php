@@ -130,7 +130,7 @@
                                             {{ $data->customerCode == $item->code ? 'selected' : '' }}>
                                             {{ $item->code . ' - ' . $item->name }}</option>
                                     @endforeach
-                                </select>`
+                                </select>
                             </div>
 
                             <div class="col-md-6 position-relative">
@@ -296,7 +296,9 @@
                                 <th>#</th>
                                 <th style="width: 20%">Material</th>
                                 <th style="width: 20%">Unit</th>
-                                <th>Material Qty</th>
+                                <th>Qty</th>
+                                <th style="width: 20%">Unit2</th>
+                                <th>Qty2</th>
                             </tr>
                         </thead>
                         <tbody id="materialForm">
@@ -337,6 +339,22 @@
                                                 id="materialQty_{{ $loop->iteration }}" type="number" min="1"
                                                 value="{{ $ordm->materialQty }}" placeholder="Material Qty">
                                         </td>
+                                        <td>
+                                            <select class="form-control js-example-basic-single" name="unitCode2[]"
+                                                id="unitCode2_{{ $loop->iteration }}">
+
+                                                @foreach ($unit as $item)
+                                                    <option value="{{ $item->code }}"
+                                                        {{ $ordm->unitCode2 == $item->code ? 'selected' : '' }}>
+                                                        {{ $item->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input class="form-control" name="materialQty2[]"
+                                                id="materialQty2_{{ $loop->iteration }}" type="number" min="1"
+                                                value="{{ $ordm->materialQty2 }}" placeholder="Qty">
+                                        </td>
 
                                     </tr>
                                 @endforeach
@@ -369,6 +387,20 @@
                                     <td>
                                         <input class="form-control" name="materialQty[]" id="materialQty_1"
                                             type="number" min="1" placeholder="Material Qty">
+                                    </td>
+                                    <td>
+                                        <select class="js-example-basic-single" name="unitCode2[]" id="unitCode2_1">
+                                            <option selected="" disabled="" value="">
+                                                {{ __('general.choose') }}...
+                                            </option>
+                                            @foreach ($unit as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input class="form-control" name="materialQty2[]" id="materialQty_1"
+                                            type="number" min="1" placeholder="Qty">
                                     </td>
 
                                 </tr>
@@ -779,6 +811,20 @@
                 <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number"
                     min="1" placeholder="Material Qty">
             </td>
+            <td>
+                <select class="form-control js-example-basic-single" name="unitCode2[]" id="unitCode2_${row}" >
+                    <option selected disabled value="">
+                        {{ __('general.choose') }}...
+                    </option>
+                    @foreach ($unit as $item)
+                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
+            </td>
+            <td>
+                <input class="form-control" name="materialQty2[]" id="materialQty2_${row}" type="number"
+                    min="1" placeholder="Qty">
+            </td>
         </tr>
     `;
 
@@ -787,6 +833,8 @@
             // Reinitialize select2 (jika pakai select2)
             $(`#materialCode_${row}`).select2();
             $(`#unitCode_${row}`).select2();
+            $(`#materialCode2_${row}`).select2();
+            $(`#unitCode2_${row}`).select2();
         });
 
         function removeDetailRow(row) {
