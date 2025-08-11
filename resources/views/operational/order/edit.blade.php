@@ -423,7 +423,7 @@
                 </div>
             </div>
 
-            @if ($data->status == 0)
+            @if ($data->status == 0 || in_array(auth()->user()->roleCode, ['SPRADMIN', 'SPRUSER']))
                 <div class="card">
                     <div class="col-12">
                         <div class="card-body ">
@@ -776,7 +776,7 @@
                 </select>
             </td>
             <td>
-                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number" 
+                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number"
                     min="1" placeholder="Material Qty">
             </td>
         </tr>

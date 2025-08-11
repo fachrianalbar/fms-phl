@@ -508,6 +508,16 @@ class OrderController extends Controller
                     $edit = '';
 
 
+                    if ($row->status != 0 && in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
+
+                        $edit =  '<a href="' . route($this->view . 'edit', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                        data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>';
+                    }
+
+
 
                     if ($row->notes) {
                         $note = '<a href="javascript:showModal(\'' . $row->id . '\')"
@@ -542,10 +552,10 @@ class OrderController extends Controller
                         data-bs-toggle="tooltip" title="Show">
                             <i class="mdi mdi-eye fs-14 text-success"></i>
                         </a>
-                        ' . $edit . '    
-                        ' . $delete . '    
-                        ' . $note . '    
-                        ' . $finishOrder . '                                   
+                        ' . $edit . '
+                        ' . $delete . '
+                        ' . $note . '
+                        ' . $finishOrder . '
                     </td>';
 
                     return $btn;
