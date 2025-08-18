@@ -190,11 +190,11 @@ class OrderService
             $orderMaterial = $this->orderMaterial->create([
                 'code' => GenerateCode::generateCode('FOM', true),
                 'orderCode' => $request->code,
-                'materialCode' => $filtered['materialCode'][$i],
-                'unitCode' => $filtered['unitCode'][$i],
-                'materialQty' => (int)$filtered['materialQty'][$i],
-                'unitCode2' => $filtered['unitCode2'][$i],
-                'materialQty2' => (int)$filtered['materialQty2'][$i]
+                'materialCode' => $filtered['materialCode'][$i] ?? null,
+                'unitCode' => $filtered['unitCode'][$i] ?? null,
+                'materialQty' => (int)$filtered['materialQty'][$i] ?? null,
+                'unitCode2' => $filtered['unitCode2'][$i] ?? null,
+                'materialQty2' => (int)$filtered['materialQty2'][$i] ?? null
             ]);
 
             $this->logActivity('Order Material', $orderMaterial, 'Create');

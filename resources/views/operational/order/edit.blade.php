@@ -327,6 +327,9 @@
                                             <select class="form-control js-example-basic-single" name="unitCode[]"
                                                 id="unitCode_{{ $loop->iteration }}">
 
+                                                <option selected="" disabled="" value="">
+                                                    {{ __('general.choose') }}...
+                                                </option>
                                                 @foreach ($unit as $item)
                                                     <option value="{{ $item->code }}"
                                                         {{ $ordm->unitCode == $item->code ? 'selected' : '' }}>
@@ -336,13 +339,16 @@
                                         </td>
                                         <td>
                                             <input class="form-control" name="materialQty[]"
-                                                id="materialQty_{{ $loop->iteration }}" type="number" min="1"
+                                                id="materialQty_{{ $loop->iteration }}" type="number"
                                                 value="{{ $ordm->materialQty }}" placeholder="Material Qty">
                                         </td>
                                         <td>
                                             <select class="form-control js-example-basic-single" name="unitCode2[]"
                                                 id="unitCode2_{{ $loop->iteration }}">
 
+                                                <option selected="" disabled="" value="">
+                                                    {{ __('general.choose') }}...
+                                                </option>
                                                 @foreach ($unit as $item)
                                                     <option value="{{ $item->code }}"
                                                         {{ $ordm->unitCode2 == $item->code ? 'selected' : '' }}>
@@ -352,7 +358,7 @@
                                         </td>
                                         <td>
                                             <input class="form-control" name="materialQty2[]"
-                                                id="materialQty2_{{ $loop->iteration }}" type="number" min="1"
+                                                id="materialQty2_{{ $loop->iteration }}" type="number"
                                                 value="{{ $ordm->materialQty2 }}" placeholder="Qty">
                                         </td>
 
@@ -386,7 +392,7 @@
                                     </td>
                                     <td>
                                         <input class="form-control" name="materialQty[]" id="materialQty_1"
-                                            type="number" min="1" placeholder="Material Qty">
+                                            type="number" placeholder="Material Qty">
                                     </td>
                                     <td>
                                         <select class="js-example-basic-single" name="unitCode2[]" id="unitCode2_1">
@@ -400,7 +406,7 @@
                                     </td>
                                     <td>
                                         <input class="form-control" name="materialQty2[]" id="materialQty_1"
-                                            type="number" min="1" placeholder="Qty">
+                                            type="number" placeholder="Qty">
                                     </td>
 
                                 </tr>
