@@ -28,8 +28,12 @@
                 <th style="font-size: 14px; font-weight: bold; text-align: center">{{ __('menu_order.destination') }}
                 </th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">{{ __('menu_order.load_type') }}</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">{{ __('menu_order.route_price') }}
+                </th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Qty</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">{{ __('menu_order.total_price') }}
                 <th style="font-size: 14px; font-weight: bold; text-align: center">{{ __('menu_order.cost') }}</th>
+
             </tr>
         </thead>
         <tbody>
@@ -51,8 +55,10 @@
                     <td style="text-align: center">
                         {{ isset($item->route->destinationLocation->name) ? $item->route->destinationLocation->name : '' }}
                     </td>
-                    <td style="text-align: center">{{ $item->route->routeType->name }}</td>
+                    <td style="text-align: center">{{ $item->route->routeType->name ?? '' }}</td>
+                    <td style="text-align: center">{{ $item->route->price ?? '' }}</td>
                     <td style="text-align: center">{{ $item->qty }}</td>
+                    <td style="text-align: center">{{ $item->route->price * $item->qty }}</td>
 
                     <td style="text-align: center">
                         @php

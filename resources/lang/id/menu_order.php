@@ -36,4 +36,5 @@ return [
     'change_driver_success' => 'Ganti supir berhasil',
     'change_driver_failed' => 'Ganti supir gagal',
     'order_report' => 'Laporan Pesanan',
+    'total_price' => 'Total Harga',
 ];

@@ -26,7 +26,10 @@ class OrderReport implements FromView, ShouldAutoSize, WithColumnFormatting
     public function columnFormats(): array
     {
         return [
-            'J' => '#,##0_);(#,##0)',
+            'I' => '#,##0_);(#,##0)',
+            'K' => '#,##0_);(#,##0)',
+            'L' => '#,##0_);(#,##0)',
+            'M' => '#,##0_);(#,##0)',
         ];
     }
 
