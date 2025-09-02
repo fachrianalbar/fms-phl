@@ -34,5 +34,6 @@ return [
     'route_price' => 'Harga Rute',
     'change_driver' => 'Ganti Supir',
     'change_driver_success' => 'Ganti supir berhasil',
-    'change_driver_failed' => 'Ganti supir gagal'
+    'change_driver_failed' => 'Ganti supir gagal',
+    'order_report' => 'Laporan Pesanan',
 ];

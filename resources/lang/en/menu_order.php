@@ -35,4 +35,5 @@ return [
     'change_driver' => 'Change Driver',
     'change_driver_success' => 'Change driver was successful',
     'change_driver_failed' => 'Change driver failed',
+    'order_report' => 'Order Report',
 ];

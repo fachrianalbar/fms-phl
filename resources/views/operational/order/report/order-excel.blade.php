@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Order Report</title>
+    <title>{{ __('menu_order.order_report') }}</title>
 </head>
 
 <body>
@@ -13,7 +13,7 @@
         <thead>
             <tr>
                 <th colspan="10" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
-                    Order Report Data</th>
+                    {{ __('menu_order.order_report') }} Data</th>
             </tr>
             <tr>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">No</th>
