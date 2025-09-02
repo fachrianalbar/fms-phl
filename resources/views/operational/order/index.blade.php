@@ -759,7 +759,7 @@
                     } else {
                         tbody.append(`
                             <tr>
-                                <td colspan="4" class="text-center">Belum ada data order driver</td>
+                                <td colspan="4" class="text-center">Belum ada data supirr</td>
                             </tr>
                         `);
                     }
