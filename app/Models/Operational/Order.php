@@ -119,4 +119,9 @@ class Order extends Model
     {
         return $this->hasMany(OrderMaterial::class, 'orderCode', 'code');
     }
+
+    public function orderDrivers()
+    {
+        return $this->hasMany(OrderDriver::class, 'orderCode', 'code');
+    }
 }

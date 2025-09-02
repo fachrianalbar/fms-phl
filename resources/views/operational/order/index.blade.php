@@ -20,6 +20,33 @@
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+
+    <style>
+        /* Custom CSS untuk Select2 di modal */
+        .modal .select2-container {
+            z-index: 9999;
+            width: 100% !important;
+        }
+
+        .modal .select2-container .select2-selection {
+            height: 38px;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+
+        .modal .select2-container .select2-selection__rendered {
+            line-height: 36px;
+            padding-left: 12px;
+        }
+
+        .modal .select2-container .select2-selection__arrow {
+            height: 36px;
+        }
+
+        .select2-dropdown {
+            z-index: 99999 !important;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -276,6 +303,75 @@
         @csrf
         @method('PUT')
     </form>
+
+    <div class="modal fade bd-example-modal-xl" id="modal-add-driver" tabindex="-1" role="dialog"
+        aria-labelledby="myLargeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="myLargeModalLabel">{{ __('menu_order.change_driver') }}</h4>
+                    <button class="btn-close py-0" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="post" action="{{ route('operational.store-order-driver') }}" id="form-add-driver">
+                    @csrf
+                    <div class="card">
+                        <div class="card-body col-md-12">
+                            <div class="row g-3">
+                                <input type="hidden" name="orderCode" id="orderCode">
+
+                                <div class="col-md-12">
+                                    <label class="form-label" for="driverCode">{{ __('menu_order.driver') }}</label>
+                                    <br>
+                                    <select class="form-control select2-modal" name="driverCode" id="driverCode"
+                                        style="width: 100%;">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($driver as $item)
+                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label"
+                                        for="description">{{ __('menu_order.description') }}</label>
+                                    <textarea class="form-control" name="description" id="description" rows="3"
+                                        placeholder="{{ __('menu_order.description') }}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- List Data yang sudah diinput -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Data {{ __('menu_order.change_driver') }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped" id="order-driver-list">
+                                    <thead>
+                                        <tr>
+                                            <th>No</th>
+                                            <th>{{ __('menu_order.driver') }}</th>
+                                            <th>{{ __('menu_order.description') }}</th>
+                                            <th>{{ __('menu_order.action') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Data akan dimuat via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer justify-content-start">
+                        <button type="submit" class="btn btn-primary">{{ __('general.save') }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script')
@@ -543,6 +639,21 @@
                 });
             });
 
+            // Event listener untuk modal add driver
+            $('#modal-add-driver').on('shown.bs.modal', function() {
+                // Initialize select2 saat modal ditampilkan
+                $('.select2-modal').select2({
+                    dropdownParent: $('#modal-add-driver'),
+                    width: '100%',
+                    placeholder: '{{ __('general.choose') }}...',
+                });
+            });
+
+            // Destroy select2 saat modal ditutup untuk menghindari konflik
+            $('#modal-add-driver').on('hidden.bs.modal', function() {
+                $('.select2-modal').select2('destroy');
+            });
+
         });
 
         function finishOrder(id) {
@@ -607,5 +718,113 @@
                 }
             });
         }
+
+        function addOrderDriver(orderId, orderCode) {
+            $('#orderCode').val(orderCode);
+            $('#driverCode').val('').trigger('change');
+            $('#description').val('');
+
+            // Load existing order drivers
+            loadOrderDrivers(orderCode);
+
+            $('#modal-add-driver').modal('show');
+        }
+
+        function loadOrderDrivers(orderCode) {
+            $.ajax({
+                url: "{{ route('operational.order.get-order-drivers') }}",
+                method: "GET",
+                data: {
+                    orderCode: orderCode
+                },
+                success: function(response) {
+                    let tbody = $('#order-driver-list tbody');
+                    tbody.empty();
+
+                    if (response.success && response.data.length > 0) {
+                        response.data.forEach((item, index) => {
+                            tbody.append(`
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.driver ? item.driver.name : '-'}</td>
+                                    <td>${item.description || '-'}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteOrderDriver('${item.id}', '${orderCode}')">
+                                            <i class="mdi mdi-delete fs-14"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="4" class="text-center">Belum ada data order driver</td>
+                            </tr>
+                        `);
+                    }
+                },
+                error: function() {
+                    console.log('Error loading order drivers');
+                }
+            });
+        }
+
+        function deleteOrderDriver(id, orderCode) {
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "Ingin menghapus data supir ini?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $.ajax({
+                        url: "{{ route('operational.order.delete-order-driver') }}",
+                        method: "DELETE",
+                        data: {
+                            id: id,
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                swal("Sukses", "Data supir berhasil dihapus", "success");
+                                loadOrderDrivers(orderCode); // Reload data
+                            } else {
+                                swal("Error", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            swal("Error", "Gagal menghapus data", "error");
+                        }
+                    });
+                }
+            });
+        }
+
+        // Handle form submission untuk menambah order driver
+        $('#form-add-driver').on('submit', function(e) {
+            e.preventDefault();
+
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: $(this).serialize(),
+                success: function(response) {
+                    if (response.success) {
+                        swal("Sukses", "{{ __('menu_order.change_driver_success') }}", "success");
+                        $('#driverCode').val('').trigger('change');
+                        $('#description').val('');
+                        loadOrderDrivers($('#orderCode').val()); // Reload data
+                    } else {
+                        swal("Error", response.message ||
+                            "{{ __('menu_order.change_driver_failed') }}", "error");
+                    }
+                },
+                error: function() {
+                    swal("Error", "{{ __('menu_order.change_driver_failed') }}", "error");
+                }
+            });
+        });
     </script>
 @endpush

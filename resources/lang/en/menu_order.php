@@ -31,5 +31,8 @@ return [
     'action' => 'Action',
     'is_leave' => 'Is Leave?',
     'route' => 'Route',
-    'route_price' => 'Route Price'
+    'route_price' => 'Route Price',
+    'change_driver' => 'Change Driver',
+    'change_driver_success' => 'Change driver was successful',
+    'change_driver_failed' => 'Change driver failed',
 ];

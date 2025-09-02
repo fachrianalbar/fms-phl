@@ -433,7 +433,6 @@
 
         $('#add-material').on('click', function() {
             let row = $('#materialForm tr').length + 1;
-            console.log(row);
 
             let newRow = `
         <tr>

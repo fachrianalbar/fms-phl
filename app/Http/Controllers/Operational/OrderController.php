@@ -506,6 +506,14 @@ class OrderController extends Controller
                     $finishOrder = '';
                     $delete = '';
                     $edit = '';
+                    $addDriver = '';
+
+                    // Tombol Add Driver - muncul di semua status order
+                    $addDriver = '<a href="javascript:addOrderDriver(\'' . $row->id . '\', \'' . $row->code . '\')"
+                                class="btn btn-icon btn-sm bg-warning-subtle me-1"
+                                data-bs-toggle="tooltip" title="Add Driver">
+                                    <i class="mdi mdi-account-plus fs-14 text-warning"></i>
+                                </a>';
 
 
                     if ($row->status != 0 && in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
@@ -556,6 +564,7 @@ class OrderController extends Controller
                         ' . $delete . '
                         ' . $note . '
                         ' . $finishOrder . '
+                        ' . $addDriver . '
                     </td>';
 
                     return $btn;
@@ -584,6 +593,100 @@ class OrderController extends Controller
         $this->service->finishOrder($id);
 
         return redirect()->route($this->view . 'index')->with('success',  __('menu_order.finish_order_was_successfull'));
+    }
+
+    public function storeOrderDriver(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'orderCode' => 'required',
+            'driverCode' => 'required',
+            'description' => 'nullable|string|max:255'
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route($this->view . 'index')
+                ->withErrors($validator)
+                ->withInput()
+                ->with('fail', 'Validation failed');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $orderDriver = new \App\Models\Operational\OrderDriver();
+            $orderDriver->code = GenerateCode::generateCode('ODR');
+            $orderDriver->orderCode = $request->orderCode;
+            $orderDriver->driverCode = $request->driverCode;
+            $orderDriver->description = $request->description;
+            $orderDriver->save();
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json(['success' => true, 'message' => __('menu_order.change_driver_success')]);
+            }
+
+            return redirect()->route($this->view . 'index')->with('success', __('menu_order.change_driver_success'));
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            if ($request->ajax()) {
+                return response()->json(['success' => false, 'message' => __('menu_order.change_driver_failed') . ': ' . $e->getMessage()]);
+            }
+
+            return redirect()->route($this->view . 'index')->with('fail', __('menu_order.change_driver_failed') . ': ' . $e->getMessage());
+        }
+    }
+
+    public function getOrderDrivers(Request $request)
+    {
+        $orderCode = $request->get('orderCode');
+
+        if (!$orderCode) {
+            return response()->json(['success' => false, 'message' => 'Order code is required']);
+        }
+
+        try {
+            $orderDrivers = \App\Models\Operational\OrderDriver::with('driver')
+                ->where('orderCode', $orderCode)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $orderDrivers
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function deleteOrderDriver(Request $request)
+    {
+        $id = $request->get('id');
+
+        if (!$id) {
+            return response()->json(['success' => false, 'message' => 'ID is required']);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $orderDriver = \App\Models\Operational\OrderDriver::find($id);
+
+            if (!$orderDriver) {
+                return response()->json(['success' => false, 'message' => 'Data not found']);
+            }
+
+            $orderDriver->delete();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Supir berhasil dihapus']);
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus supier: ' . $e->getMessage()]);
+        }
     }
 
     public function checkNullRelations()

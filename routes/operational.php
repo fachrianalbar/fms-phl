@@ -22,6 +22,9 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::post('cancel-do', [ReturnDoController::class, 'cancelDo'])->name('return-do.cancel-do');
     Route::put('finish-order/{id}', [OrderController::class, 'finishOrder'])->name('finish-order');
+    Route::post('order-driver', [OrderController::class, 'storeOrderDriver'])->name('store-order-driver');
+    Route::get('order-drivers', [OrderController::class, 'getOrderDrivers'])->name('order.get-order-drivers');
+    Route::delete('order-driver', [OrderController::class, 'deleteOrderDriver'])->name('order.delete-order-driver');
 
     // Route::put('finish-order/{id}', [OrderMonitoringController::class, 'finishOrder'])->name('finish-order');
     Route::get('pdf-down-payment/{id}', [DownPaymentController::class, 'pdfDownPayment'])->name('down-payment.pdf-down-payment');
