@@ -9,8 +9,9 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
-class OrderReport implements FromView, ShouldAutoSize
+class OrderReport implements FromView, ShouldAutoSize, WithColumnFormatting
 {
 
     use Exportable;
@@ -21,6 +22,14 @@ class OrderReport implements FromView, ShouldAutoSize
     {
         $this->request = $request;
     }
+
+    public function columnFormats(): array
+    {
+        return [
+            'J' => '#,##0_);(#,##0)',
+        ];
+    }
+
 
     public function view(): View
     {
