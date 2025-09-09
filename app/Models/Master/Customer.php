@@ -30,10 +30,12 @@ class Customer extends Model
         'email',
         'npwp',
         'telegramUsername',
-        'due_date_duration',
+        'dueDateDuration',
         'companyCode',
         'type',
-        'isDo'
+        'isDo',
+        'invoicePdf',
+        'overdueInvoice',
     ];
 
     public function routes()
@@ -54,5 +56,10 @@ class Customer extends Model
     public function pic()
     {
         return $this->hasMany(CustomerPic::class, 'customerCode', 'code');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(\App\Models\Finance\Invoice::class, 'customerCode', 'code');
     }
 }

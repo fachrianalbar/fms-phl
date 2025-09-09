@@ -17,6 +17,10 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 @endpush
 
 @section('content')
@@ -24,34 +28,140 @@
         <div class="card">
             @csrf
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Data</h4>
+                <h4>{{ $title }} {{ __('general.data') }}</h4>
 
-                <button type="submit" class="btn btn-primary" id="saveOrder">Confirm Return</button>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="accordion-item ">
+                        <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <i class="mdi mdi-magnify fs-14 text-dark"></i>
+                        </a>
+
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="saveOrder">
+                        {{ __('menu_not_return_do.confirm_return') }}
+                    </button>
+
+                </div>
+
+
 
             </div>
+
+            <div class="card-header">
+                <div class="accordion-collapse collapse" id="collapseTwo" aria-labelledby="headingTwo"
+                    data-bs-parent="#simpleaccordion">
+                    <div class="accordion-body col-md-12">
+                        <div id="filterForm" class="g-3">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.plate_number') }}</label>
+                                    <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($fleet as $item)
+                                            <option value="{{ $item->plateNumber }}">
+                                                {{ $item->plateNumber }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.driver') }}</label>
+                                    <select class="js-example-basic-single" name="driverName" id="driverName">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($driver as $item)
+                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.customer') }}</label>
+                                    <select class="js-example-basic-single" name="customerName" id="customerName">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($customer as $item)
+                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>`
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.fleet_type') }}</label>
+                                    <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($fleetType as $item)
+                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>`
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.shipment_no') }}</label>
+                                    <input class="form-control" name="shipmentNumber" type="text"
+                                        placeholder="Shipment Number">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
+                                    <input class="form-control" name="startDate" id="datetime-local" type="date"
+                                        placeholder="Start Date">
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label" for="name"></label>
+                                    <input class="form-control" name="endDate" id="datetime-local" type="date"
+                                        placeholder="End Date">
+                                </div>
+                            </div>
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="name">{{ __('menu_order.destination') }}</label>
+                                    <select class="js-example-basic-single" name="destination" id="destination">
+                                        <option selected="" value="">{{ __('general.choose') }}...</option>
+                                        @foreach ($location as $item)
+                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>`
+                                </div>
+                            </div>
+                            <button class="btn btn-primary mt-3" type="button" id="btnFilter">Filter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="card-body">
                 @include('partials.alert')
                 <div class="table-responsive custom-scrollbar">
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>No</th>
-                                <th>Order Date</th>
-                                <th>Code</th>
-                                <th>Shipment No</th>
-                                <th>Customer Name</th>
-                                <th>Origin</th>
-                                <th>Destination</th>
-                                <th>Fleet</th>
-                                <th>Fleet Type</th>
-                                <th>Driver</th>
+                                <th>
+                                    <input type="checkbox" id="checkAll">
+                                </th>
+                                <th>{{ __('menu_not_return_do.no') }}</th>
+                                <th>{{ __('menu_not_return_do.order_date') }}</th>
+                                <th>{{ __('menu_not_return_do.shipment_no') }}</th>
+                                <th>{{ __('menu_not_return_do.customer_name') }}</th>
+                                <th>{{ __('menu_not_return_do.origin') }}</th>
+                                <th>{{ __('menu_not_return_do.destination') }}</th>
+                                <th>{{ __('menu_not_return_do.fleet') }}</th>
+                                <th>{{ __('menu_not_return_do.driver') }}</th>
                             </tr>
                         </thead>
-                        <tbody>
-
-                        </tbody>
+                        <tbody></tbody>
                     </table>
+
                 </div>
             </div>
         </div>
@@ -61,34 +171,47 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h4 class="modal-title" id="myLargeModalLabel">Not Return Data</h4>
-                        <button class="btn-close py-0" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <h4 class="modal-title" id="myLargeModalLabel">
+                            {{ __('menu_not_return_do.not_return_data') }}
+                        </h4>
+                        <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
+
                     <div class="card">
                         <div class="card-body col-md-12">
                             <div class="row g-3">
                                 <div class="col-md-12">
-                                    <label class="form-label" for="returnDate">Date <i
-                                            class="mdi mdi-information text-danger"></i></label>
-                                    <input class="form-control" name="returnDate" id="returnDate" type="date" required
-                                        placeholder="Date">
+                                    <label class="form-label" for="returnDate">
+                                        {{ __('menu_not_return_do.date') }} <i
+                                            class="mdi mdi-information text-danger"></i>
+                                    </label>
+                                    <input class="form-control" name="returnDate" id="returnDate" type="date"
+                                        required placeholder="{{ __('menu_not_return_do.date') }}">
                                 </div>
 
                                 <div class="col-md-12">
-                                    <label class="form-label" for="description">Description </label>
-                                    <textarea class="form-control" name="returnDescription" id="description" placeholder="Description" rows="4"></textarea>
+                                    <label class="form-label"
+                                        for="description">{{ __('menu_not_return_do.description') }}</label>
+                                    <textarea class="form-control" name="returnDescription" id="description"
+                                        placeholder="{{ __('menu_not_return_do.description') }}" rows="4"></textarea>
                                 </div>
                             </div>
                         </div>
+
                         <div class="modal-footer justify-content-start">
-                            <button class="btn btn-primary" type="submit">Save Data</button>
+                            <button class="btn btn-primary" type="submit">
+                                {{ __('menu_not_return_do.save_data') }}
+                            </button>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>
     </form>
 @endsection
+
 
 @push('script')
     <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
@@ -109,13 +232,61 @@
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
     <script src="../assets/js/sweet-alert/sweetalert.min.js"></script>
+
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+    <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
 
     <script>
+        // ====== Dependencies loaded above (DataTables, SweetAlert, Select2) ======
+
         let selectedOrders = [];
 
+        // ---------- Helpers ----------
+        function addSelected(id) {
+            if (!selectedOrders.includes(id)) selectedOrders.push(id);
+        }
+
+        function removeSelected(id) {
+            selectedOrders = selectedOrders.filter(x => x !== id);
+        }
+
+        function setAllOnPage(checked) {
+            $('.order-checkbox').each(function() {
+                const id = $(this).val();
+                $(this).prop('checked', checked);
+                if (checked) addSelected(id);
+                else removeSelected(id);
+            });
+        }
+
+        function syncHeaderState() {
+            const $rows = $('.order-checkbox');
+            const total = $rows.length;
+            const checked = $rows.filter(':checked').length;
+            const header = document.getElementById('checkAll');
+            if (!header) return;
+
+            if (total === 0) {
+                header.checked = false;
+                header.indeterminate = false;
+                return;
+            }
+
+            if (checked === 0) {
+                header.checked = false;
+                header.indeterminate = false;
+            } else if (checked === total) {
+                header.checked = true;
+                header.indeterminate = false;
+            } else {
+                header.checked = false;
+                header.indeterminate = true;
+            }
+        }
+
+        // ---------- Submit handler ----------
         document.getElementById('saveOrder').addEventListener('click', function(event) {
-            // Get all checkboxes
             if (selectedOrders.length === 0) {
                 event.preventDefault();
                 swal({
@@ -126,7 +297,8 @@
                 return;
             }
 
-            // Tambahkan array ke form
+            // inject hidden input (remove previous if any)
+            $('input[name="selectedOrders"]').remove();
             $('<input>').attr({
                 type: 'hidden',
                 name: 'selectedOrders',
@@ -134,91 +306,98 @@
             }).appendTo('form');
 
             event.preventDefault();
-
             $('#do-modal').modal('show');
-
-
         });
 
-        $(document).ready(function() {
-            // Event handler untuk checkbox
-            $(document).on('change', '.order-checkbox', function() {
-                const orderId = $(this).val();
-                if ($(this).is(':checked')) {
-                    if (!selectedOrders.includes(orderId)) {
-                        selectedOrders.push(orderId);
+        // ---------- DataTable init ----------
+        $(function() {
+            const table = $('#dt').DataTable({
+                processing: true,
+                serverSide: true,
+                destroy: true,
+                ajax: {
+                    url: "{{ route('dt.not-return-do') }}",
+                    data: function(d) {
+                        d.plateNumber = $('select[name="plateNumber"]').val();
+                        d.customerName = $('select[name="customerName"]').val();
+                        d.driverName = $('select[name="driverName"]').val();
+                        d.fleetTypeName = $('select[name="fleetTypeName"]').val();
+                        d.shipmentNumber = $('input[name="shipmentNumber"]').val();
+                        d.startDate = $('input[name="startDate"]').val();
+                        d.endDate = $('input[name="endDate"]').val();
+                        d.destination = $('select[name="destination"]').val();
+                        d.orderTypeCode = $('select[name="orderTypeCode"]').val();
                     }
-                } else {
-                    selectedOrders = selectedOrders.filter(id => id !== orderId);
-                }
-
+                },
+                columns: [{
+                        data: 'action'
+                    },
+                    {
+                        data: 'DT_RowIndex'
+                    },
+                    {
+                        data: 'orderDate'
+                    },
+                    {
+                        data: 'shipmentNumber'
+                    },
+                    {
+                        data: 'customer.name'
+                    },
+                    {
+                        data: 'route.originLocation.name'
+                    },
+                    {
+                        data: 'route.destinationLocation.name'
+                    },
+                    {
+                        data: 'fleet.plateNumber'
+                    },
+                    {
+                        data: 'driver.name'
+                    },
+                ],
+                columnDefs: [{
+                        searchable: false,
+                        targets: [0, 1]
+                    },
+                    {
+                        orderable: false,
+                        targets: [0, 1]
+                    },
+                ],
+                order: [
+                    [2, 'asc']
+                ],
             });
 
-            // Simpan state saat DataTable di-reload (misalnya saat pindah halaman)
+            // Filter button
+            $('#btnFilter').on('click', function() {
+                table.ajax.reload();
+            });
+
+            // When table draws (paging/sorting/filter), restore checkbox states on visible rows
             $('#dt').on('draw.dt', function() {
                 $('.order-checkbox').each(function() {
-                    const orderId = $(this).val();
-                    if (selectedOrders.includes(orderId)) {
-                        $(this).prop('checked', true);
-                    }
+                    const id = $(this).val();
+                    $(this).prop('checked', selectedOrders.includes(id));
                 });
+                syncHeaderState();
             });
+        });
 
-            $('#dt').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "destroy": true,
-                "ajax": {
-                    "url": "{{ route('dt.not-return-do') }}",
-                },
-                "columns": [{
-                        "data": 'action'
-                    }, {
-                        "data": 'DT_RowIndex'
-                    },
-                    {
-                        "data": 'orderDate'
-                    },
-                    {
-                        "data": 'code'
-                    },
-                    {
-                        "data": 'shipmentNumber'
-                    },
-                    {
-                        "data": 'customer.name'
-                    },
-                    {
-                        "data": 'route.originLocation.name'
-                    },
-                    {
-                        "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'driver.name'
-                    },
+        // ---------- Row checkbox change (delegate) ----------
+        $(document).on('change', '.order-checkbox', function() {
+            const id = $(this).val();
+            if ($(this).is(':checked')) addSelected(id);
+            else removeSelected(id);
+            syncHeaderState();
+        });
 
-
-                ],
-                "columnDefs": [{
-                        "searchable": false,
-                        "targets": [0, 1]
-                    },
-                    {
-                        "orderable": false,
-                        "targets": [0, 1]
-                    }
-                ],
-                "order": [
-                    [2, 'asc']
-                ]
-            })
+        // ---------- Header CheckAll (delegate in case header is re-rendered) ----------
+        $(document).on('click', '#checkAll', function() {
+            setAllOnPage(this.checked);
+            syncHeaderState();
         });
     </script>
 @endpush

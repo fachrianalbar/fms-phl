@@ -63,25 +63,41 @@
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+        $totalPrice = 0;
+        $totalQty = 0;
+    @endphp
+
     <!-- Informasi invoice + rekening (gabungan) -->
     <table style="width: 100%; margin-top: 20px; font-size: 10pt;">
         <tr>
             <td style="width: 45%; vertical-align: top;">
                 <table style="width: 100%;">
                     <tr>
-                        <td>NO. INVOICE : 1-24</td>
+                        <td>NO. INVOICE : {{ $data->invoiceNumber }}</td>
                     </tr>
                     <tr>
                         <td>Kepada YTH :</td>
                     </tr>
                     <tr>
-                        <td><strong>PT. ASIA MAKMUR</strong></td>
+                        <td><strong>{{ strtoupper($customer->name ?? 'PT. ASIA MAKMUR') }}</strong></td>
                     </tr>
+                    @if ($customer && $customer->officeAddress)
+                        <tr>
+                            <td>{{ $customer->officeAddress }}</td>
+                        </tr>
+                    @endif
                 </table>
             </td>
-            <td style="width: 55%; vertical-align: top;">
+
+            <td style="width: 55%; vertical-align: top">
                 <div style="text-align: right;">
-                    <p>B LAMPUNG, 23 Januari 2024</p>
+                    <p>
+                        {{ strtoupper($company->city ?? 'BANDAR LAMPUNG') }},
+                        {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}
+                    </p>
+
                     <table style="font-size: 10pt; display: inline-block; text-align: left;">
                         <tr>
                             <td colspan="2" style="font-weight: bold;">Mohon dibayarkan ke Rekening BCA</td>
@@ -104,7 +120,6 @@
         </tr>
     </table>
 
-
     <!-- Tabel data utama -->
     <table class="data-table" style="margin-top: 20px;">
         <thead>
@@ -120,44 +135,38 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>09/01/24</td>
-                <td>B 9001 UEV</td>
-                <td>B Lampung</td>
-                <td>Surabaya</td>
-                <td>Kopi</td>
-                <td>40,204.5</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td>10/01/24</td>
-                <td>BE 8969 BM</td>
-                <td>B Lampung</td>
-                <td>Surabaya</td>
-                <td>Kopi</td>
-                <td>20,223.5</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td>10/01/24</td>
-                <td>D 9751 AD</td>
-                <td>B Lampung</td>
-                <td>Surabaya</td>
-                <td>Kopi</td>
-                <td>20,241.0</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
+            @foreach ($invoiceDetails as $index => $detail)
+                @php
+                    $order = $detail->order;
+                    $route = $order->route;
+                @endphp
+                <tr>
+                    <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
+                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                </tr>
+                @php
+                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                @endphp
+            @endforeach
+
             <tr>
                 <td colspan="7" style="text-align: right;"><strong>TOTAL :</strong></td>
-                <td><strong>0</strong></td>
+                <td><strong>{{ number_format($totalPrice, 0, ',', '.') }}</strong></td>
             </tr>
         </tbody>
     </table>
-
-
 
     <!-- TTD -->
     <div class="footer-sign">

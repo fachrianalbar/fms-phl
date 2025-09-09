@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class ReturnDoController extends Controller
 {
@@ -18,10 +19,12 @@ class ReturnDoController extends Controller
     protected $view;
     protected $menuSvc;
 
-    public function __construct(ReturnDoService $returnDoService)
+    public function __construct(ReturnDoService $returnDoService, MenuService $menuSvc)
     {
         $this->service = $returnDoService;
         $this->title = "Return Do";
+        $this->menuSvc = $menuSvc->getByName("Return Do");
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "operational.return-do.";
     }
 

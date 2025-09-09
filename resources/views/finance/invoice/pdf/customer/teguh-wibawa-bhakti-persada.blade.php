@@ -54,46 +54,69 @@
 
 <body>
 
+    @php
+        use Carbon\Carbon;
+
+        $totalPrice = 0;
+        foreach ($data->details as $detail) {
+            $totalPrice += $detail->order->route->price * $detail->order->qty;
+        }
+    @endphp
+
     <table class="no-border">
         <tr>
-            <td class="bold">PTWT-1/1-25</td>
+            <td class="bold">{{ $data->invoiceNumber }}</td>
         </tr>
     </table>
 
     <table class="no-border">
         <tr>
-            <td class="text-center bold" colspan="2">PT TEGUH WIBAWA BHAKTI PERSADA</td>
+            <td class="text-center bold" colspan="2">{{ strtoupper($data->customer->name) }}</td>
         </tr>
         <tr>
-            <td class="text-center" colspan="2">Tiga Juta Tujuh Ratus Ribu Rupiah</td>
+            <td class="text-center" colspan="2">{{ \App\Helpers\TerbilangHelper::terbilang($totalPrice) }} Rupiah
+            </td>
         </tr>
     </table>
 
     <table class="no-border">
         <tr>
-            <td colspan="2" class="bold">Ongkos Angkut Sagu Dari B. Lampung - Surabaya:</td>
+            <td colspan="2" class="bold">Ongkos Angkut
+                {{ $data->details->first()->order->orderMaterial->first()->material->name ?? '' }}Dari
+                {{ $data->details->first()->order->route->originLocation->name ?? '' }} -
+                {{ $data->details->first()->order->route->destinationLocation->name ?? '' }}</td>
         </tr>
-        <tr>
-            <td colspan="2">Tgl. 27-12-2024 &nbsp; = BE 8097 AUC &nbsp; = 20,000 x 145,-</td>
-        </tr>
+        @foreach ($data->details as $detail)
+            <tr>
+                <td colspan="2">
+                    Tgl. {{ Carbon::parse($detail->order->orderDate)->format('d-m-Y') }}
+                    = {{ $detail->order->fleet->plateNumber ?? '-' }}
+                    = {{ number_format($detail->order->qty, 0, ',', '.') }} x
+                    {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }},-
+                </td>
+            </tr>
+        @endforeach
+
     </table>
 
     <table class="no-border">
         <tr>
-            <td class="bold">Pembayaran mohon ditransfer ke bank BNI:</td>
-            <td class="text-right bold">Bandar Lampung, 8 Januari 2024</td>
+            <td class="bold">Pembayaran mohon ditransfer ke bank {{ $company->bank_name ?? 'BNI' }}:</td>
+            <td class="text-right bold">{{ strtoupper($company->city ?? 'Bandar Lampung') }},
+                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
-            <td>Nama&nbsp;&nbsp;&nbsp;&nbsp;: PT Wijaya Trans Makmur Sejahtera</td>
+            <td>Nama&nbsp;&nbsp;&nbsp;&nbsp;: PT Wijaya Trans Makmur Sejahtera </td>
         </tr>
         <tr>
-            <td>No. Rek&nbsp;: 1812766011</td>
+            <td>No. Rek&nbsp;: {{ $company->bank_account ?? '1812766011' }}</td>
         </tr>
     </table>
 
-    <div class="amount">Rp. 3,700,000,-</div>
+    <div class="amount">Rp. {{ number_format($totalPrice, 0, ',', '.') }},-</div>
 
     <div class="signature">Hendri - PT Wijaya Trans Makmur Sejahtera</div>
+
 
 </body>
 

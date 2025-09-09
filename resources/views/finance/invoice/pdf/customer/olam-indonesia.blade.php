@@ -64,11 +64,17 @@
         @include('finance.invoice.pdf.header.phl')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+        $totalPrice = 0;
+        $totalQty = 0;
+    @endphp
+
     <!-- Informasi Header Invoice -->
     <table style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : 1-25</td>
-            <td class="text-right">B LAMPUNG, 14 Januari 2025</td>
+            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
+            <td class="text-right">B LAMPUNG, {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
@@ -109,35 +115,37 @@
                 <th>Nama Barang</th>
                 <th>Tonase</th>
                 <th>Tarif/kgs</th>
-                <th>Ongkos Angkut</th>
+                <th>Jumlah</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>1</td>
-                <td>07/01/25</td>
-                <td>D 9750 AD</td>
-                <td>B Lampung</td>
-                <td>Surabaya</td>
-                <td>Kopi</td>
-                <td>19,981.0</td>
-                <td>-</td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>07/01/25</td>
-                <td>B 9656 UXS</td>
-                <td>B Lampung</td>
-                <td>Surabaya</td>
-                <td>Kopi</td>
-                <td>20,096.0</td>
-                <td>-</td>
-                <td>-</td>
-            </tr>
+            @foreach ($data->details as $index => $detail)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
+
+                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    </td>
+                    @php
+                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    @endphp
+                </tr>
+            @endforeach
             <tr>
                 <td colspan="8" class="text-right bold">TOTAL :</td>
-                <td>-</td>
+                <td>{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

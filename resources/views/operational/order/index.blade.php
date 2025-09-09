@@ -58,8 +58,6 @@
                 <div class="d-flex align-items-center gap-3">
                     <div class="accordion-item ">
 
-
-
                         <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
                             data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                             <i class="mdi mdi-magnify fs-14 text-dark"></i>

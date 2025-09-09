@@ -60,7 +60,7 @@ class CustomerService
             'ppn' => $request->ppn,
             'pph' => $request->pph,
             'companyCode' => $request->companyCode,
-            'due_date_duration' => $request->due_date_duration,
+            'duedateduration' => $request->duedateduration,
             'type' => $request->type,
             'isDo' => $request->isDo
             // 'telegramUsername' => $request->telegramUsername
@@ -91,7 +91,7 @@ class CustomerService
             'ppn' => $request->ppn,
             'pph' => $request->pph,
             'companyCode' => $request->companyCode,
-            'due_date_duration' => $request->due_date_duration,
+            'duedateduration' => $request->duedateduration,
             'type' => $request->type,
             'isDo' => $request->isDo
             // 'telegramUsername' => $request->telegramUsername

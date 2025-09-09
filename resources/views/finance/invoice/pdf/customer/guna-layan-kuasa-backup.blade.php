@@ -64,15 +64,15 @@
 
         $totalPrice = 0;
         foreach ($data->details as $detail) {
-            // $totalPrice += $detail->order_cost->calculateTotalCost();
+            $totalPrice += $detail->order_cost->calculateTotalCost();
         }
     @endphp
 
     <table style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
+            <td style="width: 60%;">NO. INVOICE : {{ $data->invoice_number }}</td>
             <td class="text-right">{{ strtoupper($company->city ?? 'B LAMPUNG') }},
-                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
+                {{ Carbon::parse($data->invoice_date)->locale('id')->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
@@ -88,7 +88,7 @@
         </tr>
         <tr>
             <td style="width: 20%;">A/N</td>
-            <td>: PT PUTRI HOKI LOGISTIK</td>
+            <td>: {{ $company->name ?? 'PT PRIMA HARAPAN LAMPUNG' }}</td>
         </tr>
         <tr>
             <td>NO. REKENING</td>
@@ -106,11 +106,10 @@
                 <th>No</th>
                 <th>Tanggal</th>
                 <th>No Kendaraan</th>
-                <th>No. SPPB</th>
-                <th>Gudang Muat</th>
+                <th>Dari</th>
                 <th>Tujuan</th>
                 <th>Nama Barang</th>
-                <th>Total Tonase</th>
+                <th>Tonase</th>
                 <th>Tarif/Kg</th>
                 <th>Ongkos Angkut</th>
             </tr>
@@ -119,40 +118,50 @@
             @foreach ($data->details as $index => $detail)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
-                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
-                    <td>{{ $detail->order->shipmentNumber ?? '-' }}</td>
-                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
-                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
-                    <td>
-                        @foreach ($detail->order->orderMaterial as $i => $mtr)
-                            {{ $mtr->material->name }}@if (!$loop->last)
-                                ,
-                            @endif
-                        @endforeach
+                    <td>{{ Carbon::parse($detail->order_cost->order->start_date)->format('d/m/y') }}</td>
+                    <td>{{ $detail->order_cost->order->fleet->plate_number ?? '-' }}</td>
+                    <td>{{ $detail->order_cost->order->from_address ?? '-' }}</td>
+                    <td>{{ $detail->order_cost->order->to_address ?? '-' }}</td>
+                    <td>{{ $detail->order_cost->order->orderMaterials->first()->material->name ?? '-' }}</td>
+                    <td>{{ number_format($detail->order_cost->order->orderMaterials->sum('quantity') / 1000, 3, '.', ',') }}
                     </td>
-
-                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
-                    </td>
-                    @php
-                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
-                    @endphp
+                    <td>{{ number_format($detail->order_cost->cost_per_kg ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order_cost->calculateTotalCost(), 0, ',', '.') }}</td>
                 </tr>
             @endforeach
 
             <tr>
-                <td colspan="9" class="text-right bold">TOTAL :</td>
+                <td colspan="8" class="text-right bold">TOTAL :</td>
                 <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
+            @if ($customer && $customer->ppn > 0)
+                @php
+                    $ppnAmount = $totalPrice * ($customer->ppn / 100);
+                    $grandTotal = $totalPrice + $ppnAmount;
+                @endphp
+                <tr>
+                    <td colspan="8" class="text-right">PPN {{ $customer->ppn }}% :</td>
+                    <td>{{ number_format($ppnAmount, 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="8" class="text-right bold">GRAND TOTAL :</td>
+                    <td class="bold">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                </tr>
+            @endif
         </tbody>
     </table>
+
+    @if ($data->notes)
+        <div style="margin-top: 20px;">
+            <strong>Catatan:</strong><br>
+            {{ $data->notes }}
+        </div>
+    @endif
 
     <div class="mt-60 text-right">
         <p>HORMAT KAMI</p>
         <br><br><br>
-        <p class="underline bold">EVI IRAWATI</p>
+        <p class="underline bold">{{ strtoupper($company->director_name ?? 'DIREKTUR') }}</p>
     </div>
 
 </body>

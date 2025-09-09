@@ -36,65 +36,68 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
-
                 <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
-
             </div>
+
             <div class="card-body col-md-12">
                 <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
                     @csrf
                     @method('PUT')
+
                     <div class="row">
                         <div class="col-md-6 position-relative">
-                            <label class="form-label" for="customerCode">Customer
-                                Name <i class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="customerCode" id="customerCode" required=""
-                                disabled>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                            <label class="form-label" for="customerCode">
+                                {{ __('menu_invoice.customer_name') }} <i class="mdi mdi-information text-danger"></i>
+                            </label>
+                            <select class="js-example-basic-single" name="customerCode" id="customerCode" required disabled>
+                                <option selected disabled value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}"
                                         {{ $data->customerCode == $item->code ? 'selected' : '' }}>
                                         {{ $item->name }}
                                     </option>
                                 @endforeach
-                            </select>`
+                            </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="invoiceNumber">Invoice Number <i
-                                    class="mdi mdi-information text-danger"></i></label>
+                            <label class="form-label" for="invoiceNumber">
+                                {{ __('menu_invoice.invoice_number') }} <i class="mdi mdi-information text-danger"></i>
+                            </label>
                             <input class="form-control" name="invoiceNumber" id="invoiceNumber" type="text" required
-                                placeholder="Invoice Number" value="{{ $data->invoiceNumber }}">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label" for="receiptNumber">Receipt Number <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="receiptNumber" id="receiptNumber" type="text" required
-                                placeholder="Receipt Number" value="{{ $data->receiptNumber }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="poNumber">Po Number</label>
-                            <input class="form-control" name="poNumber" id="poNumber" type="text"
-                                placeholder="Po Number" value="{{ $data->poNumber }}">
+                                placeholder="{{ __('menu_invoice.invoice_number') }}" value="{{ $data->invoiceNumber }}">
                         </div>
                     </div>
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="name">Invoice Date <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="invoiceDate" id="datetime-local" type="date" required
-                                placeholder="Invoice Date" value="{{ $data->invoiceDate }}">
+                            <label class="form-label" for="receiptNumber">
+                                {{ __('menu_invoice.receipt_number') }} <i class="mdi mdi-information text-danger"></i>
+                            </label>
+                            <input class="form-control" name="receiptNumber" id="receiptNumber" type="text" required
+                                placeholder="{{ __('menu_invoice.receipt_number') }}" value="{{ $data->receiptNumber }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="name">Overdue Date </label>
-                            <input class="form-control" name="overdueDate" readonly placeholder="Overdue Date"
-                                value="{{ $data->overdueDate }}">
+                            <label class="form-label" for="poNumber">{{ __('menu_invoice.po_number') }}</label>
+                            <input class="form-control" name="poNumber" id="poNumber" type="text"
+                                placeholder="{{ __('menu_invoice.po_number') }}" value="{{ $data->poNumber }}">
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label" for="invoiceDate">
+                                {{ __('menu_invoice.invoice_date') }} <i class="mdi mdi-information text-danger"></i>
+                            </label>
+                            <input class="form-control" name="invoiceDate" id="invoiceDate" type="date" required
+                                placeholder="{{ __('menu_invoice.invoice_date') }}" value="{{ $data->invoiceDate }}">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="overdueDate">{{ __('menu_invoice.overdue_date') }}</label>
+                            <input class="form-control" name="overdueDate" id="overdueDate" type="date" readonly
+                                placeholder="{{ __('menu_invoice.overdue_date') }}" value="{{ $data->overdueDate }}">
                         </div>
                     </div>
 
@@ -102,62 +105,41 @@
                         <hr>
                     </div>
 
-                    <div class="row ">
+                    {{-- <div class="row">
                         <div class="col-md-6">
-                            <label class="form-label" for="picName">To Pic Name </label>
+                            <label class="form-label" for="picName">{{ __('menu_invoice.to_pic_name') }}</label>
                             <input class="form-control" name="picName" id="picName" type="text"
-                                value="{{ $customerData->picName }}" readonly placeholder="To Pic Name">
+                                value="{{ $customerData->picName }}" readonly
+                                placeholder="{{ __('menu_invoice.to_pic_name') }}">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="picPhone">To Pic Phone Number</label>
+                            <label class="form-label" for="picPhone">{{ __('menu_invoice.to_pic_phone_number') }}</label>
                             <input class="form-control" name="picPhone" id="picPhone" type="text"
-                                value="{{ $data->phone }}" readonly placeholder="To Pic Phone Number">
+                                value="{{ $data->phone }}" readonly
+                                placeholder="{{ __('menu_invoice.to_pic_phone_number') }}">
+                        </div>
+                    </div> --}}
+
+                    <div class="row">
+                        {{--
+          <div class="col-md-6">
+            <label class="form-label" for="invoiceAddress">{{ __('menu_invoice.billing_address') }}</label>
+            <textarea class="form-control" placeholder="{{ __('menu_invoice.billing_address') }}" rows="4" disabled readonly>
+              {{ $data->customer->billingAddress }}
+            </textarea>
+          </div>
+          --}}
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="notes">{{ __('menu_invoice.notes') }}</label>
+                            <textarea class="form-control" name="notes" id="notes" placeholder="{{ __('menu_invoice.notes') }}"
+                                rows="4">{{ $data->notes }}</textarea>
                         </div>
                     </div>
-
-
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="invoiceAddress">Billing Address</label>
-                            <textarea class="form-control" placeholder="Billing Address" rows="4" disabled readonly>{{ $data->customer->billingAddress }}</textarea>
-
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label" for="notes">Notes <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <textarea class="form-control" name="notes" id="notes" placeholder="Notes" rows="4" required>{{ $data->notes }}</textarea>
-                        </div>
-                    </div>
-
-
-                    @if (isset($data->customer->pic))
-                        <div id="picContainer">
-                            <label class="form-label" for="picName">Data Pic </label>
-
-                            <div id="listPic">
-                                @foreach ($data->customer->pic as $item)
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <input class="form-control" type="text" readonly
-                                                value="{{ $item->picName }}" placeholder="To Pic Name" disabled>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <input class="form-control" type="text" readonly
-                                                value="{{ $item->phone }}" placeholder="To Pic Phone Number" disabled>
-                                        </div>
-                                    </div>
-                                @endforeach
-
-                            </div>
-
-                        </div>
-                    @endif
-
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Edit</button>
+                        <button class="btn btn-primary" type="submit">{{ __('menu_invoice.edit') }}</button>
                     </div>
                 </form>
             </div>
@@ -165,7 +147,7 @@
 
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Order Data</h4>
+                <h4>{{ __('menu_invoice.order_data_title') }}</h4>
 
                 <div class="d-flex gap-5">
                     <a target="_blank" href="{{ route($view . 'pdf-invoice', $data->id) }}"
@@ -173,25 +155,26 @@
 
                     @if ($status == 0)
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                            data-bs-target=".bd-example-modal-xl"
-                            id="openModalButton">{{ __('general.add_data') }}</button>
+                            data-bs-target=".bd-example-modal-xl" id="openModalButton">
+                            {{ __('general.add_data') }}
+                        </button>
                     @endif
                 </div>
             </div>
+
             <div class="card-body col-md-12">
                 <table class="table table-striped w-100 nowrap" id="dt-order">
                     <thead>
                         <tr>
-                            <th>#</th>
-                            <th>No</th>
-                            {{-- <th>Shipment No</th> --}}
-                            <th>Order Date</th>
-                            <th>Origin</th>
-                            <th>Destination</th>
-                            <th>Shipment No</th>
-                            <th>Plate No</th>
-                            {{-- <th>Order Type</th> --}}
-                            <th>Total Cost</th>
+                            <th>{{ __('menu_invoice.hash') }}</th>
+                            <th>{{ __('menu_invoice.no') }}</th>
+                            {{-- <th>{{ __('menu_invoice.shipment_no') }}</th> --}}
+                            <th>{{ __('menu_invoice.order_date') }}</th>
+                            <th>{{ __('menu_invoice.origin') }}</th>
+                            <th>{{ __('menu_invoice.destination') }}</th>
+                            <th>{{ __('menu_invoice.shipment_no') }}</th>
+                            <th>{{ __('menu_invoice.plate_no') }}</th>
+                            {{-- <th>{{ __('menu_invoice.total_cost') }}</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -202,12 +185,11 @@
                             <tr>
                                 <td>
                                     @if ($status == 0)
-                                        <ul class="action">
-                                            <li class="delete"><a
-                                                    href="javascript:deleteInvoiceDetail('{{ $item->id }}')"><i
-                                                        class="icon-trash"></i></a>
-                                            </li>
-                                        </ul>
+                                        <a href="javascript:deleteInvoiceDetail('{{ $item->id }}')"
+                                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                            title="Delete">
+                                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                        </a>
                                     @endif
 
                                 </td>
@@ -218,48 +200,6 @@
                                 <td>{{ $item->shipmentNumber }}</td>
                                 <td>{{ $item->fleet->plateNumber }}</td>
                                 {{-- <td>{{ $item->orderType->name }}</td> --}}
-                                <td>
-                                    @php
-                                        $details = $item->route->routeDetail;
-
-                                        $price = 0;
-                                        foreach ($details as $detail) {
-                                            if ($detail->costComponent->type == 'Allowance') {
-                                                if ($detail->amount != 0) {
-                                                    $price += $detail->amount;
-                                                }
-
-                                                if ($detail->percentage) {
-                                                    $route = Route::where('code', $detail->routeCode)->first();
-
-                                                    $price = $route->price * ($detail->percentage / 100);
-                                                }
-                                            }
-                                        }
-                                        $totalAllowance += $price;
-                                        $bonus = TonaseBonus::where('min', '<=', $item->qty)
-                                            ->where('max', '>=', $item->qty)
-                                            ->first();
-
-                                        if ($bonus) {
-                                            $price += $bonus->value;
-                                            $totalAllowance += $bonus->value;
-                                        }
-
-                                        $cost = 0;
-                                        if (isset($item->cost)) {
-                                            foreach ($item->cost as $itCost) {
-                                                $cost += $itCost->nominal;
-                                            }
-                                        }
-                                        $price += $cost;
-                                        $totalAllowance += $cost;
-                                        $allowance = 'Rp ' . number_format($price, 0, ',', '.');
-                                    @endphp
-                                    {{ $allowance }}
-                                </td>
-
-
                             </tr>
                         @endforeach
                         {{-- <tr>
@@ -268,7 +208,6 @@
                             </tr> --}}
                     </tbody>
                 </table>
-                <p class="h5">Total : Rp {{ number_format($totalAllowance, 0, ',', '.') }}</p>
             </div>
         </div>
 
@@ -280,48 +219,46 @@
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Data Order</h4>
+                            <h4 class="modal-title" id="myLargeModalLabel">{{ __('menu_invoice.order_data_title') }}</h4>
                             <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
                                 aria-label="Close"></button>
                         </div>
+
                         <div class="card">
                             <div class="card-body col-md-12">
                                 <div class="row g-3">
                                     <table class="table table-striped w-100 nowrap" id="dt">
                                         <thead>
                                             <tr>
-                                                <th>#</th>
-                                                <th>No</th>
-                                                <th>Order Date</th>
-                                                <th>Origin</th>
-                                                <th>Destination</th>
-                                                <th>Shipment No</th>
-                                                <th>Plate No</th>
-                                                <th>Total Cost</th>
-                                                {{-- <th>Fleet Type</th> --}}
-                                                {{-- <th>Order Type</th> --}}
-                                                {{-- <th>Allowance</th> --}}
-                                                {{-- <th>Qty</th>
-                                        <th>Cost</th>
-                                        <th>Tonase</th>
-                                        <th>Add Cost</th> --}}
+                                                <th>{{ __('menu_invoice.hash') }}</th>
+                                                <th>{{ __('menu_invoice.no') }}</th>
+                                                <th>{{ __('menu_invoice.order_date') }}</th>
+                                                <th>{{ __('menu_invoice.origin') }}</th>
+                                                <th>{{ __('menu_invoice.destination') }}</th>
+                                                <th>{{ __('menu_invoice.shipment_no') }}</th>
+                                                <th>{{ __('menu_invoice.plate_no') }}</th>
+                                                <th>{{ __('menu_invoice.total_cost') }}</th>
+                                                {{-- <th>{{ __('menu_invoice.fleet_type') }}</th> --}}
+                                                {{-- <th>{{ __('menu_invoice.order_type') }}</th> --}}
+                                                {{-- <th>{{ __('menu_invoice.allowance') }}</th> --}}
                                             </tr>
                                         </thead>
-                                        <tbody>
-
-                                        </tbody>
+                                        <tbody></tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
+
                         <div class="modal-footer justify-content-start">
-                            <button type="submit" id="saveInvoice" class="btn btn-primary">Save</button>
+                            <button type="submit" id="saveInvoice"
+                                class="btn btn-primary">{{ __('menu_invoice.save') }}</button>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
     </div>
+
     <form id="delete-form" method="post">
         @csrf
         @method('DELETE')
@@ -355,14 +292,20 @@
 
     <script>
         $(document).ready(function() {
-            $("input[name='invoiceDate']").on("change", function() {
-                let invoiceDate = new Date($(this).val());
-                if (!isNaN(invoiceDate.getTime())) {
-                    let overdueDate = new Date(invoiceDate);
-                    overdueDate.setDate(overdueDate.getDate() + 2); // Tambahkan 2 hari
+            $('input[name="invoiceDate"]').on('change', function() {
+                const customerCode = $('#customerCode').select2('val');
 
-                    let formattedDate = overdueDate.toISOString().split('T')[0];
-                    $("input[name='overdueDate']").val(formattedDate);
+                if (customerCode) {
+                    $.get("{{ url('ajax/customer-invoice') }}/" + customerCode, function(data) {
+                        let invoiceDate = new Date($("input[name='invoiceDate']").val());
+                        if (!isNaN(invoiceDate.getTime())) {
+                            let overdueDate = new Date(invoiceDate);
+                            overdueDate.setDate(overdueDate.getDate() + data.dueDateDuration);
+
+                            let formattedDate = overdueDate.toISOString().split('T')[0];
+                            $("input[name='overdueDate']").val(formattedDate);
+                        }
+                    });
                 }
             });
 

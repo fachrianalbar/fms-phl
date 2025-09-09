@@ -116,10 +116,10 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label" for="due_date_duration">
+                            <label class="form-label" for="dueDateDuration">
                                 {{ __('menu_customer.due_date_duration') }}
                                 ({{ __('menu_customer.days') }})</label>
-                            <input class="form-control" name="due_date_duration" id="due_date_duration" type="number"
+                            <input class="form-control" name="dueDateDuration" id="dueDateDuration" type="number"
                                 min="1"
                                 placeholder="{{ __('menu_customer.due_date_duration') }} ({{ __('menu_customer.days') }})">
                         </div>

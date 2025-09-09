@@ -36,15 +36,14 @@
                             <tr>
                                 <th>#</th>
                                 <th>No</th>
-                                <th>Code</th>
-                                <th>Invoice No</th>
-                                <th>Receipt No</th>
-                                <th>Customer Name</th>
-                                <th>Invoice Dates</th>
-                                <th>Total Order</th>
-                                <th>Total Price</th>
-                                <th>PPN</th>
-                                <th>Total Billing</th>
+                                <th>{{ __('menu_invoice.invoice_no') }}</th>
+                                <th>{{ __('menu_invoice.receipt_no') }}</th>
+                                <th>{{ __('menu_invoice.customer_name') }}</th>
+                                <th>{{ __('menu_invoice.invoice_dates') }}</th>
+                                <th>{{ __('menu_invoice.total_order') }}</th>
+                                <th>{{ __('menu_invoice.price') }}</th>
+                                <th>{{ __('menu_invoice.ppn') }}</th>
+                                <th>{{ __('menu_invoice.total_billing') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -98,9 +97,6 @@
                         "data": 'DT_RowIndex'
                     },
                     {
-                        "data": 'code'
-                    },
-                    {
                         "data": 'invoiceNumber'
                     },
                     {
@@ -116,7 +112,7 @@
                         "data": 'orderCount'
                     },
                     {
-                        "data": 'totalPrice'
+                        "data": 'price'
                     },
                     {
                         "data": 'ppn'
@@ -124,9 +120,6 @@
                     {
                         "data": 'totalBilling'
                     }
-
-
-
                 ],
                 "columnDefs": [{
                         "searchable": false,

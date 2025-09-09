@@ -185,54 +185,28 @@ class InvoiceController extends Controller
 
                     return $customer;
                 })
-                ->addColumn('totalPrice', function ($row) {
+
+                ->addColumn('price', function ($row) {
+                    $price = 0;
+
                     foreach ($row->details as $item) {
-                        $datas = $item->order->route->routeDetail;
-
-                        $allowance = 0;
-                        foreach ($datas as $items) {
-                            if ($items->costComponent->type == 'Allowance') {
-                                if ($items->amount != 0) {
-                                    $allowance += $items->amount;
-                                }
-
-                                if ($items->percentage) {
-                                    $route = Route::where('code', $items->routeCode)->first();
-
-                                    $allowance += $route->price * ($items->percentage / 100);
-                                }
-                            }
-                        }
-
-                        $this->totalPriceInvoice += $allowance;
-
-                        $tonaseBonus = TonaseBonus::where('min', '<=', $item->order->qty)
-                            ->where('max', '>=', $item->order->qty)
-                            ->first();
-
-                        $bonus = 0;
-
-                        if ($tonaseBonus) {
-                            $bonus = number_format($tonaseBonus->value, 0, '.', ',');
-                            $this->totalPriceInvoice += $tonaseBonus->value;
-                        }
-
-                        $cost = 0;
-                        if (isset($item->order->cost)) {
-                            foreach ($item->order->cost as $costs) {
-                                $cost += $costs->nominal;
-                            }
-                        }
-                        $this->totalPriceInvoice += $cost;
+                        $price = $item->order->route->price * $item->order->qty;
                     }
 
-                    return '' . number_format($this->totalPriceInvoice, 0, ',', '.');
+                    $this->totalPriceInvoice = $price;
+
+
+                    return '' . number_format($price, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
-                    return number_format($this->totalPriceInvoice * 0.11, 0, '.', ',');
+                    $customer = $row->details->first()->order->customer;
+
+                    return number_format($this->totalPriceInvoice * ($customer->ppn / 100), 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    return '' . number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
+                    $customer = $row->details->first()->order->customer;
+
+                    return '' . number_format($this->totalPriceInvoice *  ($customer->ppn / 100) + $this->totalPriceInvoice, 0, ',', '.');
                 })
 
                 ->addColumn('action', function ($row) {
@@ -274,7 +248,7 @@ class InvoiceController extends Controller
                     }
                     return $btn;
                 })
-                ->rawColumns(['action', 'orderCount', 'totalPrice', 'ppn', 'totalBilling', 'customer.name'])
+                ->rawColumns(['action', 'orderCount', 'ppn', 'totalBilling', 'customer.name', 'price'])
                 ->toJson();
         }
     }
@@ -335,67 +309,6 @@ class InvoiceController extends Controller
 
                     return $destination;
                 })
-                ->addColumn('allowance', function ($row) {
-                    $order = $row->route->routeDetail;
-
-                    $allowance = 0;
-                    foreach ($order as $item) {
-                        if ($item->costComponent->type == 'Allowance') {
-                            if ($item->amount != 0) {
-                                $allowance += $item->amount;
-                            }
-
-                            if ($item->percentage) {
-                                $route = Route::where('code', $item->routeCode)->first();
-
-                                $allowance = $route->price * ($item->percentage / 100);
-                            }
-                        }
-                    }
-                    return  'Rp ' .  number_format($allowance, 0, ',', '.');
-                })
-                ->addColumn('cost', function ($row) {
-                    $allowance = 0;
-
-                    if (isset($row->route->routeDetail)) {
-                        $data = $row->route->routeDetail;
-
-                        foreach ($data as $item) {
-                            if ($item->costComponent->type == 'Allowance') {
-                                if ($item->amount != 0) {
-                                    $allowance = $item->amount;
-                                }
-
-                                if ($item->percentage) {
-                                    $route = Route::where('code', $item->routeCode)->first();
-
-                                    $allowance = $route->price * ($item->percentage / 100);
-                                }
-                            }
-                        }
-                        $this->totalPrice = $allowance;
-                    }
-
-                    return '' . number_format($allowance, 0, ',', '.');
-                })
-                ->addColumn('tonase', function ($row) {
-                    if (isset($row->route->routeTypeCode)) {
-                        if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
-                        }
-                    }
-                    return '' . 0;
-                })
-
-                ->addColumn('bonus', function ($row) {
-                    $bonus = TonaseBonus::where('min', '<=', $row->qty)->where('max', '>=', $row->qty)->first();
-
-                    if ($bonus) {
-                        $this->totalPrice += $bonus->value;
-                        return '' . number_format($bonus->value, 0, ',', '.');
-                    }
-                    return '' . 0;
-                })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
                     if (isset($row->cost)) {
@@ -403,7 +316,7 @@ class InvoiceController extends Controller
                             $cost += $item->nominal;
                         }
                     }
-                    $this->totalPrice += $cost;
+                    $this->totalPrice = $cost;
                     return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
@@ -417,7 +330,7 @@ class InvoiceController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-M-Y');
                 })
-                ->rawColumns(['action', 'allowance', 'orderDate', 'fleet.plateNumber', 'route.originLocation.name', 'route.destinationLocation.name', 'orderType.name', 'cost', 'bonus', 'tonase', 'addCost', 'totalPrice'])
+                ->rawColumns(['action', 'orderDate', 'fleet.plateNumber', 'route.originLocation.name', 'route.destinationLocation.name', 'orderType.name', 'addCost', 'totalPrice'])
                 ->toJson();
         }
     }
@@ -465,6 +378,62 @@ class InvoiceController extends Controller
 
         $company = CompanySetting::first();
 
+        // Get invoice details with related data
+        $invoiceDetails = $data->details()->with([
+            'order.orderMaterial.material',
+            'order.orderMaterial.unit',
+            'order.cost',
+            'order.customer',
+            'order.fleet',
+            'order.driver',
+            'order.route.originLocation',
+            'order.route.destinationLocation'
+        ])->get();
+
+        // Tentukan template PDF berdasarkan customer invoicePdf field
+        $customer = $data->customer;
+        $pdfTemplate = 'finance.invoice.pdf.general'; // Default template
+
+        if ($customer && $customer->invoicePdf) {
+            // Switch case untuk menentukan template berdasarkan invoicePdf field
+            switch ($customer->invoicePdf) {
+                case 'asia-makmur':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.asia-makmur';
+                    break;
+                case 'asia-sakti-wahid-foods-manufacture':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.asia-sakti-wahid-foods-manufacture';
+                    break;
+                case 'teguh-wibawa-bhakti-persada':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada';
+                    break;
+                case 'olam-indonesia':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.olam-indonesia';
+                    break;
+                case 'matahari-sakti':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.matahari-sakti';
+                    break;
+                case 'sriboga-flour-mill':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.sriboga-flour-mill';
+                    break;
+                case 'guna-layan-kuasa':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.guna-layan-kuasa';
+                    break;
+                case 'ekspedisi-berdikari':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.ekspedisi-berdikari';
+                    break;
+                case 'danitama-niaga-prima':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.danitama-niaga-prima';
+                    break;
+                case 'central-pertiwi-bahari':
+                    $pdfTemplate = 'finance.invoice.pdf.customer.central-pertiwi-bahari';
+                    break;
+                default:
+                    // Jika template tidak ditemukan, gunakan general
+                    $pdfTemplate = 'finance.invoice.pdf.general';
+                    break;
+            }
+        }
+
         $mpdf = new Mpdf(
             [
                 'orientation' => 'P',
@@ -472,13 +441,18 @@ class InvoiceController extends Controller
             ]
         );
 
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
         $mpdf->WriteHTML(
-            view($this->view . 'pdf.invoice')
+            view($pdfTemplate)
                 ->with('data', $data)
                 ->with('company', $company)
+                ->with('invoiceDetails', $invoiceDetails)
+                ->with('customer', $customer)
         );
 
-        return $mpdf->Output('Laporan Invoice.pdf', 'I');
+        return $mpdf->Output('Invoice-' . $data->invoiceNumber . '.pdf', 'I');
     }
 
     public function customerInvoice($customerCode)

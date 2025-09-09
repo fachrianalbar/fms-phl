@@ -68,22 +68,30 @@
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+
+        $totalPrice = 0;
+
+    @endphp
+
     <table class="no-border" style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : 2-25</td>
-            <td class="text-right">B LAMPUNG, 17 Januari 2025</td>
+            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
+            <td class="text-right">{{ strtoupper($company->city ?? 'B LAMPUNG') }},
+                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
         </tr>
         <tr>
-            <td colspan="2"><strong>PT. SRIBOGA FLOUR MILL</strong></td>
+            <td colspan="2"><strong>{{ strtoupper($customer->name) }}</strong></td>
         </tr>
     </table>
 
     <table class="no-border" style="margin-top: 15px;">
         <tr>
-            <td colspan="2"><strong>Mohon di bayarkan ke Rekening BCA</strong></td>
+            <td colspan="2"><strong>Mohon di bayarkan ke Rekening {{ $company->bank_name ?? 'BCA' }}</strong></td>
         </tr>
         <tr>
             <td style="width: 25%;">A/N</td>
@@ -91,17 +99,18 @@
         </tr>
         <tr>
             <td>NO. REKENING</td>
-            <td>: 0209918899</td>
+            <td>: {{ $company->bank_account ?? '0209918899' }}</td>
         </tr>
         <tr>
             <td>CABANG</td>
-            <td>: BUMI WARAS</td>
+            <td>: {{ $company->bank_branch ?? 'BUMI WARAS' }}</td>
         </tr>
     </table>
 
     <table class="invoice-table mt-20">
         <thead>
             <tr>
+                <th>No</th>
                 <th>TGL</th>
                 <th>NO. KENDARAAN</th>
                 <th>DARI</th>
@@ -113,54 +122,33 @@
             </tr>
         </thead>
         <tbody>
+            @foreach ($data->details as $index => $detail)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
+
+                    <td>{{ $detail->order->qty ?? 0 }}</td>
+                    <td>{{ $detail->order->route->price ?? 0 }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    </td>
+                    @php
+                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    @endphp
+                </tr>
+            @endforeach
             <tr>
-                <td>10-Jan-25</td>
-                <td>B 9480 UXS</td>
-                <td>SEMARANG</td>
-                <td>PALEMBANG</td>
-                <td>TEPUNG</td>
-                <td>20,000</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td colspan="6" class="text-left">Ongkos Bongkar</td>
-                <td></td>
-                <td>480,000</td>
-            </tr>
-            <tr>
-                <td>6-Jan-25</td>
-                <td>BE 8141 AME</td>
-                <td>SEMARANG</td>
-                <td>LUBUK LINGGAU</td>
-                <td>TEPUNG</td>
-                <td>20,000</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td colspan="6" class="text-left">Ongkos Bongkar</td>
-                <td></td>
-                <td>480,000</td>
-            </tr>
-            <tr>
-                <td>13-Jan-25</td>
-                <td>BE 8149 ALS</td>
-                <td>SEMARANG</td>
-                <td>NATAR</td>
-                <td>TEPUNG</td>
-                <td>20,000</td>
-                <td>0</td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td colspan="6" class="text-left">Ongkos Bongkar</td>
-                <td></td>
-                <td>400,000</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-right bold">TOTAL :</td>
-                <td class="bold">1,360,000</td>
+                <td colspan="8" class="text-right bold">TOTAL :</td>
+                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

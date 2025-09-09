@@ -69,36 +69,43 @@
         @include('finance.invoice.pdf.header.phl')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+
+        $totalPrice = 0;
+    @endphp
+
     <!-- Info Invoice -->
     <table style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : 1-25</td>
-            <td class="text-right">B LAMPUNG, 13 Januari 2025</td>
+            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
+            <td class="text-right">{{ strtoupper($company->city ?? 'B LAMPUNG') }},
+                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
         </tr>
         <tr>
-            <td colspan="2"><strong>Ekspedisi Berdikari</strong></td>
+            <td colspan="2"><strong>Berdikari Exp</strong></td>
         </tr>
     </table>
 
     <!-- Rekening -->
     <table style="margin-top: 10px;">
         <tr>
-            <td colspan="2"><strong>Mohon di bayarkan ke Rekening BCA</strong></td>
+            <td colspan="2"><strong>Mohon di bayarkan ke Rekening {{ $company->bank_name ?? 'BCA' }}</strong></td>
         </tr>
         <tr>
             <td style="width: 20%;">A/N</td>
-            <td>: HENDRI WIJAYA</td>
+            <td>: {{ $company->account_name ?? ($company->director_name ?? 'HENDRI WIJAYA') }}</td>
         </tr>
         <tr>
             <td>NO. REK</td>
-            <td>: 0-200514866</td>
+            <td>: {{ $company->bank_account ?? '0-200514866' }}</td>
         </tr>
         <tr>
             <td>CABANG</td>
-            <td>: BUMI WARAS - B Lampung</td>
+            <td>: {{ $company->bank_branch ?? 'BUMI WARAS - B Lampung' }}</td>
         </tr>
     </table>
 
@@ -113,103 +120,37 @@
                 <th>Nama Barang</th>
                 <th>Kubikasi</th>
                 <th>Tarif/m3</th>
-                <th>Ongkos Angkut</th>
+                <th>Jumlah</th>
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>02/01/25</td>
-                <td>B 9702 TXR</td>
-                <td>Jakarta</td>
-                <td>Bengkulu</td>
-                <td>Indofood</td>
-                <td>54.788</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>688,800</td>
-            </tr>
+            @foreach ($data->details as $detail)
+                <tr>
+                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
 
-            <tr>
-                <td>03/01/25</td>
-                <td>BE 8252 AUC</td>
-                <td>Jakarta</td>
-                <td>Bengkulu</td>
-                <td>Indofood</td>
-                <td>56.374</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>767,900</td>
-            </tr>
-
-            <tr>
-                <td>16/12/24</td>
-                <td>BE 8684 YO</td>
-                <td>Jakarta</td>
-                <td>Muarabungo</td>
-                <td>Tisu</td>
-                <td>56.320</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>1,170,000</td>
-            </tr>
-
-            <tr>
-                <td>03/01/25</td>
-                <td>BE 8684 YO</td>
-                <td>Jakarta</td>
-                <td>Bengkulu</td>
-                <td>Indofood</td>
-                <td>55.469</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>672,000</td>
-            </tr>
-
-            <tr>
-                <td>03/01/25</td>
-                <td>B 9480 CXR</td>
-                <td>Jakarta</td>
-                <td>Bengkulu</td>
-                <td>Indofood</td>
-                <td>55.407</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>770,700</td>
-            </tr>
-
-            <tr>
-                <td>07/01/25</td>
-                <td>B 9021 WEH</td>
-                <td>Jakarta</td>
-                <td>Bengkulu</td>
-                <td>Tisu</td>
-                <td>54.266</td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td colspan="7" class="text-left">Ongkos Bongkar</td>
-                <td>625,800</td>
-            </tr>
+                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    </td>
+                    @php
+                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    @endphp
+                </tr>
+            @endforeach
 
             <tr>
                 <td colspan="7" class="text-right bold">TOTAL :</td>
-                <td class="bold">4,695,200</td>
+                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

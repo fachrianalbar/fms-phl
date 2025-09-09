@@ -69,11 +69,18 @@
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+
+        $totalPrice = 0;
+    @endphp
+
     <!-- Header Informasi -->
     <table style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : 1-25</td>
-            <td class="text-right">BANDAR LAMPUNG, 21 Januari 2025</td>
+            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
+            <td class="text-right">BANDAR LAMPUNG,
+                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
@@ -106,9 +113,9 @@
     </table>
 
     <!-- Pernyataan -->
-    <p class="mt-20">
+    {{-- <p class="mt-20">
         Untuk Pembayaran : Ongkos Angkut Tepung Dari Semarang ke PT. Surya Tsabat Mandiri
-    </p>
+    </p> --}}
 
     <!-- Tabel utama -->
     <table class="bordered" style="margin-top: 10px;">
@@ -126,7 +133,7 @@
         </thead>
         <tbody>
             <!-- Entry 1 -->
-            <tr>
+            {{-- <tr>
                 <td>18/01/25</td>
                 <td>BE 8204 ALB</td>
                 <td>Semarang</td>
@@ -147,36 +154,43 @@
             </tr>
             <tr>
                 <td colspan="8" class="text-left">No. Sub SO : SS2501,000022</td>
-            </tr>
+            </tr> --}}
 
-            <!-- Entry 2 -->
-            <tr>
-                <td>18/01/25</td>
-                <td>BE 8204 ALB</td>
-                <td>Semarang</td>
-                <td>PT Surya Tsabat</td>
-                <td>16 Bag Terigu</td>
-                <td>400</td>
-                <td></td>
-                <td>0</td>
-            </tr>
-            <tr>
-                <td colspan="8" class="text-left">Mandiri - Metro, Tali Emas, Lampung @25 kg</td>
-            </tr>
-            <tr>
-                <td colspan="8" class="text-left">No SO.Induk : 25,000555</td>
-            </tr>
-            <tr>
-                <td colspan="8" class="text-left">No. PO : 0146/STM/I/25 (2501,0119)</td>
-            </tr>
-            <tr>
-                <td colspan="8" class="text-left">No. Sub SO : SS2501,000022</td>
-            </tr>
+            @foreach ($data->details as $detail)
+                <tr>
+                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
+
+                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    </td>
+                    @php
+                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    @endphp
+                </tr>
+
+                @foreach ($detail->order->customerDetailOrders as $item)
+                    <tr>
+                        <td colspan="8" class="text-left">{{ $item->customerDetail->name }} : {{ $item->value }}
+                        </td>
+                    </tr>
+                @endforeach
+            @endforeach
 
             <!-- Total -->
             <tr>
                 <td colspan="7" class="text-right bold">TOTAL :</td>
-                <td class="bold">0</td>
+                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>

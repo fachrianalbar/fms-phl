@@ -5,34 +5,6 @@
     'secondSegment' => 'Beranda',
 ])
 
-@push('style')
-    <style>
-        .mdi-spin {
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        #filter-btn:disabled {
-            opacity: 0.8;
-            cursor: not-allowed;
-        }
-
-        .widget-loading {
-            opacity: 0.6;
-            transition: opacity 0.3s ease;
-        }
-    </style>
-@endpush
-
 @section('content')
     <!-- Filter Section -->
     <div class="row mb-4">
@@ -42,7 +14,7 @@
                     <div class="row">
                         <div class="col-md-3">
                             <label for="year-filter" class="form-label">Tahun</label>
-                            <select id="year-filter" class="form-select" onchange="applyFilters()">
+                            <select id="year-filter" class="form-select">
                                 @for ($y = 2020; $y <= date('Y') + 1; $y++)
                                     <option value="{{ $y }}" {{ $y == $currentYear ? 'selected' : '' }}>
                                         {{ $y }}</option>
@@ -51,7 +23,7 @@
                         </div>
                         <div class="col-md-3">
                             <label for="month-filter" class="form-label">Bulan (Opsional)</label>
-                            <select id="month-filter" class="form-select" onchange="applyFilters()">
+                            <select id="month-filter" class="form-select">
                                 <option value="">Semua Bulan</option>
                                 @for ($m = 1; $m <= 12; $m++)
                                     <option value="{{ $m }}" {{ $m == $currentMonth ? 'selected' : '' }}>
@@ -61,13 +33,8 @@
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
-                            <button type="button" class="btn btn-primary" id="filter-btn" onclick="applyFilters()">
-                                <span id="filter-text">
-                                    <i class="mdi mdi-filter"></i> Filter
-                                </span>
-                                <span id="filter-loader" class="d-none">
-                                    <i class="mdi mdi-loading mdi-spin"></i> Loading...
-                                </span>
+                            <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                                <i class="mdi mdi-filter"></i> Filter
                             </button>
                         </div>
                     </div>
@@ -78,8 +45,8 @@
 
     <!-- Main Widgets -->
     <div class="row">
-        <div class="col-md-6 col-lg-6">
-            <div class="card" id="order-widget">
+        <div class="col-md-6 col-lg-3">
+            <div class="card">
                 <div class="card-body">
                     <div class="widget-first">
                         <div class="d-flex align-items-center mb-2">
@@ -92,14 +59,12 @@
                                     </svg>
                                 </div>
                             </div>
-                            <p class="mb-0 text-dark fs-15">Total Order</p>
+                            <p class="mb-0 text-dark fs-15">Total Order Bulan Ini</p>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0 fs-22 text-dark me-3" id="total-orders-count">
-                                {{ number_format($monthlyOrderNow) }}</h3>
+                            <h3 class="mb-0 fs-22 text-dark me-3">{{ number_format($monthlyOrderNow) }}</h3>
                             <div class="text-center">
-                                <p class="text-dark fs-13 mb-0" id="orders-period">{{ $currentMonthName }}
-                                    {{ $currentYear }}</p>
+                                <p class="text-dark fs-13 mb-0">{{ $currentMonthName }} {{ $currentYear }}</p>
                             </div>
                         </div>
                     </div>
@@ -107,7 +72,7 @@
             </div>
         </div>
 
-        {{-- <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-3">
             <div class="card">
                 <div class="card-body">
                     <div class="widget-first">
@@ -132,9 +97,9 @@
                     </div>
                 </div>
             </div>
-        </div> --}}
+        </div>
 
-        {{-- <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-3">
             <div class="card">
                 <div class="card-body">
                     <div class="widget-first">
@@ -159,9 +124,9 @@
                     </div>
                 </div>
             </div>
-        </div> --}}
+        </div>
 
-        <div class="col-md-6 col-lg-6">
+        <div class="col-md-6 col-lg-3">
             <div class="card">
                 <div class="card-body">
                     <div class="widget-first">
@@ -331,21 +296,21 @@
                                     <th>Jatuh Tempo</th>
                                     <th>Sisa Hari</th>
                                     <th>Status</th>
-                                    {{-- <th>Aksi</th> --}}
+                                    <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach ($overdueInvoices as $invoice)
                                     <tr>
                                         <td>
-                                            <strong>{{ $invoice->invoiceNumber }}</strong>
+                                            <strong>{{ $invoice->invoice_number }}</strong>
                                         </td>
                                         <td>{{ $invoice->customer_name }}</td>
                                         <td>
-                                            {{ \Carbon\Carbon::parse($invoice->invoiceDate)->format('d/m/Y') }}
+                                            {{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d/m/Y') }}
                                         </td>
                                         <td>
-                                            {{ \Carbon\Carbon::parse($invoice->overdueDate)->format('d/m/Y') }}
+                                            {{ \Carbon\Carbon::parse($invoice->due_date)->format('d/m/Y') }}
                                         </td>
                                         <td>
                                             @if ($invoice->days_remaining > 7)
@@ -367,7 +332,7 @@
                                                 <span class="badge bg-danger-subtle text-danger">Telat Bayar</span>
                                             @endif
                                         </td>
-                                        {{-- <td>
+                                        <td>
                                             <div class="dropdown">
                                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
                                                     type="button" data-bs-toggle="dropdown">
@@ -379,7 +344,7 @@
                                                     <li><a class="dropdown-item" href="#">Print Invoice</a></li>
                                                 </ul>
                                             </div>
-                                        </td> --}}
+                                        </td>
                                     </tr>
                                 @endforeach
                                 @if ($overdueInvoices->count() == 0)
@@ -407,7 +372,6 @@
 
     <script>
         let orderChart;
-        let filterTimeout;
 
         // Initialize chart on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -467,121 +431,27 @@
             });
         }
 
-        // Apply filters function with debounce
+        // Apply filters function
         function applyFilters() {
-            // Clear existing timeout
-            if (filterTimeout) {
-                clearTimeout(filterTimeout);
-            }
-
-            // Add small delay to prevent multiple rapid calls
-            filterTimeout = setTimeout(() => {
-                executeFilter();
-            }, 300);
-        }
-
-        // Execute the actual filter logic
-        function executeFilter() {
             const year = document.getElementById('year-filter').value;
             const month = document.getElementById('month-filter').value;
-
-            // Show loader
-            showLoader();
 
             // Update chart year display
             document.getElementById('chart-year').textContent = year;
 
-            // Create array of promises for all API calls
-            const promises = [];
-
-            // Fetch order statistics
-            promises.push(fetchOrderStatsByYear(year));
-
-            // Fetch order count for widget
-            promises.push(fetchOrderCount(year, month));
-
-            // If month is selected, also update customer and fleet stats
-            if (month || year !== '{{ $currentYear }}') {
-                promises.push(refreshCustomerStats(year, month));
-                promises.push(refreshFleetStats(year, month));
-            }
-
-            // Wait for all promises to complete
-            Promise.all(promises)
-                .then(() => {
-                    // Hide loader when all requests are complete
-                    hideLoader();
-
-                    // Show success notification
-                    showSuccessNotification();
-                })
-                .catch(error => {
-                    console.error('Error applying filters:', error);
-                    hideLoader();
-
-                    // Show error notification
-                    showErrorNotification();
-                });
-        }
-
-        // Show loading state
-        function showLoader() {
-            const btn = document.getElementById('filter-btn');
-            const text = document.getElementById('filter-text');
-            const loader = document.getElementById('filter-loader');
-            const orderWidget = document.getElementById('order-widget');
-
-            btn.disabled = true;
-            text.classList.add('d-none');
-            loader.classList.remove('d-none');
-            orderWidget.classList.add('widget-loading');
-        }
-
-        // Hide loading state
-        function hideLoader() {
-            const btn = document.getElementById('filter-btn');
-            const text = document.getElementById('filter-text');
-            const loader = document.getElementById('filter-loader');
-            const orderWidget = document.getElementById('order-widget');
-
-            btn.disabled = false;
-            text.classList.remove('d-none');
-            loader.classList.add('d-none');
-            orderWidget.classList.remove('widget-loading');
-        }
-
-        // Fetch order count for widget
-        function fetchOrderCount(year, month) {
-            return fetch(`{{ route('dashboard.order-count') }}?year=${year}${month ? '&month=' + month : ''}`)
-                .then(response => response.json())
-                .then(data => {
-                    updateOrderWidget(data, year, month);
-                })
-                .catch(error => {
-                    console.error('Error fetching order count:', error);
-                });
-        }
-
-        // Update order widget
-        function updateOrderWidget(data, year, month) {
-            const countElement = document.getElementById('total-orders-count');
-            const periodElement = document.getElementById('orders-period');
-
-            countElement.textContent = new Intl.NumberFormat('id-ID').format(data.count);
+            // Fetch new data based on filters
+            fetchOrderStatsByYear(year);
 
             if (month) {
-                const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-                ];
-                periodElement.textContent = `${monthNames[parseInt(month)]} ${year}`;
-            } else {
-                periodElement.textContent = `Tahun ${year}`;
+                // If month is selected, also update customer and fleet stats
+                refreshCustomerStats(year, month);
+                refreshFleetStats(year, month);
             }
         }
 
         // Fetch order statistics by year
         function fetchOrderStatsByYear(year) {
-            return fetch(`{{ route('dashboard.order-stats-year') }}?year=${year}`)
+            fetch(`{{ route('dashboard.order-stats-year') }}?year=${year}`)
                 .then(response => response.json())
                 .then(data => {
                     updateChart(data);
@@ -617,7 +487,7 @@
                 url += '?' + params.toString();
             }
 
-            return fetch(url)
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     updateCustomerTable(data);
@@ -639,7 +509,7 @@
                 url += '?' + params.toString();
             }
 
-            return fetch(url)
+            fetch(url)
                 .then(response => response.json())
                 .then(data => {
                     updateFleetTable(data);
@@ -731,58 +601,6 @@
             if (diffInSeconds < 2592000) return Math.floor(diffInSeconds / 86400) + ' hari lalu';
             if (diffInSeconds < 31536000) return Math.floor(diffInSeconds / 2592000) + ' bulan lalu';
             return Math.floor(diffInSeconds / 31536000) + ' tahun lalu';
-        }
-
-        // Show success notification
-        function showSuccessNotification() {
-            // Create toast element
-            const toast = document.createElement('div');
-            toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed';
-            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
-            toast.setAttribute('role', 'alert');
-            toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="mdi mdi-check-circle me-2"></i>Filter berhasil diterapkan!
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            `;
-
-            document.body.appendChild(toast);
-
-            // Auto remove after 3 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, 3000);
-        }
-
-        // Show error notification
-        function showErrorNotification() {
-            // Create toast element
-            const toast = document.createElement('div');
-            toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed';
-            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
-            toast.setAttribute('role', 'alert');
-            toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="mdi mdi-alert-circle me-2"></i>Terjadi kesalahan saat menerapkan filter!
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            `;
-
-            document.body.appendChild(toast);
-
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, 5000);
         }
     </script>
 @endpush

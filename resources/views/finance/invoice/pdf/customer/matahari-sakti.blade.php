@@ -82,14 +82,20 @@
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+        $totalPrice = 0;
+        $totalQty = 0;
+    @endphp
+
     <!-- Header Info -->
     <table style="margin-top: 20px;">
         <tr>
             <td class="left" style="width: 60%;">
-                <strong>No. Tagihan</strong> : 15-25
+                <strong>No. Tagihan</strong> : {{ $data->invoiceNumber }}
             </td>
             <td class="text-right" style="width: 40%;">
-                B Lampung, 23 April 2025
+                B Lampung, {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}
             </td>
         </tr>
     </table>
@@ -112,59 +118,36 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>1</td>
-                <td>17/04/25</td>
-                <td>TF-2504-001032</td>
-                <td>B 9649 TXR</td>
-                <td>Margomulyo</td>
-                <td>B Lampung</td>
-                <td>1,000.00</td>
-                <td>0.00</td>
-                <td>0.00</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>17/04/25</td>
-                <td>TF-2504-001033</td>
-                <td>B 9649 TXR</td>
-                <td>Margomulyo</td>
-                <td>B Lampung</td>
-                <td>4,200.00</td>
-                <td>0.00</td>
-                <td>0.00</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>17/04/25</td>
-                <td>TF-2504-001034</td>
-                <td>B 9649 TXR</td>
-                <td>Margomulyo</td>
-                <td>B Lampung</td>
-                <td>5,000.00</td>
-                <td>0.00</td>
-                <td>0.00</td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td>17/04/25</td>
-                <td>TF-2504-001035</td>
-                <td>B 9649 TXR</td>
-                <td>Margomulyo</td>
-                <td>B Lampung</td>
-                <td>9,200.00</td>
-                <td>0.00</td>
-                <td>0.00</td>
-            </tr>
+            @foreach ($invoiceDetails as $index => $detail)
+                @php
+                    $order = $detail->order;
+                    $route = $order->route;
+                @endphp
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $order->shipmentNumber }}</td>
+                    <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $route->destinationLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->qty ?? 0 }}</td>
+                    <td>{{ $detail->order->route->price ?? 0 }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                </tr>
+                @php
+                    $totalQty += $detail->order->qty ?? 0;
+                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                @endphp
+            @endforeach
             <tr>
                 <td colspan="6" class="text-left bold">Pembulatan Tonase</td>
-                <td>600.00</td>
+                <td>{{ number_format($totalQty, 0, ',', '.') }}</td>
                 <td></td>
-                <td>0.00</td>
+                <td></td>
             </tr>
             <tr>
                 <td colspan="8" class="text-right bold">TOTAL</td>
-                <td class="bold">0.00</td>
+                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>
@@ -173,11 +156,12 @@
     <table style="margin-top: 20px;">
         <tr>
             <td style="width: 15%;">TAGIHAN</td>
-            <td>: Rp 8,100,000.00,-</td>
+            <td>: Rp {{ number_format($totalPrice, 0, ',', '.') }}</td>
         </tr>
         <tr>
             <td>TERBILANG</td>
-            <td>: Delapan Juta Seratus Ribu Rupiah</td>
+            <td>: {{ \App\Helpers\TerbilangHelper::terbilang($totalPrice) }} Rupiah
+            </td>
         </tr>
     </table>
 

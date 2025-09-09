@@ -26,7 +26,9 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
 
-                <button type="submit" class="btn btn-primary" id="saveOrder">Cancel Return</button>
+                <button type="submit" class="btn btn-primary" id="saveOrder">
+                    {{ __('menu_return_do.cancel_return') }}
+                </button>
 
             </div>
             <div class="card-body">
@@ -35,18 +37,16 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>No</th>
-                                <th>Order Date</th>
-                                <th>Code</th>
-                                <th>Shipment No</th>
-                                <th>Customer Name</th>
-                                <th>Origin</th>
-                                <th>Destination</th>
-                                <th>Fleet</th>
-                                <th>Fleet Type</th>
-                                <th>Driver</th>
-                                <th>Return Date</th>
+                                <th>{{ __('menu_return_do.hash') }}</th>
+                                <th>{{ __('menu_return_do.no') }}</th>
+                                <th>{{ __('menu_return_do.order_date') }}</th>
+                                <th>{{ __('menu_return_do.shipment_no') }}</th>
+                                <th>{{ __('menu_return_do.customer_name') }}</th>
+                                <th>{{ __('menu_return_do.origin') }}</th>
+                                <th>{{ __('menu_return_do.destination') }}</th>
+                                <th>{{ __('menu_return_do.fleet') }}</th>
+                                <th>{{ __('menu_return_do.driver') }}</th>
+                                <th>{{ __('menu_return_do.return_date') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,9 +143,6 @@
                         "data": 'orderDate'
                     },
                     {
-                        "data": 'code'
-                    },
-                    {
                         "data": 'shipmentNumber'
                     },
                     {
@@ -161,17 +158,12 @@
                         "data": 'fleet.plateNumber'
                     },
                     {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
                         "data": 'driver.name'
                     },
 
                     {
                         "data": 'returnDate'
                     }
-
-
                 ],
                 "columnDefs": [{
                         "searchable": false,

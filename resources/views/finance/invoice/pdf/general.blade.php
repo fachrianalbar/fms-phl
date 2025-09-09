@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Invoice - PT GUNA LAYAN KUASA</title>
+    <title>Invoice - {{ $data->customer->name }}</title>
     <style>
         @page {
             header: page-header;
@@ -20,10 +20,15 @@
             border-collapse: collapse;
         }
 
+        .bordered,
+        .bordered td,
+        .bordered th {
+            border: 1px solid black;
+        }
+
         .bordered th,
         .bordered td {
-            border: 1px solid black;
-            padding: 4px;
+            padding: 5px;
             text-align: center;
         }
 
@@ -39,16 +44,16 @@
             font-weight: bold;
         }
 
-        .underline {
-            text-decoration: underline;
-        }
-
         .mt-20 {
             margin-top: 20px;
         }
 
         .mt-60 {
             margin-top: 60px;
+        }
+
+        .underline {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -61,58 +66,57 @@
 
     @php
         use Carbon\Carbon;
-
         $totalPrice = 0;
-        foreach ($data->details as $detail) {
-            // $totalPrice += $detail->order_cost->calculateTotalCost();
-        }
+        $totalQty = 0;
     @endphp
 
+    <!-- Informasi Header Invoice -->
     <table style="margin-top: 20px;">
         <tr>
             <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
-            <td class="text-right">{{ strtoupper($company->city ?? 'B LAMPUNG') }},
-                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
+            <td class="text-right">B LAMPUNG, {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}</td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
         </tr>
         <tr>
-            <td colspan="2"><strong>{{ strtoupper($customer->name) }}</strong></td>
+            <td colspan="2"><strong>{{ $data->customer->name }}</strong></td>
         </tr>
     </table>
 
+    <!-- Info Pembayaran -->
     <table style="margin-top: 10px;">
         <tr>
-            <td colspan="2"><strong>Mohon di bayarkan ke Rekening {{ $company->bank_name ?? 'BCA' }}</strong></td>
+            <td colspan="2"><strong>Mohon di bayarkan ke Rekening BCA</strong></td>
         </tr>
         <tr>
             <td style="width: 20%;">A/N</td>
             <td>: PT PUTRI HOKI LOGISTIK</td>
         </tr>
         <tr>
-            <td>NO. REKENING</td>
-            <td>: {{ $company->bank_account ?? '0208888351' }}</td>
+            <td>NO. REK</td>
+            <td>: 0208888351</td>
         </tr>
         <tr>
             <td>CABANG</td>
-            <td>: {{ $company->bank_branch ?? 'KCU - Bumi Waras - B. Lampung' }}</td>
+            <td>: KCU - Bumi Waras - B. Lampung</td>
         </tr>
     </table>
 
+    <!-- Tabel Data Utama -->
     <table class="bordered mt-20">
         <thead>
             <tr>
                 <th>No</th>
                 <th>Tanggal</th>
                 <th>No Kendaraan</th>
-                <th>No. SPPB</th>
-                <th>Gudang Muat</th>
+                <th>No Pengiriman</th>
+                <th>Dari </th>
                 <th>Tujuan</th>
                 <th>Nama Barang</th>
-                <th>Total Tonase</th>
-                <th>Tarif/Kg</th>
-                <th>Ongkos Angkut</th>
+                <th>Tonase</th>
+                <th>Tarif/kgs</th>
+                <th>Jumlah</th>
             </tr>
         </thead>
         <tbody>
@@ -141,14 +145,14 @@
                     @endphp
                 </tr>
             @endforeach
-
             <tr>
-                <td colspan="9" class="text-right bold">TOTAL :</td>
-                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
+                <td colspan="8" class="text-right bold">TOTAL :</td>
+                <td>-</td>
             </tr>
         </tbody>
     </table>
 
+    <!-- Tanda Tangan -->
     <div class="mt-60 text-right">
         <p>HORMAT KAMI</p>
         <br><br><br>

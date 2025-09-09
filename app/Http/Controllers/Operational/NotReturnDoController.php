@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers\Operational;
 
+use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
 use App\Services\MenuService;
 use App\Models\Operational\Order;
+use App\Services\Data\FleetDriverService;
+use App\Services\Master\CustomerService;
+use App\Services\Master\FleetService;
+use App\Services\Master\FleetTypeService;
+use App\Services\Master\LocationService;
+use App\Services\Master\OrderTypeService;
+use App\Services\Master\UnitService;
 use App\Services\Operational\NotReturnDoService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Auth;
 
 class NotReturnDoController extends Controller
 {
@@ -18,11 +26,27 @@ class NotReturnDoController extends Controller
     protected $title;
     protected $view;
     protected $menuSvc;
+    protected $customerSvc;
+    protected $fleetTypeSvc;
+    protected $locationSvc;
+    protected $driverSvc;
+    protected $fleetSvc;
+    protected $orderTypeSvc;
+    protected $unitSvc;
 
-    public function __construct(NotReturnDoService $notReturnDoService)
+    public function __construct(NotReturnDoService $notReturnDoService, MenuService $menuSvc, CustomerService $customerSvc, FleetTypeService $fleetTypeSvc, LocationService $locationSvc, FleetDriverService $driverSvc, FleetService $fleetSvc, OrderTypeService $orderTypeSvc, UnitService $unitSvc)
     {
         $this->service = $notReturnDoService;
         $this->title = "Not Return Do";
+        $this->menuSvc = $menuSvc->getByName("Not Return Do");
+        $this->customerSvc = $customerSvc;
+        $this->fleetTypeSvc = $fleetTypeSvc;
+        $this->locationSvc = $locationSvc;
+        $this->driverSvc = $driverSvc;
+        $this->fleetSvc = $fleetSvc;
+        $this->orderTypeSvc = $orderTypeSvc;
+        $this->unitSvc = $unitSvc;
+        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "operational.not-return-do.";
     }
 
@@ -31,13 +55,29 @@ class NotReturnDoController extends Controller
      */
     public function index()
     {
+        $customer = $this->customerSvc->findAll();
+        $fleetType = $this->fleetTypeSvc->findAll();
+        $location = $this->locationSvc->findAll();
+        $driver = $this->driverSvc->findAll();
+        $fleet = $this->fleetSvc->findAll();
+        $orderType = $this->orderTypeSvc->findAll();
+        $unit = $this->unitSvc->findAll();
+
         return view($this->view . 'index')
             ->with('view', $this->view)
-            ->with('title', $this->title);
+            ->with('title', $this->title)
+            ->with('customer', $customer)
+            ->with('fleetType', $fleetType)
+            ->with('location', $location)
+            ->with('driver', $driver)
+            ->with('fleet', $fleet)
+            ->with('orderType', $orderType)
+            ->with('unit', $unit);
     }
 
     public function confirmDo(Request $request)
     {
+        dd($request->all());
         $selectedOrders = json_decode($request->input('selectedOrders'), true);
 
         try {
@@ -63,6 +103,38 @@ class NotReturnDoController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->datatable();
+
+            // Definisikan kolom filter dengan alias
+            $filters = [
+                'fleet_plateNumber' => $request->plateNumber,
+                'customer_name' => $request->customerName,
+                'driver_name' => $request->driverName,
+                'fleetType_name' => $request->fleetTypeName,
+                'shipmentNumber' => $request->shipmentNumber,
+                // 'origin' => $request->origin,
+                'destination' => $request->destination,
+                'orderTypeCode' => $request->orderTypeCode,
+
+            ];
+
+            // Hubungkan alias ke relasi dan kolom yang sesuai
+            $relations = [
+                'fleet_plateNumber' => 'fleet.plateNumber',
+                'customer_name' => 'customer.name',
+                'driver_name' => 'driver.name',
+                'fleetType_name' => 'fleet.type.name',
+                // 'origin' => 'route.originLocation.name',
+                'destination' => 'route.destinationLocation.name'
+            ];
+
+            $dateFilters = [
+                'orderDate' => [
+                    'start' => $request->startDate,
+                    'end' => $request->endDate,
+                ],
+            ];
+
+            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('orderDate', function ($row) {

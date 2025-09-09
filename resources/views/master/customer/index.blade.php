@@ -103,7 +103,7 @@
                         "data": 'company.name'
                     },
                     {
-                        "data": 'due_date_duration'
+                        "data": 'dueDateDuration'
                     }
 
 

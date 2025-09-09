@@ -31,25 +31,45 @@ class InvoiceService
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->with(['details', 'customer', 'payments', 'customer.pic'])->first();
+        return $this->service->where('id', $id)->with([
+            'details.order.orderMaterial.material',
+            'details.order.orderMaterial.unit',
+            'details.order.cost',
+            'details.order.customer',
+            'details.order.fleet',
+            'details.order.driver',
+            'details.order.route.originLocation',
+            'details.order.route.destinationLocation',
+            'customer',
+            'payments',
+            'customer.pic'
+        ])->first();
     }
 
     public function getOrder()
     {
-        return $this->order->where('status', 4)->with([
-            // 'fleetDriver.fleet',
-            'fleet',
-            'fleet.type',
-            // 'fleetDriver.employee',
-            'driver',
-            'customer',
-            'route.originLocation',
-            'route.destinationLocation',
-            'route.originLocation',
-            'orderType',
-            'route.routeDetail',
-        ])->orderBy('created_at', 'desc');
+        return $this->order
+            ->where(function ($q) {
+                $q->where('status', 4)
+                    ->orWhereHas('customer', function ($q2) {
+                        $q2->where('isDo', 0);
+                    });
+            })
+            ->where('status', '!=', 5) // buang semua status 5
+            ->with([
+                'fleet',
+                'fleet.type',
+                'driver',
+                'customer',
+                'route.originLocation',
+                'route.destinationLocation',
+                'orderType',
+                'route.routeDetail',
+            ])
+            ->orderBy('created_at', 'desc');
     }
+
+
 
     public function store($request, $title, $selectedOrders)
     {

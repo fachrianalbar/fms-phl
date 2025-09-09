@@ -50,28 +50,38 @@
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
+    @php
+        use Carbon\Carbon;
+        $totalPrice = 0;
+        $totalQty = 0;
+    @endphp
+
     <!-- Info invoice + rekening -->
     <table style="margin-top: 20px;">
         <tr>
             <td style="width: 50%; vertical-align: top;">
                 <table>
                     <tr>
-                        <td>NO. INVOICE : HW-3/ASW/3-24</td>
+                        <td><strong>NO. INVOICE : {{ $data->invoiceNumber }}</strong></td>
                     </tr>
                     <tr>
                         <td>Kepada YTH :</td>
                     </tr>
                     <tr>
-                        <td><strong>PT ASIA SAKTI WAHID FOODS MANUFACTURE</strong></td>
+                        <td><strong>{{ strtoupper($customer->name ?? 'PT ASIA SAKTI WAHID FOODS MANUFACTURE') }}</strong>
+                        </td>
                     </tr>
-                    <tr>
-                        <td>Di MEDAN</td>
-                    </tr>
+                    @if ($customer && $customer->officeAddress)
+                        <tr>
+                            <td>{{ $customer->officeAddress }}</td>
+                        </tr>
+                    @endif
                 </table>
             </td>
             <td style="width: 50%; vertical-align: top;">
                 <div style="text-align: right;">
-                    <p>BANDAR LAMPUNG, 26 Januari 2024</p>
+                    <p>{{ strtoupper($company->city ?? 'BANDAR LAMPUNG') }},
+                        {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}</p>
                     <table style="display: inline-block; text-align: left;">
                         <tr>
                             <td colspan="2" style="font-weight: bold;">Mohon di bayarkan ke Rekening BCA</td>
@@ -109,54 +119,38 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
-                <td>16/01/24</td>
-                <td>B 9084 KXR</td>
-                <td>Surabaya</td>
-                <td>Depok</td>
-                <td>Biskuit Hatari</td>
-                <td></td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td>17/01/24</td>
-                <td>B 9472 UXS</td>
-                <td>Surabaya</td>
-                <td>B Lampung (BAP)</td>
-                <td>Biskuit Hatari</td>
-                <td></td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td>09/01/24</td>
-                <td>B 9480 CXR</td>
-                <td>Surabaya</td>
-                <td>Karawang</td>
-                <td>Biskuit Hatari</td>
-                <td></td>
-                <td></td>
-                <td>-</td>
-            </tr>
-            <tr>
-                <td>20/01/24</td>
-                <td>B 9581 SXR</td>
-                <td>Surabaya</td>
-                <td>Pulo Gadung</td>
-                <td>Biskuit Hatari</td>
-                <td></td>
-                <td></td>
-                <td>-</td>
-            </tr>
+            @foreach ($invoiceDetails as $index => $detail)
+                @php
+                    $order = $detail->order;
+                    $route = $order->route;
+                @endphp
+                <tr>
+                    <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
+                    <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $route->originLocation->name ?? '-' }}</td>
+                    <td>{{ $route->destinationLocation->name ?? '-' }}</td>
+                    <td>
+                        @foreach ($detail->order->orderMaterial as $i => $mtr)
+                            {{ $mtr->material->name }}@if (!$loop->last)
+                                ,
+                            @endif
+                        @endforeach
+                    </td>
+                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                </tr>
+                @php
+                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                @endphp
+            @endforeach
             <tr>
                 <td colspan="7" style="text-align: right;"><strong>TOTAL :</strong></td>
-                <td><strong>0</strong></td>
+                <td><strong>{{ number_format($totalPrice, 0, ',', '.') }}</strong></td>
             </tr>
         </tbody>
     </table>
 
-    <!-- Catatan dan tanda tangan -->
     <p style="margin-top: 20px;">Berikut kami lampirkan tanda terima dari tagihan di atas.</p>
 
     <div class="footer-sign">
