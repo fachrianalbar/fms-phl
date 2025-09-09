@@ -17,6 +17,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('fleet-stats', [DashboardController::class, 'getFleetStats'])->name('fleet-stats');
     Route::get('order-stats-year', [DashboardController::class, 'getOrderStatsByYear'])->name('order-stats-year');
     Route::get('order-count', [DashboardController::class, 'getOrderCount'])->name('order-count');
+    Route::get('pending-invoice-orders', [DashboardController::class, 'getPendingInvoiceOrders'])->name('pending-invoice-orders');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {

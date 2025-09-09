@@ -78,7 +78,7 @@
 
     <!-- Main Widgets -->
     <div class="row">
-        <div class="col-md-6 col-lg-6">
+        <div class="col-md-4 col-lg-4">
             <div class="card" id="order-widget">
                 <div class="card-body">
                     <div class="widget-first">
@@ -107,35 +107,8 @@
             </div>
         </div>
 
-        {{-- <div class="col-md-6 col-lg-3">
-            <div class="card">
-                <div class="card-body">
-                    <div class="widget-first">
-                        <div class="d-flex align-items-center mb-2">
-                            <div class="p-2 border border-success border-opacity-10 bg-success-subtle rounded-2 me-2">
-                                <div class="bg-success rounded-circle widget-size text-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-                                        viewBox="0 0 24 24">
-                                        <path fill="#ffffff"
-                                            d="M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <p class="mb-0 text-dark fs-15">Total Customer Aktif</p>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0 fs-22 text-dark me-3">{{ number_format($topCustomers->count()) }}</h3>
-                            <div class="text-center">
-                                <p class="text-dark fs-13 mb-0">Yang pernah order</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
-
-        {{-- <div class="col-md-6 col-lg-3">
-            <div class="card">
+        <div class="col-md-4 col-lg-4">
+            <div class="card" id="pending-invoice-widget">
                 <div class="card-body">
                     <div class="widget-first">
                         <div class="d-flex align-items-center mb-2">
@@ -144,24 +117,26 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
                                         viewBox="0 0 24 24">
                                         <path fill="#ffffff"
-                                            d="M18.92 5.01C18.72 4.42 18.16 4 17.5 4h-11c-.66 0-1.22.42-1.42 1.01L3 11v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99M6.5 15c-.83 0-1.5-.67-1.5-1.5S5.67 12 6.5 12s1.5.67 1.5 1.5S7.33 15 6.5 15m11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5s1.5.67 1.5 1.5s-.67 1.5-1.5 1.5M5 10l1.5-4.5h11L19 10H5Z" />
+                                            d="M14 2H6c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h12c1.11 0 2-.89 2-2V8l-6-6m4 18H6V4h7v5h5v11Z" />
                                     </svg>
                                 </div>
                             </div>
-                            <p class="mb-0 text-dark fs-15">Total Fleet Aktif</p>
+                            <p class="mb-0 text-dark fs-15">Order Belum Invoice</p>
                         </div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <h3 class="mb-0 fs-22 text-dark me-3">{{ number_format($topFleets->count()) }}</h3>
+                            <h3 class="mb-0 fs-22 text-dark me-3" id="pending-invoice-count">
+                                {{ number_format($pendingInvoiceOrders) }}</h3>
                             <div class="text-center">
-                                <p class="text-dark fs-13 mb-0">Yang pernah digunakan</p>
+                                <p class="text-dark fs-13 mb-0" id="pending-period">{{ $currentMonthName }}
+                                    {{ $currentYear }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div> --}}
+        </div>
 
-        <div class="col-md-6 col-lg-6">
+        <div class="col-md-4 col-lg-4">
             <div class="card">
                 <div class="card-body">
                     <div class="widget-first">
@@ -500,6 +475,9 @@
             // Fetch order count for widget
             promises.push(fetchOrderCount(year, month));
 
+            // Fetch pending invoice orders
+            promises.push(fetchPendingInvoiceOrders(year, month));
+
             // If month is selected, also update customer and fleet stats
             if (month || year !== '{{ $currentYear }}') {
                 promises.push(refreshCustomerStats(year, month));
@@ -530,11 +508,13 @@
             const text = document.getElementById('filter-text');
             const loader = document.getElementById('filter-loader');
             const orderWidget = document.getElementById('order-widget');
+            const pendingWidget = document.getElementById('pending-invoice-widget');
 
             btn.disabled = true;
             text.classList.add('d-none');
             loader.classList.remove('d-none');
             orderWidget.classList.add('widget-loading');
+            pendingWidget.classList.add('widget-loading');
         }
 
         // Hide loading state
@@ -543,11 +523,13 @@
             const text = document.getElementById('filter-text');
             const loader = document.getElementById('filter-loader');
             const orderWidget = document.getElementById('order-widget');
+            const pendingWidget = document.getElementById('pending-invoice-widget');
 
             btn.disabled = false;
             text.classList.remove('d-none');
             loader.classList.add('d-none');
             orderWidget.classList.remove('widget-loading');
+            pendingWidget.classList.remove('widget-loading');
         }
 
         // Fetch order count for widget
@@ -566,6 +548,35 @@
         function updateOrderWidget(data, year, month) {
             const countElement = document.getElementById('total-orders-count');
             const periodElement = document.getElementById('orders-period');
+
+            countElement.textContent = new Intl.NumberFormat('id-ID').format(data.count);
+
+            if (month) {
+                const monthNames = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+                ];
+                periodElement.textContent = `${monthNames[parseInt(month)]} ${year}`;
+            } else {
+                periodElement.textContent = `Tahun ${year}`;
+            }
+        }
+
+        // Fetch pending invoice orders
+        function fetchPendingInvoiceOrders(year, month) {
+            return fetch(`{{ route('dashboard.pending-invoice-orders') }}?year=${year}${month ? '&month=' + month : ''}`)
+                .then(response => response.json())
+                .then(data => {
+                    updatePendingInvoiceWidget(data, year, month);
+                })
+                .catch(error => {
+                    console.error('Error fetching pending invoice orders:', error);
+                });
+        }
+
+        // Update pending invoice widget
+        function updatePendingInvoiceWidget(data, year, month) {
+            const countElement = document.getElementById('pending-invoice-count');
+            const periodElement = document.getElementById('pending-period');
 
             countElement.textContent = new Intl.NumberFormat('id-ID').format(data.count);
 

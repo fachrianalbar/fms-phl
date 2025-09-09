@@ -116,6 +116,15 @@ class DashboardController extends Controller
                 return $invoice;
             });
 
+        // Order yang belum dibuat invoice (status bukan 5 dan kurang dari 5)
+        $pendingInvoiceOrders = Order::where('status', '<', 5)
+            ->where('status', '!=', 5)
+            ->whereYear('created_at', $currentYear)
+            ->when($currentMonth, function ($query) use ($currentMonth) {
+                return $query->whereMonth('created_at', $currentMonth);
+            })
+            ->count();
+
         $totalOrders = Order::whereYear('created_at', $currentYear)->count();
 
         $ordersByStatus = OrderStatus::leftJoin('order', function ($join) use ($currentYear) {
@@ -170,6 +179,7 @@ class DashboardController extends Controller
             'topCustomers' => $topCustomers,
             'topFleets' => $topFleets,
             'overdueInvoices' => $overdueInvoices,
+            'pendingInvoiceOrders' => $pendingInvoiceOrders,
             'fleet' => $fleet,
             'view' => $this->view
         ]);
@@ -354,6 +364,29 @@ class DashboardController extends Controller
         $month = $request->get('month');
 
         $query = Order::whereYear('created_at', $year);
+
+        if ($month) {
+            $query->whereMonth('created_at', $month);
+        }
+
+        $count = $query->count();
+
+        return response()->json([
+            'count' => $count,
+            'year' => $year,
+            'month' => $month
+        ]);
+    }
+
+    // API untuk mendapatkan jumlah order yang belum dibuat invoice
+    public function getPendingInvoiceOrders(Request $request)
+    {
+        $year = $request->get('year', now()->year);
+        $month = $request->get('month');
+
+        $query = Order::where('status', '<', 5)
+            ->where('status', '!=', 5)
+            ->whereYear('created_at', $year);
 
         if ($month) {
             $query->whereMonth('created_at', $month);
