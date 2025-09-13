@@ -77,7 +77,6 @@ class NotReturnDoController extends Controller
 
     public function confirmDo(Request $request)
     {
-        dd($request->all());
         $selectedOrders = json_decode($request->input('selectedOrders'), true);
 
         try {
