@@ -28,20 +28,20 @@
             width: 100% !important;
         }
 
-        .modal .select2-container .select2-selection {
-            height: 38px;
-            border: 1px solid #ced4da;
-            border-radius: 0.375rem;
-        }
+        /* .modal .select2-container .select2-selection {
+                                                                                            height: 38px;
+                                                                                            border: 1px solid #ced4da;
+                                                                                            border-radius: 0.375rem;
+                                                                                        }
 
-        .modal .select2-container .select2-selection__rendered {
-            line-height: 36px;
-            padding-left: 12px;
-        }
+                                                                                        .modal .select2-container .select2-selection__rendered {
+                                                                                            line-height: 36px;
+                                                                                            padding-left: 12px;
+                                                                                        }
 
-        .modal .select2-container .select2-selection__arrow {
-            height: 36px;
-        }
+                                                                                        .modal .select2-container .select2-selection__arrow {
+                                                                                            height: 36px;
+                                                                                        } */
 
         .select2-dropdown {
             z-index: 99999 !important;
@@ -289,7 +289,89 @@
             </div>
         </form>
 
+        <!-- Modal Add Cost Component -->
+        <div class="modal fade bd-example-modal-xl" id="modal-cost-component" tabindex="-1" role="dialog"
+            aria-labelledby="myLargeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="myLargeModalLabel">Tambah Komponen Biaya</h4>
+                        <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="orderCode" id="costOrderCode">
 
+                        <!-- Existing Cost Components Section -->
+                        <div class="mb-4">
+                            <h5>Daftar Komponen Biaya:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Komponen</th>
+                                            {{-- <th>Type</th> --}}
+                                            <th>Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="existing-cost-list">
+                                        <!-- Existing costs will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="mt-2">
+                                <strong id="total-amount">Total: Rp 0</strong>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <!-- Add New Cost Component Section -->
+                        <div>
+                            <h5>Tambah Komponen Biaya:</h5>
+                            <form id="form-cost-component">
+                                @csrf
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nama Komponen Biaya</label>
+                                        <select class="form-select select2-modal" name="componentType"
+                                            id="componentType">
+                                            <option selected="" disabled="" value="">Choose...</option>
+                                        </select>
+
+
+
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Nominal</label>
+                                        <input class="form-control" type="text" oninput="formatAngka(this)"
+                                            step="0.01" name="nominal" id="nominal" placeholder="Enter amount"
+                                            required>
+                                    </div>
+                                    {{-- <div class="col-md-6">
+                                        <label class="form-label">Cost Component Type</label>
+                                        <select class="form-select select2-modal" name="costComponentType"
+                                            id="costComponentType">
+                                            <option selected="" disabled="" value="">Choose...</option>
+                                            <option value="On Charge">On Charge</option>
+                                            <option value="Off Charge">Off Charge</option>
+                                        </select>
+                                    </div> --}}
+                                </div>
+                                {{-- <div class="row mt-3">
+                                    
+                                </div> --}}
+                            </form>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" id="btn-add-cost">Tambah Komponen Biaya</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </div>
     <form id="delete-form" method="post">
@@ -393,6 +475,8 @@
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+    <script src=" {{ asset('assets/js/helper.js') }}"></script>
+
     <script>
         let selectedOrders = [];
 
@@ -821,6 +905,187 @@
                 },
                 error: function() {
                     swal("Error", "{{ __('menu_order.change_driver_failed') }}", "error");
+                }
+            });
+        });
+
+        // Event listener untuk modal cost component
+        $('#modal-cost-component').on('shown.bs.modal', function() {
+            // Initialize select2 saat modal ditampilkan
+            $('.select2-modal').select2({
+                dropdownParent: $('#modal-cost-component'),
+                width: '100%',
+                placeholder: 'Pilih...',
+            });
+        });
+
+        // Destroy select2 saat modal ditutup untuk menghindari konflik
+        $('#modal-cost-component').on('hidden.bs.modal', function() {
+            $('.select2-modal').select2('destroy');
+        });
+
+        function manageCostComponent(orderId, orderCode) {
+            $('#costOrderCode').val(orderCode);
+
+            // Load cost components untuk dropdown
+            loadCostComponents();
+
+            // Load existing order costs
+            loadOrderCosts(orderCode);
+
+            // Clear form
+            $('#componentType').val('').trigger('change');
+            $('#costComponentType').val('').trigger('change');
+            $('#nominal').val('');
+
+            $('#modal-cost-component').modal('show');
+        }
+
+        function loadCostComponents() {
+            $.ajax({
+                url: "{{ route('ajax.cost-components-all') }}",
+                method: "GET",
+                success: function(response) {
+                    let options = '<option selected="" disabled="" value="">Pilih...</option>';
+                    if (response && response.length > 0) {
+                        response.forEach(function(item) {
+                            options += `<option value="${item.code}">${item.name}</option>`;
+                        });
+                    }
+                    $('#componentType').html(options);
+                },
+                error: function() {
+                    console.log('Error loading cost components');
+                }
+            });
+        }
+
+        function loadOrderCosts(orderCode) {
+            $.ajax({
+                url: "{{ route('operational.order.get-order-costs') }}",
+                method: "GET",
+                data: {
+                    orderCode: orderCode
+                },
+                success: function(response) {
+                    let tbody = $('#existing-cost-list');
+                    tbody.empty();
+
+                    let total = 0;
+
+                    if (response.success && response.data.length > 0) {
+                        response.data.forEach(function(item) {
+                            let nominal = parseFloat(item.nominal);
+                            total += nominal;
+                            let formattedNominal = new Intl.NumberFormat('id-ID').format(nominal);
+                            tbody.append(`
+                                <tr>
+                                    <td>${item.cost_component ? item.cost_component.name : 'N/A'}</td>
+                                    <td>Rp ${formattedNominal}</td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="3" class="text-center">Belum ada data</td>
+                            </tr>
+                        `);
+                    }
+
+                    // Update total
+                    let formattedTotal = new Intl.NumberFormat('id-ID').format(total);
+                    $('#total-amount').text(`Total: Rp ${formattedTotal}`);
+                },
+                error: function() {
+                    console.log('Error loading order costs');
+                }
+            });
+        }
+
+        function deleteOrderCost(id, orderCode) {
+            swal({
+                title: "Konfirmasi",
+                text: "Yakin ingin menghapus komponen biaya ini?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $.ajax({
+                        url: "{{ route('operational.order.delete-order-cost') }}",
+                        method: "DELETE",
+                        data: {
+                            id: id,
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                swal("Sukses", "Komponen biaya berhasil dihapus", "success");
+                                loadOrderCosts(orderCode); // Reload data
+                            } else {
+                                swal("Error", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            swal("Error", "Gagal menghapus komponen biaya", "error");
+                        }
+                    });
+                }
+            });
+        }
+
+        // Handle form submission untuk menambah cost component
+        $('#btn-add-cost').on('click', function(e) {
+            e.preventDefault();
+
+            let formData = {
+                orderCode: $('#costOrderCode').val(),
+                componentType: $('#componentType').val(),
+                costComponentType: $('#costComponentType').val(),
+                nominal: $('#nominal').val(),
+                _token: '{{ csrf_token() }}'
+            };
+
+            // Validasi
+            // if (!formData.componentType) {
+            //     swal("Warning", "Please select a cost component", "warning");
+            //     return;
+            // }
+
+            // if (!formData.costComponentType) {
+            //     swal("Warning", "Please select cost component type", "warning");
+            //     return;
+            // }
+
+            if (!formData.nominal || formData.nominal <= 0) {
+                swal("Warning", "Please enter a valid amount", "warning");
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('operational.order.store-order-cost') }}",
+                method: 'POST',
+                data: formData,
+                success: function(response) {
+                    if (response.success) {
+                        swal("Success", "Komponen biaya berhasil ditambahkan", "success");
+                        // Clear form
+                        $('#componentType').val('').trigger('change');
+                        $('#costComponentType').val('').trigger('change');
+                        $('#nominal').val('');
+                        // Reload data
+                        loadOrderCosts($('#costOrderCode').val());
+                    } else {
+                        swal("Error", response.message || "Failed to add cost component", "error");
+                    }
+                },
+                error: function(xhr) {
+                    let message = "Failed to add cost component";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    swal("Error", message, "error");
                 }
             });
         });

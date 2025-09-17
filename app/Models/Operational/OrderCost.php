@@ -20,6 +20,7 @@ class OrderCost extends Model
         'componentType',
         'orderCode',
         'nominal',
+        'type',
         'description'
     ];
 

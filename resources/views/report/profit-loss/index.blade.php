@@ -106,8 +106,7 @@
                                 <th colspan="4" class="text-center">Fleet Data</th>
                                 <th colspan="1" class="text-center">Sales (A)</th>
                                 <th colspan="2" class="text-center">Cost (B)</th>
-                                <th colspan="2" class="text-center">Cost (C)</th>
-                                <th rowspan="1" class="text-center">Margin (A - B - C)</th>
+                                <th rowspan="1" class="text-center">Margin (A - B)</th>
                             </tr>
                             <!-- Sub-header -->
                             <tr>
@@ -119,11 +118,9 @@
                                 <th>Basic Sales</th>
                                 {{-- <th>Total Sales</th> --}}
 
-                                <th>Basic Allowance</th>
-                                <th>Additional Cost</th>
+                                <th>Order Cost</th>
 
                                 <th>Maintenance</th>
-                                <th>Tonase</th>
 
                                 <th>Total Margin</th>
                             </tr>
@@ -198,21 +195,14 @@
                     {
                         "data": 'basic_sales'
                     },
-                    // {
-                    //     "data": 'total_sales'
-                    // },
-                    {
-                        "data": 'basic_allowance'
-                    },
+
                     {
                         "data": 'additional_cost'
                     },
                     {
                         "data": 'maintenance'
                     },
-                    {
-                        "data": 'tonase'
-                    },
+
                     {
                         "data": 'total_margin'
                     }

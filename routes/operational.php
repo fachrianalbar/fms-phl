@@ -25,6 +25,9 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::post('order-driver', [OrderController::class, 'storeOrderDriver'])->name('store-order-driver');
     Route::get('order-drivers', [OrderController::class, 'getOrderDrivers'])->name('order.get-order-drivers');
     Route::delete('order-driver', [OrderController::class, 'deleteOrderDriver'])->name('order.delete-order-driver');
+    Route::post('order-cost', [OrderController::class, 'storeOrderCost'])->name('order.store-order-cost');
+    Route::get('order-costs', [OrderController::class, 'getOrderCosts'])->name('order.get-order-costs');
+    Route::delete('order-cost', [OrderController::class, 'deleteOrderCost'])->name('order.delete-order-cost');
 
     // Route::put('finish-order/{id}', [OrderMonitoringController::class, 'finishOrder'])->name('finish-order');
     Route::get('pdf-down-payment/{id}', [DownPaymentController::class, 'pdfDownPayment'])->name('down-payment.pdf-down-payment');

@@ -507,6 +507,7 @@ class OrderController extends Controller
                     $delete = '';
                     $edit = '';
                     $addDriver = '';
+                    $costComponent = '';
 
                     // Tombol Add Driver - muncul di semua status order
                     $addDriver = '<a href="javascript:addOrderDriver(\'' . $row->id . '\', \'' . $row->code . '\')"
@@ -514,6 +515,15 @@ class OrderController extends Controller
                                 data-bs-toggle="tooltip" title="Add Driver">
                                     <i class="mdi mdi-account-plus fs-14 text-warning"></i>
                                 </a>';
+
+                    // Tombol Cost Component - muncul jika status >= 3
+                    if ($row->status >= 3) {
+                        $costComponent = '<a href="javascript:manageCostComponent(\'' . $row->id . '\', \'' . $row->code . '\')"
+                                    class="btn btn-icon btn-sm bg-secondary-subtle me-1"
+                                    data-bs-toggle="tooltip" title="Kelola Komponen Biaya">
+                                        <i class="mdi mdi-cash fs-14 text-secondary"></i>
+                                    </a>';
+                    }
 
 
                     if ($row->status != 0 && in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
@@ -565,6 +575,7 @@ class OrderController extends Controller
                         ' . $note . '
                         ' . $finishOrder . '
                         ' . $addDriver . '
+                        ' . $costComponent . '
                     </td>';
 
                     return $btn;
@@ -759,6 +770,128 @@ class OrderController extends Controller
         $cost->delete();
 
         return redirect()->route($this->view . 'edit', $cost->order->id)->with('success', 'Delete Data Success');
+    }
+
+    public function getOrderCosts(Request $request)
+    {
+        $orderCode = $request->get('orderCode');
+
+        if (!$orderCode) {
+            return response()->json(['success' => false, 'message' => 'Order code is required']);
+        }
+
+        try {
+            $orderCosts = OrderCost::with('costComponent')
+                ->where('orderCode', $orderCode)
+                ->where('type', 'On Charge')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $orderCosts
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error loading order costs: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function storeOrderCost(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'orderCode' => 'required',
+            'nominal' => 'required|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ]);
+            }
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput()
+                ->with('fail', 'Validation failed');
+        }
+
+        $orderCost = OrderCost::where('orderCode', $request->orderCode)
+            ->where('componentType', $request->componentType)
+            ->first();
+
+        if ($orderCost) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Komponen biaya sudah ada untuk order ini'
+                ]);
+            }
+            return redirect()->back()->with('fail', 'Komponen biaya sudah ada untuk order ini');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $orderCost = new OrderCost();
+            $orderCost->code = GenerateCode::generateCode('OCT');
+            $orderCost->orderCode = $request->orderCode;
+            $orderCost->componentType = $request->componentType;
+            $orderCost->nominal = (int) str_replace('.', '', $request->nominal);
+            $orderCost->type = 'On Charge';
+            $orderCost->description = $request->description ?? null;
+            $orderCost->save();
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Komponen biaya berhasil ditambahkan'
+                ]);
+            }
+
+            return redirect()->back()->with('success', 'Komponen biaya berhasil ditambahkan');
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menambahkan komponen biaya: ' . $e->getMessage()
+                ]);
+            }
+
+            return redirect()->back()->with('fail', 'Gagal menambahkan komponen biaya: ' . $e->getMessage());
+        }
+    }
+
+    public function deleteOrderCost(Request $request)
+    {
+        try {
+            $cost = OrderCost::find($request->id);
+
+            if (!$cost) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Komponen biaya tidak ditemukan'
+                ]);
+            }
+
+            $cost->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Komponen biaya berhasil dihapus'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus komponen biaya: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function routeOrder($customerId, $routeTypeCode)

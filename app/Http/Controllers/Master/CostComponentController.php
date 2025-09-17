@@ -164,4 +164,10 @@ class CostComponentController extends Controller
                 ->toJson();
         }
     }
+
+    public function getAllCostComponents()
+    {
+        $costComponents = $this->service->findAll();
+        return response()->json($costComponents);
+    }
 }

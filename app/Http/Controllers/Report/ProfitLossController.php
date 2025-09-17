@@ -73,7 +73,7 @@ class ProfitLossController extends Controller
                 $query->whereDate('date', '>=', $request->startDate)
                     ->whereDate('date', '<=', $request->endDate);
             }
-        }, 'orders.route.routeDetail', 'maintenances.details', 'orders.cost'])->where('code', $id)->first();
+        }, 'orders.route.routeDetail', 'maintenances.details', 'orders.cost'])->where('id', $id)->first();
 
         $basicSales = 0;
         $basicAllowance = 0;
@@ -81,7 +81,6 @@ class ProfitLossController extends Controller
         $maintenance = 0;
         $tonase = 0;
         $orderCost = 0;
-
 
 
         foreach ($data->orders as $item) {
@@ -462,39 +461,39 @@ class ProfitLossController extends Controller
                 ->addColumn('basic_allowance', function ($row) {
                     $basicAllowance = 0;
 
-                    foreach ($row->orders as $order) {
-                        $data = $order->route->routeDetail;
-                        $allowance = 0;
+                    // foreach ($row->orders as $order) {
+                    //     $data = $order->route->routeDetail;
+                    //     $allowance = 0;
 
-                        foreach ($data as $item) {
-                            if ($item->costComponent->type == 'Allowance') {
-                                if ($item->amount != 0) {
-                                    $allowance += $item->amount;
-                                }
+                    //     foreach ($data as $item) {
+                    //         if ($item->costComponent->type == 'Allowance') {
+                    //             if ($item->amount != 0) {
+                    //                 $allowance += $item->amount;
+                    //             }
 
-                                if ($item->percentage) {
-                                    $route = Route::where('code', $item->routeCode)->first();
+                    //             if ($item->percentage) {
+                    //                 $route = Route::where('code', $item->routeCode)->first();
 
-                                    $allowance += $route->price * ($item->percentage / 100);
-                                }
-                            }
+                    //                 $allowance += $route->price * ($item->percentage / 100);
+                    //             }
+                    //         }
 
-                            if ($item->costComponent->type == 'Allowance Office') {
-                                if ($item->amount != 0) {
-                                    $allowance += $item->amount;
-                                }
+                    //         if ($item->costComponent->type == 'Allowance Office') {
+                    //             if ($item->amount != 0) {
+                    //                 $allowance += $item->amount;
+                    //             }
 
-                                if ($item->percentage) {
-                                    $route = Route::where('code', $item->routeCode)->first();
+                    //             if ($item->percentage) {
+                    //                 $route = Route::where('code', $item->routeCode)->first();
 
-                                    $allowance += $route->price * ($item->percentage / 100);
-                                }
-                            }
-                        }
+                    //                 $allowance += $route->price * ($item->percentage / 100);
+                    //             }
+                    //         }
+                    //     }
 
-                        $basicAllowance += $allowance;
-                    }
-                    $this->totalMargin -= $basicAllowance;
+                    //     $basicAllowance += $allowance;
+                    // }
+                    // $this->totalMargin -= $basicAllowance;
 
 
                     return number_format($basicAllowance, 0, ',', '.');

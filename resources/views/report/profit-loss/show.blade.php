@@ -139,11 +139,7 @@
                             <th>No</th>
                             <th>Order Date</th>
                             <th>Shipment No</th>
-                            <th>Qty</th>
                             <th>Cost</th>
-                            <th>Tonase</th>
-                            <th>Add Cost</th>
-                            <th>Total Cost</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -233,19 +229,7 @@
                         "data": "shipmentNumber"
                     },
                     {
-                        "data": 'qty'
-                    },
-                    {
-                        "data": 'cost',
-                    },
-                    {
-                        "data": 'bonus'
-                    },
-                    {
                         "data": 'addCost'
-                    },
-                    {
-                        "data": 'totalPrice'
                     },
 
                 ],
