@@ -103,47 +103,83 @@
     <table class="bordered mt-20">
         <thead>
             <tr>
-                <th>No</th>
-                <th>Tanggal</th>
-                <th>No Kendaraan</th>
-                <th>No. SPPB</th>
-                <th>Gudang Muat</th>
-                <th>Tujuan</th>
-                <th>Nama Barang</th>
-                <th>Total Tonase</th>
-                <th>Tarif/Kg</th>
-                <th>Ongkos Angkut</th>
+                <th style="width: 3%;">No</th>
+                <th style="width: 7%;">Tanggal</th>
+                <th style="width: 9%;">No Kendaraan</th>
+                <th style="width: 12%;">No. SPPB</th>
+                <th style="width: 8%;">Gudang Muat</th>
+                <th style="width: 8%;">Nama Pembeli</th>
+                <th style="width: 8%;">Tujuan</th>
+                <th style="width: 13%;">Nama Barang</th>
+                <th style="width: 7%;">Kg/Box</th>
+                <th style="width: 6%;">Box</th>
+                {{-- <th style="width: 2%;">Tonase</th> --}}
+                <th style="width: 7%;">Total Tonase</th>
+                <th style="width: 7%;">Tarif/Kg</th>
+                <th style="width: 10%;">Ongkos Angkut</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($data->details as $index => $detail)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
-                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
-                    <td>{{ $detail->order->shipmentNumber ?? '-' }}</td>
-                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
-                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">{{ $index + 1 }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ $detail->order->shipmentNumber ?? '-' }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">PT SIL</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ $detail->order->customer->name ?? '' }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                    <td>{{ $detail->order->orderMaterial->first()->material->name }}</td>
                     <td>
-                        @foreach ($detail->order->orderMaterial as $i => $mtr)
-                            {{ $mtr->material->name }}@if (!$loop->last)
-                                ,
-                            @endif
-                        @endforeach
+                        {{-- KG --}}
+                        @if ($detail->order->orderMaterial->first()->unitCode === 'KU240831233156')
+                            {{ $detail->order->orderMaterial->first()->materialQty }}
+                        @elseif ($detail->order->orderMaterial->first()->unitCode2 === 'KU240831233156')
+                            {{ $detail->order->orderMaterial->first()->materialQty2 }}
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td>
+                        {{-- Box --}}
+                        @if ($detail->order->orderMaterial->first()->unitCode === 'TE250801132342')
+                            {{ $detail->order->orderMaterial->first()->materialQty }}
+                        @elseif ($detail->order->orderMaterial->first()->unitCode2 === 'TE250801132342')
+                            {{ $detail->order->orderMaterial->first()->materialQty2 }}
+                        @else
+                            -
+                        @endif
                     </td>
 
-                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                        {{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
                     </td>
-                    @php
-                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
-                    @endphp
+                    @if ($detail->order->orderMaterial->count() > 1)
+                        @foreach ($detail->order->orderMaterial->skip(1) as $material)
+                <tr>
+                    <td class="text-left">{{ $material->material->name ?? '-' }}</td>
+                    <td>{{ $material->materialQty }}</td>
+                    <td>{{ $material->materialQty2 }}</td>
                 </tr>
+
+                @php
+                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                @endphp
+            @endforeach
+            @endif
             @endforeach
 
             <tr>
-                <td colspan="9" class="text-right bold">TOTAL :</td>
+                <td colspan="12" class="text-right bold">TOTAL :</td>
                 <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
