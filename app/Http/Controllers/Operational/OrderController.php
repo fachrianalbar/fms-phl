@@ -505,7 +505,11 @@ class OrderController extends Controller
                     $note = '';
                     $finishOrder = '';
                     $delete = '';
-                    $edit = '';
+                    $edit =  '<a href="' . route($this->view . 'edit', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                        data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>';
                     $addDriver = '';
                     $costComponent = '';
 

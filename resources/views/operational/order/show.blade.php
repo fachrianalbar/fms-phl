@@ -202,6 +202,7 @@
                                     <th>Qty</th>
                                     <th>Unit 2</th>
                                     <th>Qty 2</th>
+                                    <th>Tonase</th>
                                 </tr>
                             </thead>
                             <tbody id="materialForm">
@@ -215,6 +216,8 @@
                                             <td>{{ $ordm->materialQty }}</td>
                                             <td>{{ $ordm->unit2->name ?? '' }}</td>
                                             <td>{{ $ordm->materialQty2 }}</td>
+                                            <td>{{ number_format($ordm->materialQty * $ordm->materialQty2, 0, ',', '.') }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 @endif

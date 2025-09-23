@@ -85,6 +85,11 @@ class Order extends Model
         return $this->hasMany(OrderCost::class, 'orderCode', 'code');
     }
 
+    public function onChargeCost()
+    {
+        return $this->hasMany(OrderCost::class, 'orderCode', 'code')->where('type', 'On Charge');
+    }
+
     public function orderType()
     {
         return $this->belongsTo(OrderType::class, 'orderTypeCode', 'code');
