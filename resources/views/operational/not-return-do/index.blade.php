@@ -291,11 +291,11 @@
                     },
                     {
                         orderable: false,
-                        targets: [0, 8]
+                        targets: [0, 1, 2, 3, 4, 5, 6, 7, 8]
                     },
                 ],
                 order: [
-                    [3, 'asc']
+                    [2, 'asc']
                 ],
             });
         });
