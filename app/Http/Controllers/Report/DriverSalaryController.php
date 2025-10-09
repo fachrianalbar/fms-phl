@@ -199,6 +199,8 @@ class DriverSalaryController extends Controller
             $mpdf = new Mpdf([
                 'orientation' => 'P',
                 'format' => [215, 330],
+                'tempDir' => storage_path('app/mpdf-temp')
+
             ]);
             $mpdf->setAutoTopMargin = 'stretch';
             $mpdf->setAutoBottomMargin = 'stretch';

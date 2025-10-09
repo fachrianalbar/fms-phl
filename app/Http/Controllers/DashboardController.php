@@ -262,6 +262,7 @@ class DashboardController extends Controller
             [
                 'orientation' => 'P',
                 'format' => [215, 330],
+                'tempDir' => storage_path('app/mpdf-temp')
             ]
         );
 
