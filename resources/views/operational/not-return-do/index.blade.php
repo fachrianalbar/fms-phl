@@ -28,7 +28,7 @@
         <div class="card">
             @csrf
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} {{ __('general.data') }}</h4>
+                <h4>{{ $title }} Data</h4>
 
                 <div class="d-flex align-items-center gap-3">
                     <div class="accordion-item ">
@@ -40,9 +40,9 @@
 
                     </div>
 
-                    <button type="submit" class="btn btn-primary" id="saveOrder">
+                    {{-- <button type="submit" class="btn btn-primary" s>
                         {{ __('menu_not_return_do.confirm_return') }}
-                    </button>
+                    </button> --}}
 
                 </div>
 
@@ -146,9 +146,7 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th>
-                                    <input type="checkbox" id="checkAll">
-                                </th>
+                                <th>#</th>
                                 <th>{{ __('menu_not_return_do.no') }}</th>
                                 <th>{{ __('menu_not_return_do.order_date') }}</th>
                                 <th>{{ __('menu_not_return_do.shipment_no') }}</th>
@@ -238,7 +236,70 @@
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
 
     <script>
-        // ====== Dependencies loaded above (DataTables, SweetAlert, Select2) ======
+        $(document).ready(function() {
+            const table = $('#dt').DataTable({
+                processing: true,
+                serverSide: true,
+                destroy: true,
+                ajax: {
+                    url: "{{ route('dt.not-return-do') }}",
+                    data: function(d) {
+                        d.plateNumber = $('select[name="plateNumber"]').val();
+                        d.customerName = $('select[name="customerName"]').val();
+                        d.driverName = $('select[name="driverName"]').val();
+                        d.fleetTypeName = $('select[name="fleetTypeName"]').val();
+                        d.shipmentNumber = $('input[name="shipmentNumber"]').val();
+                        d.startDate = $('input[name="startDate"]').val();
+                        d.endDate = $('input[name="endDate"]').val();
+                        d.destination = $('select[name="destination"]').val();
+                        d.orderTypeCode = $('select[name="orderTypeCode"]').val();
+                    }
+                },
+                columns: [{
+                        data: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'DT_RowIndex'
+                    },
+                    {
+                        data: 'orderDate'
+                    },
+                    {
+                        data: 'shipmentNumber'
+                    },
+                    {
+                        data: 'customer.name'
+                    },
+                    {
+                        data: 'route.originLocation.name'
+                    },
+                    {
+                        data: 'route.destinationLocation.name'
+                    },
+                    {
+                        data: 'fleet.plateNumber'
+                    },
+                    {
+                        data: 'driver.name'
+                    }
+                ],
+                columnDefs: [{
+                        searchable: false,
+                        targets: [0, 1, 8]
+                    },
+                    {
+                        orderable: false,
+                        targets: [0, 8]
+                    },
+                ],
+                order: [
+                    [3, 'asc']
+                ],
+            });
+        });
+
 
         let selectedOrders = [];
 
@@ -311,65 +372,7 @@
 
         // ---------- DataTable init ----------
         $(function() {
-            const table = $('#dt').DataTable({
-                processing: true,
-                serverSide: true,
-                destroy: true,
-                ajax: {
-                    url: "{{ route('dt.not-return-do') }}",
-                    data: function(d) {
-                        d.plateNumber = $('select[name="plateNumber"]').val();
-                        d.customerName = $('select[name="customerName"]').val();
-                        d.driverName = $('select[name="driverName"]').val();
-                        d.fleetTypeName = $('select[name="fleetTypeName"]').val();
-                        d.shipmentNumber = $('input[name="shipmentNumber"]').val();
-                        d.startDate = $('input[name="startDate"]').val();
-                        d.endDate = $('input[name="endDate"]').val();
-                        d.destination = $('select[name="destination"]').val();
-                        d.orderTypeCode = $('select[name="orderTypeCode"]').val();
-                    }
-                },
-                columns: [{
-                        data: 'action'
-                    },
-                    {
-                        data: 'DT_RowIndex'
-                    },
-                    {
-                        data: 'orderDate'
-                    },
-                    {
-                        data: 'shipmentNumber'
-                    },
-                    {
-                        data: 'customer.name'
-                    },
-                    {
-                        data: 'route.originLocation.name'
-                    },
-                    {
-                        data: 'route.destinationLocation.name'
-                    },
-                    {
-                        data: 'fleet.plateNumber'
-                    },
-                    {
-                        data: 'driver.name'
-                    },
-                ],
-                columnDefs: [{
-                        searchable: false,
-                        targets: [0, 1]
-                    },
-                    {
-                        orderable: false,
-                        targets: [0, 1]
-                    },
-                ],
-                order: [
-                    [2, 'asc']
-                ],
-            });
+
 
             // Filter button
             $('#btnFilter').on('click', function() {

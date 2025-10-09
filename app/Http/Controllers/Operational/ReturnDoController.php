@@ -109,13 +109,13 @@ class ReturnDoController extends Controller
                 })
 
                 ->editColumn('returnDate', function ($row) {
-                    $returnDate = '';
+                    // $returnDate = '';
 
-                    if (isset($row->returnDate)) {
-                        $returnDate = Carbon::parse($row->returnDate)->format('d-m-Y H:i ');
-                    }
+                    // if (isset($row->returnDate)) {
+                    //     $returnDate = Carbon::parse($row->returnDate)->format('d-m-Y H:i ');
+                    // }
 
-                    return $returnDate;
+                    return $row->returnDate;
                 })
 
                 ->addColumn('action', function ($row) {

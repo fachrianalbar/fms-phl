@@ -194,7 +194,7 @@ class MaintenanceController extends Controller
             ->decrement('stockOut', $md->qty);
 
         // Hapus transaksi stok
-        StockTransaction::where('transactionCode', $md->code)->delete();
+        StockTransaction::where('transactionDetailCode', $md->code)->delete();
 
         // Hapus detail maintenance
         $maintenanceId = $md->maintenance->id;

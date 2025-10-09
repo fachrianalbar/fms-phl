@@ -21,4 +21,6 @@ return [
     'destination'      => 'Tujuan',
     'fleet'            => 'Armada',
     'driver'           => 'Sopir',
+    'confirm'          => 'Konfirmasi'
+
 ];

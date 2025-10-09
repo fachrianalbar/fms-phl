@@ -21,4 +21,5 @@ return [
     'destination'      => 'Destination',
     'fleet'            => 'Fleet',
     'driver'           => 'Driver',
+    'confirm'          => 'Confirm'
 ];

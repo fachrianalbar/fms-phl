@@ -58,7 +58,7 @@
                                 <label class="form-label" for="name">{{ __('menu_purchase.date') }}<i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="date" id="datetime-local" type="date" required
-                                    placeholder="Order Date" value="{{ now()->toDateString() }}">
+                                    placeholder="Purcahse Date" value="{{ now()->toDateString() }}">
                             </div>
 
                             <div class="col-md-6">
@@ -79,6 +79,15 @@
                                         <option value="{{ $item->code }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <label class="form-label" for="name">{{ __('menu_purchase.due_date') }}<i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="dueDate" id="datetime-local" type="date" required
+                                    placeholder="{{ __('menu_purchase.due_date') }}">
                             </div>
                         </div>
 
@@ -108,7 +117,8 @@
                                 <td>
                                     <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1" required
                                         onchange="loadItemDetails(1)">
-                                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
                                         </option>
                                         @foreach ($items as $it)
                                             <option value="{{ $it->code }}" data-name="{{ $it->name }}"

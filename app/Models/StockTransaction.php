@@ -20,11 +20,13 @@ class StockTransaction extends Model
     protected $fillable = [
         'code',
         'itemCode',
+        'warehouseCode',
         'transactionCode',
+        'transactionDetailCode',
+        'qtyIn',
+        'qtyOut',
         'date',
-        'type',
-        'qty',
-        'transactionType'
+        'transactionType',
     ];
 
     public function item()

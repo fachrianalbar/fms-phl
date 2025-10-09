@@ -68,7 +68,6 @@ class InvoiceController extends Controller
         $validator = Validator::make($request->all(), [
             'customerCode' => 'required',
             'invoiceNumber' => 'required',
-            'receiptNumber' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
@@ -137,7 +136,6 @@ class InvoiceController extends Controller
         $validator = Validator::make($request->all(), [
             // 'customerCode' => 'required',
             'invoiceNumber' => 'required',
-            'receiptNumber' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
@@ -459,5 +457,12 @@ class InvoiceController extends Controller
     public function customerInvoice($customerCode)
     {
         return $this->customerSvc->getByCode($customerCode);
+    }
+
+    public function invoiceNumberFormat($id)
+    {
+        $data = $this->service->invoiceNumberFormat($id);
+
+        return $data;
     }
 }

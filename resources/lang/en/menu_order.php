@@ -37,4 +37,5 @@ return [
     'change_driver_failed' => 'Change driver failed',
     'order_report' => 'Order Report',
     'total_price' => 'Total Price',
+    'return_date' => 'Return Date'
 ];

@@ -26,5 +26,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('customer-invoice/{customerCode}', [InvoiceController::class, 'customerInvoice'])->name('customer-finance');
+    Route::get('invoice-number-format/{id}', [InvoiceController::class, 'invoiceNumberFormat'])->name('invoice-number-format');
     Route::get('order-detail-payment/{orderCode}', [OrderPaymentController::class, 'orderDetailPayment'])->name('order-detail-payment');
 });

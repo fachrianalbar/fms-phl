@@ -172,7 +172,8 @@
                                     {{ __('general.choose') }}...</option>
                                 <option value=1 {{ $data->isDo == 1 ? 'selected' : '' }}>
                                     {{ __('general.no') }}</option>
-                                <option value=0 {{ $data->isDo == 0 || $data->isDo != null ? 'selected' : '' }}>
+                                <option value=0
+                                    {{ $data->isDo == 0 || ($data->isDo != null && $data->isDo != 1) ? 'selected' : '' }}>
                                     {{ __('general.yes') }}</option>
 
                             </select>

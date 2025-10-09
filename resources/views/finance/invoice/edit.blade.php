@@ -40,7 +40,7 @@
             </div>
 
             <div class="card-body col-md-12">
-                <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
+                <form class="row g-3 mt-1" method="post" action="{{ route($view . 'update', $data->id) }}">
                     @csrf
                     @method('PUT')
 
@@ -65,11 +65,12 @@
                                 {{ __('menu_invoice.invoice_number') }} <i class="mdi mdi-information text-danger"></i>
                             </label>
                             <input class="form-control" name="invoiceNumber" id="invoiceNumber" type="text" required
-                                placeholder="{{ __('menu_invoice.invoice_number') }}" value="{{ $data->invoiceNumber }}">
+                                placeholder="{{ __('menu_invoice.invoice_number') }}" value="{{ $data->invoiceNumber }}"
+                                readonly>
                         </div>
                     </div>
 
-                    <div class="row mt-4">
+                    {{-- <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="receiptNumber">
                                 {{ __('menu_invoice.receipt_number') }} <i class="mdi mdi-information text-danger"></i>
@@ -83,7 +84,7 @@
                             <input class="form-control" name="poNumber" id="poNumber" type="text"
                                 placeholder="{{ __('menu_invoice.po_number') }}" value="{{ $data->poNumber }}">
                         </div>
-                    </div>
+                    </div> --}}
 
                     <div class="row mt-4">
                         <div class="col-md-6">

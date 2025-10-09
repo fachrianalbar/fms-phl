@@ -74,6 +74,7 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
+                                <th>#</th>
                                 <th>No</th>
                                 <th>Item Code</th>
                                 <th>Item Name</th>
@@ -95,6 +96,38 @@
         @csrf
         @method('DELETE')
     </form>
+
+    <!-- Modal Edit Stock Awal -->
+    <div class="modal fade" id="editStockModal" tabindex="-1" aria-labelledby="editStockModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editStockModalLabel">Edit Stock Awal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="editStockForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="editItemCode" name="itemCode">
+
+                        <div class="mb-3">
+                            <label for="editItemName" class="form-label">Nama Item</label>
+                            <input type="text" class="form-control" id="editItemName" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="editQty" class="form-label">Qty Stock Awal</label>
+                            <input type="number" class="form-control" id="editQty" name="qty" required min="0"
+                                step="1">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script')
@@ -131,14 +164,21 @@
                         d.itemCode = $('select[name="itemCode"]').val();
                     }
                 },
-                "columns": [{
+                "columns": [
+
+                    {
+                        "data": 'action',
+                        "orderable": false,
+                        "searchable": false
+                    },
+                    {
                         "data": 'DT_RowIndex'
                     },
                     {
-                        "data": 'itemCode'
+                        "data": 'code'
                     },
                     {
-                        "data": 'item.name'
+                        "data": 'name'
                     },
                     // {
                     //     "data": "stockIn"
@@ -148,19 +188,20 @@
                     // },
                     {
                         "data": 'total'
-                    },
+                    }
+
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0]
+                        "targets": [0, 4]
                     },
                     {
                         "orderable": false,
-                        "targets": [0]
+                        "targets": [0, 4]
                     }
                 ],
                 "order": [
-                    [1, 'desc']
+                    [3, 'asc']
                 ]
             })
 
@@ -179,6 +220,56 @@
                 e.preventDefault();
 
                 table.ajax.reload(); // Reload DataTable dengan filter baru
+            });
+
+            // Handle modal edit stock
+            $(document).on('click', '.btn-edit-stock', function() {
+                const itemCode = $(this).data('item-code');
+                const itemName = $(this).data('item-name');
+
+                $('#editItemCode').val(itemCode);
+                $('#editItemName').val(itemName);
+                $('#editQty').val('');
+
+                // Load warehouse data
+
+                $('#editStockModal').modal('show');
+            });
+
+
+
+            // Handle form submit
+            $('#editStockForm').on('submit', function(e) {
+                e.preventDefault();
+
+                const formData = {
+                    itemCode: $('#editItemCode').val(),
+                    qty: $('#editQty').val(),
+                    _token: '{{ csrf_token() }}'
+                };
+
+                $.ajax({
+                    url: "{{ route('inventory.stock.update-initial') }}",
+                    type: "POST",
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Berhasil", response.message, "success");
+                            $('#editStockModal').modal('hide');
+                            table.ajax.reload();
+                        } else {
+                            swal("Error", response.message, "error");
+                        }
+                    },
+                    error: function(xhr) {
+                        const response = xhr.responseJSON;
+                        if (response && response.message) {
+                            swal("Error", response.message, "error");
+                        } else {
+                            swal("Error", "Terjadi kesalahan, silakan coba lagi", "error");
+                        }
+                    }
+                });
             });
         });
     </script>

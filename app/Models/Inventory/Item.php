@@ -4,6 +4,7 @@ namespace App\Models\Inventory;
 
 use App\Models\Master\Unit;
 use App\Models\Purchasing\PurchaseDetail;
+use App\Models\StockTransaction;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -51,6 +52,21 @@ class Item extends Model
     public function supplier()
     {
         return $this->belongsTo(Supplier::class, 'supplierCode', 'code');
+    }
+
+    public function stock()
+    {
+        return $this->hasOne(Stock::class, 'itemCode', 'code');
+    }
+
+    public function hasPurchase()
+    {
+        return $this->hasOne(StockTransaction::class, 'itemCode', 'code')->where('transactionType', 'IN');
+    }
+
+    public function hasMaintenance()
+    {
+        return $this->hasOne(StockTransaction::class, 'itemCode', 'code')->where('transactionType', 'OUT');
     }
 
     public function latestPurchase()

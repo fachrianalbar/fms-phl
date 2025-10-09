@@ -26,9 +26,9 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
 
-                <button type="submit" class="btn btn-primary" id="saveOrder">
+                {{-- <button type="submit" class="btn btn-primary" id="saveOrder">
                     {{ __('menu_return_do.cancel_return') }}
-                </button>
+                </button> --}}
 
             </div>
             <div class="card-body">
@@ -37,7 +37,6 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th>{{ __('menu_return_do.hash') }}</th>
                                 <th>{{ __('menu_return_do.no') }}</th>
                                 <th>{{ __('menu_return_do.order_date') }}</th>
                                 <th>{{ __('menu_return_do.shipment_no') }}</th>
@@ -81,6 +80,57 @@
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
 
     <script>
+        $(document).ready(function() {
+            $('#dt').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "destroy": true,
+                "ajax": {
+                    "url": "{{ route('dt.return-do') }}",
+                },
+                "columns": [{
+                        "data": 'DT_RowIndex'
+                    },
+                    {
+                        "data": 'orderDate'
+                    },
+                    {
+                        "data": 'shipmentNumber'
+                    },
+                    {
+                        "data": 'customer.name'
+                    },
+                    {
+                        "data": 'route.originLocation.name'
+                    },
+                    {
+                        "data": 'route.destinationLocation.name'
+                    },
+                    {
+                        "data": 'fleet.plateNumber'
+                    },
+                    {
+                        "data": 'driver.name'
+                    },
+
+                    {
+                        "data": 'returnDate'
+                    }
+                ],
+                "columnDefs": [{
+                        "searchable": false,
+                        "targets": [0, 1]
+                    },
+                    {
+                        "orderable": false,
+                        "targets": [0, 1]
+                    }
+                ],
+                "order": [
+                    [2, 'asc']
+                ]
+            })
+        });
         let selectedOrders = [];
 
         document.getElementById('saveOrder').addEventListener('click', function(event) {
@@ -127,57 +177,7 @@
                 });
             });
 
-            $('#dt').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "destroy": true,
-                "ajax": {
-                    "url": "{{ route('dt.return-do') }}",
-                },
-                "columns": [{
-                        "data": 'action'
-                    }, {
-                        "data": 'DT_RowIndex'
-                    },
-                    {
-                        "data": 'orderDate'
-                    },
-                    {
-                        "data": 'shipmentNumber'
-                    },
-                    {
-                        "data": 'customer.name'
-                    },
-                    {
-                        "data": 'route.originLocation.name'
-                    },
-                    {
-                        "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'driver.name'
-                    },
 
-                    {
-                        "data": 'returnDate'
-                    }
-                ],
-                "columnDefs": [{
-                        "searchable": false,
-                        "targets": [0, 1]
-                    },
-                    {
-                        "orderable": false,
-                        "targets": [0, 1]
-                    }
-                ],
-                "order": [
-                    [2, 'asc']
-                ]
-            })
         });
     </script>
 @endpush

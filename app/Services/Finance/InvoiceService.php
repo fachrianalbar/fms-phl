@@ -6,6 +6,7 @@ use App\Helpers\GenerateCode;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\InvoiceDetail;
 use App\Models\Operational\Order;
+use App\Models\Master\Customer;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
 
@@ -16,12 +17,14 @@ class InvoiceService
     protected $service;
     protected $order;
     protected $invoiceDetail;
+    protected $customer;
 
-    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail)
+    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer)
     {
         $this->service = $invoice;
         $this->order = $order;
         $this->invoiceDetail = $invoiceDetail;
+        $this->customer = $customer;
     }
 
     public function findAll()
@@ -190,5 +193,28 @@ class InvoiceService
         $this->logActivity('Invoice Detail', $data, 'Delete');
 
         $this->invoiceDetail->where('orderCode', $order->code)->delete();
+    }
+
+    public function invoiceNumberFormat($id)
+    {
+        $customer = $this->customer->where('id', $id)->first();
+
+        // Ambil invoiceNumber terakhir milik customer yang bersangkutan di tahun berjalan
+        $lastInvoice = $this->service
+            ->where('customerCode', $customer->code)
+            ->whereYear('created_at', now()->year)
+            ->orderByDesc('created_at')
+            ->first();
+
+        // Default increment = 1 jika belum ada invoice sebelumnya
+        $lastNumber = 0;
+
+        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
+            $lastNumber = (int) $matches[1];
+        }
+
+        $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+
+        return 'INV/' . $customer->code . '/' . $increment . '/' . now()->year;
     }
 }

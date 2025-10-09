@@ -82,6 +82,15 @@
                             </div>
                         </div>
 
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <label class="form-label" for="name">{{ __('menu_purchase.due_date') }}<i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" name="dueDate" id="datetime-local" type="date" required
+                                    value="{{ $data->dueDate }}" placeholder="{{ __('menu_purchase.due_date') }}">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

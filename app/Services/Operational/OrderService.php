@@ -65,7 +65,7 @@ class OrderService
             'fleet',
             'fleet.type',
             'unit'
-        ])->orderBy('created_at', 'desc');
+        ])->orderBy('orderDate', 'asc');
     }
 
     public function getById($id)
@@ -104,7 +104,6 @@ class OrderService
     public function update($request, $id, $title)
     {
 
-
         $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
@@ -113,7 +112,9 @@ class OrderService
         );
 
         if (isset($request->nominal)) {
-            $data->cost()->delete();
+            if (empty($request->not_return_do)) {
+                $data->cost()->whereNull('type')->delete();
+            }
             $this->storeOrderCost($request);
         }
 
@@ -173,7 +174,8 @@ class OrderService
                 'componentType' => $filtered['componentName'][$i],
                 'orderCode' => $request->code,
                 'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
-                'description' => $filtered['description'][$i]
+                'description' => $filtered['description'][$i],
+                'type' => isset($request->not_return_do) ? 'On Charge' : null
             ]);
 
             $this->logActivity('Order Cost', $orderCost, 'Create');
@@ -220,12 +222,10 @@ class OrderService
 
     private function buildOrderData($request, $isUpdate = false)
     {
-        $route = $this->route->where('code', $request->routeData)
-            ->first();
+        $route = $this->route->where('code', $request->routeData)->first();
 
-        return [
+        $data = [
             'orderDate' => $request->orderDate,
-            // 'materialCode' => $request->materialCode,
             'notes' => $request->notes,
             'sto' => $request->sto,
             'salesOrder' => $request->salesOrder,
@@ -236,10 +236,15 @@ class OrderService
             'orderTypeCode' => $request->orderTypeCode,
             'routeAmount' => $isUpdate ? (int)$request->routeAmount : $route->price,
             'customerCode' => $request->customerCode,
-            // 'unitCode' => $request->unitCode,
-            // 'materialQty' => $request->materialQty
         ];
+
+        if (!is_null($request->returnDate)) {
+            $data['returnDate'] = $request->returnDate;
+        }
+
+        return $data;
     }
+
 
     public function shipmentFormat($id)
     {

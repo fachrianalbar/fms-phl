@@ -37,7 +37,7 @@
                                 <th>#</th>
                                 <th>No</th>
                                 <th>{{ __('menu_invoice.invoice_no') }}</th>
-                                <th>{{ __('menu_invoice.receipt_no') }}</th>
+                                {{-- <th>{{ __('menu_invoice.receipt_no') }}</th> --}}
                                 <th>{{ __('menu_invoice.customer_name') }}</th>
                                 <th>{{ __('menu_invoice.invoice_dates') }}</th>
                                 <th>{{ __('menu_invoice.total_order') }}</th>
@@ -98,9 +98,6 @@
                     },
                     {
                         "data": 'invoiceNumber'
-                    },
-                    {
-                        "data": 'receiptNumber'
                     },
                     {
                         "data": 'customer.name'

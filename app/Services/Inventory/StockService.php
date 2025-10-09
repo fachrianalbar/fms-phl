@@ -3,6 +3,7 @@
 namespace App\Services\Inventory;
 
 use App\Helpers\GenerateCode;
+use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Master\Position;
 use App\Traits\LogActivity;
@@ -12,10 +13,12 @@ class StockService
     use LogActivity;
 
     protected $service;
+    protected $item;
 
-    public function __construct(Stock $stock)
+    public function __construct(Stock $stock, Item $item)
     {
         $this->service = $stock;
+        $this->item = $item;
     }
 
     public function findAll()
@@ -25,7 +28,7 @@ class StockService
 
     public function datatable()
     {
-        return $this->service->with(['item']);
+        return $this->item->with(['stock']);
     }
 
     public function getById($id)

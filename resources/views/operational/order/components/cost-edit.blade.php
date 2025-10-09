@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        <table class="table table-striped w-100 nowrap" id="dt">
+        <table class="table table-striped w-100 nowrap" id="dt-cost-component">
             <thead>
                 <tr>
                     <th>#</th>
@@ -106,7 +106,7 @@
     </div>
 
     <script>
-        let index = document.getElementById('dt').getElementsByTagName('tr')
+        let index = document.getElementById('dt-cost-component').getElementsByTagName('tr')
             .length - 1; // Initialize index for unique identifiers
 
         document.getElementById('addButton').addEventListener('click', function() {
@@ -144,7 +144,7 @@
             }
 
             // Create a new row and structure it according to your example
-            const table = document.getElementById('dt').getElementsByTagName('tbody')[0];
+            const table = document.getElementById('dt-cost-component').getElementsByTagName('tbody')[0];
             const newRow = table.insertRow();
 
 
@@ -185,7 +185,7 @@
 
         // Function to remove a row
         function removeRow(rowIndex) {
-            const table = document.getElementById('dt').getElementsByTagName('tbody')[0];
+            const table = document.getElementById('dt-cost-component').getElementsByTagName('tbody')[0];
             table.deleteRow(rowIndex);
             index--;
         }

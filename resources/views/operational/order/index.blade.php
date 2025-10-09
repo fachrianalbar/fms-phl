@@ -29,19 +29,19 @@
         }
 
         /* .modal .select2-container .select2-selection {
-                                                                                            height: 38px;
-                                                                                            border: 1px solid #ced4da;
-                                                                                            border-radius: 0.375rem;
-                                                                                        }
+                                                                                                        height: 38px;
+                                                                                                        border: 1px solid #ced4da;
+                                                                                                        border-radius: 0.375rem;
+                                                                                                    }
 
-                                                                                        .modal .select2-container .select2-selection__rendered {
-                                                                                            line-height: 36px;
-                                                                                            padding-left: 12px;
-                                                                                        }
+                                                                                                    .modal .select2-container .select2-selection__rendered {
+                                                                                                        line-height: 36px;
+                                                                                                        padding-left: 12px;
+                                                                                                    }
 
-                                                                                        .modal .select2-container .select2-selection__arrow {
-                                                                                            height: 36px;
-                                                                                        } */
+                                                                                                    .modal .select2-container .select2-selection__arrow {
+                                                                                                        height: 36px;
+                                                                                                    } */
 
         .select2-dropdown {
             z-index: 99999 !important;
@@ -544,12 +544,10 @@
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 1]
+                        "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8]
                     }
                 ],
-                "order": [
-                    [2, 'desc']
-                ]
+
             })
 
             const tableTax = $('#dt-order-tax').DataTable({

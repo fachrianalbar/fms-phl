@@ -100,11 +100,9 @@
                                 <th>Code</th>
                                 <th>{{ __('menu_purchase.purchase_date') }}</th>
                                 <th>{{ __('menu_purchase.purchase_due_date') }}</th>
-                                <th>{{ __('menu_purchase.received_date') }}</th>
                                 <th>{{ __('menu_purchase.supplier_name') }}</th>
                                 <th>{{ __('menu_purchase.warehouse') }}</th>
                                 <th>{{ __('menu_purchase.total_prices') }}</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -176,9 +174,6 @@
                         "data": 'dueDate'
                     },
                     {
-                        "data": 'receivedDate'
-                    },
-                    {
                         "data": "supplier.name"
                     },
                     {
@@ -186,9 +181,6 @@
                     },
                     {
                         "data": "totalPrice"
-                    },
-                    {
-                        "data": "purchaseStatus.name"
                     }
                 ],
                 "columnDefs": [{

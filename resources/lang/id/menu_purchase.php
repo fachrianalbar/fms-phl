@@ -21,5 +21,6 @@ return [
     'payment_date' => 'Tanggal Pembayaran',
     'description' => 'Deskripsi',
     'verify_data' => 'Verifikasi Data',
-    'purchase_due_date' => 'Jatuh Tempo Pembayaran Pembelian'
+    'purchase_due_date' => 'Jatuh Tempo Pembayaran Pembelian',
+    'due_date' => 'Jatuh Tempo'
 ];

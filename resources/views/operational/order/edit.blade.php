@@ -89,7 +89,7 @@
                                         class="mdi mdi-information text-danger"></i></label>
                                 <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
                                     required placeholder="{{ __('menu_order.shipment_no') }}"
-                                    value="{{ $data->shipmentNumber }}">
+                                    value="{{ $data->shipmentNumber }}" readonly>
                             </div>
 
                         </div>
@@ -186,7 +186,7 @@
                                 </div>
                             </div> --}}
 
-                        <div class="row ">
+                        <div class="row mt-4">
                             @php
                                 $label = '';
 

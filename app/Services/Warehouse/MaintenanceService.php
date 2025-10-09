@@ -4,6 +4,7 @@ namespace App\Services\Warehouse;
 
 use App\Helpers\GenerateCode;
 use App\Models\Inventory\Stock;
+use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
@@ -56,6 +57,8 @@ class MaintenanceService
             'time' => $request->time,
             'fleetCode' => $request->fleetCode
         ]);
+
+        $warehouseCode = Warehouse::first()->code;
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
@@ -119,13 +122,15 @@ class MaintenanceService
 
                 // 7. Buat StockTransaction
                 StockTransaction::create([
-                    'code' => GenerateCode::generateCode('FPD', true),
+                    'code' => GenerateCode::generateCode('FST', true),
                     'itemCode' => $itemCode,
-                    'qty' => $requestedQty,
-                    'transactionCode' => $detail->code,
+                    'qtyIn' => 0,
+                    'qtyOut' => $requestedQty,
+                    'transactionCode' => $data->code,
+                    'transactionDetailCode' => $detail->code,
                     'date' => $request->date,
-                    'type' => 'OUT',
-                    'transactionType' => 2
+                    'transactionType' => 'OUT',
+                    'warehouseCode' => $warehouseCode
                 ]);
             }
         }
@@ -247,13 +252,13 @@ class MaintenanceService
                     ->increment('stockOut', $qty);
 
                 StockTransaction::updateOrCreate(
-                    ['transactionCode' => $detail->code],
+                    ['transactionDetailCode' => $detail->code],
                     [
                         'itemCode' => $itemCode,
-                        'qty' => $qty,
+                        'qtyIn' => 0,
+                        'qtyOut' => $qty,
                         'date' => $request->date,
-                        'type' => 'OUT',
-                        'transactionType' => 2
+                        'transactionType' => 'OUT',
                     ]
                 );
             }
@@ -261,9 +266,6 @@ class MaintenanceService
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
-
-
-
 
     public function destroy($id, $title)
     {
@@ -287,7 +289,7 @@ class MaintenanceService
             Stock::where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
 
             // 4. Hapus transaksi stok
-            StockTransaction::where('transactionCode', $item->code)->delete();
+            StockTransaction::where('transactionDetailCode', $item->code)->delete();
         }
 
         // 5. Hapus detail maintenance

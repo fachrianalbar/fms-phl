@@ -20,6 +20,7 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::resource('transaction-stock', StockTransactionController::class);
     Route::resource('stock', StockController::class);
     Route::get('pdf-stock', [StockController::class, 'pdfStock'])->name('stock.pdf-stock');
+    Route::post('stock/update-initial', [StockController::class, 'updateInitialStock'])->name('stock.update-initial');
     Route::get('pdf-stock-transaction', [StockTransactionController::class, 'pdfStockTransaction'])->name('transaction-stock.pdf-transaction-stock');
 });
 

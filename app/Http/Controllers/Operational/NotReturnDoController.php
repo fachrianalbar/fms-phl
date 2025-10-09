@@ -4,16 +4,23 @@ namespace App\Http\Controllers\Operational;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Data\Route;
+use App\Models\Master\CostComponent;
 use App\Services\MenuService;
 use App\Models\Operational\Order;
+use App\Models\Operational\OrderCost;
 use App\Services\Data\FleetDriverService;
 use App\Services\Master\CustomerService;
+use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
 use App\Services\Master\FleetTypeService;
 use App\Services\Master\LocationService;
 use App\Services\Master\OrderTypeService;
 use App\Services\Master\UnitService;
 use App\Services\Operational\NotReturnDoService;
+use App\Services\Operational\OrderService;
+use App\Services\Master\RouteTypeService;
+use App\Services\Master\MaterialService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
@@ -33,8 +40,11 @@ class NotReturnDoController extends Controller
     protected $fleetSvc;
     protected $orderTypeSvc;
     protected $unitSvc;
+    protected $orderSvc;
+    protected $routeTypeSvc;
+    protected $materialSvc;
 
-    public function __construct(NotReturnDoService $notReturnDoService, MenuService $menuSvc, CustomerService $customerSvc, FleetTypeService $fleetTypeSvc, LocationService $locationSvc, FleetDriverService $driverSvc, FleetService $fleetSvc, OrderTypeService $orderTypeSvc, UnitService $unitSvc)
+    public function __construct(NotReturnDoService $notReturnDoService, MenuService $menuSvc, CustomerService $customerSvc, FleetTypeService $fleetTypeSvc, LocationService $locationSvc, EmployeeService $driverSvc, FleetService $fleetSvc, OrderTypeService $orderTypeSvc, UnitService $unitSvc, OrderService $orderSvc, RouteTypeService $routeTypeSvc, MaterialService $materialSvc)
     {
         $this->service = $notReturnDoService;
         $this->title = "Not Return Do";
@@ -46,6 +56,9 @@ class NotReturnDoController extends Controller
         $this->fleetSvc = $fleetSvc;
         $this->orderTypeSvc = $orderTypeSvc;
         $this->unitSvc = $unitSvc;
+        $this->orderSvc = $orderSvc;
+        $this->routeTypeSvc = $routeTypeSvc;
+        $this->materialSvc = $materialSvc;
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = "operational.not-return-do.";
     }
@@ -95,6 +108,117 @@ class NotReturnDoController extends Controller
             DB::rollback();
 
             return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
+    }
+
+    public function edit($code)
+    {
+        $data = Order::with([
+            'customer',
+            'fleet',
+            'driver',
+            'route.originLocation',
+            'route.destinationLocation',
+            'route.routeType',
+            'cost',
+            'orderMaterial.material',
+            'orderMaterial.unit'
+        ])->where('code', $code)->firstOrFail();
+
+        $customer = $this->customerSvc->findAll();
+        $fleetType = $this->fleetTypeSvc->findAll();
+        $location = $this->locationSvc->findAll();
+        $driver = $this->driverSvc->findAll();
+        $fleet = $this->orderSvc->getFleet($data->fleetCode);
+        $orderType = $this->orderTypeSvc->findAll();
+        $unit = $this->unitSvc->findAll();
+        $routeType = $this->routeTypeSvc->findAll();
+        $material = $this->materialSvc->findAll();
+        $customerDetailOrder = $this->orderSvc->getCustomerDetailOrder($data->code);
+        $component = CostComponent::get();
+        $cost = OrderCost::where('orderCode', $data->code)->where('type', 'On Charge')->get();
+
+        $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
+
+
+        return view($this->view . 'edit')
+            ->with('view', $this->view)
+            ->with('title', $this->title)
+            ->with('data', $data)
+            ->with('customer', $customer)
+            ->with('fleetType', $fleetType)
+            ->with('location', $location)
+            ->with('driver', $driver)
+            ->with('fleet', $fleet)
+            ->with('orderType', $orderType)
+            ->with('unit', $unit)
+            ->with('routeType', $routeType)
+            ->with('material', $material)
+            ->with('component', $component)
+            ->with('cost', $cost)
+            ->with('route', $route)
+            ->with('customerDetailOrder', $customerDetailOrder);
+    }
+
+    public function update(Request $request, $code)
+    {
+
+        try {
+            DB::beginTransaction();
+
+            // Update order data sama seperti order edit
+            $this->orderSvc->update($request, Order::where('code', $code)->first()->id, $this->title);
+
+
+            Order::where('code', $code)->update([
+                'status' => 4,
+                'returnDate' => now()->format('Y-m-d'),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('operational.not-return-do.index')
+                ->with('success', 'Data berhasil diupdate');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            if ($request->has('confirm_return')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ' . $th->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('fail', 'Error: ' . $th->getMessage())
+                ->withInput();
+        }
+    }
+
+    public function confirmReturn(Request $request, $code)
+    {
+        try {
+            DB::beginTransaction();
+
+            Order::where('code', $code)->update([
+                'status' => 4,
+                'returnDate' => now()->format('Y-m-d'),
+                'returnDescription' => $request->returnDescription ?? 'Order returned via edit'
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Order berhasil dikonfirmasi return'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $th->getMessage()
+            ], 500);
         }
     }
 
@@ -178,7 +302,9 @@ class NotReturnDoController extends Controller
                 })
 
                 ->addColumn('action', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                    $btn = '<a href="' . route('operational.not-return-do.edit', $row->code) . '" class="btn btn-sm btn-info" title="Edit">
+                                <i class="mdi mdi-pencil"></i>
+                            </a>';
 
                     return $btn;
                 })

@@ -20,6 +20,8 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('not-return-do', NotReturnDoController::class);
     Route::resource('order-tax', OrderTaxController::class);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
+    Route::put('not-return-do/update/{code}', [NotReturnDoController::class, 'update'])->name('not-return-do.update');
+    Route::put('not-return-do/confirm/{code}', [NotReturnDoController::class, 'confirmReturn'])->name('not-return-do.confirm-return');
     Route::post('cancel-do', [ReturnDoController::class, 'cancelDo'])->name('return-do.cancel-do');
     Route::put('finish-order/{id}', [OrderController::class, 'finishOrder'])->name('finish-order');
     Route::post('order-driver', [OrderController::class, 'storeOrderDriver'])->name('store-order-driver');

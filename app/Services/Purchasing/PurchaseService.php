@@ -8,7 +8,10 @@ use App\Models\Inventory\Stock;
 use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
+use App\Models\StockTransaction;
+use App\Services\Helper\StockManagementService;
 use App\Traits\LogActivity;
+use Carbon\Carbon;
 use Illuminate\Support\Arr;
 
 
@@ -17,10 +20,12 @@ class PurchaseService
     use LogActivity;
 
     protected $service;
+    protected $stockManagement;
 
-    public function __construct(Purchase $purchase)
+    public function __construct(Purchase $purchase, StockManagementService $stockManagement)
     {
         $this->service = $purchase;
+        $this->stockManagement = $stockManagement;
     }
 
     public function findAll()
@@ -59,6 +64,7 @@ class PurchaseService
             'warehouseCode' => $warehouse->code,
             'date' => $request->date,
             'time' => $request->time,
+            'dueDate' => $request->dueDate,
         ]);
 
         if (isset($request->itemCode)) {
@@ -67,10 +73,6 @@ class PurchaseService
             for ($i = 0; $i < count($request->itemCode); $i++) {
 
                 $price = (int) str_replace('.', '', $filtered['price'][$i]);
-
-                // Item::where('code', $filtered['itemCode'][$i])->update([
-                //     'price' => $price,
-                // ]);
 
                 $code = $data->code;
 
@@ -85,6 +87,8 @@ class PurchaseService
                         'code' => GenerateCode::generateCode('FPD', true),
                         'itemCode' => $filtered['itemCode'][$i],
                         'qty' => $filtered['qty'][$i],
+                        'receivedQty' => $filtered['qty'][$i],
+                        'status' => 1,
                         'purchaseCode' => $request->code,
                         'price' => $price
                     ]);
@@ -93,6 +97,23 @@ class PurchaseService
                         'qty' => $filtered['qty'][$i] + $pd->qty
                     ]);
                 }
+
+                $pd = PurchaseDetail::where('itemCode', $filtered['itemCode'][$i])
+                    ->whereHas('purchase', function ($query) use ($code) {
+                        $query->where('code', $code);
+                    })
+                    ->first();
+
+
+                $this->stockManagement->processStockIn(
+                    $filtered['itemCode'][$i],
+                    $warehouse->code,
+                    $filtered['qty'][$i],
+                    $request->code, // transactionCode = Purchase code
+                    $pd->code, // transactionDetailCode = PurchaseDetail code
+                    Carbon::now(),
+                    'IN'
+                );
 
                 // $this->logActivity('Purchase Detail', $purchaseDetail, 'Create');
             }
@@ -110,6 +131,7 @@ class PurchaseService
             'supplierCode' => $request->supplierCode,
             'date' => $request->date,
             'time' => $request->time,
+            'dueDate' => $request->dueDate,
         ]);
 
         if (isset($request->itemCode)) {
@@ -120,14 +142,22 @@ class PurchaseService
                 if (isset($filtered['purchaseDetailCode'][$i])) {
                     $pd = PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->first();
 
+                    $stock = Stock::where('itemCode', $pd->item->code)->first();
+
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
-
-                    // Item::where('code', $filtered['itemCode'][$i])->update([
-                    //     'price' => $price,
-                    // ]);
+                    Item::where('code', $filtered['itemCode'][$i])->update([
+                        'price' => $price,
+                    ]);
 
                     if ($pd->item->code !=  $filtered['itemCode'][$i]) {
+
+                        if (isset($stock)) {
+                            // decrement
+                            Stock::where('itemCode', $pd->item->code)->update([
+                                'stockIn' => $stock->stockIn - $pd->qty
+                            ]);
+                        }
 
                         PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->update([
                             'itemCode' => $filtered['itemCode'][$i],
@@ -135,18 +165,85 @@ class PurchaseService
                             'purchaseCode' => $request->code,
                             'price' => $price
                         ]);
+
+                        $pd = PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->first();
+
+                        $stock = Stock::where('itemCode', $pd->item->code)->first();
+
+                        if (!$stock) {
+                            Stock::create([
+                                'code' => GenerateCode::generateCode('TSTC', true),
+                                'itemCode' => $filtered['itemCode'][$i],
+                                'stockIn' => $filtered['qty'][$i],
+                                'stockOut' => 0
+                            ]);
+                        }
+
+                        StockTransaction::where('transactionDetailCode', $filtered['purchaseDetailCode'][$i])->update([
+                            'stockIn' => $filtered['qty'][$i],
+                            'itemCode' => $filtered['itemCode'][$i],
+                        ]);
                     } else {
+                        $stock = Stock::where('itemCode', $pd->item->code)->first();
+
+                        if (isset($stock)) {
+                            // decrement
+                            Stock::where('itemCode', $pd->item->code)->update([
+                                'stockIn' => $stock->stockIn - $pd->qty
+                            ]);
+                        } else {
+                            Stock::create([
+                                'code' => GenerateCode::generateCode('TSTC', true),
+                                'itemCode' => $filtered['itemCode'][$i],
+                                'stockIn' => $filtered['qty'][$i],
+                                'stockOut' => 0
+                            ]);
+                        }
+
+                        $stock = Stock::where('itemCode', $pd->item->code)->first();
+                        if (isset($stock)) {
+                            // increment
+                            Stock::where('itemCode', $pd->item->code)->update([
+                                'stockIn' => $stock->stockIn + $filtered['qty'][$i]
+                            ]);
+                        } else {
+                            Stock::create([
+                                'code' => GenerateCode::generateCode('TSTC', true),
+                                'itemCode' => $filtered['itemCode'][$i],
+                                'stockIn' => $filtered['qty'][$i],
+                                'stockOut' => 0
+                            ]);
+                        }
+
                         $pd->update([
                             'qty' => $filtered['qty'][$i]
                         ]);
+
+                        StockTransaction::where('transactionDetailCode', $filtered['purchaseDetailCode'][$i])->update([
+                            'stockIn' => $filtered['qty'][$i]
+                        ]);
                     }
                 } else {
+                    $checkItem = Stock::where('itemCode', $filtered['itemCode'][$i])->first();
+
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
+                    Item::where('code', $filtered['itemCode'][$i])->update([
+                        'price' => $price,
+                    ]);
 
-                    // Item::where('code', $filtered['itemCode'][$i])->update([
-                    //     'price' => $price,
-                    // ]);
+                    if ($checkItem) {
+                        Stock::where('itemCode', $filtered['itemCode'][$i])->update([
+                            'stockIn' => $filtered['qty'][$i] + $checkItem->stockIn,
+                        ]);
+                    } else {
+                        Stock::create([
+                            'code' => GenerateCode::generateCode('TSTC', true),
+                            'itemCode' => $filtered['itemCode'][$i],
+                            'stockIn' => $filtered['qty'][$i],
+                            'stockOut' => 0
+                        ]);
+                    }
 
                     $data = $this->getById($id);
                     $supplier = $data->supplierCode;
@@ -160,17 +257,36 @@ class PurchaseService
 
 
                     if (!$pd) {
-                        PurchaseDetail::create([
+                        $detail = PurchaseDetail::create([
                             'code' => GenerateCode::generateCode('FPD', true),
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
                             'purchaseCode' => $request->code,
                             'price' => $price
                         ]);
+
+                        StockTransaction::create([
+                            'code' => GenerateCode::generateCode('FST', true),
+                            'itemCode' => $filtered['itemCode'][$i],
+                            'stockIn' => $filtered['qty'][$i],
+                            'stockOut' => 0,
+                            'transactionCode' => $request->code,
+                            'transactionDetailCode' => $detail->code,
+                            'date' => Carbon::now(),
+                            'transactionType' => 'IN'
+                        ]);
                     } else {
                         $pd->update([
                             'qty' => $filtered['qty'][$i] + $pd->qty
                         ]);
+
+                        $stockTransaction = StockTransaction::where('itemCode', $filtered['itemCode'][$i])->where('transactionDetailCode', $pd->code)->first();
+
+                        if ($stockTransaction) {
+                            $stockTransaction->update([
+                                'qty' => $filtered['qty'][$i] + $stockTransaction->qty
+                            ]);
+                        }
                     }
                 }
 

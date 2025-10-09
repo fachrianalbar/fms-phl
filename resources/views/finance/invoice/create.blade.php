@@ -24,7 +24,7 @@
 @endpush
 
 @section('content')
-    <form class="row g-3" method="post" action="{{ route($view . 'store') }}">
+    <form class="row g-3 mt-1" method="post" action="{{ route($view . 'store') }}">
         <div class="col-sm-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -43,7 +43,8 @@
                                 <select class="js-example-basic-single" name="customerCode" id="customerCode" required>
                                     <option selected disabled value="">{{ __('general.choose') }}...</option>
                                     @foreach ($customer as $item)
-                                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        <option value="{{ $item->code }}" data-id="{{ $item->id }}">
+                                            {{ $item->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -53,11 +54,11 @@
                                     {{ __('menu_invoice.invoice_number') }} <i class="mdi mdi-information text-danger"></i>
                                 </label>
                                 <input class="form-control" name="invoiceNumber" id="invoiceNumber" type="text" required
-                                    placeholder="{{ __('menu_invoice.invoice_number') }}">
+                                    readonly placeholder="{{ __('menu_invoice.invoice_number') }}">
                             </div>
                         </div>
 
-                        <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-md-6">
                                 <label class="form-label" for="receiptNumber">
                                     {{ __('menu_invoice.receipt_number') }} <i class="mdi mdi-information text-danger"></i>
@@ -71,7 +72,7 @@
                                 <input class="form-control" name="poNumber" id="poNumber" type="text"
                                     placeholder="{{ __('menu_invoice.po_number') }}">
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="row mt-4">
                             <div class="col-md-6">
@@ -123,8 +124,8 @@
                 </div>
             </div>
 
-            <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog"
-                aria-labelledby="myLargeModalLabel" aria-hidden="true">
+            <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+                aria-hidden="true">
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -395,7 +396,16 @@
 
         }
 
+        function generateInvoiceNumber() {
+            const customerCode = $('#customerCode').select2('val');
+            let customerId = $('#customerCode option:selected').data('id');
 
+            if (customerId) {
+                $.get("{{ url('ajax/invoice-number-format') }}/" + customerId, function(data) {
+                    $('#invoiceNumber').val(data);
+                });
+            }
+        }
 
         $('#customerCode').on('change', function() {
             $('body').append(`
@@ -406,6 +416,7 @@
             </div>
         `)
             customerInvoice();
+            generateInvoiceNumber();
 
             setTimeout(() => {
                 $('.loader-wrapper').remove();
