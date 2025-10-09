@@ -45,6 +45,6 @@ class NotReturnDoService
             'route.routeDetail',
             'fleet',
             'fleet.type'
-        ])->orderBy('order.created_at', 'desc');
+        ])->orderBy('order.created_at', 'asc');
     }
 }
