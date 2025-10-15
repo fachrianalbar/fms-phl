@@ -176,9 +176,14 @@ class OrderController extends Controller
             // 'salesOrder' => ['required', Rule::unique('order', 'salesOrder')],
             'orderDate' => 'required|date',
         ]);
+
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
         }
+
         try {
             DB::beginTransaction();
 
@@ -188,11 +193,18 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return response()->json([
+                'success' => true,
+                'message' => $this->title . ' ' . __('general.data_was_save_successfully'),
+                'redirect' => route($this->view . 'index')
+            ]);
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage()
+            ], 500);
         }
     }
 
@@ -329,8 +341,12 @@ class OrderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
         }
+
         try {
             DB::beginTransaction();
 
@@ -338,11 +354,18 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return response()->json([
+                'success' => true,
+                'message' => $this->title .  ' ' . __('general.data_was_update_succesfully'),
+                'redirect' => route($this->view . 'index')
+            ]);
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage()
+            ], 500);
         }
     }
 

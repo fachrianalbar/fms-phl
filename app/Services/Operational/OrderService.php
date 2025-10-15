@@ -108,7 +108,7 @@ class OrderService
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $this->service->where('id', $id)->update(
-            $this->buildOrderData($request, true)
+            array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
         );
 
         if (isset($request->nominal)) {
@@ -250,24 +250,33 @@ class OrderService
     {
         $customer = $this->customer->where('id', $id)->with(['company'])->first();
 
-        // Ambil shipmentNumber terakhir milik customer yang bersangkutan di tahun berjalan
+        // Ambil shipment terakhir untuk tahun berjalan
         $lastShipment = $this->service
             ->where('customerCode', $customer->code)
             ->whereYear('created_at', now()->year)
             ->orderByDesc('created_at')
             ->first();
 
-        // Default increment = 1 jika belum ada shipment sebelumnya
+        // Default increment = 1
         $lastNumber = 0;
 
         if ($lastShipment && preg_match('/\/(\d{5})\//', $lastShipment->shipmentNumber, $matches)) {
             $lastNumber = (int) $matches[1];
         }
 
-        $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        // Loop sampai dapat shipmentNumber yang unik
+        do {
+            $lastNumber++;
+            $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-        return $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+
+            $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
+        } while ($checkShipment); // jika sudah ada, ulangi lagi
+
+        return $shipmentNumber;
     }
+
 
 
     public function getFleet($fleet = null)

@@ -383,6 +383,58 @@
 
             generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
                 '/ajax/order-generate-code');
+
+            // Handle form submit dengan AJAX
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const formData = new FormData(this);
+                const submitButton = $('#save');
+
+                // Disable button saat proses
+                submitButton.prop('disabled', true).html(
+                    '<i class="mdi mdi-loading mdi-spin"></i> {{ __('general.processing') }}...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            swal({
+                                title: "Sukses",
+                                text: response.message,
+                                icon: "success",
+                                buttons: false,
+                                timer: 1500
+                            }).then(() => {
+                                window.location.href = response.redirect;
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = '{{ __('general.an_error_occurred') }}';
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+
+                        swal({
+                            title: "Error",
+                            text: errorMessage,
+                            icon: "error",
+                            button: "OK"
+                        });
+
+                        // Enable button kembali
+                        submitButton.prop('disabled', false).html(
+                            '{{ __('general.save_changes') }}');
+                    }
+                });
+            });
         })
 
         $('input[name="orderDate"]').on('change', function() {
@@ -505,25 +557,6 @@
             } else {
                 $(this).hide();
             }
-        });
-
-        $('#save').click(function(e) {
-            const routeTypeCode = $('#routeTypeCode').select2('val');
-
-            // if (routeTypeCode === 'TONASE') {
-            //     const qty = $('#qty').val();
-
-            //     if (qty > 100) {
-            //         e.preventDefault();
-            //         swal({
-            //             title: "{{ __('general.warning') }}",
-            //             text: "Tonase cannot be higher than 100",
-            //             icon: "warning",
-            //         })
-            //         return;
-            //     }
-            // }
-
         });
 
         // When routeTypeCode is changed

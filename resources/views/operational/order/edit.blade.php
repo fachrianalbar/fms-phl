@@ -35,8 +35,7 @@
 @endpush
 
 @section('content')
-    <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}"
-        onsubmit="return submitForm('routeAmount')">
+    <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
         @csrf
         @method('PUT')
         <div class="col-sm-12">
@@ -511,6 +510,58 @@
             const selectedType = $('#routeTypeCode').select2('val');
 
             // loadQty(selectedType)
+
+            // Handle form submit dengan AJAX
+            $('form[method="post"]').not('#delete-form').on('submit', function(e) {
+                e.preventDefault();
+
+                const form = $(this);
+                const formData = new FormData(this);
+                const submitButton = $('#save');
+
+                // Disable button saat proses
+                submitButton.prop('disabled', true).html(
+                    '<i class="mdi mdi-loading mdi-spin"></i> {{ __('general.processing') }}...');
+
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            swal({
+                                title: "Sukses",
+                                text: response.message,
+                                icon: "success",
+                                buttons: false,
+                                timer: 1500
+                            }).then(() => {
+                                window.location.href = response.redirect;
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMessage = '{{ __('general.an_error_occurred') }}';
+
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+
+                        swal({
+                            title: "Error",
+                            text: errorMessage,
+                            icon: "error",
+                            button: "OK"
+                        });
+
+                        // Enable button kembali
+                        submitButton.prop('disabled', false).html(
+                            '{{ __('general.save_changes') }}');
+                    }
+                });
+            });
         });
 
         // function submitFormAndi(id) {
@@ -538,26 +589,6 @@
                 }
             });
         }
-
-        $('#save').click(function(e) {
-            const routeTypeCode = $('#routeTypeCode').select2('val');
-
-            if (routeTypeCode === 'TONASE') {
-                const qty = $('#qty').val();
-
-                // if (qty > 100) {
-                //     e.preventDefault();
-                //     swal({
-                //         title: "{{ __('general.warning') }}",
-                //         text: "Tonase cannot be higher than 100",
-                //         icon: "warning",
-                //     })
-                //     return;
-                // }
-            }
-
-        });
-
 
         function checkAndLoadOriginLocation() {
             const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
@@ -740,6 +771,11 @@
         $('#customerCode').on('change', function() {
             let customerCode = $(this).val();
             let customerId = $('#customerCode option:selected').data('id');
+
+            $.get("/ajax/order-shipment-format/" + customerId, function(data) {
+                $('#shipmentNumber').val(data);
+            });
+
 
 
             if (customerCode) {

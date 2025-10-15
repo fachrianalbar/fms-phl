@@ -544,7 +544,17 @@
             let customerCode = $(this).val();
             let customerId = $('#customerCode option:selected').data('id');
 
+            $.get("/ajax/order-shipment-format/" + customerId, function(data) {
+                $('#shipmentNumber').val(data);
+            });
+
             if (customerCode) {
+                // Generate new shipment number
+                $.get("/operational/order-shipment-format/" + customerId, function(shipmentNumber) {
+                    $('#shipmentNumber').val(shipmentNumber);
+                });
+
+                // Load customer detail
                 $.get("/ajax/customer-detail/" + customerId, function(data) {
                     const $detailCard = $('#card-customer-detail');
                     const $cardBody = $detailCard.find('.card-body');
@@ -557,11 +567,7 @@
                         data.forEach(item => {
                             let html = `
                             <div class="row mt-2">
-                                <div class="col-md-6">
-                                    <label class="form-label">${item.name}</label>
-                                    <input type="hidden" name="customerDetailCode[]" value="${item.code}">
-                                    <input class="form-control" name="value[]" type="text" placeholder="${item.name}">
-                                </div>
+                                /* Lines 560-565 omitted */
                             </div>`;
                             $cardBody.append(html);
                         });
@@ -574,9 +580,9 @@
                 $('#card-customer-detail').addClass('d-none');
                 $('#card-customer-detail .card-body').empty();
                 $('#notes').prop('disabled', false);
+                $('#shipmentNumber').val('');
             }
         });
-
         $('#add-material').on('click', function() {
             let row = $('#materialForm tr').length + 1;
 
