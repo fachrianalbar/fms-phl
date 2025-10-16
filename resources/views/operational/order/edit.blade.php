@@ -141,7 +141,7 @@
                                         {{ __('general.choose') }}...</option>
                                     @foreach ($routeType as $item)
                                         <option value="{{ $item->code }}"
-                                            {{ $data->route->routeTypeCode == $item->code ? 'selected' : '' }}>
+                                            {{ $data->route?->routeTypeCode == $item->code ? 'selected' : '' }}>
                                             {{ $item->name }}
                                         </option>
                                     @endforeach
@@ -187,15 +187,12 @@
 
                         <div class="row mt-4">
                             @php
-                                $label = '';
-
-                                if ($data->route->routeTypeCode == 'TONASE') {
-                                    $label = 'Tonase';
-                                } elseif ($data->route->routeTypeCode == 'TRIP') {
-                                    $label = 'Trip';
-                                } else {
-                                    $label = 'Kubik';
-                                }
+                                $label = match ($data->route?->routeTypeCode) {
+                                    'TONASE' => 'Tonase',
+                                    'TRIP' => 'Trip',
+                                    'KUBIK' => 'Kubik',
+                                    default => '-',
+                                };
                             @endphp
 
                             <div class="col-md-6 position-relative">
