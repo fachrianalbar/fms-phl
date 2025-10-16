@@ -107,7 +107,7 @@
                                         for="orderTypeCode">{{ __('menu_order.load_type') }}</label>
                                     <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
                                         readonly placeholder="{{ __('menu_order.load_type') }}"
-                                        value="{{ $route->routeType->name }}">
+                                        value="{{ $route->routeType->name ?? '' }}">
                                 </div>
                             </div>
 
@@ -137,19 +137,32 @@
                                     <label class="form-label" for="routeData">{{ __('menu_order.route') }}</label>
                                     <input class="form-control" name="routeData" id="routeData" type="text" readonly
                                         placeholder="{{ __('menu_order.route') }}"
-                                        value="{{ $data->route->name . ' (' . ($data->route->originLocation->name ?? '') . ($data->route->destinationLocation ? ' - ' . $data->route->destinationLocation->name : '') . ') - ' . $data->route->description }}">
+                                        value="{{ $data->route?->name
+                                            ? $data->route->name .
+                                                ' (' .
+                                                ($data->route?->originLocation?->name ?? '') .
+                                                ($data->route?->destinationLocation?->name ? ' - ' . $data->route->destinationLocation->name : '') .
+                                                ') - ' .
+                                                ($data->route?->description ?? '')
+                                            : '' }}">
+
                                 </div>
                                 @php
                                     $label = '';
 
-                                    if ($data->route->routeTypeCode == 'TONASE') {
-                                        $label = 'Tonase';
-                                    } elseif ($data->route->routeTypeCode == 'TRIP') {
-                                        $label = 'Trip';
+                                    if ($data->route) {
+                                        if ($data->route->routeTypeCode === 'TONASE') {
+                                            $label = 'Tonase';
+                                        } elseif ($data->route->routeTypeCode === 'TRIP') {
+                                            $label = 'Trip';
+                                        } else {
+                                            $label = 'Kubik';
+                                        }
                                     } else {
-                                        $label = 'Kubik';
+                                        $label = '-'; // atau kosong '' sesuai kebutuhan tampilan
                                     }
                                 @endphp
+
                                 <div class="col-md-6 position-relative " id="qtyField">
                                     <label class="form-label" id="qtyLabel" for="qty">{{ $label }}</label>
                                     <input class="form-control" name="qty" id="qty" step="any"
