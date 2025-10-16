@@ -140,7 +140,11 @@
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ $detail->order->fleet->plateNumber ?? '-' }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
-                        {{ $detail->order->shipmentNumber ?? '-' }}</td>
+                        {{-- {{ $detail->order->shipmentNumber ?? '-' }} --}}
+
+                        {{ $detail->order->customerDetailOrders->where('customerDetailCode', 'FCD250801150339746')->value('value') ?? '-' }}
+
+                    </td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         PT SIL</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
