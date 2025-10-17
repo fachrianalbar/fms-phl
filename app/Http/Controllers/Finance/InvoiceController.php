@@ -393,44 +393,16 @@ class InvoiceController extends Controller
         $pdfTemplate = 'finance.invoice.pdf.general'; // Default template
 
         if ($customer && $customer->invoicePdf) {
-            // Switch case untuk menentukan template berdasarkan invoicePdf field
-            switch ($customer->invoicePdf) {
-                case 'asia-makmur':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.asia-makmur';
-                    break;
-                case 'asia-sakti-wahid-foods-manufacture':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.asia-sakti-wahid-foods-manufacture';
-                    break;
-                case 'teguh-wibawa-bhakti-persada':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada';
-                    break;
-                case 'olam-indonesia':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.olam-indonesia';
-                    break;
-                case 'matahari-sakti':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.matahari-sakti';
-                    break;
-                case 'sriboga-flour-mill':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.sriboga-flour-mill';
-                    break;
-                case 'guna-layan-kuasa':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.guna-layan-kuasa';
-                    break;
-                case 'ekspedisi-berdikari':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.ekspedisi-berdikari';
-                    break;
-                case 'danitama-niaga-prima':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.danitama-niaga-prima';
-                    break;
-                case 'central-pertiwi-bahari':
-                    $pdfTemplate = 'finance.invoice.pdf.customer.central-pertiwi-bahari';
-                    break;
-                default:
-                    // Jika template tidak ditemukan, gunakan general
-                    $pdfTemplate = 'finance.invoice.pdf.general';
-                    break;
+            $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
+
+            // Cek apakah view-nya ada, kalau tidak gunakan default general
+            if (view()->exists($pdfTemplatePath)) {
+                $pdfTemplate = $pdfTemplatePath;
+            } else {
+                $pdfTemplate = 'finance.invoice.pdf.general';
             }
         }
+
 
         $mpdf = new Mpdf(
             [

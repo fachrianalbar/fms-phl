@@ -65,7 +65,7 @@
 <body>
 
     <htmlpageheader name="page-header">
-        @include('finance.invoice.pdf.header.phl')
+        @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
     @php
@@ -102,15 +102,15 @@
                     </tr>
                     <tr>
                         <td style="width: 20%;">A/N</td>
-                        <td>: PT PUTRI HOKI LOGISTIK</td>
+                        <td>: PT Wijaya Trans Makmur Sejahtera</td>
                     </tr>
                     <tr>
                         <td>NO. REK</td>
-                        <td>: 0208888351</td>
+                        <td>: 0209918899</td>
                     </tr>
                     <tr>
                         <td>CABANG</td>
-                        <td>: KCU - Bumi Waras - B. Lampung</td>
+                        <td>: BUMI WARAS - B LAMPUNG</td>
                     </tr>
                 </table>
             </td>
@@ -174,7 +174,7 @@
     <div class="mt-60 text-right">
         <p>HORMAT KAMI</p>
         <br><br><br>
-        <p class="">EVI IRAWATI</p>
+        <p class="">Hendri Wijaya</p>
     </div>
 
 </body>
