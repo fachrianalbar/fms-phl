@@ -136,7 +136,7 @@
                             @endif
                         @endforeach
                     </td>
-                    <td>{{ number_format($detail->order->qty ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ $detail->order->qty }}</td>
                     <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
                     <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
                 </tr>

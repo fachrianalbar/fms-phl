@@ -91,7 +91,7 @@
                 <td colspan="2">
                     Tgl. {{ Carbon::parse($detail->order->orderDate)->format('d-m-Y') }}
                     = {{ $detail->order->fleet->plateNumber ?? '-' }}
-                    = {{ number_format($detail->order->qty, 0, ',', '.') }} x
+                    = {{ $detail->order->qty }} x
                     {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }},-
                 </td>
             </tr>
