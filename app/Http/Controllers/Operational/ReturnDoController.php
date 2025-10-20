@@ -127,7 +127,35 @@ class ReturnDoController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
+                ->addColumn('detail', function ($row) {
+                    $onChargeCosts = $row->onChargeCost;
+                    $detailBtn = '';
+
+                    // Filter only costs that actually have a costComponent relation
+                    $validCosts = collect([]);
+                    if ($onChargeCosts && $onChargeCosts->count() > 0) {
+                        $validCosts = $onChargeCosts->filter(function ($cost) {
+                            return isset($cost->costComponent) && !is_null($cost->costComponent->name);
+                        });
+                    }
+
+                    if ($validCosts->count() > 0) {
+                        $costsData = $validCosts->map(function ($cost) {
+                            return [
+                                'component' => $cost->costComponent->name ?? '-',
+                                'nominal' => 'Rp ' . number_format($cost->nominal, 0, ',', '.')
+                            ];
+                        })->toArray();
+
+                        $costsJson = htmlspecialchars(json_encode($costsData), ENT_QUOTES, 'UTF-8');
+                        $detailBtn = '<a href="javascript:void(0)" class="btn btn-icon btn-sm bg-success-subtle me-1 btn-detail-cost" data-costs="' . $costsJson . '" data-shipment="' . $row->shipmentNumber . '" title="Lihat detail biaya" aria-label="Lihat detail biaya">
+                            <i class="mdi mdi-eye fs-14 text-success"></i>
+                        </a>';
+                    }
+
+                    return $detailBtn;
+                })
+                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
                 ->toJson();
         }
     }
