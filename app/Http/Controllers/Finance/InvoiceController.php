@@ -392,6 +392,10 @@ class InvoiceController extends Controller
         $customer = $data->customer;
         $pdfTemplate = 'finance.invoice.pdf.general'; // Default template
 
+        if ($customer->company->name == 'PRIBADI') {
+            $pdfTemplate = 'finance.invoice.pdf.pribadi';
+        }
+
         if ($customer && $customer->invoicePdf) {
             $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
 
