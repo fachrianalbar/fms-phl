@@ -13,7 +13,7 @@ class ChangePasswordController extends Controller
     protected $service;
     protected $title;
 
-    public function __construct(UserService $userSvc, MenuService $menuSvc)
+    public function __construct(UserService $userSvc)
     {
         $this->service = $userSvc;
         $this->title = "Change Password";
