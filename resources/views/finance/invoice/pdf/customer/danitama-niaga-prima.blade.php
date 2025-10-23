@@ -70,9 +70,9 @@
     </htmlpageheader>
 
     @php
-        use Carbon\Carbon;
+    use Carbon\Carbon;
 
-        $totalPrice = 0;
+    $totalPrice = 0;
     @endphp
 
     <!-- Header Informasi -->
@@ -80,7 +80,8 @@
         <tr>
             <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
             <td class="text-right">BANDAR LAMPUNG,
-                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}</td>
+                {{ Carbon::parse($data->invoiceDate)->locale('id')->translatedFormat('d F Y') }}
+            </td>
         </tr>
         <tr>
             <td colspan="2">Kepada YTH :</td>
@@ -157,52 +158,56 @@
             </tr> --}}
 
             @foreach ($data->details as $detail)
-                <tr>
-                    <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
-                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
-                    <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
-                    <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
-                    <td>
-                        @foreach ($detail->order->orderMaterial as $i => $mtr)
-                            {{ $mtr->material->name }}@if (!$loop->last)
-                                ,
-                            @endif
-                        @endforeach
-                    </td>
+            <tr>
+                <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
+                <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
+                <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
+                <td>
+                    @foreach ($detail->order->orderMaterial as $i => $mtr)
+                    {{ $mtr->material->name }}@if (!$loop->last)
+                    ,
+                    @endif
+                    @endforeach
+                </td>
 
-                    <td>{{ $detail->order->qty }}</td>
-                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
-                    </td>
+                <td>{{ $detail->order->qty }}</td>
+                <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                </td>
+                @php
+                $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                @endphp
+            </tr>
+
+            @foreach ($detail->order->onChargeCost as $cost)
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>{{ $cost->costComponent->name ?? null }}</td>
+                <td></td>
+                <td></td>
+                <td>
                     @php
-                        $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    $totalPrice += $cost->nominal;
                     @endphp
-                </tr>
+                    {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}
+                </td>
+            </tr>
+            @endforeach
 
-                @foreach ($detail->order->onChargeCost as $cost)
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td>{{ $cost->costComponent->name ?? null }}</td>
-                        <td></td>
-                        <td></td>
-                        <td>
-                            @php
-                                $totalPrice += $cost->nominal;
-                            @endphp
-                            {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endforeach
-
-                @foreach ($detail->order->customerDetailOrders as $item)
-                    <tr>
-                        <td colspan="8" class="text-left">{{ $item->customerDetail->name }} : {{ $item->value }}
-                        </td>
-                    </tr>
-                @endforeach
+            @foreach ($detail->order->customerDetailOrders as $item)
+            @php
+            $hasValue = filled($item->value) && !(is_string($item->value) && trim($item->value) === '');
+            @endphp
+            @if ($hasValue)
+            <tr>
+                <td colspan="8" class="text-left">{{ $item->customerDetail->name }} : {{ $item->value }}</td>
+            </tr>
+            @endif
+            @endforeach
             @endforeach
 
             <!-- Total -->
