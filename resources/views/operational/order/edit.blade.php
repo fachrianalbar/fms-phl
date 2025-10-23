@@ -518,7 +518,7 @@
 
                 // Disable button saat proses
                 submitButton.prop('disabled', true).html(
-                    '<i class="mdi mdi-loading mdi-spin"></i> {{ __('general.processing') }}...');
+                    '<i class="mdi mdi-loading mdi-spin"></i> Loading...');
 
                 $.ajax({
                     url: form.attr('action'),

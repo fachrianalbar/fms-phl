@@ -65,7 +65,7 @@
 <body>
 
     <htmlpageheader name="page-header">
-        @include('finance.invoice.pdf.header.phl')
+        @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
     @php
@@ -102,15 +102,15 @@
                     </tr>
                     <tr>
                         <td style="width: 20%;">A/N</td>
-                        <td>: PT PUTRI HOKI LOGISTIK</td>
+                        <td>: PT Wijaya Trans Makmur Sejahtera</td>
                     </tr>
                     <tr>
                         <td>NO. REK</td>
-                        <td>: 0208888351</td>
+                        <td>: 0209918899</td>
                     </tr>
                     <tr>
                         <td>CABANG</td>
-                        <td>: KCU - Bumi Waras - B. Lampung</td>
+                        <td>: BUMI WARAS - B LAMPUNG</td>
                     </tr>
                 </table>
             </td>
@@ -161,6 +161,25 @@
                         $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
                     @endphp
                 </tr>
+
+                @foreach ($detail->order->onChargeCost as $cost)
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ $cost->costComponent->name ?? null }}</td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            @php
+                                $totalPrice += $cost->nominal;
+                            @endphp
+                            {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @endforeach
             @endforeach
             <tr>
                 <td colspan="8" style="border-bottom: 1px solid white; border-left: 1px solid white;"></td>
@@ -174,7 +193,7 @@
     <div class="mt-60 text-right">
         <p>HORMAT KAMI</p>
         <br><br><br>
-        <p class="">EVI IRAWATI</p>
+        <p class="">Hendri Wijaya</p>
     </div>
 
 </body>

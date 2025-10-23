@@ -21,29 +21,30 @@
                 <form class="row g-3" method="post" action="{{ route('change-password.store') }}">
                     @csrf
                     <div class="col-md-12">
-                        <label class="form-label" for="old_password">Old Password <i
+                        <label class="form-label" for="old_password">{{ __('change_password.old_password') }} <i
                                 class="icofont icofont-warning-alt text-danger"></i></label>
                         <input class="form-control" name="old_password" id="old_password" type="password" required
-                            placeholder="Old Password">
+                            placeholder="{{ __('change_password.old_password') }}">
                     </div>
 
                     <div class="col-md-12">
-                        <label class="form-label" for="new_password">New Password <i
+                        <label class="form-label" for="new_password">{{ __('change_password.new_password') }} <i
                                 class="icofont icofont-warning-alt text-danger"></i></label>
                         <input class="form-control" name="new_password" id="new_password" type="password" required
-                            placeholder="New Password">
+                            placeholder="{{ __('change_password.new_password') }}">
                     </div>
 
 
                     <div class="col-md-12">
-                        <label class="form-label" for="new_password_confirmation">Re-Type New Password <i
+                        <label class="form-label"
+                            for="new_password_confirmation">{{ __('change_password.confirm_new_password') }} <i
                                 class="icofont icofont-warning-alt text-danger"></i></label>
                         <input class="form-control" name="new_password_confirmation" id="new_password_confirmation"
-                            type="password" required placeholder="Re-Type New Password">
+                            type="password" required placeholder="{{ __('change_password.confirm_new_password') }}">
                     </div>
 
                     <div class="col-12">
-                        <button class="btn btn-primary" type="submit">Save</button>
+                        <button class="btn btn-primary" type="submit">{{ __('general.save') }}</button>
                     </div>
                 </form>
             </div>

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Invoice - PT Olam Indonesia</title>
+    <title>Invoice - {{ $data->customer->name }}</title>
     <style>
         @page {
             header: page-header;
@@ -55,6 +55,10 @@
         .underline {
             text-decoration: underline;
         }
+
+        th {
+            font-weight: normal;
+        }
     </style>
 </head>
 
@@ -73,55 +77,68 @@
     <!-- Informasi Header Invoice -->
     <table style="margin-top: 20px;">
         <tr>
-            <td style="width: 60%;">NO. INVOICE : {{ $data->invoiceNumber }}</td>
-            <td class="text-right">B LAMPUNG, {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}</td>
+            <td style="width: 50%; vertical-align: top;">
+                <table>
+                    <tr>
+                        <td>NO. INVOICE : {{ $data->invoiceNumber }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">Kepada YTH :</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">{{ $data->customer->name }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                <p class="text-right" style="border-bottom: 2px dotted #000">B LAMPUNG,
+                    {{ Carbon::parse($data->invoiceDate)->format('d F Y') }}</p>
+
+                <table style="margin-top: 10px;">
+                    <tr>
+                        <td colspan="2">
+                            Mohon di bayarkan ke Rekening BCA
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 20%;">A/N</td>
+                        <td>: PT PUTRI HOKI LOGISTIK</td>
+                    </tr>
+                    <tr>
+                        <td>NO. REK</td>
+                        <td>: 0208888351</td>
+                    </tr>
+                    <tr>
+                        <td>CABANG</td>
+                        <td>: KCU - Bumi Waras - B. Lampung</td>
+                    </tr>
+                </table>
+            </td>
         </tr>
-        <tr>
-            <td colspan="2">Kepada YTH :</td>
-        </tr>
-        <tr>
-            <td colspan="2"><strong>PT. OLAM INDONESIA</strong></td>
-        </tr>
+
+
     </table>
 
     <!-- Info Pembayaran -->
-    <table style="margin-top: 10px;">
-        <tr>
-            <td colspan="2"><strong>Mohon di bayarkan ke Rekening BCA</strong></td>
-        </tr>
-        <tr>
-            <td style="width: 20%;">A/N</td>
-            <td>: PT PUTRI HOKI LOGISTIK</td>
-        </tr>
-        <tr>
-            <td>NO. REK</td>
-            <td>: 0208888351</td>
-        </tr>
-        <tr>
-            <td>CABANG</td>
-            <td>: KCU - Bumi Waras - B. Lampung</td>
-        </tr>
-    </table>
+
 
     <!-- Tabel Data Utama -->
     <table class="bordered mt-20">
         <thead>
             <tr>
-                <th>No</th>
                 <th>Tanggal</th>
                 <th>No Kendaraan</th>
-                <th>Gudang Muat</th>
+                <th>Gudang Muat </th>
                 <th>Gudang Bongkar</th>
                 <th>Nama Barang</th>
                 <th>Tonase</th>
                 <th>Tarif/kgs</th>
-                <th>Jumlah</th>
+                <th>Ongkos Angkut</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($data->details as $index => $detail)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
                     <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
                     <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
                     <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
@@ -142,10 +159,8 @@
                         $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
                     @endphp
                 </tr>
-
                 @foreach ($detail->order->onChargeCost as $cost)
                     <tr>
-                        <td></td>
                         <td></td>
                         <td></td>
                         <td></td>
@@ -163,7 +178,8 @@
                 @endforeach
             @endforeach
             <tr>
-                <td colspan="8" class="text-right bold">TOTAL :</td>
+                <td colspan="7" style="border-bottom: 1px solid white; border-left: 1px solid white;"></td>
+
                 <td>{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
@@ -173,7 +189,7 @@
     <div class="mt-60 text-right">
         <p>HORMAT KAMI</p>
         <br><br><br>
-        <p class="underline bold">EVI IRAWATI</p>
+        <p class="">EVI IRAWATI</p>
     </div>
 
 </body>

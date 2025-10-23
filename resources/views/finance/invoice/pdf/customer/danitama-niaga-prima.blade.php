@@ -179,6 +179,24 @@
                     @endphp
                 </tr>
 
+                @foreach ($detail->order->onChargeCost as $cost)
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ $cost->costComponent->name ?? null }}</td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            @php
+                                $totalPrice += $cost->nominal;
+                            @endphp
+                            {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @endforeach
+
                 @foreach ($detail->order->customerDetailOrders as $item)
                     <tr>
                         <td colspan="8" class="text-left">{{ $item->customerDetail->name }} : {{ $item->value }}

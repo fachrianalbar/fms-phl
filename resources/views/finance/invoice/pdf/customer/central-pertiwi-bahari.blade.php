@@ -151,6 +151,24 @@
                         $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
                     @endphp
                 </tr>
+                @foreach ($detail->order->onChargeCost as $cost)
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>{{ $cost->costComponent->name ?? null }}</td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            @php
+                                $totalPrice += $cost->nominal;
+                            @endphp
+                            {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @endforeach
             @endforeach
             <tr>
                 <td colspan="8" class="text-right bold">TOTAL:</td>

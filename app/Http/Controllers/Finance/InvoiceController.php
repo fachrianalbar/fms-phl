@@ -390,11 +390,18 @@ class InvoiceController extends Controller
 
         // Tentukan template PDF berdasarkan customer invoicePdf field
         $customer = $data->customer;
-        $pdfTemplate = 'finance.invoice.pdf.general'; // Default template
+        $pdfTemplate = 'finance.invoice.pdf.general-phl'; // Default template
 
-        if ($customer->company->name == 'PRIBADI') {
+        // pribadi
+        if ($customer->company->format == 'HW') {
             $pdfTemplate = 'finance.invoice.pdf.pribadi';
         }
+
+        // wijaya trans
+        if ($customer->company->format == 'WT') {
+            $pdfTemplate = 'finance.invoice.pdf.general-wt';
+        }
+
 
         if ($customer && $customer->invoicePdf) {
             $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
