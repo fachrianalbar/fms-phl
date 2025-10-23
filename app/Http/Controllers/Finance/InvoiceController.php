@@ -188,7 +188,7 @@ class InvoiceController extends Controller
                     $price = 0;
 
                     foreach ($row->details as $item) {
-                        $price = $item->order->route->price * $item->order->qty;
+                        $price = ($item->order->route->price ?? 0) * $item->order->qty;
                     }
 
                     $this->totalPriceInvoice = $price;

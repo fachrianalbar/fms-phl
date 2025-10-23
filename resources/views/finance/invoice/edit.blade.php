@@ -196,10 +196,10 @@
                                 </td>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>{{ Carbon::parse($item->orderDate)->format('d-M-Y') }}</td>
-                                <td>{{ $item->route->originLocation->name }}</td>
-                                <td>{{ $item->route->destinationLocation->name }}</td>
-                                <td>{{ $item->shipmentNumber }}</td>
-                                <td>{{ $item->fleet->plateNumber }}</td>
+                                <td>{{ $item->route->originLocation->name ?? '' }}</td>
+                                <td>{{ $item->route->destinationLocation->name ?? '' }}</td>
+                                <td>{{ $item->shipmentNumber ?? '' }}</td>
+                                <td>{{ $item->fleet->plateNumber ?? '' }}</td>
                                 {{-- <td>{{ $item->orderType->name }}</td> --}}
                             </tr>
                         @endforeach
