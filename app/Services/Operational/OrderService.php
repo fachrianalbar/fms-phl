@@ -65,7 +65,7 @@ class OrderService
             'fleet',
             'fleet.type',
             'unit'
-        ])->orderBy('orderDate', 'asc');
+        ])->orderBy('orderDate', 'asc')->where('status', 0);
     }
 
     public function getById($id)

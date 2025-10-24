@@ -341,10 +341,7 @@ class OrderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()->first()
-            ], 422);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         try {
@@ -354,18 +351,11 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => $this->title .  ' ' . __('general.data_was_update_succesfully'),
-                'redirect' => route($this->view . 'index')
-            ]);
+            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage())->withInput();
         }
     }
 
@@ -723,63 +713,6 @@ class OrderController extends Controller
         }
     }
 
-    public function checkNullRelations()
-    {
-        // Ambil semua data order
-        $orders = $this->service->findAll();
-
-        $nullData = [];
-
-        foreach ($orders as $order) {
-            $nullRelations = [];
-
-            // Cek relasi null
-            if (!$order->fleet) {
-                $nullRelations[] = 'Plate Number';
-            }
-            if (!$order->fleet->type) {
-                $nullRelations[] = 'Fleet Type';
-            }
-            if (!$order->driver) {
-                $nullRelations[] = 'Driver';
-            }
-            if (!$order->customer) {
-                $nullRelations[] = 'Customer';
-            }
-            if (!$order->route->destinationLocation) {
-                $nullRelations[] = 'Destination';
-            }
-            if (!$order->material) {
-                $nullRelations[] = 'material';
-            }
-            if (!$order->route) {
-                $nullRelations[] = 'route';
-            }
-
-
-            // Jika ada relasi null, tambahkan ke array hasil
-            if (count($nullRelations) > 0) {
-                $nullData[] = [
-                    'shipmentNumber' => $order->shipmentNumber,
-                    'nullRelations' => implode(', ', $nullRelations)
-                ];
-            }
-        }
-
-        // Return hasil pengecekan
-        if (count($nullData) > 0) {
-            return response()->json([
-                'success' => true,
-                'data' => $nullData
-            ]);
-        }
-
-        return response()->json([
-            'success' => false,
-            'message' => 'No null data found.'
-        ]);
-    }
-
 
     public function excelOrder(Request $request)
     {
@@ -790,9 +723,15 @@ class OrderController extends Controller
     public function deleteCost($id)
     {
         $cost = OrderCost::where('id', $id)->with(['order'])->first();
+
+        if (!$cost) {
+            return redirect()->back()->with('error', 'Cost not found');
+        }
+
+        $orderId = $cost->order->id;
         $cost->delete();
 
-        return redirect()->route($this->view . 'edit', $cost->order->id)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'edit', $orderId)->with('success', 'Delete Data Success');
     }
 
     public function getOrderCosts(Request $request)
