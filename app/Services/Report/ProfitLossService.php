@@ -2,7 +2,6 @@
 
 namespace App\Services\Report;
 
-use App\Models\Mutation;
 use App\Models\Operational\Order;
 use App\Models\Warehouse\Maintenance;
 use App\Traits\LogActivity;
@@ -12,6 +11,7 @@ class ProfitLossService
     use LogActivity;
 
     protected $order;
+
     protected $maintenance;
 
     public function __construct(Order $order, Maintenance $maintenance)
@@ -31,7 +31,7 @@ class ProfitLossService
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
         ])->latest();
     }
 
@@ -40,7 +40,7 @@ class ProfitLossService
         return $this->maintenance->with([
             'fleet',
             'details',
-            'details.item'
+            'details.item',
         ])->where('status', 0)->where('fleetCode', $fleetCode)->latest();
     }
 }

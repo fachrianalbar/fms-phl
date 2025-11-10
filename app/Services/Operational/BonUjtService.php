@@ -14,7 +14,9 @@ class BonUjtService
     use LogActivity;
 
     protected $service;
+
     protected $order;
+
     protected $bonUjtDetail;
 
     public function __construct(BonUjt $bonUjt, Order $order, BonUjtDetail $bonUjtDetail)
@@ -27,15 +29,14 @@ class BonUjtService
     public function findAll()
     {
         return $this->service->with([
-            'fleetType'
+            'fleetType',
         ])->get();
     }
-
 
     public function datatable()
     {
         return $this->service->with([
-            'fleetType'
+            'fleetType',
         ]);
     }
 
@@ -57,7 +58,7 @@ class BonUjtService
             'route.destinationLocation',
             'route.originLocation',
             'orderType',
-            'route.routeDetail'
+            'route.routeDetail',
         ])->orderBy('created_at', 'desc');
     }
 
@@ -65,6 +66,7 @@ class BonUjtService
     {
         $data = $this->getById($id);
         $orderCodeArr = $this->bonUjtDetail->where('bonUJtCode', $data->code)->pluck('orderCode');
+
         return $this->order->whereIn('code', $orderCodeArr)->with([
             'fleetDriver.fleet',
             // 'fleetDriver.employee',
@@ -75,7 +77,7 @@ class BonUjtService
             'route.destinationLocation',
             'route.originLocation',
             'orderType',
-            'route.routeDetail'
+            'route.routeDetail',
         ])->orderBy('created_at', 'desc')->get();
     }
 
@@ -88,9 +90,9 @@ class BonUjtService
             'time' => $request->time,
             'submitDate' => $request->submitDate,
             // 'handover' => $request->handover,
-            'note' => (int)$request->note,
+            'note' => (int) $request->note,
             'createdBy' => Auth::user()->id,
-            'fleetTypeCode' => $request->fleetTypeCode
+            'fleetTypeCode' => $request->fleetTypeCode,
         ]);
 
         if (isset($request->order)) {
@@ -98,17 +100,16 @@ class BonUjtService
                 $detail = $this->bonUjtDetail->create([
                     'code' => GenerateCode::generateCode('TBUD', true),
                     'bonUjtCode' => $request->code,
-                    'orderCode' => $item
+                    'orderCode' => $item,
                 ]);
 
                 $this->order->where('code', $item)->update([
-                    'bonUjt' => 1
+                    'bonUjt' => 1,
                 ]);
 
                 $this->logActivity('Bon Ujt Detail', $detail, 'Create');
             }
         }
-
 
         $this->logActivity($title, $data, 'Create');
     }
@@ -123,12 +124,10 @@ class BonUjtService
             'time' => $request->time,
             'submitDate' => $request->submitDate,
             // 'handover' => $request->handover,
-            'note' => (int)$request->note,
-            'fleetTypeCode' => $request->fleetTypeCode
+            'note' => (int) $request->note,
+            'fleetTypeCode' => $request->fleetTypeCode,
 
         ]);
-
-
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
@@ -141,14 +140,13 @@ class BonUjtService
 
         foreach ($data->details as $item) {
             $this->order->where('code', $item->orderCode)->update([
-                'bonUjt' => 0
+                'bonUjt' => 0,
             ]);
 
             $this->bonUjtDetail->where('id', $item->id)->delete();
 
             $this->logActivity('Bon Ujt Detail', $item, 'Delete');
         }
-
 
         $this->service->where('id', $id)->delete();
     }
@@ -158,16 +156,15 @@ class BonUjtService
         $bonUjt = $this->getById($id);
         if (isset($request->order)) {
 
-
             foreach ($selectedOrders as $item) {
                 $detail = $this->bonUjtDetail->create([
                     'code' => GenerateCode::generateCode('TBUD'),
                     'bonUjtCode' => $bonUjt->code,
-                    'orderCode' => $item
+                    'orderCode' => $item,
                 ]);
 
                 $this->order->where('code', $item)->update([
-                    'bonUjt' => 1
+                    'bonUjt' => 1,
                 ]);
 
                 $this->logActivity('Bon Ujt Detail', $detail, 'Create');
@@ -180,7 +177,7 @@ class BonUjtService
         $order = $this->order->where('id', $id)->first();
 
         $this->order->where('id', $id)->update([
-            'bonUjt' => 0
+            'bonUjt' => 0,
         ]);
 
         $data = $this->bonUjtDetail->where('orderCode', $order->code)->first();

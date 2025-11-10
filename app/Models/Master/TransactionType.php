@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class TransactionType extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'transaction_type';
+
     public $incrementing = false;
 
     protected $fillable = [

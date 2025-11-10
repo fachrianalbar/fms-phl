@@ -12,6 +12,7 @@ class OrderType extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'order_type';
+
     public $incrementing = false;
 
     protected $fillable = [

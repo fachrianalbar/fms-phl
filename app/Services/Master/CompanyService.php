@@ -31,7 +31,7 @@ class CompanyService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('FCMP')
+            'code' => GenerateCode::generateCode('FCMP'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

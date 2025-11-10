@@ -2,7 +2,6 @@
 
 namespace App\Models\Bank;
 
-use App\Models\Bank\UserBank;
 use App\Models\User;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +10,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ConfigBank extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'config_bank';
+
     public $incrementing = false;
 
     protected $fillable = [

@@ -12,6 +12,7 @@ class Material extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'material';
+
     public $incrementing = false;
 
     protected $fillable = [

@@ -8,10 +8,10 @@ trait ResponseJson
     {
         $response = [];
         $response['status'] = true;
-        if (!empty($message)) {
+        if (! empty($message)) {
             $response['message'] = $message;
         }
-        if (!empty($data)) {
+        if (! empty($data)) {
             $response['data'] = $data;
         }
 
@@ -23,7 +23,7 @@ trait ResponseJson
         $response = [];
         $response['status'] = false;
         $response['message'] = $message;
-        if (!empty($data)) {
+        if (! empty($data)) {
             $response['error'] = $data;
         }
 

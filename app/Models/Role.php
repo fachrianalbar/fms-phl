@@ -12,6 +12,7 @@ class Role extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'role';
+
     public $incrementing = false;
 
     protected $fillable = [

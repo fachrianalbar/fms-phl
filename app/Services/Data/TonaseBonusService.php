@@ -32,8 +32,8 @@ class TonaseBonusService
         $data = $this->service->create([
             'min' => $request->min,
             'max' => $request->max,
-            'value' => (int)$request->value,
-            'code' => GenerateCode::generateCode('TTB')
+            'value' => (int) $request->value,
+            'code' => GenerateCode::generateCode('TTB'),
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -46,7 +46,7 @@ class TonaseBonusService
         $this->service->where('id', $id)->update([
             'min' => $request->min,
             'max' => $request->max,
-            'value' => (int)$request->value,
+            'value' => (int) $request->value,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

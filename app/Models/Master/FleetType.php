@@ -12,6 +12,7 @@ class FleetType extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'fleet_type';
+
     public $incrementing = false;
 
     protected $fillable = [

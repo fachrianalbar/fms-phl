@@ -31,7 +31,7 @@ class ItemCategoryService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TIC')
+            'code' => GenerateCode::generateCode('TIC'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

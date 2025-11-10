@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FleetBrand extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'fleet_brand';
+
     public $incrementing = false;
 
     protected $fillable = [

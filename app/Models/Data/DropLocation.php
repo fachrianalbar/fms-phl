@@ -13,6 +13,7 @@ class DropLocation extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'drop_location';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,7 +23,7 @@ class DropLocation extends Model
         'latitude',
         'address',
         'description',
-        'locationCode'
+        'locationCode',
     ];
 
     public function location()

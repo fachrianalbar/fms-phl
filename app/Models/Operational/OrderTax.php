@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class OrderTax extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'order_tax';
+
     public $incrementing = false;
 
     protected $fillable = [

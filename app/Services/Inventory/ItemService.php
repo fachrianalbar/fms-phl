@@ -2,7 +2,6 @@
 
 namespace App\Services\Inventory;
 
-use App\Helpers\GenerateCode;
 use App\Models\Inventory\Item;
 use App\Traits\LogActivity;
 

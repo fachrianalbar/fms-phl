@@ -3,36 +3,43 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Services\Master\CityService;
 use App\Services\Master\CustomerService;
 use App\Services\Master\DistrictService;
 use App\Services\Master\LocationService;
 use App\Services\Master\ProvinceService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class LocationController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $provinceSvc;
+
     protected $customerSvc;
+
     protected $citySvc;
+
     protected $districtSvc;
 
     public function __construct(LocationService $locationSvc, ProvinceService $provinceSvc, CustomerService $customerSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
     {
         $this->service = $locationSvc;
-        $this->title = "Location";
-        $this->menuSvc = $menuSvc->getByName("Location");
+        $this->title = 'Location';
+        $this->menuSvc = $menuSvc->getByName('Location');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "master.location.";
+        $this->view = 'master.location.';
         $this->provinceSvc = $provinceSvc;
         $this->customerSvc = $customerSvc;
         $this->citySvc = $citySvc;
@@ -44,7 +51,7 @@ class LocationController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -57,7 +64,7 @@ class LocationController extends Controller
         $province = $this->provinceSvc->findAll();
         $customer = $this->customerSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('province', $province)
@@ -81,7 +88,7 @@ class LocationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -90,11 +97,11 @@ class LocationController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -112,17 +119,15 @@ class LocationController extends Controller
     public function edit(string $id)
     {
         $data = $this->service->getById($id);
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', __('general.data_not_found'));
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', __('general.data_not_found'));
         }
         $province = $this->provinceSvc->findAll();
         $customer = $this->customerSvc->findAll();
         $city = $this->citySvc->getByProvince($data->provinceId);
         $district = $this->districtSvc->getByCity($data->cityId);
 
-
-
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -149,7 +154,7 @@ class LocationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -159,11 +164,11 @@ class LocationController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -174,13 +179,14 @@ class LocationController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('province', function ($row) {
@@ -210,13 +216,13 @@ class LocationController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>

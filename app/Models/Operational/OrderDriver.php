@@ -11,13 +11,14 @@ class OrderDriver extends Model
     use HasFactory, Uuid;
 
     protected $table = 'order_driver';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'orderCode',
         'driverCode',
-        'description'
+        'description',
     ];
 
     public function order()

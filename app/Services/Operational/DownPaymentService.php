@@ -12,7 +12,9 @@ class DownPaymentService
     use LogActivity;
 
     protected $service;
+
     protected $employee;
+
     protected $detail;
 
     public function __construct(DownPayment $downPayment, Employee $employee, DownPaymentDetail $detail)

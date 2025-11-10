@@ -28,7 +28,7 @@ class NotReturnDoService
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
         ])->get();
     }
 
@@ -44,7 +44,7 @@ class NotReturnDoService
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
         ])->orderBy('orderDate', 'asc');
     }
 }

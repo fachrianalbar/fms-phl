@@ -13,12 +13,14 @@ class TelegramController extends Controller
     public function handleWebhook(Request $request)
     {
         $message = $request->input('message');
-        if (!$message) return response()->json(['status' => 'no message']);
+        if (! $message) {
+            return response()->json(['status' => 'no message']);
+        }
 
         $chatId = $message['chat']['id'];
         $text = $message['text'];
 
-        if (str_starts_with($text, "/start")) {
+        if (str_starts_with($text, '/start')) {
             $username = $message['chat']['username'] ?? null;
             $firstName = $message['chat']['first_name'] ?? null;
             $lastName = $message['chat']['last_name'] ?? null;
@@ -27,19 +29,19 @@ class TelegramController extends Controller
 
             if ($telegramUser) {
                 $telegramUser->update([
-                    "chatId" => $chatId,
-                    "username" => $username,
-                    "firstName" => $firstName,
-                    "lastName" => $lastName
+                    'chatId' => $chatId,
+                    'username' => $username,
+                    'firstName' => $firstName,
+                    'lastName' => $lastName,
                 ]);
                 SendNotif::sendTelegram($chatId, "Halo $firstName, kamu sudah terdaftar.");
             } else {
                 TelegramUser::create([
-                    "code" => GenerateCode::generateCode("FTL"),
-                    "chatId" => $chatId,
-                    "username" => $username,
-                    "firstName" => $firstName,
-                    "lastName" => $lastName
+                    'code' => GenerateCode::generateCode('FTL'),
+                    'chatId' => $chatId,
+                    'username' => $username,
+                    'firstName' => $firstName,
+                    'lastName' => $lastName,
                 ]);
                 SendNotif::sendTelegram($chatId, "Halo $firstName! Pendaftaran berhasil. 🎉");
             }

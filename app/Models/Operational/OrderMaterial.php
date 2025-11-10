@@ -13,6 +13,7 @@ class OrderMaterial extends Model
     use HasFactory, Uuid;
 
     protected $table = 'order_material';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,7 +23,7 @@ class OrderMaterial extends Model
         'unitCode',
         'materialQty',
         'unitCode2',
-        'materialQty2'
+        'materialQty2',
     ];
 
     public function order()

@@ -13,6 +13,7 @@ class Invoice extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'invoice';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -24,7 +25,7 @@ class Invoice extends Model
         'overdueDate',
         'notes',
         'customerCode',
-        'status'
+        'status',
     ];
 
     public function customer()

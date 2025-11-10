@@ -14,6 +14,7 @@ class DownPayment extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'down_payment';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -24,7 +25,7 @@ class DownPayment extends Model
         'date',
         'time',
         'driverCode',
-        'type'
+        'type',
     ];
 
     public function driver()

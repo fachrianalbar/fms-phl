@@ -29,17 +29,16 @@ class MaintenanceService
         return $this->service->with([
             'fleet',
             'details',
-            'details.item'
+            'details.item',
         ])->latest();
     }
-
 
     public function datatable()
     {
         return $this->service->with([
             'fleet',
             'details',
-            'details.item'
+            'details.item',
         ])->where('status', 0)->orderBy('created_at', 'desc');
     }
 
@@ -55,7 +54,7 @@ class MaintenanceService
             'code' => $request->code,
             'date' => $request->date,
             'time' => $request->time,
-            'fleetCode' => $request->fleetCode
+            'fleetCode' => $request->fleetCode,
         ]);
 
         $warehouseCode = Warehouse::first()->code;
@@ -88,7 +87,7 @@ class MaintenanceService
                     'code' => GenerateCode::generateCode('FMD', true),
                     'maintenanceCode' => $data->code,
                     'itemCode' => $itemCode,
-                    'qty' => $requestedQty
+                    'qty' => $requestedQty,
                 ]);
 
                 // 5. Alokasikan FIFO dan simpan ke MaintenanceFifo
@@ -99,7 +98,9 @@ class MaintenanceService
                     ->get();
 
                 foreach ($fifoPurchases as $purchase) {
-                    if ($remainingQty <= 0) break;
+                    if ($remainingQty <= 0) {
+                        break;
+                    }
 
                     $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
                     $useQty = min($remainingQty, $availableQty);
@@ -111,7 +112,7 @@ class MaintenanceService
                         'code' => GenerateCode::generateCode('MF', true),
                         'maintenanceDetailCode' => $detail->code,
                         'purchaseDetailCode' => $purchase->code,
-                        'qty' => $useQty
+                        'qty' => $useQty,
                     ]);
 
                     $remainingQty -= $useQty;
@@ -130,7 +131,7 @@ class MaintenanceService
                     'transactionDetailCode' => $detail->code,
                     'date' => $request->date,
                     'transactionType' => 'OUT',
-                    'warehouseCode' => $warehouseCode
+                    'warehouseCode' => $warehouseCode,
                 ]);
             }
         }
@@ -138,9 +139,6 @@ class MaintenanceService
         // 8. Log aktivitas pencatatan
         $this->logActivity($title, $data, 'Create');
     }
-
-
-
 
     public function update($request, $id, $title)
     {
@@ -150,7 +148,7 @@ class MaintenanceService
             // 'code' => $request->code,
             'date' => $request->date,
             'time' => $request->time,
-            'fleetCode' => $request->fleetCode
+            'fleetCode' => $request->fleetCode,
         ]);
 
         if (isset($request->itemCode)) {
@@ -161,7 +159,6 @@ class MaintenanceService
 
             $detailMap = [];
             $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode']);
-
 
             // STEP 1: Rollback qtyUsed hanya untuk data yang digunakan di maintenance_fifo
             foreach ($itemCodes as $i => $itemCode) {
@@ -197,8 +194,8 @@ class MaintenanceService
             // STEP 2: Alokasi ulang
             for ($i = 0; $i < count($itemCodes); $i++) {
                 $itemCode = $itemCodes[$i];
-                $qty = (int)$qtys[$i];
-                $originalQty = (int)$originalQtys[$i];
+                $qty = (int) $qtys[$i];
+                $originalQty = (int) $originalQtys[$i];
                 // $isLifo = $qty < $originalQty;
 
                 if ($qty <= 0) {
@@ -215,7 +212,7 @@ class MaintenanceService
                         'code' => GenerateCode::generateCode('TMD', true),
                         'maintenanceCode' => $maintenanceCode,
                         'itemCode' => $itemCode,
-                        'qty' => $qty
+                        'qty' => $qty,
                     ]);
                 }
 
@@ -228,10 +225,14 @@ class MaintenanceService
                 $remainingQty = $qty;
 
                 foreach ($purchaseDetails as $purchase) {
-                    if ($remainingQty <= 0) break;
+                    if ($remainingQty <= 0) {
+                        break;
+                    }
 
                     $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
-                    if ($availableQty <= 0) continue;
+                    if ($availableQty <= 0) {
+                        continue;
+                    }
 
                     $useQty = min($remainingQty, $availableQty);
 
@@ -242,7 +243,7 @@ class MaintenanceService
                         'code' => GenerateCode::generateCode('MF', true),
                         'maintenanceDetailCode' => $detail->code,
                         'purchaseDetailCode' => $purchase->code,
-                        'qty' => $useQty
+                        'qty' => $useQty,
                     ]);
 
                     $remainingQty -= $useQty;

@@ -7,7 +7,6 @@ use App\Models\CompanySetting;
 use App\Traits\LogActivity;
 use Illuminate\Support\Facades\Storage;
 
-
 class CompanySettingService
 {
     use LogActivity;
@@ -38,7 +37,7 @@ class CompanySettingService
 
             $logo = str_replace(' ', '_', $logo);
 
-            $path = "public/company_setting/logo";
+            $path = 'public/company_setting/logo';
 
             Storage::putFileAs($path, $file, $logo);
         }
@@ -68,9 +67,9 @@ class CompanySettingService
             $file = $request->logo;
             $logo = $file->getClientOriginalName();
 
-            $path = "public/company_setting/logo/";
+            $path = 'public/company_setting/logo/';
             if ($data->logo) {
-                Storage::delete($path . $data->logo);
+                Storage::delete($path.$data->logo);
             }
 
             Storage::putFileAs($path, $file, $logo);

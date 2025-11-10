@@ -12,6 +12,7 @@ class ItemCategory extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'item_category';
+
     public $incrementing = false;
 
     protected $fillable = [

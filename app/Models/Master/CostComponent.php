@@ -12,11 +12,12 @@ class CostComponent extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'cost_component';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'type'
+        'type',
     ];
 }

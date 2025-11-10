@@ -12,6 +12,7 @@ class CustomerDetailOrder extends Model
     use HasFactory, Uuid;
 
     protected $table = 'customer_detail_order';
+
     public $incrementing = false;
 
     protected $fillable = [

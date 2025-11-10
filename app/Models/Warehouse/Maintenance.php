@@ -13,6 +13,7 @@ class Maintenance extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'maintenance';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class Maintenance extends Model
         'date',
         'time',
         'fleetCode',
-        'status'
+        'status',
     ];
 
     public function fleet()

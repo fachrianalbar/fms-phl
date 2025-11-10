@@ -18,7 +18,7 @@ class ActivityLog extends Model
         'subject_id',
         'causer_type',
         'causer_id',
-        'properties'
+        'properties',
     ];
 
     public function user()

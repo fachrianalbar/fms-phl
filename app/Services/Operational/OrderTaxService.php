@@ -12,6 +12,7 @@ class OrderTaxService
     use LogActivity;
 
     protected $service;
+
     protected $order;
 
     public function __construct(OrderTax $orderTax, Order $order)
@@ -28,13 +29,13 @@ class OrderTaxService
     public function store($request, $title)
     {
         $this->order->where('code', $request->orderCode)->update([
-            'status' => 7
+            'status' => 7,
         ]);
 
         $data = $this->service->create([
             'description' => $request->description,
             'orderCode' => $request->orderCode,
-            'code' => GenerateCode::generateCode('FOTAX')
+            'code' => GenerateCode::generateCode('FOTAX'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

@@ -23,6 +23,6 @@ return [
     'personal_vendor_price' => 'Harga Vendor Pribadi',
     'vendor_price_validation' => 'Harga rute vendor tidak boleh lebih dari harga rute',
     'personal_vendor_price_validation' => 'Harga rute vendor pribadi tidak boleh lebih dari harga rute',
-    'description' => 'Keterangan'
+    'description' => 'Keterangan',
 
 ];

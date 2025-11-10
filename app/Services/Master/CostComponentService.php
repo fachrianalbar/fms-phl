@@ -32,7 +32,7 @@ class CostComponentService
         $data = $this->service->create([
             'name' => $request->name,
             // 'type' => $request->type,
-            'code' => GenerateCode::generateCode('TCC')
+            'code' => GenerateCode::generateCode('TCC'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

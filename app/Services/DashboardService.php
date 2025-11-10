@@ -3,17 +3,16 @@
 namespace App\Services;
 
 use App\Models\Master\Fleet;
-use App\Models\Mutation;
 use App\Models\Operational\Order;
 use App\Traits\LogActivity;
 use Illuminate\Support\Facades\DB;
-
 
 class DashboardService
 {
     use LogActivity;
 
     protected $fleet;
+
     protected $order;
 
     public function __construct(Fleet $fleet, Order $order)
@@ -28,10 +27,10 @@ class DashboardService
             'fleet.code',
             'fleet.plateNumber',
             DB::raw('COUNT(DISTINCT fms_maintenance.code) as total'),
-            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price')
+            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price'),
         ])
             ->leftjoin('maintenance', 'maintenance.fleetCode', 'fleet.code')
-            ->leftjoin('maintenance_detail',  'maintenance_detail.maintenanceCode', 'maintenance.code')
+            ->leftjoin('maintenance_detail', 'maintenance_detail.maintenanceCode', 'maintenance.code')
             ->leftjoin('item', 'item.code', 'maintenance_detail.itemCode')
             ->with(['maintenances'])
             ->orderBy('total', 'DESC')
@@ -46,7 +45,7 @@ class DashboardService
                 'o1.shipmentNumber',
                 'o1.status',
                 'employee.name as driverName',
-                'o1.created_at'
+                'o1.created_at',
             ])
             ->join('employee', 'employee.code', '=', 'o1.driverCode')
             ->join(DB::raw('(
@@ -65,7 +64,7 @@ class DashboardService
             'fleet_type.name as fleetTypeName',
             'latest.shipmentNumber',
             'latest.driverName',
-            'latest.status'
+            'latest.status',
         ])
             ->leftJoin('fleet_type', 'fleet_type.code', 'fleet.fleetTypeCode')
             ->leftJoin('order', 'order.fleetCode', 'fleet.code')

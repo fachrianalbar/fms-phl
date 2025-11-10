@@ -11,19 +11,20 @@ use Illuminate\Support\Facades\Validator;
 class ChangePasswordController extends Controller
 {
     protected $service;
+
     protected $title;
 
     public function __construct(UserService $userSvc)
     {
         $this->service = $userSvc;
-        $this->title = "Change Password";
+        $this->title = 'Change Password';
     }
+
     public function index()
     {
         return view('auth.change-password')
             ->with('title', $this->title);
     }
-
 
     public function store(Request $request)
     {
@@ -33,11 +34,11 @@ class ChangePasswordController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route('change-password.index')->with('fail',  $validator->errors()->all()[0]);
+            return redirect()->route('change-password.index')->with('fail', $validator->errors()->all()[0]);
         }
 
-        if (!Hash::check($request->old_password, Auth::user()->password)) {
-            return redirect()->route('change-password.index')->with('fail',  "The old password is incorrect!");
+        if (! Hash::check($request->old_password, Auth::user()->password)) {
+            return redirect()->route('change-password.index')->with('fail', 'The old password is incorrect!');
         }
 
         $new_password = Hash::make($request->new_password);

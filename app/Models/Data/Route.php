@@ -16,6 +16,7 @@ class Route extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'route';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -29,7 +30,7 @@ class Route extends Model
         'vendorPrice',
         'routeTypeCode',
         'personalVendorPrice',
-        'description'
+        'description',
     ];
 
     public function customer()

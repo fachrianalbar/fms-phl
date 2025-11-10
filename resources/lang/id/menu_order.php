@@ -37,5 +37,5 @@ return [
     'change_driver_failed' => 'Ganti supir gagal',
     'order_report' => 'Laporan Pesanan',
     'total_price' => 'Total Harga',
-    'return_date' => 'Tanggal Kembali'
+    'return_date' => 'Tanggal Kembali',
 ];

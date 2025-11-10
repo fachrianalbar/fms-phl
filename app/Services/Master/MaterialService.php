@@ -31,7 +31,7 @@ class MaterialService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TM')
+            'code' => GenerateCode::generateCode('TM'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

@@ -11,7 +11,6 @@ use App\Http\Controllers\Operational\OrderTaxController;
 use App\Http\Controllers\Operational\ReturnDoController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('down-payment', DownPaymentController::class);
     Route::resource('down-payment-detail', DownPaymentDetailController::class);

@@ -4,35 +4,38 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Services\Inventory\SupplierService;
+use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseConfirmationService;
 use Carbon\Carbon;
-use Yajra\DataTables\DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
+use Yajra\DataTables\DataTables;
 
 class PurchaseConfirmationController extends Controller
 {
     protected $service;
-    protected $supplierSvc;
-    protected $title;
-    protected $view;
-    protected $menuSvc;
 
+    protected $supplierSvc;
+
+    protected $title;
+
+    protected $view;
+
+    protected $menuSvc;
 
     public function __construct(PurchaseConfirmationService $purchaseConfirmationSvc, SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseConfirmationSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = "Purchase Confirm";
-        $this->menuSvc = $menuSvc->getByName("Purchase Confirm");
+        $this->title = 'Purchase Confirm';
+        $this->menuSvc = $menuSvc->getByName('Purchase Confirm');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "purchasing.purchase-confirmation.";
+        $this->view = 'purchasing.purchase-confirmation.';
     }
 
     /**
@@ -42,7 +45,7 @@ class PurchaseConfirmationController extends Controller
     {
         $supplier = $this->supplierSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('title', $this->title);
@@ -55,8 +58,8 @@ class PurchaseConfirmationController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $totalPrice = 0;
@@ -71,7 +74,7 @@ class PurchaseConfirmationController extends Controller
         $supplier = $this->supplierSvc->findAll();
         // $items = Item::OrderBy('name', 'asc')->get();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             // ->with('items', $items)
@@ -89,18 +92,17 @@ class PurchaseConfirmationController extends Controller
 
         if (count($selectedPurchase) == 1) {
             $validator = Validator::make($request->all(), [
-                'receivedDate' => ['required', 'date', 'after_or_equal:' . $data->date],
+                'receivedDate' => ['required', 'date', 'after_or_equal:'.$data->date],
                 'receivedQty' => ['required'],
             ]);
         }
 
         $validator = Validator::make($request->all(), [
-            'receivedDate' => ['required', 'date', 'after_or_equal:' . $data->date],
+            'receivedDate' => ['required', 'date', 'after_or_equal:'.$data->date],
         ]);
 
-
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -110,11 +112,11 @@ class PurchaseConfirmationController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -146,12 +148,13 @@ class PurchaseConfirmationController extends Controller
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
+
                     return $date;
                 })
                 ->editColumn('receivedDate', function ($row) {
                     $receivedDate = '';
                     if ($row->receivedDate) {
-                        $receivedDate =   Carbon::parse($row->receivedDate)->format('d-M-Y');
+                        $receivedDate = Carbon::parse($row->receivedDate)->format('d-M-Y');
                     }
 
                     return $receivedDate;
@@ -159,7 +162,7 @@ class PurchaseConfirmationController extends Controller
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
                     if ($row->paymentDate) {
-                        $paymentDate =   Carbon::parse($row->paymentDate)->format('d-M-Y');
+                        $paymentDate = Carbon::parse($row->paymentDate)->format('d-M-Y');
                     }
 
                     return $paymentDate;
@@ -214,12 +217,13 @@ class PurchaseConfirmationController extends Controller
                     if ($count > 0 && $count < $total) {
                         return 'Stored Half';
                     }
+
                     return 'No Stored';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '
                     <td>
-                        <a href="' . route($this->view . 'edit', $row->id) . '"
+                        <a href="'.route($this->view.'edit', $row->id).'"
                         class="btn btn-icon btn-sm bg-primary-subtle me-1"
                         data-bs-toggle="tooltip" title="Edit">
                             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>

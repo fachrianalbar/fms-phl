@@ -4,28 +4,29 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\StockTransaction;
-use App\Services\Inventory\StockService;
 use App\Services\Inventory\StockTransactionService;
+use App\Services\MenuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Mpdf\Mpdf;
-
+use Yajra\DataTables\DataTables;
 
 class StockTransactionController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(StockTransactionService $stockTransactionSvc, MenuService $menuSvc)
     {
         $this->service = $stockTransactionSvc;
-        $this->title = "Stock Transaction";
-        $this->view = "inventory.transaction-stock.";
+        $this->title = 'Stock Transaction';
+        $this->view = 'inventory.transaction-stock.';
     }
 
     /**
@@ -35,7 +36,7 @@ class StockTransactionController extends Controller
     {
         $data = $this->service->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('data', $data)
             ->with('title', $this->title);
@@ -76,6 +77,7 @@ class StockTransactionController extends Controller
                     if ($row->type == 'IN') {
                         $in = $row->qty;
                     }
+
                     return $in;
                 })
                 ->addColumn('out', function ($row) {
@@ -84,6 +86,7 @@ class StockTransactionController extends Controller
                     if ($row->type == 'OUT') {
                         $out = $row->qty;
                     }
+
                     return $out;
                 })
                 ->editColumn('item.name', function ($row) {
@@ -96,11 +99,11 @@ class StockTransactionController extends Controller
                     return $item;
                 })
                 ->addColumn('bon', function ($row) {
-                    $bon  = '';
+                    $bon = '';
 
                     if ($row->type == 'IN' && $row->transactionType == 1) {
                         $bon = $row->purchase->purchaseCode;
-                    } else if ($row->type == 'OUT') {
+                    } elseif ($row->type == 'OUT') {
                         $bon = $row->maintenance->maintenanceCode;
                     }
 
@@ -124,7 +127,7 @@ class StockTransactionController extends Controller
         $data = StockTransaction::with([
             'item',
             'purchase',
-            'maintenance'
+            'maintenance',
         ])->orderBy('created_at', 'desc');
 
         // Definisikan kolom filter dengan alias
@@ -161,7 +164,7 @@ class StockTransactionController extends Controller
         $endDate = Carbon::parse($request->endDate)->format('d-m-Y');
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.transaction-stock-pdf')
+            view($this->view.'report.transaction-stock-pdf')
                 ->with('data', $data->get())
                 ->with('startDate', $startDate)
                 ->with('endDate', $endDate)

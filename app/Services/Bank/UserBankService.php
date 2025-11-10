@@ -59,16 +59,16 @@ class UserBankService
         LiveMutation::create([
             'code' => GenerateCode::generateCode('FLM'),
             'userBankCode' => $data->code,
-            'debit' => (int)$request->balance,
+            'debit' => (int) $request->balance,
             'credit' => 0,
-            'balance' => (int)$request->balance,
+            'balance' => (int) $request->balance,
         ]);
 
-        if ((int)$request->balance != 0) {
+        if ((int) $request->balance != 0) {
             $mutation = Mutation::create([
                 'code' => GenerateCode::generateCode('FMT'),
                 'userBankCode' => $data->code,
-                'nominal' => (int)$request->balance,
+                'nominal' => (int) $request->balance,
                 'type' => 'In',
                 'date' => Carbon::now(),
                 'description' => 'New Balance',

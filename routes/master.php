@@ -17,7 +17,6 @@ use App\Http\Controllers\Master\TransactionTypeController;
 use App\Http\Controllers\Master\UnitController;
 use Illuminate\Support\Facades\Route;
 
-
 // Route::middleware(['access'])->group(function () {
 Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleets', FleetController::class);

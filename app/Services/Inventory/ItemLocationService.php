@@ -4,7 +4,6 @@ namespace App\Services\Inventory;
 
 use App\Helpers\GenerateCode;
 use App\Models\Inventory\ItemLocation;
-use App\Models\Master\Unit;
 use App\Traits\LogActivity;
 
 class ItemLocationService
@@ -31,7 +30,7 @@ class ItemLocationService
     public function store($request, $title)
     {
         $data = $request->all();
-        $data["code"] = GenerateCode::generateCode('TE');
+        $data['code'] = GenerateCode::generateCode('TE');
         $result = $this->service->create($data);
 
         $this->logActivity($title, $result, 'Create');

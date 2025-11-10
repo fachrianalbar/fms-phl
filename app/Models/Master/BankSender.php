@@ -9,9 +9,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankSender extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'bank_sender';
+
     public $incrementing = false;
 
     protected $fillable = [

@@ -13,6 +13,7 @@ class InvoiceDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'invoice_detail';
+
     public $incrementing = false;
 
     protected $fillable = [

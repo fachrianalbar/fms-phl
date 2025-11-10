@@ -3,7 +3,6 @@
 namespace App\Services\Operational;
 
 use App\Helpers\GenerateCode;
-use App\Models\Master\Unit;
 use App\Models\Operational\DownPaymentDetail;
 use App\Traits\LogActivity;
 
@@ -35,8 +34,8 @@ class DownPaymentDetailService
             'date' => $request->date,
             'time' => $request->time,
             'price' => $request->price,
-            "note" => $request->note,
-            'code' => GenerateCode::generateCode('TDPD')
+            'note' => $request->note,
+            'code' => GenerateCode::generateCode('TDPD'),
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -50,7 +49,7 @@ class DownPaymentDetailService
             'date' => $request->date,
             'time' => $request->time,
             'price' => $request->price,
-            "note" => $request->note,
+            'note' => $request->note,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

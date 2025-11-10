@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Helpers\GenerateCode;
 use App\Models\User;
 use App\Traits\LogActivity;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
@@ -35,8 +35,8 @@ class UserService
             'name' => $request->name,
             'username' => $request->username,
             'roleCode' => $request->roleCode,
-            'password' =>  Hash::make('123456'),
-            'code' => GenerateCode::generateCode('TUSR')
+            'password' => Hash::make('123456'),
+            'code' => GenerateCode::generateCode('TUSR'),
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -65,21 +65,21 @@ class UserService
     public function changePassword($newPassword)
     {
         $this->service->where('id', Auth::user()->id)->update([
-            'password' => $newPassword
+            'password' => $newPassword,
         ]);
     }
 
     public function changeLanguange($lang)
     {
         $this->service->where('id', Auth::user()->id)->update([
-            'languange' => $lang
+            'languange' => $lang,
         ]);
     }
 
     public function reset($id)
     {
         $this->service->where('id', $id)->update([
-            'password' => Hash::make('123456')
+            'password' => Hash::make('123456'),
         ]);
     }
 }

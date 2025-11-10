@@ -12,6 +12,7 @@ class OrderPayment extends Model
     use HasFactory, Uuid;
 
     protected $table = 'order_payment';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class OrderPayment extends Model
         'cost',
         'pph',
         'total',
-        'status'
+        'status',
     ];
 
     public function order()

@@ -11,13 +11,14 @@ class CustomerPic extends Model
     use HasFactory, Uuid;
 
     protected $table = 'customer_pic';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'picName',
         'phone',
-        'customerCode'
+        'customerCode',
     ];
 
     public function customer()

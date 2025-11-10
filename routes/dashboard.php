@@ -1,12 +1,9 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Data\RouteController;
 use Illuminate\Support\Facades\Route;
 
-
 Route::get('home', [DashboardController::class, 'index'])->name('dashboard');
-
 
 Route::prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('pdf-fleet-maintenance', [DashboardController::class, 'pdfFleetMaintenance'])->name('pdf-fleet-maintenance');

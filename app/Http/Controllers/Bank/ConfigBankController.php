@@ -3,24 +3,29 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Bank\ConfigBank;
 use App\Services\Bank\ConfigBankService;
 use App\Services\Bank\UserBankService;
+use App\Services\MenuService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Yajra\DataTables\DataTables;
 use Illuminate\Validation\Rule;
+use Yajra\DataTables\DataTables;
 
 class ConfigBankController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $userBankSvc;
+
     protected $userSvc;
 
     public function __construct(ConfigBankService $configBankSvc, UserBankService $userBankSvc, UserService $userSvc, MenuService $menuSvc)
@@ -28,8 +33,8 @@ class ConfigBankController extends Controller
         $this->service = $configBankSvc;
         $this->userBankSvc = $userBankSvc;
         $this->userSvc = $userSvc;
-        $this->title = "Config Bank";
-        $this->view = "bank.config-bank.";
+        $this->title = 'Config Bank';
+        $this->view = 'bank.config-bank.';
     }
 
     /**
@@ -37,7 +42,7 @@ class ConfigBankController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -50,7 +55,7 @@ class ConfigBankController extends Controller
         $user = $this->userSvc->findAll();
         $userBank = $this->userBankSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('user', $user)
             ->with('userBank', $userBank)
@@ -68,13 +73,13 @@ class ConfigBankController extends Controller
             'userBankCode' => ['required', Rule::unique('config_bank', 'userBankCode')->whereNull('deleted_at')],
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         $configBank = ConfigBank::whereIn('userBankCode', $request->userBankCode)->get();
 
         if (count($configBank) > 0) {
-            return redirect()->route($this->view . 'index')->with('fail', 'User bank data aiready exists');
+            return redirect()->route($this->view.'index')->with('fail', 'User bank data aiready exists');
         }
 
         try {
@@ -84,11 +89,11 @@ class ConfigBankController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -107,15 +112,14 @@ class ConfigBankController extends Controller
     {
         $data = $this->service->getByUser($code);
 
-
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $user = $this->userSvc->findAll();
         $userBank = $this->userBankSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('user', $user)
@@ -133,7 +137,7 @@ class ConfigBankController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         $userBankCodes = $request->input('userBankCode');
@@ -152,11 +156,11 @@ class ConfigBankController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -174,7 +178,7 @@ class ConfigBankController extends Controller
     {
         $this->service->destroyByUser($code, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function listUserBank()
@@ -186,6 +190,7 @@ class ConfigBankController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->datatable();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('userCode', function ($row) {
@@ -206,7 +211,7 @@ class ConfigBankController extends Controller
 
                         $result .= '<ul>';
                         foreach ($data as $item) {
-                            $result .=            '<li>' . $i . '. ' . $item->userBank->accountNumber . ' - ' . $item->userBank->bank->name . ' - ' . $item->userBank->accountName . '</li>';
+                            $result .= '<li>'.$i.'. '.$item->userBank->accountNumber.' - '.$item->userBank->bank->name.' - '.$item->userBank->accountName.'</li>';
                             $i++;
                         }
                         $result .= '</li>';
@@ -216,8 +221,8 @@ class ConfigBankController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->code) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->code . '\')"><i class="icon-trash"></i></a></li>
+                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->code).'"><i class="icon-pencil-alt"></i></a></li>
+                                        <li class="delete"><a href="javascript:deleteData(\''.$row->code.'\')"><i class="icon-trash"></i></a></li>
                                     </ul>';
 
                     return $btn;

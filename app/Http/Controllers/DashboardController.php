@@ -13,18 +13,17 @@ use App\Services\Master\FleetService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
-use Mpdf\Mpdf;
 use Maatwebsite\Excel\Facades\Excel;
-
-
+use Mpdf\Mpdf;
+use Yajra\DataTables\DataTables;
 
 class DashboardController extends Controller
 {
     protected $service;
-    protected $fleetSvc;
-    protected $view;
 
+    protected $fleetSvc;
+
+    protected $view;
 
     public function __construct(
         DashboardService $dashboardService,
@@ -32,8 +31,9 @@ class DashboardController extends Controller
     ) {
         $this->service = $dashboardService;
         $this->fleetSvc = $fleetSvc;
-        $this->view = "dashboard.";
+        $this->view = 'dashboard.';
     }
+
     public function index()
     {
         $currentYear = request('year', now()->year);
@@ -113,6 +113,7 @@ class DashboardController extends Controller
                     $invoice->status_color = 'danger';
                     $invoice->status_text = 'Terlambat';
                 }
+
                 return $invoice;
             });
 
@@ -163,7 +164,7 @@ class DashboardController extends Controller
 
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view . 'home', [
+        return view($this->view.'home', [
             'monthlyOrders' => $monthlyOrders,
             'monthlyOrderData' => $monthlyOrderData,
             'monthlyPurchases' => $monthlyPurchases,
@@ -181,7 +182,7 @@ class DashboardController extends Controller
             'overdueInvoices' => $overdueInvoices,
             'pendingInvoiceOrders' => $pendingInvoiceOrders,
             'fleet' => $fleet,
-            'view' => $this->view
+            'view' => $this->view,
         ]);
     }
 
@@ -262,7 +263,7 @@ class DashboardController extends Controller
             [
                 'orientation' => 'P',
                 'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp')
+                'tempDir' => storage_path('app/mpdf-temp'),
             ]
         );
 
@@ -284,7 +285,7 @@ class DashboardController extends Controller
         $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.fleet-maintenance-pdf')
+            view($this->view.'report.fleet-maintenance-pdf')
                 ->with('data', $data->get())
         );
 
@@ -375,7 +376,7 @@ class DashboardController extends Controller
         return response()->json([
             'count' => $count,
             'year' => $year,
-            'month' => $month
+            'month' => $month,
         ]);
     }
 
@@ -398,7 +399,7 @@ class DashboardController extends Controller
         return response()->json([
             'count' => $count,
             'year' => $year,
-            'month' => $month
+            'month' => $month,
         ]);
     }
 }

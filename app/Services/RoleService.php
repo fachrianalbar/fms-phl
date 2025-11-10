@@ -33,7 +33,7 @@ class RoleService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TRL')
+            'code' => GenerateCode::generateCode('TRL'),
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -68,8 +68,7 @@ class RoleService
                     // Check if item already exists in the role_menu table
                     $roleMenu = RoleMenu::where('menuCode', $item)->where('roleCode', $data->code)->first();
 
-
-                    if (!$roleMenu) {
+                    if (! $roleMenu) {
                         // Insert the item if it doesn't exist
                         RoleMenu::create([
                             'code' => GenerateCode::generateCode('TRL'),
@@ -88,7 +87,7 @@ class RoleService
                 // Ensure the header is present if at least one child item is checked
                 $headerRoleMenu = RoleMenu::where('menuCode', $header)->where('roleCode', $data->code)->first();
 
-                if (!$headerRoleMenu) {
+                if (! $headerRoleMenu) {
                     RoleMenu::create([
                         'code' => GenerateCode::generateCode('TRL'),
                         'roleCode' => $data->code,

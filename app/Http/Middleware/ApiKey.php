@@ -23,9 +23,10 @@ class ApiKey
         if ($request->header('total-kilat-key') != env('TOTAL_KILAT_API_KEY') || $request->header('total-kilat-key') == null) {
             return response()->json([
                 'error' => 'Unauthorized',
-                'message' => 'Key tidak valid!'
+                'message' => 'Key tidak valid!',
             ], 401);
         }
+
         return $next($request);
     }
 }

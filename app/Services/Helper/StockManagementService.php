@@ -9,6 +9,7 @@ use App\Models\StockTransaction;
 class StockManagementService
 {
     protected $stock;
+
     protected $stockTransaction;
 
     public function __construct(Stock $stock, StockTransaction $stockTransaction)
@@ -32,7 +33,7 @@ class StockManagementService
             'transactionCode' => $transactionCode,
             'transactionDetailCode' => $transactionDetailCode,
             'date' => $date,
-            'transactionType' => $type
+            'transactionType' => $type,
         ]);
 
         // Update or create stock
@@ -41,13 +42,13 @@ class StockManagementService
 
         if ($stock) {
             $stock->update([
-                'stockIn' => $stock->stockIn + $qty
+                'stockIn' => $stock->stockIn + $qty,
             ]);
         } else {
             $this->stock->create([
                 'itemCode' => $itemCode,
                 'stockIn' => $qty,
-                'stockOut' => 0
+                'stockOut' => 0,
             ]);
         }
 
@@ -62,7 +63,7 @@ class StockManagementService
         $stock = $this->stock->where('itemCode', $itemCode)
             ->first();
 
-        if (!$stock || ($stock->stockIn - $stock->stockOut) < $qty) {
+        if (! $stock || ($stock->stockIn - $stock->stockOut) < $qty) {
             throw new \Exception("Insufficient stock for item {$itemCode} in warehouse {$warehouseCode}");
         }
 
@@ -76,12 +77,12 @@ class StockManagementService
             'transactionCode' => $transactionCode,
             'transactionDetailCode' => $transactionDetailCode,
             'date' => $date,
-            'transactionType' => $type
+            'transactionType' => $type,
         ]);
 
         // Update stock
         $stock->update([
-            'stockOut' => $stock->stockOut + $qty
+            'stockOut' => $stock->stockOut + $qty,
         ]);
 
         return $stock;
@@ -105,11 +106,11 @@ class StockManagementService
             if ($stock) {
                 if ($stockTransaction->type === 'IN' || $stockTransaction->type === 'INITIAL') {
                     $stock->update([
-                        'stockIn' => $stock->stockIn - $stockTransaction->qty
+                        'stockIn' => $stock->stockIn - $stockTransaction->qty,
                     ]);
                 } elseif ($stockTransaction->type === 'OUT') {
                     $stock->update([
-                        'stockOut' => $stock->stockOut - $stockTransaction->qty
+                        'stockOut' => $stock->stockOut - $stockTransaction->qty,
                     ]);
                 }
             }

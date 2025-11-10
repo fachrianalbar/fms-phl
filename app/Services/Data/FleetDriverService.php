@@ -3,7 +3,6 @@
 namespace App\Services\Data;
 
 use App\Helpers\GenerateCode;
-use App\Models\Data\Driver;
 use App\Models\Data\FleetDriver;
 use App\Traits\LogActivity;
 
@@ -38,7 +37,7 @@ class FleetDriverService
             'vehicleRegistrationNumberExpDate' => $request->vehicleRegistrationNumberExpDate,
             'kir' => $request->kir,
             'kirExpDate' => $request->kirExpDate,
-            'code' => GenerateCode::generateCode('TFD')
+            'code' => GenerateCode::generateCode('TFD'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

@@ -12,8 +12,11 @@ class LocationService
     use LogActivity;
 
     protected $service;
+
     protected $provinceSvc;
+
     protected $citySvc;
+
     protected $districtSvc;
 
     public function __construct(Location $location, ProvinceService $provinceSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
@@ -51,7 +54,7 @@ class LocationService
             'districtId' => $request->districtId,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'address' =>  $address
+            'address' => $address,
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -75,7 +78,7 @@ class LocationService
             'districtId' => $request->districtId,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'address' => $address
+            'address' => $address,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

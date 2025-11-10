@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Report;
 use App\Exports\AllOrderListReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Operational\Order;
@@ -21,28 +20,41 @@ use App\Services\Master\RouteTypeService;
 use App\Services\Operational\OrderService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Maatwebsite\Excel\Facades\Excel;
-
-
+use Yajra\DataTables\DataTables;
 
 class AllOrderListController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $materialSvc;
+
     protected $fleetDriverSvc;
+
     protected $customerSvc;
+
     protected $orderTypeSvc;
+
     protected $routeTypeSvc;
+
     protected $fleetTypeSvc;
+
     protected $driverSvc;
+
     protected $totalPrice;
+
     protected $totalCost;
+
     protected $totalMargin;
+
     protected $fleetSvc;
+
     protected $locationSvc;
 
     public function __construct(
@@ -58,8 +70,8 @@ class AllOrderListController extends Controller
         LocationService $locationSvc
     ) {
         $this->service = $orderSvc;
-        $this->title = "All Order List";
-        $this->view = "report.all-order-list.";
+        $this->title = 'All Order List';
+        $this->view = 'report.all-order-list.';
         $this->materialSvc = $materialSvc;
         $this->fleetDriverSvc = $fleetDriverSvc;
         $this->customerSvc = $customerSvc;
@@ -86,7 +98,7 @@ class AllOrderListController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -109,7 +121,7 @@ class AllOrderListController extends Controller
                 'material',
                 'route.routeDetail',
                 'fleet',
-                'fleet.type'
+                'fleet.type',
             ])->orderBy('created_at', 'desc');
 
             // if ($request->startDate && $request->endDate) {
@@ -146,10 +158,8 @@ class AllOrderListController extends Controller
                 'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name'
+                'destination' => 'route.destinationLocation.name',
             ];
-
-
 
             $dateFilters = [
                 'orderDate' => [
@@ -267,15 +277,16 @@ class AllOrderListController extends Controller
                         $this->totalCost = $allowance;
                     }
 
-                    return '' . number_format($allowance, 0, ',', '.');
+                    return ''.number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
+                            return ''.number_format($row->route->price, 0, ',', '.');
                         }
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -283,9 +294,11 @@ class AllOrderListController extends Controller
 
                     if ($bonus) {
                         $this->totalCost += $bonus->value;
-                        return '' . number_format($bonus->value, 0, ',', '.');
+
+                        return ''.number_format($bonus->value, 0, ',', '.');
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -295,10 +308,11 @@ class AllOrderListController extends Controller
                         }
                     }
                     $this->totalCost += $cost;
-                    return '' . number_format($cost, 0, ',', '.');
+
+                    return ''.number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                    return ''.number_format($this->totalPrice, 0, ',', '.');
                 })
 
                 ->editColumn('orderDate', function ($row) {
@@ -308,6 +322,7 @@ class AllOrderListController extends Controller
                 })
                 ->addColumn('gaji', function ($row) {
                     $this->totalCost += 140000;
+
                     return number_format(140000, 0, ',', '.');
                 })
                 ->addColumn('basic_sales', function ($row) {
@@ -315,14 +330,15 @@ class AllOrderListController extends Controller
 
                     $this->totalMargin = $basicSales;
 
-                    return  number_format($basicSales, 0, ',', '.');
+                    return number_format($basicSales, 0, ',', '.');
                 })
                 ->addColumn('total_cost', function ($row) {
                     $this->totalMargin -= $this->totalCost;
-                    return  number_format($this->totalCost, 0, ',', '.');
+
+                    return number_format($this->totalCost, 0, ',', '.');
                 })
                 ->addColumn('total_margin', function ($row) {
-                    return  number_format($this->totalMargin, 0, ',', '.');
+                    return number_format($this->totalMargin, 0, ',', '.');
                 })
 
                 ->rawColumns(['fleet.type.name', 'total_margin', 'total_cost', 'basic_sales', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'route.originLocation.name', 'material.name', 'driver.name', 'basic_allowance', 'bonus', 'tonase', 'addCost', 'totalPrice', 'gaji'])

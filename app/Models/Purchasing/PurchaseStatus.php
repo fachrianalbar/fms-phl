@@ -11,11 +11,12 @@ class PurchaseStatus extends Model
     use HasFactory, Uuid;
 
     protected $table = 'purchase_status';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'nama'
+        'nama',
     ];
 }

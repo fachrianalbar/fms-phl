@@ -3,7 +3,6 @@
 namespace App\Services\Purchasing;
 
 use App\Helpers\GenerateCode;
-use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
@@ -11,7 +10,6 @@ use App\Models\StockTransaction;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-
 
 class PurchaseConfirmationService
 {
@@ -29,7 +27,7 @@ class PurchaseConfirmationService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->whereIn('status', [1, 2])->orderBy('time', 'desc')->get();
     }
 
@@ -38,7 +36,7 @@ class PurchaseConfirmationService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->whereIn('status', [1, 2])->orderBy('time', 'desc');
     }
 
@@ -47,7 +45,7 @@ class PurchaseConfirmationService
         return $this->service->where('id', $id)->with([
             'details',
             'details.item',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->first();
     }
 
@@ -57,9 +55,8 @@ class PurchaseConfirmationService
 
         $this->service->where('id', $id)->update([
             'status' => 2,
-            'receivedDate' => $request->receivedDate
+            'receivedDate' => $request->receivedDate,
         ]);
-
 
         $selectedPurchase = $request->input('confirm');
         $receivedQty = null;
@@ -76,8 +73,8 @@ class PurchaseConfirmationService
             $pd->update([
                 'status' => 1,
                 'description' => $request->description,
-                'receivedQty' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
-                'qtyUsed' => 0
+                'receivedQty' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
+                'qtyUsed' => 0,
             ]);
 
             $pd = PurchaseDetail::where('id', $selectedPurchase[$i])->first();
@@ -86,27 +83,27 @@ class PurchaseConfirmationService
 
             if (isset($stock)) {
                 Stock::where('itemCode', $pd->item->code)->update([
-                    'stockIn' => $stock->stockIn + $pd->receivedQty
+                    'stockIn' => $stock->stockIn + $pd->receivedQty,
                 ]);
             }
 
-            if (!$stock) {
+            if (! $stock) {
                 Stock::create([
                     'code' => GenerateCode::generateCode('FSTC', true),
                     'itemCode' => $pd->itemCode,
-                    'stockIn' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
-                    'stockOut' => 0
+                    'stockIn' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
+                    'stockOut' => 0,
                 ]);
             }
 
             StockTransaction::create([
                 'code' => GenerateCode::generateCode('FPD', true),
                 'itemCode' => $pd->itemCode,
-                'qty' => $receivedQty ? (int)$receivedQty : $filtered['qty'][$i],
+                'qty' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
                 'transactionCode' => $pd->code,
                 'date' => Carbon::now(),
                 'type' => 'IN',
-                'transactionType' => 1
+                'transactionType' => 1,
             ]);
         }
 

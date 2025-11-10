@@ -2,30 +2,36 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\ProfitLossReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\Fleet;
 use App\Services\Master\FleetService;
-use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\ProfitLossReport;
 use App\Services\Master\FleetTypeService;
 use App\Services\Report\ProfitLossService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\DataTables;
 
 class ProfitLossController extends Controller
 {
     protected $service;
+
     protected $fleetSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $totalMargin;
+
     protected $fleetTypeSvc;
+
     protected $totalPrice;
 
     public function __construct(
@@ -34,8 +40,8 @@ class ProfitLossController extends Controller
         ProfitLossService $profitLossSvc
     ) {
         $this->service = $profitLossSvc;
-        $this->title = "Profit & Loss";
-        $this->view = "report.profit-loss.";
+        $this->title = 'Profit & Loss';
+        $this->view = 'report.profit-loss.';
         $this->fleetSvc = $fleetSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
         $this->totalMargin = 0;
@@ -50,8 +56,7 @@ class ProfitLossController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
 
-
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('fleetType', $fleetType)
@@ -81,7 +86,6 @@ class ProfitLossController extends Controller
         $maintenance = 0;
         $tonase = 0;
         $orderCost = 0;
-
 
         foreach ($data->orders as $item) {
             // Basic Sales
@@ -148,7 +152,7 @@ class ProfitLossController extends Controller
         $totalMargin -= $maintenance;
         $totalMargin -= $tonase;
 
-        return view($this->view . 'show')
+        return view($this->view.'show')
             ->with('view', $this->view)
             ->with('data', $data)
             ->with('totalMargin', $totalMargin)
@@ -157,7 +161,6 @@ class ProfitLossController extends Controller
             ->with('orderCost', $orderCost)
             ->with('title', $this->title);
     }
-
 
     public function datatableMaintenance(Request $request)
     {
@@ -168,13 +171,13 @@ class ProfitLossController extends Controller
             // Definisikan kolom filter dengan alias
             $filters = [
                 'fleet_plateNumber' => $request->plateNumber,
-                'item_code' => $request->itemCode
+                'item_code' => $request->itemCode,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
                 'fleet_plateNumber' => 'fleet.plateNumber',
-                'item_code' => 'details.itemCode'
+                'item_code' => 'details.itemCode',
             ];
 
             $dateFilters = [
@@ -191,7 +194,8 @@ class ProfitLossController extends Controller
                 ->addColumn('maintenanceDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
-                    return $date . ' ' . $time;
+
+                    return $date.' '.$time;
                 })
                 ->editColumn('fleet.name', function ($row) {
                     $fleet = '';
@@ -206,7 +210,7 @@ class ProfitLossController extends Controller
                 ->addColumn('items', function ($row) {
                     $items = '';
                     foreach ($row->details as $item) {
-                        $items .= $item->itemCode . ': ' . $item->item->name . ' Qty : ' .  $item->qty . '<br>';
+                        $items .= $item->itemCode.': '.$item->item->name.' Qty : '.$item->qty.'<br>';
                     }
 
                     return $items;
@@ -219,17 +223,17 @@ class ProfitLossController extends Controller
                         $price += intval($item->item->price) * $item->qty;
                     }
 
-                    return '' . number_format($price, 0, ',', '.');
+                    return ''.number_format($price, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -268,7 +272,7 @@ class ProfitLossController extends Controller
                 'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 // 'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name'
+                'destination' => 'route.destinationLocation.name',
             ];
 
             $dateFilters = [
@@ -365,15 +369,16 @@ class ProfitLossController extends Controller
                         $this->totalPrice = $allowance;
                     }
 
-                    return '' . number_format($allowance, 0, ',', '.');
+                    return ''.number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
+                            return ''.number_format($row->route->price, 0, ',', '.');
                         }
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -381,9 +386,11 @@ class ProfitLossController extends Controller
 
                     if ($bonus) {
                         $this->totalPrice += $bonus->value;
-                        return '' . number_format($bonus->value, 0, ',', '.');
+
+                        return ''.number_format($bonus->value, 0, ',', '.');
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -393,10 +400,11 @@ class ProfitLossController extends Controller
                         }
                     }
                     $this->totalPrice += $cost;
-                    return '' . number_format($cost, 0, ',', '.');
+
+                    return ''.number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                    return ''.number_format($this->totalPrice, 0, ',', '.');
                 })
 
                 ->editColumn('orderDate', function ($row) {
@@ -454,8 +462,7 @@ class ProfitLossController extends Controller
                     }
                     $this->totalMargin = $basicSales;
 
-
-                    return  number_format($basicSales, 0, ',', '.');
+                    return number_format($basicSales, 0, ',', '.');
                 })
 
                 ->addColumn('basic_allowance', function ($row) {
@@ -494,7 +501,6 @@ class ProfitLossController extends Controller
                     //     $basicAllowance += $allowance;
                     // }
                     // $this->totalMargin -= $basicAllowance;
-
 
                     return number_format($basicAllowance, 0, ',', '.');
                 })
@@ -539,7 +545,6 @@ class ProfitLossController extends Controller
 
                     $this->totalMargin -= $tonase;
 
-
                     return number_format($tonase, 0, ',', '.');
                 })
                 ->addColumn('total_margin', function ($row) {
@@ -548,12 +553,13 @@ class ProfitLossController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-                                    <a href="' . route($this->view . 'show', $row->id) . '"
+                                    <a href="'.route($this->view.'show', $row->id).'"
                                     class="btn btn-icon btn-sm bg-primary-subtle me-1"
                                     data-bs-toggle="tooltip" title="Show">
                                         <i class="mdi mdi-eye fs-14 text-primary"></i>
                                     </a>
                                 </td>';
+
                     return $btn;
                 })
                 ->rawColumns(['type.name', 'basic_sales', 'basic_allowance', 'additional_cost', 'maintenance', 'tonase', 'total_margin', 'action'])

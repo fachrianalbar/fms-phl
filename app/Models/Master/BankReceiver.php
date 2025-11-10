@@ -10,16 +10,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BankReceiver extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'bank_receiver';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'bankName',
         'accountNumber',
-        'userCode'
+        'userCode',
     ];
 
     public function user()

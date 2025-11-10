@@ -2,7 +2,6 @@
 
 namespace App\Services\Master;
 
-use App\Models\Master\Position;
 use App\Models\Master\RouteType;
 use App\Traits\LogActivity;
 

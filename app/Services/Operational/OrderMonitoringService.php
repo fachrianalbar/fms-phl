@@ -29,7 +29,7 @@ class OrderMonitoringService
             'route.routeDetail',
             'fleet',
             'fleet.type',
-            'orderStatus'
+            'orderStatus',
         ])->get();
     }
 
@@ -46,7 +46,7 @@ class OrderMonitoringService
             'route.routeDetail',
             'fleet',
             'fleet.type',
-            'orderStatus'
+            'orderStatus',
         ])->orderBy('order.created_at', 'desc');
     }
 
@@ -57,7 +57,7 @@ class OrderMonitoringService
             'route.originLocation',
             'route.destinationLocation',
             'fleet',
-            'orderStatus'
+            'orderStatus',
         ])->first();
     }
 
@@ -68,14 +68,14 @@ class OrderMonitoringService
             'route.originLocation',
             'route.destinationLocation',
             'fleet',
-            'orderStatus'
+            'orderStatus',
         ])->first();
     }
 
     public function finishOrder($id)
     {
         $this->service->where('id', $id)->update([
-            'status' => 3
+            'status' => 3,
         ]);
     }
 }

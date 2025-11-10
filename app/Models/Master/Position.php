@@ -12,6 +12,7 @@ class Position extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'position';
+
     public $incrementing = false;
 
     protected $fillable = [

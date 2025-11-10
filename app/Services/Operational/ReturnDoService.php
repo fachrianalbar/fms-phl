@@ -37,7 +37,7 @@ class ReturnDoService
                 'material',
                 'route.routeDetail',
                 'fleet',
-                'fleet.type'
+                'fleet.type',
             ])
             ->get();
     }
@@ -64,7 +64,7 @@ class ReturnDoService
                 'route.routeDetail',
                 'fleet',
                 'fleet.type',
-                'onChargeCost.costComponent'
+                'onChargeCost.costComponent',
             ])->orderBy('order.created_at', 'desc');
     }
 }

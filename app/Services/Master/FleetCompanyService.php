@@ -32,7 +32,7 @@ class FleetCompanyService
         $data = $this->service->create([
             'name' => $request->name,
             'type' => $request->type,
-            'code' => GenerateCode::generateCode('FFC')
+            'code' => GenerateCode::generateCode('FFC'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

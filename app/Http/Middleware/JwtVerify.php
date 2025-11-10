@@ -12,7 +12,6 @@ class JwtVerify
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  \Closure(\Illuminate\Http\Request): (\Illuminate\Http\Response|\Illuminate\Http\RedirectResponse)  $next
      * @return \Illuminate\Http\Response|\Illuminate\Http\RedirectResponse
      */
@@ -20,18 +19,19 @@ class JwtVerify
     {
         try {
             $user = JWTAuth::parseToken()->authenticate();
-            if (!$user) {
+            if (! $user) {
                 return response()->json(['message' => 'user not found'], 500);
             }
         } catch (JWTException $e) {
             return response()->json(
                 [
                     'status' => false,
-                    'message' => "Unauthorized"
+                    'message' => 'Unauthorized',
                 ],
                 401
             );
         }
+
         return $next($request);
     }
 }

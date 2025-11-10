@@ -3,29 +3,32 @@
 namespace App\Http\Controllers\Operational;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Operational\Order;
+use App\Services\MenuService;
 use App\Services\Operational\ReturnDoService;
-use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class ReturnDoController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(ReturnDoService $returnDoService, MenuService $menuSvc)
     {
         $this->service = $returnDoService;
-        $this->title = "Return Do";
-        $this->menuSvc = $menuSvc->getByName("Return Do");
+        $this->title = 'Return Do';
+        $this->menuSvc = $menuSvc->getByName('Return Do');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "operational.return-do.";
+        $this->view = 'operational.return-do.';
     }
 
     /**
@@ -33,7 +36,7 @@ class ReturnDoController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -48,16 +51,16 @@ class ReturnDoController extends Controller
             Order::whereIn('code', $selectedOrders)->update([
                 'status' => 3,
                 'returnDate' => null,
-                'returnDescription' => null
+                'returnDescription' => null,
             ]);
 
             DB::commit();
 
-            return redirect()->back()->with('success',  'Data was save succesfully');
+            return redirect()->back()->with('success', 'Data was save succesfully');
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -65,6 +68,7 @@ class ReturnDoController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->datatable();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('orderDate', function ($row) {
@@ -122,7 +126,7 @@ class ReturnDoController extends Controller
                     $btn = '';
 
                     if ($row->status == 4) {
-                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
                     }
 
                     return $btn;
@@ -135,7 +139,7 @@ class ReturnDoController extends Controller
                     $validCosts = collect([]);
                     if ($onChargeCosts && $onChargeCosts->count() > 0) {
                         $validCosts = $onChargeCosts->filter(function ($cost) {
-                            return isset($cost->costComponent) && !is_null($cost->costComponent->name);
+                            return isset($cost->costComponent) && ! is_null($cost->costComponent->name);
                         });
                     }
 
@@ -143,12 +147,12 @@ class ReturnDoController extends Controller
                         $costsData = $validCosts->map(function ($cost) {
                             return [
                                 'component' => $cost->costComponent->name ?? '-',
-                                'nominal' => 'Rp ' . number_format($cost->nominal, 0, ',', '.')
+                                'nominal' => 'Rp '.number_format($cost->nominal, 0, ',', '.'),
                             ];
                         })->toArray();
 
                         $costsJson = htmlspecialchars(json_encode($costsData), ENT_QUOTES, 'UTF-8');
-                        $detailBtn = '<a href="javascript:void(0)" class="btn btn-icon btn-sm bg-success-subtle me-1 btn-detail-cost" data-costs="' . $costsJson . '" data-shipment="' . $row->shipmentNumber . '" title="Lihat detail biaya" aria-label="Lihat detail biaya">
+                        $detailBtn = '<a href="javascript:void(0)" class="btn btn-icon btn-sm bg-success-subtle me-1 btn-detail-cost" data-costs="'.$costsJson.'" data-shipment="'.$row->shipmentNumber.'" title="Lihat detail biaya" aria-label="Lihat detail biaya">
                             <i class="mdi mdi-eye fs-14 text-success"></i>
                         </a>';
                     }

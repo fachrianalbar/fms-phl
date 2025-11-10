@@ -31,7 +31,7 @@ class PositionService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => GenerateCode::generateCode('TP')
+            'code' => GenerateCode::generateCode('TP'),
         ]);
 
         $this->logActivity($title, $data, 'Create');

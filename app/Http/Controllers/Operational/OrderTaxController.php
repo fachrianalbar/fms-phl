@@ -5,27 +5,29 @@ namespace App\Http\Controllers\Operational;
 use App\Http\Controllers\Controller;
 use App\Services\Master\MenuService;
 use App\Services\Operational\OrderTaxService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-
+use Yajra\DataTables\DataTables;
 
 class OrderTaxController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(OrderTaxService $orderTaxSvc, MenuService $menuSvc)
     {
         $this->service = $orderTaxSvc;
-        $this->title = "Order Tax";
-        $this->menuSvc = $menuSvc->getByName("Order Tax");
+        $this->title = 'Order Tax';
+        $this->menuSvc = $menuSvc->getByName('Order Tax');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "operational.order-tax.";
+        $this->view = 'operational.order-tax.';
     }
 
     /**
@@ -33,7 +35,7 @@ class OrderTaxController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -47,11 +49,11 @@ class OrderTaxController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -59,6 +61,7 @@ class OrderTaxController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('fleet.plateNumber', function ($row) {

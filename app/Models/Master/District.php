@@ -12,12 +12,13 @@ class District extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'district';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'city_id'
+        'city_id',
     ];
 
     public function city()

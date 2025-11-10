@@ -12,12 +12,13 @@ class ItemLocation extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'item_location';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'warehouseCode'
+        'warehouseCode',
     ];
 
     public function warehouse()

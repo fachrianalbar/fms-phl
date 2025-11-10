@@ -9,7 +9,6 @@ use App\Traits\LogActivity;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-
 class FleetService
 {
     use LogActivity;
@@ -38,9 +37,9 @@ class FleetService
             $file = $request->barcode;
 
             $fileExtension = $file->getClientOriginalExtension();
-            $barcode = Str::random(25) . '.' . $fileExtension;
+            $barcode = Str::random(25).'.'.$fileExtension;
 
-            $path = "public/fleet/barcode";
+            $path = 'public/fleet/barcode';
 
             Storage::putFileAs($path, $file, $barcode);
         }
@@ -50,9 +49,9 @@ class FleetService
             $file = $request->vehicleRegistrationNumber;
 
             $fileExtension = $file->getClientOriginalExtension();
-            $vehicleRegistrationNumber = Str::random(25) . '.' . $fileExtension;
+            $vehicleRegistrationNumber = Str::random(25).'.'.$fileExtension;
 
-            $path = "public/fleet/vehicleRegistrationNumber";
+            $path = 'public/fleet/vehicleRegistrationNumber';
 
             Storage::putFileAs($path, $file, $vehicleRegistrationNumber);
         }
@@ -71,7 +70,7 @@ class FleetService
             'fleetCompanyCode' => $request->fleetCompanyCode,
             'vehicleTax' => $request->vehicleTax,
             'vehicleKir' => $request->vehicleKir,
-            'code' => GenerateCode::generateCode('FMSF')
+            'code' => GenerateCode::generateCode('FMSF'),
         ]);
 
         if (isset($request->fleetPicture)) {
@@ -80,16 +79,16 @@ class FleetService
                     $file = $item;
                     $fileExtension = $file->getClientOriginalExtension();
 
-                    $fleetPicture = Str::random(25) . '.' . $fileExtension;
+                    $fleetPicture = Str::random(25).'.'.$fileExtension;
 
-                    $path = "public/fleet/fleetPicture";
+                    $path = 'public/fleet/fleetPicture';
 
                     Storage::putFileAs($path, $file, $fleetPicture);
 
                     FleetPicture::create([
                         'code' => GenerateCode::generateCode('FFP', true),
                         'fleetCode' => $data->code,
-                        'fleetPicture' => $fleetPicture
+                        'fleetPicture' => $fleetPicture,
                     ]);
                 }
             }
@@ -111,7 +110,7 @@ class FleetService
 
                 if ($existingPicture) {
                     // Hapus file lama dari storage
-                    Storage::delete('fleet/fleetPicture/' . $existingPicture->fleetPicture);
+                    Storage::delete('fleet/fleetPicture/'.$existingPicture->fleetPicture);
 
                     // Hapus data lama dari database
                     $existingPicture->delete();
@@ -120,9 +119,9 @@ class FleetService
                 // Simpan file baru
                 $fileExtension = $file->getClientOriginalExtension();
 
-                $newFileName = Str::random(25) . '.' . $fileExtension;
+                $newFileName = Str::random(25).'.'.$fileExtension;
 
-                $path = "public/fleet/fleetPicture";
+                $path = 'public/fleet/fleetPicture';
 
                 Storage::putFileAs($path, $file, $newFileName);
 
@@ -141,9 +140,9 @@ class FleetService
                     $file = $item;
                     $fileExtension = $file->getClientOriginalExtension();
 
-                    $newFleetPicture = Str::random(25) . '.' . $fileExtension;
+                    $newFleetPicture = Str::random(25).'.'.$fileExtension;
 
-                    $path = "public/fleet/fleetPicture";
+                    $path = 'public/fleet/fleetPicture';
 
                     Storage::putFileAs($path, $file, $newFleetPicture);
 
@@ -162,11 +161,11 @@ class FleetService
             $file = $request->barcode;
 
             $fileExtension = $file->getClientOriginalExtension();
-            $barcode = Str::random(25) . '.' . $fileExtension;
+            $barcode = Str::random(25).'.'.$fileExtension;
 
-            $path = "public/fleet/barcode/";
+            $path = 'public/fleet/barcode/';
             if ($data->barcode) {
-                Storage::delete($path . $data->barcode);
+                Storage::delete($path.$data->barcode);
             }
 
             Storage::putFileAs($path, $file, $barcode);
@@ -178,11 +177,11 @@ class FleetService
             $file = $request->vehicleRegistrationNumber;
             $fileExtension = $file->getClientOriginalExtension();
 
-            $vehicleRegistrationNumber =   Str::random(25) . '.' . $fileExtension;
+            $vehicleRegistrationNumber = Str::random(25).'.'.$fileExtension;
 
-            $path = "public/fleet/vehicleRegistrationNumber/";
+            $path = 'public/fleet/vehicleRegistrationNumber/';
             if ($data->vehicleRegistrationNumber) {
-                Storage::delete($path . $data->vehicleRegistrationNumber);
+                Storage::delete($path.$data->vehicleRegistrationNumber);
             }
 
             Storage::putFileAs($path, $file, $vehicleRegistrationNumber);

@@ -12,6 +12,7 @@ class DueDate extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'due_date';
+
     public $incrementing = false;
 
     protected $fillable = [

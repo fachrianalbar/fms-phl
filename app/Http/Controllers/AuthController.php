@@ -2,10 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-
-use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
@@ -30,7 +29,6 @@ class AuthController extends Controller
 
         return back()->with('fail', 'Username atau password salah!');
     }
-
 
     public function logout()
     {

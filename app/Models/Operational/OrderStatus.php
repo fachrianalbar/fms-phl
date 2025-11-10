@@ -11,11 +11,12 @@ class OrderStatus extends Model
     use HasFactory, Uuid;
 
     protected $table = 'order_status';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'nama'
+        'nama',
     ];
 }

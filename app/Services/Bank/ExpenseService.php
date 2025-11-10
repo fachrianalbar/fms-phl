@@ -15,7 +15,9 @@ class ExpenseService
     use LogActivity;
 
     protected $service;
+
     protected $mutation;
+
     protected $liveMutation;
 
     public function __construct(Expense $expense, Mutation $mutation, LiveMutation $liveMutation)
@@ -42,14 +44,14 @@ class ExpenseService
         $data = $this->mutation->create([
             'code' => GenerateCode::generateCode('FMT'),
             'userBankCode' => $request->userBankCode,
-            'date' => $request->date . ' ' . $request->time,
-            'description' => $request->transactionTypeName . " with amount " . number_format((int)$request->nominal, 0, ',', '.') . " to driver " . $request->driverName . " (" . $request->description . ")",
-            'nominal' => (int)$request->nominal,
-            'type' => "Out",
+            'date' => $request->date.' '.$request->time,
+            'description' => $request->transactionTypeName.' with amount '.number_format((int) $request->nominal, 0, ',', '.').' to driver '.$request->driverName.' ('.$request->description.')',
+            'nominal' => (int) $request->nominal,
+            'type' => 'Out',
             'transactionTypeCode' => $request->transactionTypeCode,
         ]);
 
-        LiveMutationHelper::updateLiveMutation($request->userBankCode, (int)$request->nominal, 'credit');
+        LiveMutationHelper::updateLiveMutation($request->userBankCode, (int) $request->nominal, 'credit');
 
         $this->service->create([
             'code' => $request->code,
@@ -72,8 +74,8 @@ class ExpenseService
 
         $oldBank = $mutation->userBankCode;
         $newBank = $request->userBankCode;
-        $oldNominal = (int)$mutation->nominal;
-        $newNominal = (int)$request->nominal;
+        $oldNominal = (int) $mutation->nominal;
+        $newNominal = (int) $request->nominal;
 
         $liveMutation = LiveMutation::where('userBankCode', $newBank)->first();
 
@@ -95,7 +97,7 @@ class ExpenseService
 
         $mutation->update([
             'userBankCode' => $newBank,
-            'date' => $request->date . ' ' . $request->time,
+            'date' => $request->date.' '.$request->time,
             'description' => $request->description,
             'nominal' => $newNominal,
             'transactionTypeCode' => $request->transactionTypeCode,
@@ -108,8 +110,6 @@ class ExpenseService
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
-
-
 
     public function destroy($id, $title)
     {

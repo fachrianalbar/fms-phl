@@ -20,5 +20,5 @@ return [
     'image_data' => 'Image Data',
     'vehicle_tax' => 'Vehicle Tax',
     'vehicle_kir' => 'Vehicle Kir',
-    'delete_validation' => 'Please select at least one data to delete.'
+    'delete_validation' => 'Please select at least one data to delete.',
 ];

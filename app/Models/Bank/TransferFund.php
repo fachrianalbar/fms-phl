@@ -12,6 +12,7 @@ class TransferFund extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'transfer_fund';
+
     public $incrementing = false;
 
     protected $fillable = [

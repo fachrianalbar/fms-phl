@@ -12,12 +12,13 @@ class TonaseBonus extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'tonase_bonus';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'min',
         'max',
-        'value'
+        'value',
     ];
 }

@@ -15,6 +15,7 @@ class Location extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'location';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -25,7 +26,7 @@ class Location extends Model
         'districtId',
         'address',
         'latitude',
-        'longitude'
+        'longitude',
     ];
 
     public function pickupLocations()

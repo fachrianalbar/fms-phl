@@ -4,36 +4,38 @@ namespace App\Http\Controllers\Operational;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Master\FleetTypeService;
+use App\Services\MenuService;
 use App\Services\Operational\BonUjtService;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
-use Mpdf\Mpdf;
 use Carbon\Carbon;
-
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Mpdf\Mpdf;
+use Yajra\DataTables\DataTables;
 
 class BonUjtController extends Controller
 {
     protected $service;
+
     protected $fleetTypeSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $totalPrice;
-
-
 
     public function __construct(BonUjtService $bonUjtSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
     {
         $this->service = $bonUjtSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
-        $this->title = "Bon Ujt";
-        $this->view = "operational.bon-ujt.";
+        $this->title = 'Bon Ujt';
+        $this->view = 'operational.bon-ujt.';
         $this->totalPrice = 0;
     }
 
@@ -44,7 +46,7 @@ class BonUjtController extends Controller
     {
         $fleetType = $this->fleetTypeSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleetType', $fleetType)
             ->with('title', $this->title);
@@ -57,7 +59,8 @@ class BonUjtController extends Controller
     {
         $order = $this->service->getOrder();
         $fleetType = $this->fleetTypeSvc->findAll();
-        return view($this->view . 'create')
+
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('order', $order)
             ->with('fleetType', $fleetType)
@@ -80,7 +83,7 @@ class BonUjtController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -88,16 +91,15 @@ class BonUjtController extends Controller
 
             $selectedOrders = json_decode($request->input('selectedOrders'), true);
 
-
             $this->service->store($request, $this->title, $selectedOrders);
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -116,15 +118,14 @@ class BonUjtController extends Controller
     {
         $data = $this->service->getById($id);
 
-
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $order = $this->service->getOrderDetail($id);
         $fleetType = $this->fleetTypeSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleetType', $fleetType)
@@ -156,11 +157,11 @@ class BonUjtController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -171,7 +172,7 @@ class BonUjtController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -211,9 +212,9 @@ class BonUjtController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
-                                        <li class="mx-2 delete"> <a target="_blank" href="' . route($this->view . 'pdf-bon-ujt', $row->id) . '"><i class="fa fa-file-pdf-o"></i></a></li>
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
+                                        <li class="mx-2 delete"> <a target="_blank" href="'.route($this->view.'pdf-bon-ujt', $row->id).'"><i class="fa fa-file-pdf-o"></i></a></li>
+                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->id).'"><i class="icon-pencil-alt"></i></a></li>
+                                        <li class="delete"><a href="javascript:deleteData(\''.$row->id.'\')"><i class="icon-trash"></i></a></li>
                                     </ul>';
 
                     return $btn;
@@ -291,7 +292,8 @@ class BonUjtController extends Controller
                             }
                         }
                     }
-                    return  'Rp ' .  number_format($allowance, 0, ',', '.');
+
+                    return 'Rp '.number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('cost', function ($row) {
                     $allowance = 0;
@@ -315,15 +317,16 @@ class BonUjtController extends Controller
                         $this->totalPrice = $allowance;
                     }
 
-                    return '' . number_format($allowance, 0, ',', '.');
+                    return ''.number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
+                            return ''.number_format($row->route->price, 0, ',', '.');
                         }
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -331,9 +334,11 @@ class BonUjtController extends Controller
 
                     if ($bonus) {
                         $this->totalPrice += $bonus->value;
-                        return '' . number_format($bonus->value, 0, ',', '.');
+
+                        return ''.number_format($bonus->value, 0, ',', '.');
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -343,13 +348,14 @@ class BonUjtController extends Controller
                         }
                     }
                     $this->totalPrice += $cost;
-                    return '' . number_format($cost, 0, ',', '.');
+
+                    return ''.number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                    return ''.number_format($this->totalPrice, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
 
                     return $btn;
                 })
@@ -379,11 +385,11 @@ class BonUjtController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -399,8 +405,8 @@ class BonUjtController extends Controller
 
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $order = $this->service->getOrderDetail($id);
@@ -465,12 +471,12 @@ class BonUjtController extends Controller
             [
                 'orientation' => 'P',
                 'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp')
+                'tempDir' => storage_path('app/mpdf-temp'),
             ]
         );
 
         $mpdf->WriteHTML(
-            view($this->view . 'pdf.bon-ujt')
+            view($this->view.'pdf.bon-ujt')
                 ->with('data', $data)
                 ->with('int', $int)
                 ->with('ext', $ext)

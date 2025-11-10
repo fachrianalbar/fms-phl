@@ -12,11 +12,12 @@ class BonUjtDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'bon_ujt_detail';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'bonUjtCode',
-        'orderCode'
+        'orderCode',
     ];
 }

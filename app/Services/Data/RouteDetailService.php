@@ -40,16 +40,15 @@ class RouteDetailService
         // Simpan data dengan kode unik
         $data = $this->service->create([
             'type' => $request->componentType,
-            'amount' => (int)$request->amount,
+            'amount' => (int) $request->amount,
             'percentage' => $request->percentage,
             'componentCode' => $request->componentCode,
             'routeCode' => $routeData->code,
-            'code' => $code
+            'code' => $code,
         ]);
 
         $this->logActivity($title, $data, 'Create');
     }
-
 
     public function update($request, $id, $title)
     {

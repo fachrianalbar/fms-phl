@@ -14,6 +14,7 @@ class MaintenanceDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'maintenance_detail';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,7 +22,7 @@ class MaintenanceDetail extends Model
         'qty',
         'itemCode',
         'maintenanceCode',
-        'status'
+        'status',
     ];
 
     public function maintenance()

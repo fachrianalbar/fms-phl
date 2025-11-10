@@ -11,5 +11,5 @@ return [
     'payment_date' => 'Payment Date',
     'amount' => 'Amount',
     'description' => 'Description',
-    'payment_data' => 'Payment Data'
+    'payment_data' => 'Payment Data',
 ];

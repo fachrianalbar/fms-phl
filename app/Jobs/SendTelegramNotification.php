@@ -4,16 +4,15 @@ namespace App\Jobs;
 
 use App\Helpers\SendNotif;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Foundation\Queue\Queueable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 
 class SendTelegramNotification implements ShouldQueue
 {
     use Queueable;
 
-    public $chatId, $message;
+    public $chatId;
+
+    public $message;
 
     /**
      * Create a new job instance.

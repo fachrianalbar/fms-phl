@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Operational;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Data\FleetDriverService;
@@ -17,25 +16,38 @@ use App\Services\Master\MaterialService;
 use App\Services\Master\OrderTypeService;
 use App\Services\Master\RouteTypeService;
 use App\Services\Operational\OrderService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
-use Carbon\Carbon;
 
 class OrderOfficeController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $materialSvc;
+
     protected $fleetDriverSvc;
+
     protected $customerSvc;
+
     protected $orderTypeSvc;
+
     protected $routeTypeSvc;
+
     protected $fleetTypeSvc;
+
     protected $driverSvc;
+
     protected $totalPrice;
+
     protected $fleetSvc;
+
     protected $locationSvc;
 
     public function __construct(
@@ -51,8 +63,8 @@ class OrderOfficeController extends Controller
         LocationService $locationSvc
     ) {
         $this->service = $orderSvc;
-        $this->title = "Order";
-        $this->view = "operational.order.";
+        $this->title = 'Order';
+        $this->view = 'operational.order.';
         $this->materialSvc = $materialSvc;
         $this->fleetDriverSvc = $fleetDriverSvc;
         $this->customerSvc = $customerSvc;
@@ -76,7 +88,6 @@ class OrderOfficeController extends Controller
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
-
 
         return view('operational.office-order.index')
             ->with('view', $this->view)
@@ -113,7 +124,7 @@ class OrderOfficeController extends Controller
                 'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 // 'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name'
+                'destination' => 'route.destinationLocation.name',
             ];
 
             $dateFilters = [
@@ -220,15 +231,16 @@ class OrderOfficeController extends Controller
 
                     $this->totalPrice = $allowance;
 
-                    return '' . number_format($allowance, 0, ',', '.');
+                    return ''.number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
+                            return ''.number_format($row->route->price, 0, ',', '.');
                         }
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -236,9 +248,11 @@ class OrderOfficeController extends Controller
 
                     if ($bonus) {
                         $this->totalPrice += $bonus->value;
-                        return '' . number_format($bonus->value, 0, ',', '.');
+
+                        return ''.number_format($bonus->value, 0, ',', '.');
                     }
-                    return '' . 0;
+
+                    return ''. 0;
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -248,24 +262,24 @@ class OrderOfficeController extends Controller
                         }
                     }
                     $this->totalPrice += $cost;
-                    return '' . number_format($cost, 0, ',', '.');
+
+                    return ''.number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                    return ''.number_format($this->totalPrice, 0, ',', '.');
                 })
-
 
                 ->addColumn('action', function ($row) {
 
                     $note = '';
 
                     if ($row->notes) {
-                        $note = '<li class=""><a href="javascript:showModal(\'' . $row->id . '\')"><i class="icon-receipt"></i></a></li>';
+                        $note = '<li class=""><a href="javascript:showModal(\''.$row->id.'\')"><i class="icon-receipt"></i></a></li>';
                     }
                     $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                                        <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                                        ' . $note . '                                   
+                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->id).'"><i class="icon-pencil-alt"></i></a></li>
+                                        <li class="delete"><a href="javascript:deleteData(\''.$row->id.'\')"><i class="icon-trash"></i></a></li>
+                                        '.$note.'                                   
 
                                     </ul>';
 

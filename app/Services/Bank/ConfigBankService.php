@@ -7,15 +7,15 @@ use App\Models\Bank\ConfigBank;
 use App\Models\Bank\UserBank;
 use App\Models\User;
 use App\Traits\LogActivity;
-use Illuminate\Support\Facades\DB;
-
 
 class ConfigBankService
 {
     use LogActivity;
 
     protected $service;
+
     protected $user;
+
     protected $userBank;
 
     public function __construct(ConfigBank $configBank, User $user, UserBank $userBank)
@@ -45,12 +45,10 @@ class ConfigBankService
         return $this->service->where('id', $id)->first();
     }
 
-
     public function getByUser($code)
     {
         return $this->user->where('code', $code)->with(['configBank.userBank.bank'])->first();
     }
-
 
     public function store($request, $title)
     {
@@ -88,8 +86,6 @@ class ConfigBankService
 
         $this->service->where('id', $id)->delete();
     }
-
-
 
     public function destroyByUser($code, $title)
     {

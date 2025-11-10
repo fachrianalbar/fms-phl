@@ -13,6 +13,7 @@ class Expense extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'expense';
+
     public $incrementing = false;
 
     protected $fillable = [

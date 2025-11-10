@@ -3,23 +3,28 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Master\Employee;
 use App\Services\Data\FleetDriverService;
 use App\Services\Master\FleetService;
 use App\Services\Master\FleetTypeService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class FleetDriverController extends Controller
 {
     protected $service;
+
     protected $fleetSvc;
+
     protected $fleetTypeSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(FleetDriverService $fleetDriverSvc, FleetService $fleetSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc)
@@ -27,8 +32,8 @@ class FleetDriverController extends Controller
         $this->service = $fleetDriverSvc;
         $this->fleetSvc = $fleetSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
-        $this->title = "Fleet Owner";
-        $this->view = "data.fleet-owner.";
+        $this->title = 'Fleet Owner';
+        $this->view = 'data.fleet-owner.';
     }
 
     /**
@@ -36,7 +41,7 @@ class FleetDriverController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -49,7 +54,8 @@ class FleetDriverController extends Controller
         $fleet = $this->fleetSvc->findAll();
         // $driver = Employee::where('positionCode', 'KP_240823034043')->get();
         $fleetType = $this->fleetTypeSvc->findAll();
-        return view($this->view . 'create')
+
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleetType', $fleetType)
@@ -71,7 +77,7 @@ class FleetDriverController extends Controller
             'kirExpDate' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -79,11 +85,11 @@ class FleetDriverController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -105,12 +111,11 @@ class FleetDriverController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
 
-
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -133,7 +138,7 @@ class FleetDriverController extends Controller
             'kirExpDate' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -142,11 +147,11 @@ class FleetDriverController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -157,24 +162,25 @@ class FleetDriverController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>

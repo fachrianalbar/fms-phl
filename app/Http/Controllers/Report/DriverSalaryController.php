@@ -4,26 +4,29 @@ namespace App\Http\Controllers\Report;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
-use Mpdf\Mpdf;
 use Illuminate\Support\Facades\File;
-use ZipArchive;
 use Illuminate\Support\Facades\View;
-
+use Mpdf\Mpdf;
+use Yajra\DataTables\DataTables;
+use ZipArchive;
 
 class DriverSalaryController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $driverSvc;
+
     protected $fleetSvc;
 
     public function __construct(
@@ -31,8 +34,8 @@ class DriverSalaryController extends Controller
         FleetService $fleetSvc,
     ) {
         $this->service = '';
-        $this->title = "Driver Salary";
-        $this->view = "report.driver-salary.";
+        $this->title = 'Driver Salary';
+        $this->view = 'report.driver-salary.';
         $this->driverSvc = $driverSvc;
         $this->fleetSvc = $fleetSvc;
     }
@@ -45,7 +48,7 @@ class DriverSalaryController extends Controller
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('driver', $driver)
             ->with('fleet', $fleet)
@@ -55,7 +58,7 @@ class DriverSalaryController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Order::select('fleetCode', 'driverCode',  DB::raw('COUNT(*) as total_orders'))
+            $data = Order::select('fleetCode', 'driverCode', DB::raw('COUNT(*) as total_orders'))
                 ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
                 ->join('employee', 'employee.code', '=', 'order.driverCode')
                 ->with(['fleet', 'driver'])
@@ -68,7 +71,7 @@ class DriverSalaryController extends Controller
             // Definisikan kolom filter dengan alias
             $filters = [
                 'fleetCode' => $request->fleetCode,
-                'driverCode' => $request->driverCode
+                'driverCode' => $request->driverCode,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
@@ -98,7 +101,6 @@ class DriverSalaryController extends Controller
                 ->editColumn('driver.name', function ($row) {
                     $driver = '';
 
-
                     if (isset($row->driver->name)) {
                         $driver = $row->driver->name;
                     }
@@ -107,6 +109,7 @@ class DriverSalaryController extends Controller
                 })
                 ->addColumn('value', function ($row) {
                     $value = $row->total_orders * 100000;
+
                     return number_format($value, 0, ',', '.');
                 })
                 ->addColumn('description', function ($row) {
@@ -127,7 +130,7 @@ class DriverSalaryController extends Controller
         // Definisikan kolom filter dengan alias
         $filters = [
             'fleetCode' => $request->fleetCode,
-            'driverCode' => $request->driverCode
+            'driverCode' => $request->driverCode,
         ];
 
         // Hubungkan alias ke relasi dan kolom yang sesuai
@@ -140,7 +143,7 @@ class DriverSalaryController extends Controller
             ],
         ];
 
-        $query = Order::select('fleetCode', 'driverCode',  DB::raw('COUNT(*) as total_orders'))
+        $query = Order::select('fleetCode', 'driverCode', DB::raw('COUNT(*) as total_orders'))
             ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
             ->join('employee', 'employee.code', '=', 'order.driverCode')
             ->with(['fleet', 'driver'])
@@ -181,7 +184,7 @@ class DriverSalaryController extends Controller
         $zipPath = storage_path('app/customer-invoice.zip');
 
         // Buat folder output kalau belum ada
-        if (!File::exists($outputFolder)) {
+        if (! File::exists($outputFolder)) {
             File::makeDirectory($outputFolder, 0755, true);
         } else {
             File::cleanDirectory($outputFolder);
@@ -190,7 +193,7 @@ class DriverSalaryController extends Controller
         // Generate PDF dari setiap blade
         foreach ($bladeFiles as $bladeFile) {
             $filename = str_replace('.blade.php', '', $bladeFile->getFilename());
-            $viewName = 'finance.invoice.pdf.customer.' . $filename;
+            $viewName = 'finance.invoice.pdf.customer.'.$filename;
 
             // Render view ke HTML
             $html = View::make($viewName, ['data' => $this->getDummyData()])->render();
@@ -199,7 +202,7 @@ class DriverSalaryController extends Controller
             $mpdf = new Mpdf([
                 'orientation' => 'P',
                 'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp')
+                'tempDir' => storage_path('app/mpdf-temp'),
 
             ]);
             $mpdf->setAutoTopMargin = 'stretch';
@@ -214,7 +217,7 @@ class DriverSalaryController extends Controller
         $zip = new ZipArchive;
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
             foreach (File::files($outputFolder) as $pdfFile) {
-                $zip->addFile($pdfFile->getRealPath(), 'customer-invoice/' . $pdfFile->getFilename());
+                $zip->addFile($pdfFile->getRealPath(), 'customer-invoice/'.$pdfFile->getFilename());
             }
             $zip->close();
         }

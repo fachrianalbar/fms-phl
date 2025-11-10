@@ -5,25 +5,27 @@ namespace App\Http\Controllers\Report;
 use App\Exports\DriverTonaseReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Master\CustomerService;
 use App\Services\Master\EmployeeService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\DataTables;
 
 class DriverTonaseController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $driverSvc;
+
     protected $customerSvc;
-
-
 
     public function __construct(
         EmployeeService $driverSvc,
@@ -31,8 +33,8 @@ class DriverTonaseController extends Controller
 
     ) {
         $this->service = '';
-        $this->title = "Driver Tonase";
-        $this->view = "report.driver-tonase.";
+        $this->title = 'Driver Tonase';
+        $this->view = 'report.driver-tonase.';
         $this->driverSvc = $driverSvc;
         $this->customerSvc = $customerSvc;
     }
@@ -45,7 +47,7 @@ class DriverTonaseController extends Controller
         $driver = $this->driverSvc->findAll();
         $customer = $this->customerSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('driver', $driver)
             ->with('customer', $customer)
@@ -55,7 +57,7 @@ class DriverTonaseController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Order::select('driverCode', 'customerCode',  DB::raw('SUM(' . env('DB_PREFIX') . 'order.qty) as total_tonase'))
+            $data = Order::select('driverCode', 'customerCode', DB::raw('SUM('.env('DB_PREFIX').'order.qty) as total_tonase'))
                 ->join('employee', 'employee.code', '=', 'order.driverCode')
                 ->join('customer', 'customer.code', '=', 'order.customerCode')
                 ->with(['driver', 'customer'])
@@ -68,7 +70,7 @@ class DriverTonaseController extends Controller
             // Definisikan kolom filter dengan alias
             $filters = [
                 'customerCode' => $request->customerCode,
-                'driverCode' => $request->driverCode
+                'driverCode' => $request->driverCode,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
@@ -104,7 +106,6 @@ class DriverTonaseController extends Controller
                     return $customer;
                 })
                 ->editColumn('total_tonase', function ($row) {
-
 
                     return number_format($row->total_tonase, 2);
                 })

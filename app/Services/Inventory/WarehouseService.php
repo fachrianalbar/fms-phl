@@ -32,7 +32,7 @@ class WarehouseService
         $data = $this->service->create([
             'name' => $request->name,
             'address' => $request->address,
-            'code' => GenerateCode::generateCode('TW')
+            'code' => GenerateCode::generateCode('TW'),
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -44,7 +44,7 @@ class WarehouseService
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,
-            'address' => $request->address
+            'address' => $request->address,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

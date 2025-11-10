@@ -4,24 +4,22 @@ namespace App\Services\Finance;
 
 use App\Helpers\GenerateCode;
 use App\Helpers\LiveMutationHelper;
-use App\Models\Finance\Invoice;
-use App\Models\Finance\InvoiceDetail;
 use App\Models\Finance\OrderPayment;
 use App\Models\Finance\OrderPaymentHistory;
-use App\Models\Finance\VendorPayment;
 use App\Models\Mutation;
 use App\Models\Operational\Order;
-use App\Models\Operational\OrderCost;
 use App\Traits\LogActivity;
-use Carbon\Carbon;
 
 class OrderPaymentService
 {
     use LogActivity;
 
     protected $service;
+
     protected $order;
+
     protected $orderPaymentHistory;
+
     protected $mutation;
 
     public function __construct(OrderPayment $service, Order $order, OrderPaymentHistory $orderPaymentHistory, Mutation $mutation)
@@ -56,7 +54,7 @@ class OrderPaymentService
 
         $payment = $status == 1 ? $request->total : $request->paymentAmount;
 
-        if (!$orderPayment) {
+        if (! $orderPayment) {
             $data = $this->service->create([
                 'code' => GenerateCode::generateCode('FOP'),
                 'orderCode' => $request->orderCode,
@@ -72,12 +70,12 @@ class OrderPaymentService
             if ($request->type == 'Dp') {
                 if ($orderPayment->total + $request->paymentAmount == $orderPayment->cost + $orderPayment->pph) {
                     $orderPayment->update([
-                        "status" => 1
+                        'status' => 1,
                     ]);
                 }
             } else {
                 $orderPayment->update([
-                    "status" => 1
+                    'status' => 1,
                 ]);
             }
 
@@ -90,25 +88,25 @@ class OrderPaymentService
 
         LiveMutationHelper::updateLiveMutation($request->userBankCode, $payment, 'debit');
 
-        $orderPaymentHistory =  $this->orderPaymentHistory->create([
+        $orderPaymentHistory = $this->orderPaymentHistory->create([
             'code' => GenerateCode::generateCode('FOPH'),
             'orderCode' => $request->orderCode,
             'paymentType' => $request->type,
-            'total' =>  $payment,
+            'total' => $payment,
             'date' => $request->date,
             'description' => $request->description,
-            'userBankCode' => $request->userBankCode
+            'userBankCode' => $request->userBankCode,
         ]);
 
         $mutation = $this->mutation->create([
             'code' => GenerateCode::generateCode('FMT'),
             'userBankCode' => $request->userBankCode,
             'date' => now(),
-            'description' => 'Order payment with amount ' . number_format($payment, 0, ',', '.'),
+            'description' => 'Order payment with amount '.number_format($payment, 0, ',', '.'),
             'nominal' => $payment,
-            'type' => "In",
+            'type' => 'In',
             'transactionCode' => $orderPaymentHistory->code,
-            'transactionTypeCode' => "FTT250306114178", // Order Payment
+            'transactionTypeCode' => 'FTT250306114178', // Order Payment
         ]);
 
         $this->logActivity('Order Payment History', $orderPaymentHistory, 'Create');
@@ -129,12 +127,11 @@ class OrderPaymentService
         $payment = $data->orderPayment->total ?? 0;
         $total = $cost + $pph;
 
-
         return [
-            "cost" => $cost,
-            "pph" => $pph,
-            "total" => $total - $payment,
-            "payment" => $payment
+            'cost' => $cost,
+            'pph' => $pph,
+            'total' => $total - $payment,
+            'payment' => $payment,
         ];
     }
 }

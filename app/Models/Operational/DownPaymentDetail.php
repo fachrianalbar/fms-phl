@@ -12,6 +12,7 @@ class DownPaymentDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'down_payment_detail';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class DownPaymentDetail extends Model
         'time',
         'price',
         'note',
-        'dpCode'
+        'dpCode',
     ];
 
     public function downPayment()

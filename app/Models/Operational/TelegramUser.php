@@ -11,6 +11,7 @@ class TelegramUser extends Model
     use HasFactory, Uuid;
 
     protected $table = 'telegram_user';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -18,6 +19,6 @@ class TelegramUser extends Model
         'chatId',
         'username',
         'firstName',
-        'lastName'
+        'lastName',
     ];
 }

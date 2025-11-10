@@ -12,11 +12,12 @@ class Unit extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'unit';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'type'
+        'type',
     ];
 }

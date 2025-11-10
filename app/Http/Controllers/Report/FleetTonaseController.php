@@ -5,25 +5,29 @@ namespace App\Http\Controllers\Report;
 use App\Exports\FleetTonaseReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Operational\Order;
 use App\Services\Master\CustomerService;
 use App\Services\Master\FleetService;
 use App\Services\Master\FleetTypeService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
-
+use Yajra\DataTables\DataTables;
 
 class FleetTonaseController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $fleetSvc;
+
     protected $customerSvc;
+
     protected $fleetTypeSvc;
 
     public function __construct(
@@ -32,8 +36,8 @@ class FleetTonaseController extends Controller
         FleetTypeService $fleetTypeSvc,
     ) {
         $this->service = '';
-        $this->title = "Fleet Tonase";
-        $this->view = "report.fleet-tonase.";
+        $this->title = 'Fleet Tonase';
+        $this->view = 'report.fleet-tonase.';
         $this->fleetSvc = $fleetSvc;
         $this->customerSvc = $customerSvc;
         $this->fleetTypeSvc = $fleetTypeSvc;
@@ -48,7 +52,7 @@ class FleetTonaseController extends Controller
         $customer = $this->customerSvc->findAll();
         $fleetType = $this->fleetTypeSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('customer', $customer)
@@ -59,7 +63,7 @@ class FleetTonaseController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Order::select('fleetCode', 'customerCode',  DB::raw('SUM(' . env('DB_PREFIX') . 'order.qty) as total_tonase'))
+            $data = Order::select('fleetCode', 'customerCode', DB::raw('SUM('.env('DB_PREFIX').'order.qty) as total_tonase'))
                 ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
                 ->join('customer', 'customer.code', '=', 'order.customerCode')
                 ->with(['fleet.type', 'customer'])
@@ -113,7 +117,6 @@ class FleetTonaseController extends Controller
                 ->editColumn('customer.name', function ($row) {
                     $customer = '';
 
-
                     if (isset($row->customer->name)) {
                         $customer = $row->customer->name;
                     }
@@ -121,7 +124,6 @@ class FleetTonaseController extends Controller
                     return $customer;
                 })
                 ->editColumn('total_tonase', function ($row) {
-
 
                     return number_format($row->total_tonase, 2);
                 })

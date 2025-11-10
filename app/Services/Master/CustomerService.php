@@ -11,14 +11,16 @@ use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
-
 class CustomerService
 {
     use LogActivity;
 
     protected $service;
+
     protected $customerDetail;
+
     protected $customerDetailOrder;
+
     protected $customerPic;
 
     public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic)
@@ -62,7 +64,7 @@ class CustomerService
             'companyCode' => $request->companyCode,
             'duedateduration' => $request->duedateduration,
             'type' => $request->type,
-            'isDo' => $request->isDo
+            'isDo' => $request->isDo,
             // 'telegramUsername' => $request->telegramUsername
         ]);
 
@@ -93,7 +95,7 @@ class CustomerService
             'companyCode' => $request->companyCode,
             'duedateduration' => $request->duedateduration,
             'type' => $request->type,
-            'isDo' => $request->isDo
+            'isDo' => $request->isDo,
             // 'telegramUsername' => $request->telegramUsername
         ]);
 
@@ -104,7 +106,6 @@ class CustomerService
             $this->storeCustomerPic($request);
         }
 
-
         if (isset($request->nameDetail)) {
             $filtered = Arr::only($request->all(), ['nameDetail']);
 
@@ -114,7 +115,7 @@ class CustomerService
                 $dataDetail = $this->customerDetail->create([
                     'code' => GenerateCode::generateCode('FCD', true),
                     'name' => $filtered['nameDetail'][$i],
-                    'customerCode' => $data->code
+                    'customerCode' => $data->code,
                 ]);
                 $this->logActivity('Customer Detail', $dataDetail, 'Create');
             }
@@ -129,7 +130,7 @@ class CustomerService
         $data = $this->getById($id);
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code . '-del-' . Str::random(3)
+            'code' => $data->code.'-del-'.Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -158,6 +159,7 @@ class CustomerService
     public function customerDetail($customerId)
     {
         $customer = $this->service->where('id', $customerId)->first();
+
         return $this->customerDetail->where('customerCode', $customer->code)->get();
     }
 
@@ -176,7 +178,7 @@ class CustomerService
                 'code' => GenerateCode::generateCode('FCP', true),
                 'picName' => $filtered['picName'][$i],
                 'phone' => $filtered['phone'][$i],
-                'customerCode' =>  $request->code
+                'customerCode' => $request->code,
             ]);
 
             $this->logActivity('Customer Pic', $customerPic, 'Create');

@@ -7,14 +7,14 @@ namespace App\Models;
 use App\Models\Bank\ConfigBank;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\HasApiTokens;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -27,7 +27,7 @@ class User extends Authenticatable implements JWTSubject
         'username',
         'password',
         'roleCode',
-        'language'
+        'language',
     ];
 
     /**
@@ -62,7 +62,7 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'username' => $this->username,
-            'name' => $this->name
+            'name' => $this->name,
         ];
     }
 

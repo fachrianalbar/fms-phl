@@ -13,6 +13,7 @@ class PurchaseDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'purchase_detail';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -24,7 +25,7 @@ class PurchaseDetail extends Model
         'receivedQty',
         'qtyUsed',
         'price',
-        'description'
+        'description',
     ];
 
     public function purchase()

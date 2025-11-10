@@ -9,11 +9,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Menu extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'menu';
-    public $incrementing = false;
 
+    public $incrementing = false;
 
     protected $fillable = [
         'code',
@@ -21,6 +21,6 @@ class Menu extends Model
         'parentCode',
         'url',
         'icon',
-        'sort'
+        'sort',
     ];
 }

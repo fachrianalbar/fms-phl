@@ -22,6 +22,7 @@ class Order extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'order';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -52,7 +53,7 @@ class Order extends Model
         'returnDate',
         'is_order_tax',
         'returnDescription',
-        'routeAmount'
+        'routeAmount',
     ];
 
     public function customer()

@@ -2,36 +2,38 @@
 
 namespace App\Http\Controllers\Master;
 
-use App\Helpers\GetTokenHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
-use App\Models\CompanySetting;
 use App\Models\Master\Fleet;
 use App\Models\Master\FleetPicture;
-use App\Services\Master\CompanyService;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetBrandService;
 use App\Services\Master\FleetCompanyService;
 use App\Services\Master\FleetService;
 use App\Services\Master\FleetTypeService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class FleetController extends Controller
 {
     protected $service;
+
     protected $fleetBrandSvc;
+
     protected $fleetTypeSvc;
+
     protected $driverSvc;
+
     protected $fleetCompanySvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(FleetService $fleetSvc, FleetBrandService $fleetBrandSvc, FleetTypeService $fleetTypeSvc, MenuService $menuSvc, EmployeeService $driverSvc, FleetCompanyService $fleetCompanySvc)
@@ -41,19 +43,18 @@ class FleetController extends Controller
         $this->fleetTypeSvc = $fleetTypeSvc;
         $this->driverSvc = $driverSvc;
         $this->fleetCompanySvc = $fleetCompanySvc;
-        $this->title = "Fleet";
-        $this->menuSvc = $menuSvc->getByName("Fleet");
+        $this->title = 'Fleet';
+        $this->menuSvc = $menuSvc->getByName('Fleet');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "master.fleets.";
+        $this->view = 'master.fleets.';
     }
-
 
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -68,7 +69,7 @@ class FleetController extends Controller
         $driver = $this->driverSvc->findDriver();
         $company = $this->fleetCompanySvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('type', $type)
@@ -91,7 +92,7 @@ class FleetController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -99,11 +100,11 @@ class FleetController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -127,11 +128,11 @@ class FleetController extends Controller
         $driver = $this->driverSvc->findDriver();
         $company = $this->fleetCompanySvc->findAll();
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -155,7 +156,7 @@ class FleetController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -164,11 +165,11 @@ class FleetController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -179,16 +180,16 @@ class FleetController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function deleteFleetPicture($id)
     {
         $data = FleetPicture::where('id', $id)->first();
 
-        $path = "public/fleet/fleetPicture/";
+        $path = 'public/fleet/fleetPicture/';
         if ($data->fleetPicture) {
-            Storage::delete($path . $data->fleetPicture);
+            Storage::delete($path.$data->fleetPicture);
         }
 
         $data->delete();
@@ -200,6 +201,7 @@ class FleetController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('company.name', function ($row) {
@@ -249,38 +251,40 @@ class FleetController extends Controller
                 })
                 ->editColumn('vehicleRegistrationNumber', function ($row) {
                     if (isset($row->vehicleRegistrationNumber)) {
-                        $imageUrl = url('storage/fleet/vehicleRegistrationNumber/' . $row->vehicleRegistrationNumber);
-                        return '<img onclick="showModal(\'' . $imageUrl . '\')" style="cursor: pointer" src="' . $imageUrl . '" width="150px" height="150px" />';
+                        $imageUrl = url('storage/fleet/vehicleRegistrationNumber/'.$row->vehicleRegistrationNumber);
+
+                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
                     }
 
                     return '';
                 })
                 ->editColumn('insurance', function ($row) {
                     if (isset($row->insurance)) {
-                        $imageUrl = url('storage/fleet/insurance/' . $row->insurance);
-                        return '<img onclick="showModal(\'' . $imageUrl . '\')" style="cursor: pointer" src="' . $imageUrl . '" width="150px" height="150px" />';
-                    }
+                        $imageUrl = url('storage/fleet/insurance/'.$row->insurance);
 
+                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
+                    }
 
                     return '';
                 })
                 ->editColumn('barcode', function ($row) {
                     if (isset($row->barcode)) {
-                        $imageUrl = url('storage/fleet/barcode/' . $row->barcode);
-                        return '<img onclick="showModal(\'' . $imageUrl . '\')" style="cursor: pointer" src="' . $imageUrl . '" width="150px" height="150px" />';
+                        $imageUrl = url('storage/fleet/barcode/'.$row->barcode);
+
+                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
                     }
 
                     return '';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <input class="fleet-checkbox" type="checkbox" name="fleet[]" data-id="' . $row->id . '" value="' . $row->id . '">
+        <input class="fleet-checkbox" type="checkbox" name="fleet[]" data-id="'.$row->id.'" value="'.$row->id.'">
     </td>';
 
                     return $btn;
@@ -306,11 +310,11 @@ class FleetController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+            return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 }

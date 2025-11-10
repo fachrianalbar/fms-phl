@@ -5,40 +5,40 @@ namespace App\Http\Controllers\Purchasing;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Inventory\Item;
-use App\Models\Inventory\Stock;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
-use App\Models\StockTransaction;
 use App\Services\Inventory\SupplierService;
+use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+use Yajra\DataTables\DataTables;
 
 class PurchaseController extends Controller
 {
     protected $service;
-    protected $supplierSvc;
-    protected $title;
-    protected $view;
-    protected $menuSvc;
 
+    protected $supplierSvc;
+
+    protected $title;
+
+    protected $view;
+
+    protected $menuSvc;
 
     public function __construct(PurchaseService $purchaseSvc, SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = "Purchase";
-        $this->menuSvc = $menuSvc->getByName("Purchase");
+        $this->title = 'Purchase';
+        $this->menuSvc = $menuSvc->getByName('Purchase');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "purchasing.purchase.";
+        $this->view = 'purchasing.purchase.';
     }
 
     /**
@@ -48,7 +48,7 @@ class PurchaseController extends Controller
     {
         $supplier = $this->supplierSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('title', $this->title);
@@ -62,7 +62,7 @@ class PurchaseController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('items', $items)
@@ -81,7 +81,7 @@ class PurchaseController extends Controller
             'time' => 'required',
             'price' => ['required', 'array', function ($attribute, $value, $fail) {
                 foreach ($value as $price) {
-                    if ($price == "0") {
+                    if ($price == '0') {
                         $fail('The price cannot be 0.');
                     }
                 }
@@ -95,7 +95,7 @@ class PurchaseController extends Controller
             }],
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -104,11 +104,11 @@ class PurchaseController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -127,8 +127,8 @@ class PurchaseController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $totalPrice = 0;
@@ -143,7 +143,7 @@ class PurchaseController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('items', $items)
@@ -165,7 +165,7 @@ class PurchaseController extends Controller
             'time' => 'required',
             'price' => ['required', 'array', function ($attribute, $value, $fail) {
                 foreach ($value as $price) {
-                    if ($price == "0") {
+                    if ($price == '0') {
                         $fail('The price cannot be 0.');
                     }
                 }
@@ -176,11 +176,11 @@ class PurchaseController extends Controller
                         $fail('The qty cannot be 0.');
                     }
                 }
-            }]
+            }],
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -190,11 +190,11 @@ class PurchaseController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -205,7 +205,7 @@ class PurchaseController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function deletePurchaseDetail($id)
@@ -214,7 +214,7 @@ class PurchaseController extends Controller
 
         $pd->delete();
 
-        return redirect()->route($this->view . 'edit', $pd->purchase->id)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'edit', $pd->purchase->id)->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -245,12 +245,13 @@ class PurchaseController extends Controller
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
+
                     return $date;
                 })
                 ->editColumn('receivedDate', function ($row) {
                     $receivedDate = '';
                     if ($row->receivedDate) {
-                        $receivedDate =   Carbon::parse($row->receivedDate)->format('d-M-Y');
+                        $receivedDate = Carbon::parse($row->receivedDate)->format('d-M-Y');
                     }
 
                     return $receivedDate;
@@ -258,7 +259,7 @@ class PurchaseController extends Controller
                 ->editColumn('dueDate', function ($row) {
                     $dueDate = '';
                     if ($row->dueDate) {
-                        $dueDate =   Carbon::parse($row->dueDate)->format('d-M-Y');
+                        $dueDate = Carbon::parse($row->dueDate)->format('d-M-Y');
                     }
 
                     return $dueDate;
@@ -266,7 +267,7 @@ class PurchaseController extends Controller
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
                     if ($row->paymentDate) {
-                        $paymentDate =   Carbon::parse($row->paymentDate)->format('d-M-Y');
+                        $paymentDate = Carbon::parse($row->paymentDate)->format('d-M-Y');
                     }
 
                     return $paymentDate;
@@ -336,13 +337,13 @@ class PurchaseController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-                                <a href="' . route($this->view . 'edit', $row->id) . '"
+                                <a href="'.route($this->view.'edit', $row->id).'"
                                 class="btn btn-icon btn-sm bg-primary-subtle me-1"
                                 data-bs-toggle="tooltip" title="Edit">
                                     <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                                 </a>
 
-                                <a href="javascript:deleteData(\'' . $row->id . '\')"
+                                <a href="javascript:deleteData(\''.$row->id.'\')"
                                 class="btn btn-icon btn-sm bg-danger-subtle"
                                 data-bs-toggle="tooltip" title="Delete">
                                     <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -351,7 +352,7 @@ class PurchaseController extends Controller
 
                     if (in_array($row->status, [1, 2, 3])) {
                         $btn = '<td>
-                                    <a href="' . route($this->view . 'edit', $row->id) . '"
+                                    <a href="'.route($this->view.'edit', $row->id).'"
                                     class="btn btn-icon btn-sm bg-primary-subtle me-1"
                                     data-bs-toggle="tooltip" title="Edit">
                                         <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>

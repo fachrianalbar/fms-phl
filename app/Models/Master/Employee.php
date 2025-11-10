@@ -13,6 +13,7 @@ class Employee extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'employee';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -38,7 +39,7 @@ class Employee extends Model
         'gender',
         'citizenship',
         'bankCode',
-        'accountNumber'
+        'accountNumber',
     ];
 
     public function position()

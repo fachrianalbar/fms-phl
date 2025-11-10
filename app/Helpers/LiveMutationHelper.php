@@ -9,17 +9,17 @@ class LiveMutationHelper
     /**
      * Update credit or debit of a live mutation and recalculate balance.
      *
-     * @param string $userBankCode
-     * @param float|int $amount
-     * @param string $type "debit" or "credit"
+     * @param  float|int  $amount
+     * @param  string  $type  "debit" or "credit"
      * @return LiveMutation
+     *
      * @throws \Exception
      */
     public static function updateLiveMutation(string $userBankCode, $amount, string $type)
     {
         $liveMutation = LiveMutation::where('userBankCode', $userBankCode)->first();
 
-        if (!$liveMutation) {
+        if (! $liveMutation) {
             throw new \Exception("LiveMutation with user bank code {$userBankCode} not found.");
         }
 

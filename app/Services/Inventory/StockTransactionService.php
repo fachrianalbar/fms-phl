@@ -11,6 +11,7 @@ class StockTransactionService
     use LogActivity;
 
     protected $service;
+
     protected $item;
 
     public function __construct(StockTransaction $stockTransaction, Item $item)
@@ -26,7 +27,6 @@ class StockTransactionService
 
         return $this->item->whereIn('code', $item)->get();
     }
-
 
     public function datatable()
     {

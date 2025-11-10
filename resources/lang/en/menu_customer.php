@@ -17,5 +17,5 @@ return [
     'name' => 'Name',
     'pic_data' => 'Pic Data',
     'office_address' => 'Office Address',
-    'billing_address' => 'Billing Address'
+    'billing_address' => 'Billing Address',
 ];

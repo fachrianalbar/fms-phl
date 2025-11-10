@@ -15,6 +15,7 @@ class Item extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'item';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -26,7 +27,7 @@ class Item extends Model
         'warehouseCode',
         'unitCode',
         'supplierCode',
-        'price'
+        'price',
     ];
 
     public function unit()

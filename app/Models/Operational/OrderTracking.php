@@ -12,6 +12,7 @@ class OrderTracking extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'order_tracking';
+
     public $incrementing = false;
 
     protected $fillable = [

@@ -12,6 +12,7 @@ class RouteType extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'route_type';
+
     public $incrementing = false;
 
     protected $fillable = [

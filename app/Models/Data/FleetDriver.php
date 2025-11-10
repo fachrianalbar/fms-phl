@@ -15,6 +15,7 @@ class FleetDriver extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'fleet_driver';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -26,7 +27,7 @@ class FleetDriver extends Model
         'vehicleRegistrationNumber',
         'vehicleRegistrationNumberExpDate',
         'kir',
-        'kirExpDate'
+        'kirExpDate',
     ];
 
     // public function employee()

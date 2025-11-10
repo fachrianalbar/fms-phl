@@ -12,6 +12,7 @@ class CompanySetting extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'company_setting';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,6 +22,6 @@ class CompanySetting extends Model
         'owner',
         'logo',
         'email',
-        'phone'
+        'phone',
     ];
 }

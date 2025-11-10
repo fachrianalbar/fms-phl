@@ -11,6 +11,6 @@ return [
     'payment_date' => 'Tanggal Pembayaran',
     'amount' => 'Jumlah',
     'description' => 'Deskripsi',
-    'payment_data' => 'Data Pembayaran'
+    'payment_data' => 'Data Pembayaran',
 
 ];

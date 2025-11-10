@@ -15,6 +15,7 @@ class StockTransaction extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'stock_transaction';
+
     public $incrementing = false;
 
     protected $fillable = [

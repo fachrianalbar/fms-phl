@@ -4,12 +4,11 @@ namespace App\Exports;
 
 use App\Helpers\FilterHelper;
 use App\Models\Operational\Order;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
-
 
 class DriverTonaseReport implements FromView, ShouldAutoSize
 {
@@ -32,7 +31,7 @@ class DriverTonaseReport implements FromView, ShouldAutoSize
 
         $request = $this->request;
 
-        $data = Order::select('driverCode', 'customerCode',  DB::raw('SUM(' . env('DB_PREFIX') . 'order.qty) as total_tonase'))
+        $data = Order::select('driverCode', 'customerCode', DB::raw('SUM('.env('DB_PREFIX').'order.qty) as total_tonase'))
             ->join('employee', 'employee.code', '=', 'order.driverCode')
             ->join('customer', 'customer.code', '=', 'order.customerCode')
             ->with(['driver', 'customer'])
@@ -43,7 +42,7 @@ class DriverTonaseReport implements FromView, ShouldAutoSize
         // Definisikan kolom filter dengan alias
         $filters = [
             'customerCode' => $request->customerCode,
-            'driverCode' => $request->driverCode
+            'driverCode' => $request->driverCode,
         ];
 
         // Hubungkan alias ke relasi dan kolom yang sesuai
@@ -57,7 +56,6 @@ class DriverTonaseReport implements FromView, ShouldAutoSize
         ];
 
         $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
 
         return view('report.driver-tonase.report.driver-tonase-excel')
             ->with('data', $data->get());

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Warehouse;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Inventory\Stock;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
@@ -14,23 +13,28 @@ use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\Inventory\StockService;
 use App\Services\Master\FleetService;
+use App\Services\MenuService;
 use App\Services\Warehouse\MaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
-use Mpdf\Mpdf;
 use Illuminate\Support\Facades\Auth;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Mpdf\Mpdf;
+use Yajra\DataTables\DataTables;
 
 class MaintenanceController extends Controller
 {
     protected $service;
+
     protected $fleetSvc;
+
     protected $stockSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(MaintenanceService $maintenanceService, FleetService $fleetSvc, StockService $stockSvc, MenuService $menuSvc)
@@ -38,10 +42,10 @@ class MaintenanceController extends Controller
         $this->service = $maintenanceService;
         $this->fleetSvc = $fleetSvc;
         $this->stockSvc = $stockSvc;
-        $this->title = "Maintenance";
-        $this->menuSvc = $menuSvc->getByName("Maintenance");
+        $this->title = 'Maintenance';
+        $this->menuSvc = $menuSvc->getByName('Maintenance');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "warehouse.maintenance.";
+        $this->view = 'warehouse.maintenance.';
     }
 
     /**
@@ -52,7 +56,7 @@ class MaintenanceController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $stock = $this->stockSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('stock', $stock)
@@ -67,7 +71,7 @@ class MaintenanceController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $stock = $this->stockSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('stock', $stock)
@@ -87,7 +91,7 @@ class MaintenanceController extends Controller
             'time' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -96,11 +100,11 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -119,14 +123,14 @@ class MaintenanceController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $stock = $this->stockSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -147,7 +151,7 @@ class MaintenanceController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -157,11 +161,11 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -172,7 +176,7 @@ class MaintenanceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function deleteMaintenanceDetail($id)
@@ -200,10 +204,9 @@ class MaintenanceController extends Controller
         $maintenanceId = $md->maintenance->id;
         $md->delete();
 
-        return redirect()->route($this->view . 'edit', $maintenanceId)
+        return redirect()->route($this->view.'edit', $maintenanceId)
             ->with('success', 'Delete Data Success');
     }
-
 
     public function datatable(Request $request)
     {
@@ -214,13 +217,13 @@ class MaintenanceController extends Controller
             // Definisikan kolom filter dengan alias
             $filters = [
                 'fleet_plateNumber' => $request->plateNumber,
-                'item_code' => $request->itemCode
+                'item_code' => $request->itemCode,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
                 'fleet_plateNumber' => 'fleet.plateNumber',
-                'item_code' => 'details.itemCode'
+                'item_code' => 'details.itemCode',
             ];
 
             $dateFilters = [
@@ -237,7 +240,8 @@ class MaintenanceController extends Controller
                 ->addColumn('maintenanceDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
-                    return $date . ' ' . $time;
+
+                    return $date.' '.$time;
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -252,20 +256,20 @@ class MaintenanceController extends Controller
                 ->addColumn('items', function ($row) {
                     $items = '';
                     foreach ($row->details as $item) {
-                        $items .= $item->itemCode . ': ' . $item->item->name . ' Qty : ' .  $item->qty . '<br>';
+                        $items .= $item->itemCode.': '.$item->item->name.' Qty : '.$item->qty.'<br>';
                     }
 
                     return $items;
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -303,7 +307,7 @@ class MaintenanceController extends Controller
             'details',
             'details.item',
             'details.item.supplier',
-            'details.item.category'
+            'details.item.category',
 
         ])->orderBy('created_at', 'desc');
 
@@ -320,7 +324,7 @@ class MaintenanceController extends Controller
         $endDate = Carbon::parse($request->endDate)->format('d-m-Y');
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.maintenance-pdf')
+            view($this->view.'report.maintenance-pdf')
                 ->with('data', $data->get())
                 ->with('plateNumber', $request->plateNumber)
                 ->with('startDate', $startDate)

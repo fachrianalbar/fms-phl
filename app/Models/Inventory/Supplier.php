@@ -12,6 +12,7 @@ class Supplier extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'supplier';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,6 +23,6 @@ class Supplier extends Model
         'phone',
         'email',
         'ppn',
-        'pph'
+        'pph',
     ];
 }

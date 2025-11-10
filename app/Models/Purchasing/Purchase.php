@@ -5,19 +5,17 @@ namespace App\Models\Purchasing;
 use App\Models\Bank\UserBank;
 use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
-use App\Models\Master\ConfigBank;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
-
 
 class Purchase extends Model
 {
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'purchase';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -32,7 +30,7 @@ class Purchase extends Model
         'nominal',
         'paymentCode',
         'userBankCode',
-        'dueDate'
+        'dueDate',
     ];
 
     public function supplier()

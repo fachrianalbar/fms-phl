@@ -14,7 +14,7 @@ class GetAddress
             $url = "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={$lat}&lon={$long}";
 
             $response = Http::withHeaders([
-                'User-Agent' => 'YourAppName/1.0' // Nominatim requires a valid User-Agent
+                'User-Agent' => 'YourAppName/1.0', // Nominatim requires a valid User-Agent
             ])->get($url);
 
             if ($response->successful()) {

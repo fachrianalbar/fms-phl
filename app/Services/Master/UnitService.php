@@ -35,7 +35,7 @@ class UnitService
     public function store($request, $title)
     {
         $data = $request->all();
-        $data["code"] = GenerateCode::generateCode('TE');
+        $data['code'] = GenerateCode::generateCode('TE');
         $result = $this->service->create($data);
 
         $this->logActivity($title, $result, 'Create');

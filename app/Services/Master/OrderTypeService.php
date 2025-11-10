@@ -2,9 +2,7 @@
 
 namespace App\Services\Master;
 
-use App\Helpers\GenerateCode;
 use App\Models\Master\OrderType;
-use App\Models\Master\Position;
 use App\Traits\LogActivity;
 
 class OrderTypeService

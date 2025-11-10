@@ -3,24 +3,27 @@
 namespace App\Http\Controllers\Data;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Services\Data\RouteDetailService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class RouteDetailController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(RouteDetailService $routeDetailSvc, MenuService $menuSvc)
     {
         $this->service = $routeDetailSvc;
-        $this->title = "Route Detail";
-        $this->view = "data.route.";
+        $this->title = 'Route Detail';
+        $this->view = 'data.route.';
     }
 
     /**
@@ -32,27 +35,27 @@ class RouteDetailController extends Controller
 
         $validator = Validator::make($request->all(), [
             'componentCode' => 'required',
-            'componentType' => 'required'
+            'componentType' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'edit', $routeData->id)->with('fail', $validator->errors()->all()[0]);
         }
 
         if ($request->componentType == 'Percentage') {
             if ($request->percentage > 100) {
-                return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', 'Percentage cannot be more than 100%');
+                return redirect()->route($this->view.'edit', $routeData->id)->with('fail', 'Percentage cannot be more than 100%');
             }
         }
 
         if ($request->componentType == 'Amount' && $routeData->routeTypeCode == 'TRIP') {
-            if ((int)$request->amount > $routeData->price) {
-                return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', 'Amount cannot be higher than route price');
+            if ((int) $request->amount > $routeData->price) {
+                return redirect()->route($this->view.'edit', $routeData->id)->with('fail', 'Amount cannot be higher than route price');
             }
         }
 
         foreach ($routeData->route_detail as $item) {
             if ($item->componentCode == $request->componentCode) {
-                return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', 'Cost component is aiready exist');
+                return redirect()->route($this->view.'edit', $routeData->id)->with('fail', 'Cost component is aiready exist');
             }
         }
 
@@ -67,7 +70,7 @@ class RouteDetailController extends Controller
         }
 
         if ($totalPrice > $routeData->price && $routeData->routeTypeCode == 'TRIP') {
-            return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', 'Cost component cannot be higher than route price');
+            return redirect()->route($this->view.'edit', $routeData->id)->with('fail', 'Cost component cannot be higher than route price');
         }
 
         try {
@@ -77,11 +80,11 @@ class RouteDetailController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'edit', $routeData->id)->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'edit', $routeData->id)->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'edit', $routeData->id)->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'edit', $routeData->id)->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -93,6 +96,6 @@ class RouteDetailController extends Controller
         $data = $this->service->getById($id);
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'edit', $data->route->id)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'edit', $data->route->id)->with('success', 'Delete Data Success');
     }
 }

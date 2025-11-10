@@ -3,8 +3,6 @@
 namespace App\Services\Master;
 
 use App\Helpers\GenerateCode;
-use App\Models\Master\BankSender;
-use App\Models\Master\BankUser;
 use App\Models\Master\TransactionType;
 use App\Traits\LogActivity;
 

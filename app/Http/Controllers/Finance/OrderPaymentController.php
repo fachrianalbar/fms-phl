@@ -7,34 +7,39 @@ use App\Models\Data\Route;
 use App\Services\Bank\UserBankService;
 use App\Services\Finance\OrderPaymentService;
 use App\Services\Master\MenuService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Yajra\DataTables\DataTables;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\DataTables;
 
 class OrderPaymentController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $userBankSvc;
 
     public function __construct(OrderPaymentService $orderPaymentSvc, MenuService $menuSvc, UserBankService $userBankSvc)
     {
         $this->service = $orderPaymentSvc;
-        $this->title = "Order Payment";
-        $this->menuSvc = $menuSvc->getByName("Order Payment");
+        $this->title = 'Order Payment';
+        $this->menuSvc = $menuSvc->getByName('Order Payment');
         $this->userBankSvc = $userBankSvc;
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "finance.order-payment.";
+        $this->view = 'finance.order-payment.';
     }
 
     public function index()
     {
         $userBank = $this->userBankSvc->findAll();
-        return view($this->view . 'index')
+
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('title', $this->title);
@@ -51,11 +56,11 @@ class OrderPaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -65,7 +70,7 @@ class OrderPaymentController extends Controller
         $orderPayment = $this->service->orderPaymentDetail($data->code);
         $route = Route::where('code', $data->routeCode)->first();
 
-        return view($this->view . 'show')
+        return view($this->view.'show')
             ->with('view', $this->view)
             ->with('data', $data)
             ->with('orderPayment', $orderPayment)
@@ -77,6 +82,7 @@ class OrderPaymentController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('fleet.plateNumber', function ($row) {
@@ -135,7 +141,7 @@ class OrderPaymentController extends Controller
                         $cost += $item->nominal;
                     }
 
-                    return '' . number_format($cost, 0, ',', '.');
+                    return ''.number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('pph', function ($row) {
                     $cost = 0;
@@ -145,8 +151,7 @@ class OrderPaymentController extends Controller
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
 
-
-                    return '' . number_format($pph, 0, ',', '.');
+                    return ''.number_format($pph, 0, ',', '.');
                 })
                 ->addColumn('pph', function ($row) {
                     $cost = 0;
@@ -156,11 +161,10 @@ class OrderPaymentController extends Controller
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
 
-
-                    return '' . number_format($pph, 0, ',', '.');
+                    return ''.number_format($pph, 0, ',', '.');
                 })
                 ->addColumn('paymentAmount', function ($row) {
-                    return '' . number_format($row->orderPayment->total ?? 0, 0, ',', '.');
+                    return ''.number_format($row->orderPayment->total ?? 0, 0, ',', '.');
                 })
                 ->addColumn('total', function ($row) {
                     $cost = 0;
@@ -172,21 +176,22 @@ class OrderPaymentController extends Controller
                     $payment = $row->orderPayment->total ?? 0;
                     $total = $cost + $pph - $payment;
 
-                    return '' . number_format($total, 0, ',', '.');
+                    return ''.number_format($total, 0, ',', '.');
                 })
                 ->addColumn('paymentStatus', function ($row) {
-                    $status = "No Payment";
-                    $badgeClass = "danger";
+                    $status = 'No Payment';
+                    $badgeClass = 'danger';
                     if (isset($row->orderPayment)) {
-                        $status = "Dp";
-                        $badgeClass = "warning";
+                        $status = 'Dp';
+                        $badgeClass = 'warning';
 
                         if ($row->orderPayment->status == 1) {
-                            $status = "Full Payment";
-                            $badgeClass = "success";
+                            $status = 'Full Payment';
+                            $badgeClass = 'success';
                         }
                     }
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $status . '</span>';
+
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$status.'</span>';
                 })
                 // ->editColumn('status', function ($row) {
                 //     $statusText = '';
@@ -205,7 +210,7 @@ class OrderPaymentController extends Controller
                 //     return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 // })
                 ->addColumn('action', function ($row) {
-                    $payment = '<a href="javascript:showModal(\'' . $row->code . '\')"
+                    $payment = '<a href="javascript:showModal(\''.$row->code.'\')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
                                     <i class="mdi mdi-credit-card fs-14 text-success"></i>
@@ -216,17 +221,16 @@ class OrderPaymentController extends Controller
                         if ($row->orderPayment->status == 1) {
                             $payment = '';
                         }
-                        $history = '<a href="' . route($this->view . 'show', $row->id) . '"
+                        $history = '<a href="'.route($this->view.'show', $row->id).'"
                         class="btn btn-icon btn-sm bg-primary-subtle me-1"
                         data-bs-toggle="tooltip" title="show">
                             <i class="mdi mdi-eye fs-14 text-primary"></i>
                         </a>';
                     }
 
-
                     $btn = '<td>
-                                ' . $payment . '    
-                                ' . $history . '    
+                                '.$payment.'    
+                                '.$history.'    
                             </td>';
 
                     return $btn;

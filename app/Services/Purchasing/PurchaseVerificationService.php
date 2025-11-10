@@ -9,9 +9,7 @@ use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Traits\LogActivity;
-use Carbon\Carbon;
 use Illuminate\Support\Arr;
-
 
 class PurchaseVerificationService
 {
@@ -29,7 +27,7 @@ class PurchaseVerificationService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->where('status', 0)->orderBy('time', 'desc')->get();
     }
 
@@ -38,7 +36,7 @@ class PurchaseVerificationService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->where('status', 0)->orderBy('time', 'desc');
     }
 
@@ -53,7 +51,7 @@ class PurchaseVerificationService
 
         $this->service->where('id', $id)->update([
             'status' => 1,
-            'dueDate' => $request->dueDate
+            'dueDate' => $request->dueDate,
         ]);
 
         if (isset($request->itemCode)) {
@@ -70,21 +68,20 @@ class PurchaseVerificationService
                     //     'price' => $price,
                     // ]);
 
-                    if ($pd->item->code !=  $filtered['itemCode'][$i]) {
+                    if ($pd->item->code != $filtered['itemCode'][$i]) {
 
                         PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->update([
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
-                            'purchaseCode' => $request->code
+                            'purchaseCode' => $request->code,
                         ]);
                     } else {
                         $pd->update([
-                            'qty' => $filtered['qty'][$i]
+                            'qty' => $filtered['qty'][$i],
                         ]);
                     }
                 } else {
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
-
 
                     Item::where('code', $filtered['itemCode'][$i])->update([
                         'price' => $price,
@@ -99,17 +96,16 @@ class PurchaseVerificationService
                         })
                         ->first();
 
-
-                    if (!$pd) {
+                    if (! $pd) {
                         PurchaseDetail::create([
                             'code' => GenerateCode::generateCode('TPD', true),
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
-                            'purchaseCode' => $request->code
+                            'purchaseCode' => $request->code,
                         ]);
                     } else {
                         $pd->update([
-                            'qty' => $filtered['qty'][$i] + $pd->qty
+                            'qty' => $filtered['qty'][$i] + $pd->qty,
                         ]);
                     }
                 }

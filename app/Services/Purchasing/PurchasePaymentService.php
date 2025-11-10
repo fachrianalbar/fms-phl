@@ -4,24 +4,22 @@ namespace App\Services\Purchasing;
 
 use App\Helpers\GenerateCode;
 use App\Helpers\LiveMutationHelper;
-use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\LiveMutation;
 use App\Models\Mutation;
 use App\Models\Purchasing\Purchase;
-use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
-
 
 class PurchasePaymentService
 {
     use LogActivity;
 
     protected $service;
+
     protected $liveMutation;
+
     protected $mutation;
 
     public function __construct(Purchase $purchase, LiveMutation $liveMutation, Mutation $mutation)
@@ -36,7 +34,7 @@ class PurchasePaymentService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->whereIn('status', [2, 3])->orderBy('time', 'desc')->get();
     }
 
@@ -45,7 +43,7 @@ class PurchasePaymentService
         return $this->service->with([
             'supplier',
             'warehouse',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->orderBy('date', 'desc')->whereIn('status', [2, 3])->orderBy('time', 'desc');
     }
 
@@ -54,7 +52,7 @@ class PurchasePaymentService
         return $this->service->where('id', $id)->with([
             'details',
             'details.item',
-            'purchaseStatus'
+            'purchaseStatus',
         ])->first();
     }
 
@@ -67,7 +65,7 @@ class PurchasePaymentService
             'paymentDate' => $request->paymentDate,
             'paymentCode' => GenerateCode::generateCode('FPY'),
             'nominal' => $totalPrice,
-            'userBankCode' => $request->userBankCode
+            'userBankCode' => $request->userBankCode,
         ]);
 
         // LiveMutationHelper::updateLiveMutation($request->userBankCode, $totalPrice, 'credit');
@@ -81,7 +79,6 @@ class PurchasePaymentService
         //     'description' => 'Purchase Payment with amount ' . number_format($totalPrice, 0, '.', ','),
         //     'transactionTypeCode' => 'FTT250306114138'
         // ]);
-
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }

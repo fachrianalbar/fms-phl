@@ -7,7 +7,6 @@ use App\Models\Data\Route;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
 
-
 class RouteService
 {
     use LogActivity;
@@ -41,10 +40,10 @@ class RouteService
                     'customerCode' => $filtered['customerCode'][$i],
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
-                    'price' => (int)$filtered['price'][$i],
+                    'price' => (int) $filtered['price'][$i],
                     // 'vendorPrice' => (int)$filtered['vendorPrice'][$i],
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
-                    'code' => GenerateCode::generateCode('TR', true)
+                    'code' => GenerateCode::generateCode('TR', true),
                 ]
             );
             $this->logActivity($title, $data, 'Create');
@@ -64,11 +63,11 @@ class RouteService
             'originLocationCode' => $request->originLocationCode,
             'destinationLocationCode' => $request->destinationLocationCode,
             // 'fleetTypeCode' => $request->fleetTypeCode,
-            'price' => (int)$request->price,
-            'vendorPrice' => (int)$request->vendorPrice,
+            'price' => (int) $request->price,
+            'vendorPrice' => (int) $request->vendorPrice,
             'routeTypeCode' => $request->routeType,
-            'personalVendorPrice' => (int)$request->personalVendorPrice,
-            'description' => $request->description
+            'personalVendorPrice' => (int) $request->personalVendorPrice,
+            'description' => $request->description,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

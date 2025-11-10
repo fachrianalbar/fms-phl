@@ -4,35 +4,38 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Services\Inventory\SupplierService;
+use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseVerificationService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class PurchaseVerificationController extends Controller
 {
     protected $service;
-    protected $supplierSvc;
-    protected $title;
-    protected $view;
-    protected $menuSvc;
 
+    protected $supplierSvc;
+
+    protected $title;
+
+    protected $view;
+
+    protected $menuSvc;
 
     public function __construct(PurchaseVerificationService $purchaseVerificationSvc, SupplierService $supplierSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseVerificationSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = "Purchase Verification";
-        $this->menuSvc = $menuSvc->getByName("Purchase Verif");
+        $this->title = 'Purchase Verification';
+        $this->menuSvc = $menuSvc->getByName('Purchase Verif');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "purchasing.purchase-verification.";
+        $this->view = 'purchasing.purchase-verification.';
     }
 
     /**
@@ -42,7 +45,7 @@ class PurchaseVerificationController extends Controller
     {
         $supplier = $this->supplierSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('title', $this->title);
@@ -55,8 +58,8 @@ class PurchaseVerificationController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $totalPrice = 0;
@@ -71,7 +74,7 @@ class PurchaseVerificationController extends Controller
         $supplier = $this->supplierSvc->findAll();
         // $items = Item::OrderBy('name', 'asc')->get();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             // ->with('items', $items)
@@ -86,18 +89,18 @@ class PurchaseVerificationController extends Controller
         $data = $this->service->getById($id);
 
         $validator = Validator::make($request->all(), [
-            'verifDate' => ['required', 'date', 'after_or_equal:' . $data->date],
+            'verifDate' => ['required', 'date', 'after_or_equal:'.$data->date],
             'qty' => ['required', 'array', function ($attribute, $value, $fail) {
                 foreach ($value as $price) {
                     if ($price == 0 || $price == null) {
                         $fail('The qty cannot be 0.');
                     }
                 }
-            }]
+            }],
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -106,11 +109,11 @@ class PurchaseVerificationController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -120,9 +123,8 @@ class PurchaseVerificationController extends Controller
 
         $pd->delete();
 
-        return redirect()->route($this->view . 'edit', $pd->purchase->id)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'edit', $pd->purchase->id)->with('success', 'Delete Data Success');
     }
-
 
     public function datatable(Request $request)
     {
@@ -152,6 +154,7 @@ class PurchaseVerificationController extends Controller
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
+
                     // return $date . ' ' . $time;
                     return $date;
                 })
@@ -184,7 +187,7 @@ class PurchaseVerificationController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = ' <td>
-                        <a href="' . route($this->view . 'edit', $row->id) . '"
+                        <a href="'.route($this->view.'edit', $row->id).'"
                         class="btn btn-icon btn-sm bg-primary-subtle me-1"
                         data-bs-toggle="tooltip" title="Edit">
                             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>

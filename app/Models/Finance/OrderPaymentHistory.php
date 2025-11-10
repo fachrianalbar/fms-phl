@@ -13,6 +13,7 @@ class OrderPaymentHistory extends Model
     use HasFactory, Uuid;
 
     protected $table = 'order_payment_history';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -22,7 +23,7 @@ class OrderPaymentHistory extends Model
         'total',
         'date',
         'description',
-        'userBankCode'
+        'userBankCode',
     ];
 
     public function order()

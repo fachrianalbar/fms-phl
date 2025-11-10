@@ -4,12 +4,11 @@ namespace App\Exports;
 
 use App\Helpers\FilterHelper;
 use App\Models\Operational\Order;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
-
 
 class FleetTonaseReport implements FromView, ShouldAutoSize
 {
@@ -32,7 +31,7 @@ class FleetTonaseReport implements FromView, ShouldAutoSize
 
         $request = $this->request;
 
-        $data = Order::select('fleetCode', 'customerCode',  DB::raw('SUM(' . env('DB_PREFIX') . 'order.qty) as total_tonase'))
+        $data = Order::select('fleetCode', 'customerCode', DB::raw('SUM('.env('DB_PREFIX').'order.qty) as total_tonase'))
             ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
             ->join('customer', 'customer.code', '=', 'order.customerCode')
             ->with(['fleet.type', 'customer'])
@@ -60,7 +59,6 @@ class FleetTonaseReport implements FromView, ShouldAutoSize
         ];
 
         $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
 
         return view('report.fleet-tonase.report.fleet-tonase-excel')
             ->with('data', $data->get());

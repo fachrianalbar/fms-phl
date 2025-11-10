@@ -14,18 +14,22 @@ use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
-
-
 class OrderService
 {
     use LogActivity;
 
     protected $service;
+
     protected $customerDetailOrder;
+
     protected $orderCost;
+
     protected $route;
+
     protected $customer;
+
     protected $fleet;
+
     protected $orderMaterial;
 
     public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial)
@@ -49,7 +53,7 @@ class OrderService
             'route.routeDetail',
             'fleet',
             'fleet.type',
-            'unit'
+            'unit',
         ])->orderBy('created_at', 'desc')->get();
     }
 
@@ -64,7 +68,7 @@ class OrderService
             'route.routeDetail',
             'fleet',
             'fleet.type',
-            'unit'
+            'unit',
         ])->orderBy('orderDate', 'asc')->where('status', 0);
     }
 
@@ -76,7 +80,7 @@ class OrderService
     public function finishOrder($id)
     {
         $this->service->where('id', $id)->update([
-            'status' => 3
+            'status' => 3,
         ]);
     }
 
@@ -128,8 +132,6 @@ class OrderService
             $this->storeOrderMaterial($request);
         }
 
-
-
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
 
@@ -146,8 +148,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code . '-del-' . Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3)
+            'code' => $data->code.'-del-'.Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -173,9 +175,9 @@ class OrderService
                 'code' => GenerateCode::generateCode('TOC', true),
                 'componentType' => $filtered['componentName'][$i],
                 'orderCode' => $request->code,
-                'nominal' => (int)str_replace('.', '', $filtered['nominal'][$i]),
+                'nominal' => (int) str_replace('.', '', $filtered['nominal'][$i]),
                 'description' => $filtered['description'][$i],
-                'type' => isset($request->not_return_do) ? 'On Charge' : null
+                'type' => isset($request->not_return_do) ? 'On Charge' : null,
             ]);
 
             $this->logActivity('Order Cost', $orderCost, 'Create');
@@ -186,7 +188,6 @@ class OrderService
     {
         $filtered = Arr::only($request->all(), ['materialCode', 'unitCode', 'materialQty', 'unitCode2', 'materialQty2']);
 
-
         for ($i = 0; $i < count($request->materialCode); $i++) {
 
             $orderMaterial = $this->orderMaterial->create([
@@ -194,9 +195,9 @@ class OrderService
                 'orderCode' => $request->code,
                 'materialCode' => $filtered['materialCode'][$i] ?? null,
                 'unitCode' => $filtered['unitCode'][$i] ?? null,
-                'materialQty' => (int)$filtered['materialQty'][$i] ?? null,
+                'materialQty' => (int) $filtered['materialQty'][$i] ?? null,
                 'unitCode2' => $filtered['unitCode2'][$i] ?? null,
-                'materialQty2' => (int)$filtered['materialQty2'][$i] ?? null
+                'materialQty2' => (int) $filtered['materialQty2'][$i] ?? null,
             ]);
 
             $this->logActivity('Order Material', $orderMaterial, 'Create');
@@ -213,7 +214,7 @@ class OrderService
                 'code' => GenerateCode::generateCode('FCDO', true),
                 'customerDetailCode' => $filtered['customerDetailCode'][$i],
                 'value' => $filtered['value'][$i],
-                'orderCode' =>  $request->code
+                'orderCode' => $request->code,
             ]);
 
             $this->logActivity('Customer Detail Order', $customerDetailOrder, 'Create');
@@ -234,17 +235,16 @@ class OrderService
             'routeCode' => $request->routeData,
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
-            'routeAmount' => $isUpdate ? (int)$request->routeAmount : $route->price,
+            'routeAmount' => $isUpdate ? (int) $request->routeAmount : $route->price,
             'customerCode' => $request->customerCode,
         ];
 
-        if (!is_null($request->returnDate)) {
+        if (! is_null($request->returnDate)) {
             $data['returnDate'] = $request->returnDate;
         }
 
         return $data;
     }
-
 
     public function shipmentFormat($id)
     {
@@ -269,15 +269,13 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi
 
         return $shipmentNumber;
     }
-
-
 
     public function getFleet($fleet = null)
     {

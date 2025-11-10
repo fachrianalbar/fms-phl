@@ -2,9 +2,7 @@
 
 namespace App\Services\Inventory;
 
-use App\Helpers\GenerateCode;
 use App\Models\Inventory\Supplier;
-use App\Models\Master\Unit;
 use App\Traits\LogActivity;
 
 class SupplierService

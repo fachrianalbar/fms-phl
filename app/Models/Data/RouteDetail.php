@@ -13,6 +13,7 @@ class RouteDetail extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'route_detail';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -21,7 +22,7 @@ class RouteDetail extends Model
         'amount',
         'percentage',
         'componentCode',
-        'routeCode'
+        'routeCode',
     ];
 
     public function route()

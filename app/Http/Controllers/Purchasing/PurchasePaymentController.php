@@ -4,38 +4,42 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Inventory\Item;
 use App\Models\LiveMutation;
 use App\Services\Bank\UserBankService;
 use App\Services\Inventory\SupplierService;
+use App\Services\MenuService;
 use App\Services\Purchasing\PurchasePaymentService;
-use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class PurchasePaymentController extends Controller
 {
     protected $service;
-    protected $supplierSvc;
-    protected $userBankSvc;
-    protected $title;
-    protected $view;
-    protected $menuSvc;
 
+    protected $supplierSvc;
+
+    protected $userBankSvc;
+
+    protected $title;
+
+    protected $view;
+
+    protected $menuSvc;
 
     public function __construct(PurchasePaymentService $purchasePaymentSvc, SupplierService $supplierSvc, UserBankService $userBankSvc, MenuService $menuSvc)
     {
         $this->service = $purchasePaymentSvc;
         $this->supplierSvc = $supplierSvc;
         $this->userBankSvc = $userBankSvc;
-        $this->title = "Purchase Payment";
-        $this->menuSvc = $menuSvc->getByName("Purchase Payment");
+        $this->title = 'Purchase Payment';
+        $this->menuSvc = $menuSvc->getByName('Purchase Payment');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
-        $this->view = "purchasing.purchase-payment.";
+        $this->view = 'purchasing.purchase-payment.';
     }
 
     /**
@@ -45,7 +49,7 @@ class PurchasePaymentController extends Controller
     {
         $supplier = $this->supplierSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('title', $this->title);
@@ -58,8 +62,8 @@ class PurchasePaymentController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $totalPrice = 0;
@@ -74,7 +78,7 @@ class PurchasePaymentController extends Controller
 
         $userBank = $this->userBankSvc->findCompany();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             // ->with('items', $items)
@@ -90,12 +94,11 @@ class PurchasePaymentController extends Controller
         $data = $this->service->getById($id);
 
         $validator = Validator::make($request->all(), [
-            'paymentDate' => ['required', 'date', 'after_or_equal:' . $data->receivedDate],
+            'paymentDate' => ['required', 'date', 'after_or_equal:'.$data->receivedDate],
         ]);
 
-
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         $totalPrice = 0;
@@ -118,11 +121,11 @@ class PurchasePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -154,12 +157,13 @@ class PurchasePaymentController extends Controller
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
+
                     return $date;
                 })
                 ->editColumn('receivedDate', function ($row) {
                     $receivedDate = '';
                     if ($row->receivedDate) {
-                        $receivedDate =   Carbon::parse($row->receivedDate)->format('d-M-Y');
+                        $receivedDate = Carbon::parse($row->receivedDate)->format('d-M-Y');
                     }
 
                     return $receivedDate;
@@ -167,7 +171,7 @@ class PurchasePaymentController extends Controller
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
                     if ($row->paymentDate) {
-                        $paymentDate =   Carbon::parse($row->paymentDate)->format('d-M-Y');
+                        $paymentDate = Carbon::parse($row->paymentDate)->format('d-M-Y');
                     }
 
                     return $paymentDate;
@@ -208,7 +212,6 @@ class PurchasePaymentController extends Controller
 
                     $count = 0;
 
-
                     if (isset($row->purchaseStatus->name)) {
                         $status = Auth::user()->languange == 'id' ? $row->purchaseStatus->nama : $row->purchaseStatus->name;
 
@@ -220,19 +223,20 @@ class PurchasePaymentController extends Controller
                             }
 
                             if ($count == $total) {
-                                $status =  'Stored Full';
+                                $status = 'Stored Full';
                             }
 
                             if ($count > 0 && $count < $total) {
-                                $status =  'Stored Half';
+                                $status = 'Stored Half';
                             }
                         }
                     }
+
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-                                <a href="' . route($this->view . 'edit', $row->id) . '"
+                                <a href="'.route($this->view.'edit', $row->id).'"
                                 class="btn btn-icon btn-sm bg-primary-subtle me-1"
                                 data-bs-toggle="tooltip" title="Payment">
                                     <i class="mdi mdi-credit-card fs-14 text-primary"></i>

@@ -9,27 +9,30 @@ use App\Models\Inventory\Stock;
 use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
-use App\Services\MenuService;
 use App\Services\Inventory\StockService;
 use App\Services\Inventory\WarehouseService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
 use Mpdf\Mpdf;
+use Yajra\DataTables\DataTables;
 
 class StockController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $warehouseSvc;
 
     public function __construct(StockService $stockSvc, MenuService $menuSvc, WarehouseService $warehouseSvc)
     {
         $this->service = $stockSvc;
-        $this->title = "Stock";
-        $this->view = "inventory.stock.";
+        $this->title = 'Stock';
+        $this->view = 'inventory.stock.';
         $this->menuSvc = $menuSvc;
         $this->warehouseSvc = $warehouseSvc;
     }
@@ -42,7 +45,7 @@ class StockController extends Controller
         $stock = $this->service->findAll();
         $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('stock', $stock)
             ->with('warehouse', $warehouse)
@@ -78,8 +81,8 @@ class StockController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $action = '<button type="button" class="btn btn-sm btn-info btn-edit-stock" 
-                                data-item-code="' . $row->code . '" 
-                                data-item-name="' . ($row->name ?? '') . '"
+                                data-item-code="'.$row->code.'" 
+                                data-item-name="'.($row->name ?? '').'"
                                 title="Edit Stock Awal">
                                 <i class="mdi mdi-pencil"></i>
                               </button>';
@@ -101,14 +104,14 @@ class StockController extends Controller
             [
                 'orientation' => 'P',
                 'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp')
+                'tempDir' => storage_path('app/mpdf-temp'),
             ]
         );
 
         $data = $this->service->findAll();
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.stock-pdf')
+            view($this->view.'report.stock-pdf')
                 ->with('data', $data)
         );
 
@@ -136,7 +139,7 @@ class StockController extends Controller
             if ($hasInOutTransaction) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak dapat mengubah stock awal karena sudah ada transaksi masuk/keluar untuk item ini'
+                    'message' => 'Tidak dapat mengubah stock awal karena sudah ada transaksi masuk/keluar untuk item ini',
                 ], 422);
             }
 
@@ -170,7 +173,7 @@ class StockController extends Controller
                     'transactionCode' => null,
                     'transactionDetailCode' => null,
                     'transactionType' => 'INITIAL',
-                    'date' => now()
+                    'date' => now(),
                 ]);
 
                 PurchaseDetail::create([
@@ -205,12 +208,12 @@ class StockController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Stock awal berhasil diperbarui'
+                'message' => 'Stock awal berhasil diperbarui',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }

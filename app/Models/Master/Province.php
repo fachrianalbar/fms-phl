@@ -12,6 +12,7 @@ class Province extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'province';
+
     public $incrementing = false;
 
     protected $fillable = [

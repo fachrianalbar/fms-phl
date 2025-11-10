@@ -12,6 +12,7 @@ class InvoicePayment extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'invoice_payment';
+
     public $incrementing = false;
 
     protected $fillable = [

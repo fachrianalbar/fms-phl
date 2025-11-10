@@ -20,6 +20,6 @@ return [
     'save' => 'Simpan',
     'data_not_found' => 'Data tidak ditemukan',
     'warning' => 'Peringatan',
-    'delete_data' => 'Hapus Data'
+    'delete_data' => 'Hapus Data',
 
 ];

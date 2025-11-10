@@ -12,11 +12,12 @@ class Warehouse extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'warehouse';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'address'
+        'address',
     ];
 }

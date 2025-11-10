@@ -11,21 +11,25 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 
-
 class ActivityLogController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $userSvc;
+
     protected $roleSvc;
 
     public function __construct(ActivityLogService $activityLogSvc, UserService $userSvc, RoleService $roleSvc, MenuService $menuSvc)
     {
         $this->service = $activityLogSvc;
-        $this->title = "Activity Log";
-        $this->view = "administrator.activity-log.";
+        $this->title = 'Activity Log';
+        $this->view = 'administrator.activity-log.';
         $this->userSvc = $userSvc;
         $this->roleSvc = $roleSvc;
     }
@@ -40,7 +44,7 @@ class ActivityLogController extends Controller
         $action = ['Create', 'Update', 'Delete'];
         $activity = $this->service->getLogName();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('user', $user)
             ->with('role', $role)
@@ -59,7 +63,7 @@ class ActivityLogController extends Controller
                 'userRole' => $request->roleCode,
                 'description' => $request->action,
                 'log_name' => $request->activity,
-                'properties' => $request->data
+                'properties' => $request->data,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai

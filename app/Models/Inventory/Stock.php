@@ -9,16 +9,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Stock extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'stock';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'itemCode',
         'stockIn',
-        'stockOut'
+        'stockOut',
     ];
 
     public function item()

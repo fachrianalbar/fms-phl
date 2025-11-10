@@ -6,7 +6,6 @@ use App\Models\Master\District;
 
 class DistrictService
 {
-
     protected $service;
 
     public function __construct(District $district)

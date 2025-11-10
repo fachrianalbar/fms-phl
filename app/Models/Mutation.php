@@ -13,9 +13,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Mutation extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'mutation';
+
     public $incrementing = false;
 
     protected $fillable = [
@@ -26,7 +27,7 @@ class Mutation extends Model
         'nominal',
         'type',
         'transactionTypeCode',
-        'transactionCode'
+        'transactionCode',
     ];
 
     public function userBank()

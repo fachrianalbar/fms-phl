@@ -3,36 +3,43 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Services\Bank\UserBankService;
 use App\Services\Finance\InvoicePaymentService;
 use App\Services\Finance\InvoiceService;
 use App\Services\Master\CustomerService;
+use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Validator;
+use Yajra\DataTables\DataTables;
 
 class InvoicePaymentController extends Controller
 {
     protected $service;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
+
     protected $invoiceSvc;
+
     protected $customerSvc;
+
     protected $userBankSvc;
+
     protected $totalPrice;
+
     protected $totalPriceInvoice;
 
     public function __construct(InvoicePaymentService $invoicePaymentSvc, InvoiceService $invoiceSvc, CustomerService $customerSvc, UserBankService $userBankSvc, MenuService $menuSvc)
     {
         $this->service = $invoicePaymentSvc;
-        $this->title = "Invoice Payment";
-        $this->view = "finance.invoice-payment.";
+        $this->title = 'Invoice Payment';
+        $this->view = 'finance.invoice-payment.';
         $this->customerSvc = $customerSvc;
         $this->invoiceSvc = $invoiceSvc;
         $this->userBankSvc = $userBankSvc;
@@ -45,7 +52,7 @@ class InvoicePaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -57,8 +64,8 @@ class InvoicePaymentController extends Controller
     {
         $data = $this->invoiceSvc->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -114,19 +121,18 @@ class InvoicePaymentController extends Controller
             }
         }
 
-
         $status = 0;
         if ($totalPrice == 0) {
             // Full Payment
             $status = 2;
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
             ->with('order', $order)
-            ->with('totalPrice',  $totalPrice)
+            ->with('totalPrice', $totalPrice)
             ->with('userBank', $userBank)
             ->with('customerData', $customerData)
             ->with('status', $status)
@@ -139,15 +145,15 @@ class InvoicePaymentController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'amount' => ['required', 'numeric', 'max:' . (int) $request->totalPrice],
+            'amount' => ['required', 'numeric', 'max:'.(int) $request->totalPrice],
             'paymentDate' => ['required'],
-            'userBankCode' => ['required']
+            'userBankCode' => ['required'],
         ], [
-            'amount.max'      => 'The payment amount cannot be greater than the total price.',
-            'userBankCode.required' => 'User bank field is required'
+            'amount.max' => 'The payment amount cannot be greater than the total price.',
+            'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -156,11 +162,11 @@ class InvoicePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -168,6 +174,7 @@ class InvoicePaymentController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->datatable();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('orderCount', function ($row) {
@@ -223,18 +230,17 @@ class InvoicePaymentController extends Controller
                         $this->totalPriceInvoice += $cost;
                     }
 
-                    return '' . number_format($this->totalPriceInvoice, 0, ',', '.');
+                    return ''.number_format($this->totalPriceInvoice, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
                     return number_format($this->totalPriceInvoice * 0.11, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    return '' . number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
+                    return ''.number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
                 })
                 ->addColumn('statusPayment', function ($row) {
                     $status = '';
                     $totalPriceInvoice = $this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice;
-
 
                     $totalPrice = 0;
                     foreach ($row->payments as $item) {
@@ -269,7 +275,7 @@ class InvoicePaymentController extends Controller
 
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-credit-card"></i></a></li>
+                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->id).'"><i class="icon-credit-card"></i></a></li>
                                     </ul>';
 
                     return $btn;

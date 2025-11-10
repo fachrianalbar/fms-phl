@@ -38,7 +38,7 @@ class BankAccountService
         $result = $this->service->create([
             'code' => GenerateCode::generateCode('FBA'),
             'name' => $request->name,
-            'bankCode' => $request->bankCode
+            'bankCode' => $request->bankCode,
         ]);
 
         $this->logActivity($title, $result, 'Create');
@@ -52,7 +52,7 @@ class BankAccountService
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,
-            'bankCode' => $request->bankCode
+            'bankCode' => $request->bankCode,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

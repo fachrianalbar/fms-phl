@@ -4,11 +4,11 @@ namespace App\Exports;
 
 use App\Helpers\FilterHelper;
 use App\Models\Master\Fleet;
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
 class FleetMaintenanceReport implements FromView, ShouldAutoSize, WithColumnFormatting
@@ -40,10 +40,10 @@ class FleetMaintenanceReport implements FromView, ShouldAutoSize, WithColumnForm
             'fleet.code',
             'fleet.plateNumber',
             DB::raw('COUNT(DISTINCT fms_maintenance.code) as total'),
-            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price')
+            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price'),
         ])
             ->leftjoin('maintenance', 'maintenance.fleetCode', 'fleet.code')
-            ->leftjoin('maintenance_detail',  'maintenance_detail.maintenanceCode', 'maintenance.code')
+            ->leftjoin('maintenance_detail', 'maintenance_detail.maintenanceCode', 'maintenance.code')
             ->leftjoin('item', 'item.code', 'maintenance_detail.itemCode')
             ->with(['maintenances'])
             ->orderBy('total', 'DESC')

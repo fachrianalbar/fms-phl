@@ -14,7 +14,7 @@ Route::prefix('data')->name('data.')->group(function () {
     Route::resource('pickup-location', PickupLocationController::class);
     Route::resource('route', RouteController::class);
     Route::resource('tonase-bonus', TonaseBonusController::class);
-    Route::resource("route-detail", RouteDetailController::class);
+    Route::resource('route-detail', RouteDetailController::class);
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {

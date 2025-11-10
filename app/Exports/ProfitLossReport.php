@@ -4,11 +4,10 @@ namespace App\Exports;
 
 use App\Helpers\FilterHelper;
 use App\Models\Master\Fleet;
+use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
-
 
 class ProfitLossReport implements FromView, ShouldAutoSize
 {
@@ -55,7 +54,6 @@ class ProfitLossReport implements FromView, ShouldAutoSize
         $query = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
 
         $data = $query->get();
-
 
         return view('report.profit-loss.report.profit-loss-excel')
             ->with('data', $data);

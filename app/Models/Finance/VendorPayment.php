@@ -13,6 +13,7 @@ class VendorPayment extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'vendor_payment';
+
     public $incrementing = false;
 
     protected $fillable = [

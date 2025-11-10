@@ -3,27 +3,30 @@
 namespace App\Http\Controllers\Bank;
 
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Services\Bank\BankBookService;
+use App\Services\MenuService;
 use App\Services\MutationService;
-use Yajra\DataTables\DataTables;
 use Illuminate\Http\Request;
-
+use Yajra\DataTables\DataTables;
 
 class BankBookController extends Controller
 {
     protected $service;
+
     protected $mutationSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(BankBookService $bankBookSvc, MutationService $mutationSvc, MenuService $menuSvc)
     {
         $this->service = $bankBookSvc;
         $this->mutationSvc = $mutationSvc;
-        $this->title = "Bank Book";
-        $this->view = "bank.bank-book.";
+        $this->title = 'Bank Book';
+        $this->view = 'bank.bank-book.';
     }
 
     /**
@@ -31,7 +34,7 @@ class BankBookController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -43,14 +46,13 @@ class BankBookController extends Controller
     {
         $data = $this->service->findByUserBankCode($code);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $mutation = $this->mutationSvc->getByUserBankCode($code);
 
-
-        return view($this->view . 'show')
+        return view($this->view.'show')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('mutation', $mutation)
@@ -61,6 +63,7 @@ class BankBookController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
+
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('debit', function ($row) {
@@ -73,7 +76,7 @@ class BankBookController extends Controller
                     return number_format($row->balance, 0, ',', '.');
                 })
                 ->editColumn('userBank.accountNumber', function ($row) {
-                    $accountNumber = "";
+                    $accountNumber = '';
 
                     if (isset($row->userBank->accountNumber)) {
                         $accountNumber = $row->userBank->accountNumber;
@@ -83,7 +86,7 @@ class BankBookController extends Controller
                 })
 
                 ->editColumn('userBank.accountName', function ($row) {
-                    $accountName = "";
+                    $accountName = '';
 
                     if (isset($row->userBank->accountName)) {
                         $accountName = $row->userBank->accountName;
@@ -93,23 +96,22 @@ class BankBookController extends Controller
                 })
 
                 ->editColumn('userBank.type', function ($row) {
-                    $type = "";
+                    $type = '';
 
                     if (isset($row->userBank->type)) {
                         if ($row->userBank->type == 1) {
-                            $type = "Person";
-                        } else if ($row->userBank->type == 2) {
-                            $type = "Company";
+                            $type = 'Person';
+                        } elseif ($row->userBank->type == 2) {
+                            $type = 'Company';
                         }
                     }
 
                     return $type;
                 })
 
-
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-                                    <a href="' . route($this->view . 'show', $row->userBankCode) . '"
+                                    <a href="'.route($this->view.'show', $row->userBankCode).'"
                                 class="btn btn-icon btn-sm bg-primary-subtle me-1"
                                 data-bs-toggle="tooltip" title="Edit">
                                     <i class="mdi mdi-book-account fs-14 text-primary"></i>

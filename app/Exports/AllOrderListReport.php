@@ -4,12 +4,10 @@ namespace App\Exports;
 
 use App\Helpers\FilterHelper;
 use App\Models\Operational\Order;
+use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\DB;
-
 
 class AllOrderListReport implements FromView, ShouldAutoSize
 {
@@ -41,7 +39,7 @@ class AllOrderListReport implements FromView, ShouldAutoSize
             'material',
             'route.routeDetail',
             'fleet',
-            'fleet.type'
+            'fleet.type',
         ])->orderBy('created_at', 'desc');
 
         // if ($request->startDate && $request->endDate) {
@@ -78,7 +76,7 @@ class AllOrderListReport implements FromView, ShouldAutoSize
             'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',
             'origin' => 'route.originLocation.name',
-            'destination' => 'route.destinationLocation.name'
+            'destination' => 'route.destinationLocation.name',
         ];
 
         $dateFilters = [
@@ -88,9 +86,7 @@ class AllOrderListReport implements FromView, ShouldAutoSize
             ],
         ];
 
-
         $order = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
 
         return view('report.all-order-list.report.all-order-list-excel')
             ->with('order', $order->get());

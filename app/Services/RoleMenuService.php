@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Role;
 use App\Models\RoleMenu;
 use Illuminate\Support\Facades\Auth;
 

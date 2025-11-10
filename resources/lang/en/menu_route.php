@@ -23,5 +23,5 @@ return [
     'personal_vendor_price' => 'Personal Vendor Price',
     'vendor_price_validation' => 'Vendor price cannot be greater than the price',
     'personal_vendor_price_validation' => 'Personal vendor price cannot be greater than the price',
-    'description' => 'Description'
+    'description' => 'Description',
 ];

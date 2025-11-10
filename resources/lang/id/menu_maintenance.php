@@ -7,6 +7,6 @@ return [
     'prices' => 'Harga',
     'time' => 'Waktu',
     'total_prices' => 'Total Harga',
-    'maintenance_date' => 'Tanggal Perawatan'
+    'maintenance_date' => 'Tanggal Perawatan',
 
 ];

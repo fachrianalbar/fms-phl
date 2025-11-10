@@ -12,14 +12,16 @@ use App\Traits\LogActivity;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 
-
 class InvoicePaymentService
 {
     use LogActivity;
 
     protected $service;
+
     protected $invoice;
+
     protected $liveMutation;
+
     protected $mutation;
 
     public function __construct(InvoicePayment $invoicePayment, Invoice $invoice, LiveMutation $liveMutation, Mutation $mutation)
@@ -51,7 +53,7 @@ class InvoicePaymentService
 
             $paymentReceipt = str_replace(' ', '_', $paymentReceipt);
 
-            $path = "public/invoice-payment";
+            $path = 'public/invoice-payment';
 
             Storage::putFileAs($path, $file, $paymentReceipt);
         }
@@ -63,10 +65,10 @@ class InvoicePaymentService
             'amount' => $request->amount,
             'invoiceDate' => $request->invoiceDate,
             'description' => $request->description,
-            'paymentReceipt' => $paymentReceipt
+            'paymentReceipt' => $paymentReceipt,
         ]);
 
-        LiveMutationHelper::updateLiveMutation($request->userBankCode, (int)$request->amount, 'debit');
+        LiveMutationHelper::updateLiveMutation($request->userBankCode, (int) $request->amount, 'debit');
 
         $this->mutation->create([
             'code' => GenerateCode::generateCode('FMT'),
@@ -74,8 +76,8 @@ class InvoicePaymentService
             'nominal' => $request->amount,
             'type' => 'In',
             'date' => Carbon::now(),
-            'description' => 'Invoice Payment with amount ' . number_format((int)$request->amount, 0, '.', ','),
-            'transactionTypeCode' => 'FTT250306114138'
+            'description' => 'Invoice Payment with amount '.number_format((int) $request->amount, 0, '.', ','),
+            'transactionTypeCode' => 'FTT250306114138',
         ]);
 
         $this->logActivity($title, $data, 'Create');

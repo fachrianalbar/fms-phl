@@ -9,14 +9,15 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
 {
-    use HasFactory, Uuid, SoftDeletes;
+    use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'company';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'format'
+        'format',
     ];
 }

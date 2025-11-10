@@ -5,8 +5,8 @@ namespace App\Services\Finance;
 use App\Helpers\GenerateCode;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\InvoiceDetail;
-use App\Models\Operational\Order;
 use App\Models\Master\Customer;
+use App\Models\Operational\Order;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
 
@@ -15,8 +15,11 @@ class InvoiceService
     use LogActivity;
 
     protected $service;
+
     protected $order;
+
     protected $invoiceDetail;
+
     protected $customer;
 
     public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer)
@@ -45,7 +48,7 @@ class InvoiceService
             'details.order.route.destinationLocation',
             'customer',
             'payments',
-            'customer.pic'
+            'customer.pic',
         ])->first();
     }
 
@@ -72,8 +75,6 @@ class InvoiceService
             ->orderBy('created_at', 'desc');
     }
 
-
-
     public function store($request, $title, $selectedOrders)
     {
         $data = $this->service->create([
@@ -84,7 +85,7 @@ class InvoiceService
             'poNumber' => $request->poNumber,
             'invoiceDate' => $request->invoiceDate,
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
-            'notes' => $request->notes
+            'notes' => $request->notes,
         ]);
 
         if (isset($request->order)) {
@@ -92,11 +93,11 @@ class InvoiceService
                 $detail = $this->invoiceDetail->create([
                     'code' => GenerateCode::generateCode('INVD', true),
                     'invoiceCode' => $data->code,
-                    'orderCode' => $item
+                    'orderCode' => $item,
                 ]);
 
                 $this->order->where('code', $item)->update([
-                    'status' => 5
+                    'status' => 5,
                 ]);
 
                 $this->logActivity('Invoice Detail', $detail, 'Create');
@@ -115,7 +116,7 @@ class InvoiceService
             'poNumber' => $request->poNumber,
             'invoiceDate' => $request->invoiceDate,
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
-            'notes' => $request->notes
+            'notes' => $request->notes,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
@@ -129,7 +130,7 @@ class InvoiceService
 
         foreach ($data->details as $item) {
             $this->order->where('code', $item->orderCode)->update([
-                'status' => 4
+                'status' => 4,
             ]);
 
             $this->invoiceDetail->where('id', $item->id)->delete();
@@ -144,6 +145,7 @@ class InvoiceService
     {
         $data = $this->getById($id);
         $orderCodeArr = $this->invoiceDetail->where('invoiceCode', $data->code)->pluck('orderCode');
+
         return $this->order->whereIn('code', $orderCodeArr)->with([
             'fleetDriver.fleet',
             // 'fleetDriver.employee',
@@ -154,7 +156,7 @@ class InvoiceService
             'route.destinationLocation',
             'route.originLocation',
             'orderType',
-            'route.routeDetail'
+            'route.routeDetail',
         ])->orderBy('created_at', 'desc')->get();
     }
 
@@ -163,16 +165,15 @@ class InvoiceService
         $invoice = $this->getById($id);
         if (isset($request->order)) {
 
-
             foreach ($selectedOrders as $item) {
                 $detail = $this->invoiceDetail->create([
                     'code' => GenerateCode::generateCode('INVD', true),
                     'invoiceCode' => $invoice->code,
-                    'orderCode' => $item
+                    'orderCode' => $item,
                 ]);
 
                 $this->order->where('code', $item)->update([
-                    'status' => 5
+                    'status' => 5,
                 ]);
 
                 $this->logActivity('Invoice Detail', $detail, 'Create');
@@ -185,7 +186,7 @@ class InvoiceService
         $order = $this->order->where('id', $id)->first();
 
         $this->order->where('id', $id)->update([
-            'status' => 4
+            'status' => 4,
         ]);
 
         $data = $this->invoiceDetail->where('orderCode', $order->code)->first();
@@ -209,12 +210,12 @@ class InvoiceService
         // Default increment = 1 jika belum ada invoice sebelumnya
         $lastNumber = 0;
 
-        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
+        if ($lastInvoice && preg_match('/INV\/'.preg_quote($customer->code, '/').'\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
             $lastNumber = (int) $matches[1];
         }
 
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
 
-        return 'INV/' . $customer->code . '/' . $increment . '/' . now()->year;
+        return 'INV/'.$customer->code.'/'.$increment.'/'.now()->year;
     }
 }

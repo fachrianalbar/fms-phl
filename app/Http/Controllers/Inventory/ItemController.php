@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Services\MenuService;
 use App\Models\inventory\Item;
 use App\Services\Inventory\ItemCategoryService;
 use App\Services\Inventory\ItemLocationService;
@@ -13,22 +12,29 @@ use App\Services\Inventory\SupplierService;
 use App\Services\Inventory\WarehouseService;
 use App\Services\Master\UnitService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-
+use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
 {
     protected $service;
+
     protected $unitSvc;
+
     protected $categorySvc;
+
     protected $warehouseSvc;
+
     protected $supplierSvc;
+
     protected $locationSvc;
+
     protected $title;
+
     protected $view;
+
     protected $menuSvc;
 
     public function __construct(
@@ -45,8 +51,8 @@ class ItemController extends Controller
         $this->warehouseSvc = $warehouseSvc;
         $this->supplierSvc = $supplierSvc;
         $this->locationSvc = $locationSvc;
-        $this->title = "Item";
-        $this->view = "inventory.items.";
+        $this->title = 'Item';
+        $this->view = 'inventory.items.';
     }
 
     /**
@@ -55,7 +61,8 @@ class ItemController extends Controller
     public function index()
     {
         $items = Item::orderBy('code', 'asc')->get();
-        return view($this->view . 'index')
+
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('items', $items);
@@ -72,7 +79,7 @@ class ItemController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('unit', $unit)
             ->with('location', $location)
@@ -99,7 +106,7 @@ class ItemController extends Controller
             // 'price' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -107,11 +114,11 @@ class ItemController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -130,8 +137,8 @@ class ItemController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $unit = $this->unitSvc->findAllInventory();
@@ -140,7 +147,7 @@ class ItemController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('unit', $unit)
@@ -168,7 +175,7 @@ class ItemController extends Controller
             // 'price' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -177,11 +184,11 @@ class ItemController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title .  ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -192,7 +199,7 @@ class ItemController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -264,13 +271,13 @@ class ItemController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>

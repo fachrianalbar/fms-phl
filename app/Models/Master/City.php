@@ -12,12 +12,13 @@ class City extends Model
     use HasFactory, SoftDeletes, Uuid;
 
     protected $table = 'city';
+
     public $incrementing = false;
 
     protected $fillable = [
         'code',
         'name',
-        'province_id'
+        'province_id',
     ];
 
     public function province()
