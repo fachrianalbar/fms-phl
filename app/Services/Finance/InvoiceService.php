@@ -196,26 +196,34 @@ class InvoiceService
         $this->invoiceDetail->where('orderCode', $order->code)->delete();
     }
 
-    public function invoiceNumberFormat($id)
+    public function invoiceNumberFormat($id, $invoiceDate = null)
     {
-        $customer = $this->customer->where('id', $id)->first();
+        $customer = $this->customer->where('id', $id)->with('company')->first();
 
-        // Ambil invoiceNumber terakhir milik customer yang bersangkutan di tahun berjalan
+        // Gunakan invoiceDate jika ada, jika tidak gunakan tanggal hari ini
+        $dateToUse = $invoiceDate ? Carbon::parse($invoiceDate) : now();
+        $currentYear = $dateToUse->year;
+        $currentMonth = str_pad($dateToUse->month, 2, '0', STR_PAD_LEFT);
+
+        // Ambil invoiceNumber terakhir milik customer yang bersangkutan di bulan dan tahun dari invoiceDate
         $lastInvoice = $this->service
             ->where('customerCode', $customer->code)
-            ->whereYear('created_at', now()->year)
+            ->whereYear('created_at', $currentYear)
+            ->whereMonth('created_at', $dateToUse->month)
             ->orderByDesc('created_at')
             ->first();
 
         // Default increment = 1 jika belum ada invoice sebelumnya
         $lastNumber = 0;
 
-        if ($lastInvoice && preg_match('/INV\/'.preg_quote($customer->code, '/').'\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
+        // Format: INV/{FORMAT-COMPANY}/{CODE-CUSTOMER}/{NO-URUT}/{BULAN}/{TAHUN}
+        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
             $lastNumber = (int) $matches[1];
         }
 
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
+        $companyFormat = $customer->company->format ?? 'DEFAULT';
 
-        return 'INV/'.$customer->code.'/'.$increment.'/'.now()->year;
+        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $increment . '/' . $currentMonth . '/' . $currentYear;
     }
 }

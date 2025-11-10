@@ -448,7 +448,8 @@ class InvoiceController extends Controller
 
     public function invoiceNumberFormat($id)
     {
-        $data = $this->service->invoiceNumberFormat($id);
+        $invoiceDate = request()->query('invoiceDate');
+        $data = $this->service->invoiceNumberFormat($id, $invoiceDate);
 
         return $data;
     }

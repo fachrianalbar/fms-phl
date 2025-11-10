@@ -399,9 +399,10 @@
         function generateInvoiceNumber() {
             const customerCode = $('#customerCode').select2('val');
             let customerId = $('#customerCode option:selected').data('id');
+            let invoiceDate = $('input[name="invoiceDate"]').val();
 
             if (customerId) {
-                $.get("{{ url('ajax/invoice-number-format') }}/" + customerId, function(data) {
+                $.get("{{ url('ajax/invoice-number-format') }}/" + customerId, {invoiceDate: invoiceDate}, function(data) {
                     $('#invoiceNumber').val(data);
                 });
             }
@@ -421,6 +422,11 @@
             setTimeout(() => {
                 $('.loader-wrapper').remove();
             }, 1000);
+        });
+
+        // Event untuk saat invoiceDate berubah
+        $('input[name="invoiceDate"]').on('change', function() {
+            generateInvoiceNumber();
         });
 
         $('#saveInvoice').click(function(e) {
