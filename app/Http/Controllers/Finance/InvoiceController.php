@@ -46,7 +46,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -58,7 +58,7 @@ class InvoiceController extends Controller
     {
         $customer = $this->customerSvc->findAll();
 
-        return view($this->view.'create')
+        return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('customer', $customer)
             ->with('title', $this->title);
@@ -74,7 +74,7 @@ class InvoiceController extends Controller
             'invoiceNumber' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -85,11 +85,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -109,7 +109,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -122,7 +122,7 @@ class InvoiceController extends Controller
             $status = 1;
         }
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -142,7 +142,7 @@ class InvoiceController extends Controller
             'invoiceNumber' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -151,11 +151,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -166,7 +166,7 @@ class InvoiceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -198,7 +198,7 @@ class InvoiceController extends Controller
 
                     $this->totalPriceInvoice = $price;
 
-                    return ''.number_format($price, 0, ',', '.');
+                    return '' . number_format($price, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
                     $customer = $row->details->first()->order->customer;
@@ -208,25 +208,25 @@ class InvoiceController extends Controller
                 ->addColumn('totalBilling', function ($row) {
                     $customer = $row->details->first()->order->customer;
 
-                    return ''.number_format($this->totalPriceInvoice * ($customer->ppn / 100) + $this->totalPriceInvoice, 0, ',', '.');
+                    return '' . number_format($this->totalPriceInvoice * ($customer->ppn / 100) + $this->totalPriceInvoice, 0, ',', '.');
                 })
 
                 ->addColumn('action', function ($row) {
 
                     $btn = ' <td>
-                            <a target="_blank" href="'.route($this->view.'pdf-invoice', $row->id).'"
+                            <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
                             class="btn btn-icon btn-sm bg-success-subtle me-1"
                             data-bs-toggle="tooltip" title="Print PDF">
                                 <i class="mdi mdi-file fs-14 text-success"></i>
                             </a>
 
-                            <a href="'.route($this->view.'edit', $row->id).'"
+                            <a href="' . route($this->view . 'edit', $row->id) . '"
                             class="btn btn-icon btn-sm bg-primary-subtle me-1"
                             data-bs-toggle="tooltip" title="Edit">
                                 <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                             </a>
 
-                            <a href="javascript:deleteData(\''.$row->id.'\')"
+                            <a href="javascript:deleteData(\'' . $row->id . '\')"
                             class="btn btn-icon btn-sm bg-danger-subtle"
                             data-bs-toggle="tooltip" title="Delete">
                                 <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -235,13 +235,13 @@ class InvoiceController extends Controller
 
                     if (count($row->payments) > 0) {
                         $btn = ' <td>
-                            <a target="_blank" href="'.route($this->view.'pdf-invoice', $row->id).'"
+                            <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
                             class="btn btn-icon btn-sm bg-success-subtle me-1"
                             data-bs-toggle="tooltip" title="Print PDF">
                                 <i class="mdi mdi-file-pdf fs-14 text-success"></i>
                             </a>
 
-                            <a href="'.route($this->view.'edit', $row->id).'"
+                            <a href="' . route($this->view . 'edit', $row->id) . '"
                             class="btn btn-icon btn-sm bg-primary-subtle me-1"
                             data-bs-toggle="tooltip" title="Edit">
                                 <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
@@ -321,13 +321,13 @@ class InvoiceController extends Controller
                     }
                     $this->totalPrice = $cost;
 
-                    return ''.number_format($cost, 0, ',', '.');
+                    return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return ''.number_format($this->totalPrice, 0, ',', '.');
+                    return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
+                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
 
                     return $btn;
                 })
@@ -357,11 +357,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -377,7 +377,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $company = CompanySetting::first();
@@ -409,7 +409,7 @@ class InvoiceController extends Controller
         }
 
         if ($customer && $customer->invoicePdf) {
-            $pdfTemplatePath = 'finance.invoice.pdf.customer.'.$customer->invoicePdf;
+            $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
 
             // Cek apakah view-nya ada, kalau tidak gunakan default general
             if (view()->exists($pdfTemplatePath)) {
@@ -438,7 +438,7 @@ class InvoiceController extends Controller
                 ->with('customer', $customer)
         );
 
-        return $mpdf->Output('Invoice-'.$data->invoiceNumber.'.pdf', 'I');
+        return $mpdf->Output('Invoice-' . $data->invoiceNumber . '.pdf', 'I');
     }
 
     public function customerInvoice($customerCode)
