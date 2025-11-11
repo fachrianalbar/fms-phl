@@ -30,8 +30,9 @@ class CompanyService
     public function store($request, $title)
     {
         $data = $this->service->create([
-            'name' => $request->name,
             'code' => GenerateCode::generateCode('FCMP'),
+            'name' => $request->name,
+            'format' => $request->format,
         ]);
 
         $this->logActivity($title, $data, 'Create');
@@ -43,6 +44,7 @@ class CompanyService
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,
+            'format' => $request->format,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

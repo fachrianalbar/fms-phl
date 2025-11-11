@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Master\BankReceiverController;
 use App\Http\Controllers\Master\BankSenderController;
+use App\Http\Controllers\Master\CompanyController;
 use App\Http\Controllers\Master\CostComponentController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\DueDateController;
@@ -27,6 +28,7 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleet-type', FleetTypeController::class);
     Route::resource('fleet-brand', FleetBrandController::class);
     Route::resource('unit', UnitController::class);
+    Route::resource('company', CompanyController::class);
     Route::resource('customer', CustomerController::class);
     Route::delete('customer-detail/{id}', [CustomerController::class, 'deleteCustomerDetail'])->name('customer-detail.destroy');
     Route::delete('customer-pic/{id}', [CustomerController::class, 'deleteCustomerPic'])->name('customer-pic.destroy');
@@ -47,6 +49,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('fleet-brand', [FleetBrandController::class, 'datatable'])->name('fleet-brand');
     Route::get('fleet-type', [FleetTypeController::class, 'datatable'])->name('fleet-type');
     Route::get('unit', [UnitController::class, 'datatable'])->name('unit');
+    Route::get('company', [CompanyController::class, 'datatable'])->name('company');
     Route::get('customer', [CustomerController::class, 'datatable'])->name('customer');
     Route::get('cost-component', [CostComponentController::class, 'datatable'])->name('cost-component');
     Route::get('location', [LocationController::class, 'datatable'])->name('location');
