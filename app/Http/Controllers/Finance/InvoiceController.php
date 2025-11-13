@@ -193,7 +193,9 @@ class InvoiceController extends Controller
                     $price = 0;
 
                     foreach ($row->details as $item) {
-                        $price = ($item->order->route->price ?? 0) * $item->order->qty;
+                        if ($item->order && $item->order->route) {
+                            $price += ($item->order->route->price ?? 0) * ($item->order->qty ?? 0);
+                        }
                     }
 
                     $this->totalPriceInvoice = $price;
@@ -201,14 +203,27 @@ class InvoiceController extends Controller
                     return '' . number_format($price, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
-                    $customer = $row->details->first()->order->customer;
+                    $ppn = 0;
+                    $firstDetail = $row->details->first();
 
-                    return number_format($this->totalPriceInvoice * ($customer->ppn / 100), 0, '.', ',');
+                    if ($firstDetail && $firstDetail->order && $firstDetail->order->customer) {
+                        $customer = $firstDetail->order->customer;
+                        $ppn = $this->totalPriceInvoice * ($customer->ppn / 100);
+                    }
+
+                    return number_format($ppn, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    $customer = $row->details->first()->order->customer;
+                    $total = 0;
+                    $firstDetail = $row->details->first();
 
-                    return '' . number_format($this->totalPriceInvoice * ($customer->ppn / 100) + $this->totalPriceInvoice, 0, ',', '.');
+                    if ($firstDetail && $firstDetail->order && $firstDetail->order->customer) {
+                        $customer = $firstDetail->order->customer;
+                        $ppn = $this->totalPriceInvoice * ($customer->ppn / 100);
+                        $total = $ppn + $this->totalPriceInvoice;
+                    }
+
+                    return '' . number_format($total, 0, ',', '.');
                 })
 
                 ->addColumn('action', function ($row) {
@@ -278,7 +293,7 @@ class InvoiceController extends Controller
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
 
-                    if (isset($row->fleet->plateNumber)) {
+                    if ($row->fleet && isset($row->fleet->plateNumber)) {
                         $fleet = $row->fleet->plateNumber;
                     }
 
@@ -287,7 +302,7 @@ class InvoiceController extends Controller
                 ->editColumn('route.originLocation.name', function ($row) {
                     $origin = '';
 
-                    if (isset($row->route->originLocation->name)) {
+                    if ($row->route && $row->route->originLocation && isset($row->route->originLocation->name)) {
                         $origin = $row->route->originLocation->name;
                     }
 
@@ -297,7 +312,7 @@ class InvoiceController extends Controller
                 ->editColumn('orderType.name', function ($row) {
                     $type = '';
 
-                    if (isset($row->orderType->name)) {
+                    if ($row->orderType && isset($row->orderType->name)) {
                         $type = $row->orderType->name;
                     }
 
@@ -306,7 +321,7 @@ class InvoiceController extends Controller
                 ->editColumn('route.destinationLocation.name', function ($row) {
                     $destination = '';
 
-                    if (isset($row->route->destinationLocation->name)) {
+                    if ($row->route && $row->route->destinationLocation && isset($row->route->destinationLocation->name)) {
                         $destination = $row->route->destinationLocation->name;
                     }
 
