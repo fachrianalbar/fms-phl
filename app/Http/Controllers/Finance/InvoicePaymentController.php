@@ -52,7 +52,7 @@ class InvoicePaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -65,7 +65,7 @@ class InvoicePaymentController extends Controller
         $data = $this->invoiceSvc->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -74,6 +74,10 @@ class InvoicePaymentController extends Controller
         $userBank = $this->userBankSvc->findCompany();
 
         foreach ($data->details as $item) {
+            if (!$item->order || !$item->order->route) {
+                continue;
+            }
+
             $datas = $item->order->route->routeDetail;
 
             $allowance = 0;
@@ -127,7 +131,7 @@ class InvoicePaymentController extends Controller
             $status = 2;
         }
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -145,7 +149,7 @@ class InvoicePaymentController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'amount' => ['required', 'numeric', 'max:'.(int) $request->totalPrice],
+            'amount' => ['required', 'numeric', 'max:' . (int) $request->totalPrice],
             'paymentDate' => ['required'],
             'userBankCode' => ['required'],
         ], [
@@ -153,7 +157,7 @@ class InvoicePaymentController extends Controller
             'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -162,11 +166,11 @@ class InvoicePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -191,11 +195,15 @@ class InvoicePaymentController extends Controller
                 })
                 ->addColumn('totalPrice', function ($row) {
                     foreach ($row->details as $item) {
+                        if (!$item->order || !$item->order->route) {
+                            continue;
+                        }
+
                         $datas = $item->order->route->routeDetail;
 
                         $allowance = 0;
                         foreach ($datas as $items) {
-                            if ($items->costComponent->type == 'Allowance') {
+                            if ($items->costComponent && $items->costComponent->type == 'Allowance') {
                                 if ($items->amount != 0) {
                                     $allowance += $items->amount;
                                 }
@@ -230,13 +238,13 @@ class InvoicePaymentController extends Controller
                         $this->totalPriceInvoice += $cost;
                     }
 
-                    return ''.number_format($this->totalPriceInvoice, 0, ',', '.');
+                    return '' . number_format($this->totalPriceInvoice, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
                     return number_format($this->totalPriceInvoice * 0.11, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    return ''.number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
+                    return '' . number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
                 })
                 ->addColumn('statusPayment', function ($row) {
                     $status = '';
@@ -275,7 +283,7 @@ class InvoicePaymentController extends Controller
 
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
-                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->id).'"><i class="icon-credit-card"></i></a></li>
+                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-credit-card"></i></a></li>
                                     </ul>';
 
                     return $btn;
