@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Models\Data\Route;
-use App\Models\Data\TonaseBonus;
 use App\Services\Bank\UserBankService;
 use App\Services\Finance\InvoicePaymentService;
 use App\Services\Finance\InvoiceService;
@@ -73,51 +71,9 @@ class InvoicePaymentController extends Controller
         $order = $this->invoiceSvc->getOrderDetail($id);
         $userBank = $this->userBankSvc->findCompany();
 
-        foreach ($data->details as $item) {
-            if (!$item->order || !$item->order->route) {
-                continue;
-            }
-
-            $datas = $item->order->route->routeDetail;
-
-            $allowance = 0;
-            foreach ($datas as $items) {
-                if ($items->costComponent->type == 'Allowance') {
-                    if ($items->amount != 0) {
-                        $allowance += $items->amount;
-                    }
-
-                    if ($items->percentage) {
-                        $route = Route::where('code', $items->routeCode)->first();
-
-                        $allowance += $route->price * ($items->percentage / 100);
-                    }
-                }
-            }
-
-            $this->totalPrice += $allowance;
-
-            $tonaseBonus = TonaseBonus::where('min', '<=', $item->order->qty)
-                ->where('max', '>=', $item->order->qty)
-                ->first();
-
-            $bonus = 0;
-
-            if ($tonaseBonus) {
-                $bonus = number_format($tonaseBonus->value, 0, '.', ',');
-                $this->totalPrice += $tonaseBonus->value;
-            }
-
-            $cost = 0;
-            if (isset($item->order->cost)) {
-                foreach ($item->order->cost as $costs) {
-                    $cost += $costs->nominal;
-                }
-            }
-            $this->totalPrice += $cost;
-        }
-
-        $totalPrice = $this->totalPrice * 0.11 + $this->totalPrice;
+        // Use the invoice service to get the invoiceAmount (which already includes PPN)
+        $totals = $this->invoiceSvc->calculateInvoiceAmount($data);
+        $totalPrice = $totals['total'];
 
         if (count($data->payments) > 0) {
             foreach ($data->payments as $item) {
@@ -148,12 +104,21 @@ class InvoicePaymentController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $invoice = $this->invoiceSvc->getById($id);
+        $totalsInvoice = $this->invoiceSvc->calculateInvoiceAmount($invoice);
+        $invoiceAmount = $totalsInvoice['total'];
+        $totalPaid = 0;
+        foreach ($invoice->payments as $p) {
+            $totalPaid += $p->amount;
+        }
+        $remaining = (int) ($invoiceAmount - $totalPaid);
+
         $validator = Validator::make($request->all(), [
-            'amount' => ['required', 'numeric', 'max:' . (int) $request->totalPrice],
+            'amount' => ['required', 'numeric', 'max:' . $remaining],
             'paymentDate' => ['required'],
             'userBankCode' => ['required'],
         ], [
-            'amount.max' => 'The payment amount cannot be greater than the total price.',
+            'amount.max' => 'The payment amount cannot be greater than the remaining invoice amount.',
             'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
@@ -186,109 +151,57 @@ class InvoicePaymentController extends Controller
                 })
                 ->editColumn('customer.name', function ($row) {
                     $customer = '';
-
                     if (isset($row->customer->name)) {
                         $customer = $row->customer->name;
                     }
-
                     return $customer;
                 })
                 ->addColumn('totalPrice', function ($row) {
-                    foreach ($row->details as $item) {
-                        if (!$item->order || !$item->order->route) {
-                            continue;
-                        }
-
-                        $datas = $item->order->route->routeDetail;
-
-                        $allowance = 0;
-                        foreach ($datas as $items) {
-                            if ($items->costComponent && $items->costComponent->type == 'Allowance') {
-                                if ($items->amount != 0) {
-                                    $allowance += $items->amount;
-                                }
-
-                                if ($items->percentage) {
-                                    $route = Route::where('code', $items->routeCode)->first();
-
-                                    $allowance += $route->price * ($items->percentage / 100);
-                                }
-                            }
-                        }
-
-                        $this->totalPriceInvoice += $allowance;
-
-                        $tonaseBonus = TonaseBonus::where('min', '<=', $item->order->qty)
-                            ->where('max', '>=', $item->order->qty)
-                            ->first();
-
-                        $bonus = 0;
-
-                        if ($tonaseBonus) {
-                            $bonus = number_format($tonaseBonus->value, 0, '.', ',');
-                            $this->totalPriceInvoice += $tonaseBonus->value;
-                        }
-
-                        $cost = 0;
-                        if (isset($item->order->cost)) {
-                            foreach ($item->order->cost as $costs) {
-                                $cost += $costs->nominal;
-                            }
-                        }
-                        $this->totalPriceInvoice += $cost;
-                    }
-
-                    return '' . number_format($this->totalPriceInvoice, 0, ',', '.');
+                    // invoiceAmount now stores SUBTOTAL (without PPN)
+                    $subtotal = (float) ($row->invoiceAmount ?? 0);
+                    return '' . number_format($subtotal, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
-                    return number_format($this->totalPriceInvoice * 0.11, 0, '.', ',');
+                    $ppnAmount = (float) ($row->ppnAmount ?? 0);
+                    return number_format($ppnAmount, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    return '' . number_format($this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice, 0, ',', '.');
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    return '' . number_format($totalBilling, 0, ',', '.');
                 })
                 ->addColumn('statusPayment', function ($row) {
                     $status = '';
-                    $totalPriceInvoice = $this->totalPriceInvoice * 0.11 + $this->totalPriceInvoice;
-
-                    $totalPrice = 0;
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    $totalPaid = 0;
                     foreach ($row->payments as $item) {
-                        $totalPrice += $item->amount;
+                        $totalPaid += $item->amount;
                     }
-
-                    if ($totalPrice < $totalPriceInvoice) {
+                    if ($totalPaid < $totalBilling && $totalPaid > 0) {
                         $status = 'Half Payment';
                     }
-
-                    if ($totalPrice == $totalPriceInvoice) {
+                    if ($totalPaid == $totalBilling && $totalPaid > 0) {
                         $status = 'Full Payment';
                     }
-
                     if (count($row->payments) == 0) {
                         $status = 'No Payment';
                     }
-
                     return $status;
                 })
                 ->addColumn('totalPayment', function ($row) {
                     $totalPayment = 0;
-
                     if (count($row->payments) > 0) {
                         foreach ($row->payments as $item) {
                             $totalPayment += $item->amount;
                         }
                     }
-
                     return number_format($totalPayment, 0, '.', ',');
                 })
-
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
                                         <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-credit-card"></i></a></li>
                                     </ul>';
-
                     return $btn;
                 })
-
                 ->rawColumns(['action', 'orderCount', 'totalPrice', 'ppn', 'totalBilling', 'customer.name', 'statusPayment', 'totalPayment'])
                 ->toJson();
         }

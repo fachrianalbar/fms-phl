@@ -93,6 +93,17 @@
                 </div>
             </div>
 
+            <div class="row mt-2">
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="usePpn" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="usePpn" name="usePpn"
+                            value="1" checked>
+                        <label class="form-check-label" for="usePpn">{{ __('menu_invoice.use_ppn') }}</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="row mt-4">
                 <hr>
             </div>

@@ -9,14 +9,16 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoice', function (Blueprint $table) {
-            $table->integer('invoiceAmount')->nullable()->after('notes');
+            $table->integer('ppnAmount')->nullable()->after('invoiceAmount');
+            $table->boolean('usePpn')->default(true)->after('ppnAmount');
         });
     }
 
     public function down(): void
     {
         Schema::table('invoice', function (Blueprint $table) {
-            $table->dropColumn('invoiceAmount');
+            $table->dropColumn('ppnAmount');
+            $table->dropColumn('usePpn');
         });
     }
 };

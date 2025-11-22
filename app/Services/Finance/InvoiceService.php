@@ -3,6 +3,7 @@
 namespace App\Services\Finance;
 
 use App\Helpers\GenerateCode;
+// Removed unused imports: TonaseBonus, DataRoute
 use App\Models\Finance\Invoice;
 use App\Models\Finance\InvoiceDetail;
 use App\Models\Master\Customer;
@@ -77,6 +78,8 @@ class InvoiceService
 
     public function store($request, $title, $selectedOrders)
     {
+        $usePpn = (bool) ($request->input('usePpn') ?? false);
+
         $data = $this->service->create([
             'code' => GenerateCode::generateCode('INV'),
             'customerCode' => $request->customerCode,
@@ -86,6 +89,7 @@ class InvoiceService
             'invoiceDate' => $request->invoiceDate,
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
             'notes' => $request->notes,
+            'usePpn' => $usePpn,
         ]);
 
         if (isset($request->order)) {
@@ -103,6 +107,12 @@ class InvoiceService
                 $this->logActivity('Invoice Detail', $detail, 'Create');
             }
         }
+        // Update invoiceAmount (subtotal) and ppnAmount after creating invoice details
+        $totals = $this->calculateInvoiceAmount($data);
+        $this->service->where('id', $data->id)->update([
+            'invoiceAmount' => $totals['subtotal'],
+            'ppnAmount' => $totals['ppn'],
+        ]);
         $this->logActivity($title, $data, 'Create');
     }
 
@@ -117,6 +127,15 @@ class InvoiceService
             'invoiceDate' => $request->invoiceDate,
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
             'notes' => $request->notes,
+            'usePpn' => (bool) ($request->input('usePpn') ?? false),
+        ]);
+
+        // Recalculate invoice amount after update
+        $data = $this->getById($id);
+        $totals = $this->calculateInvoiceAmount($data);
+        $this->service->where('id', $data->id)->update([
+            'invoiceAmount' => $totals['subtotal'],
+            'ppnAmount' => $totals['ppn'],
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
@@ -178,6 +197,12 @@ class InvoiceService
 
                 $this->logActivity('Invoice Detail', $detail, 'Create');
             }
+            // update invoice and ppn amounts after adding details
+            $totals = $this->calculateInvoiceAmount($invoice);
+            $this->service->where('id', $invoice->id)->update([
+                'invoiceAmount' => $totals['subtotal'],
+                'ppnAmount' => $totals['ppn'],
+            ]);
         }
     }
 
@@ -194,6 +219,70 @@ class InvoiceService
         $this->logActivity('Invoice Detail', $data, 'Delete');
 
         $this->invoiceDetail->where('orderCode', $order->code)->delete();
+
+        // update invoice amount after removing detail
+        $invoice = $this->getById($data->invoiceCode ?? null);
+        if ($invoice) {
+            $totals = $this->calculateInvoiceAmount($invoice);
+            $this->service->where('id', $invoice->id)->update([
+                'invoiceAmount' => $totals['subtotal'],
+                'ppnAmount' => $totals['ppn'],
+            ]);
+        }
+    }
+
+    /**
+     * Calculate invoice total based on details, allowances, tonase bonus, order costs and customer ppn.
+     */
+    public function calculateInvoiceAmount($invoiceOrId)
+    {
+        $invoice = $invoiceOrId instanceof \App\Models\Finance\Invoice ? $invoiceOrId : $this->getById($invoiceOrId);
+
+        if (! $invoice) {
+            return 0;
+        }
+
+        $subtotal = 0;
+
+        foreach ($invoice->details as $detail) {
+            // Prefer using loaded relation to avoid extra queries
+            $order = ($detail->order ?? null);
+            if (! $order) {
+                $order = $this->order->where('code', $detail->orderCode)->with('cost')->first();
+            }
+            if (! $order) {
+                continue;
+            }
+
+            $routeAmount = (float) ($order->routeAmount ?? 0);
+            $qty = (float) ($order->qty ?? 0);
+            $subtotal += $routeAmount * $qty;
+
+            // add On Charge order costs
+            $onChargeCost = 0;
+            if (isset($order->cost)) {
+                foreach ($order->cost as $c) {
+                    if (isset($c->type) && strtolower($c->type) === 'on charge') {
+                        $onChargeCost += (int) $c->nominal;
+                    }
+                }
+            }
+            $subtotal += $onChargeCost;
+        }
+
+        $ppn = 0;
+        $usePpn = $invoice->usePpn ?? true; // default true if not set
+        if ($usePpn && $invoice->customer && isset($invoice->customer->ppn)) {
+            $ppn = $subtotal * ($invoice->customer->ppn / 100);
+        }
+
+        $total = (int) round($subtotal + $ppn);
+
+        return [
+            'subtotal' => (int) round($subtotal),
+            'ppn' => (int) round($ppn),
+            'total' => $total,
+        ];
     }
 
     public function invoiceNumberFormat($id, $invoiceDate = null)

@@ -19,6 +19,7 @@ return [
     'overdue_date' => 'Overdue Date',
     'billing_address' => 'Billing Address',
     'notes' => 'Notes',
+    'use_ppn' => 'Use PPN',
     'data_pic' => 'PIC Data',
     'add' => 'Add',
     'edit' => 'Edit',

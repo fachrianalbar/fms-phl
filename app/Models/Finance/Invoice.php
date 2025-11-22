@@ -25,6 +25,8 @@ class Invoice extends Model
         'overdueDate',
         'notes',
         'invoiceAmount',
+        'ppnAmount',
+        'usePpn',
         'customerCode',
         'status',
     ];

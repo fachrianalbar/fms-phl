@@ -190,39 +190,16 @@ class InvoiceController extends Controller
                 })
 
                 ->addColumn('price', function ($row) {
-                    $price = 0;
-
-                    foreach ($row->details as $item) {
-                        if ($item->order && $item->order->route) {
-                            $price += ($item->order->route->price ?? 0) * ($item->order->qty ?? 0);
-                        }
-                    }
-
-                    $this->totalPriceInvoice = $price;
-
-                    return '' . number_format($price, 0, ',', '.');
+                    // invoiceAmount stores subtotal (without PPN)
+                    $subtotal = (float) ($row->invoiceAmount ?? 0);
+                    return '' . number_format($subtotal, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
-                    $ppn = 0;
-                    $firstDetail = $row->details->first();
-
-                    if ($firstDetail && $firstDetail->order && $firstDetail->order->customer) {
-                        $customer = $firstDetail->order->customer;
-                        $ppn = $this->totalPriceInvoice * ($customer->ppn / 100);
-                    }
-
-                    return number_format($ppn, 0, '.', ',');
+                    $ppnAmount = (float) ($row->ppnAmount ?? 0);
+                    return number_format($ppnAmount, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    $total = 0;
-                    $firstDetail = $row->details->first();
-
-                    if ($firstDetail && $firstDetail->order && $firstDetail->order->customer) {
-                        $customer = $firstDetail->order->customer;
-                        $ppn = $this->totalPriceInvoice * ($customer->ppn / 100);
-                        $total = $ppn + $this->totalPriceInvoice;
-                    }
-
+                    $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
                     return '' . number_format($total, 0, ',', '.');
                 })
 
@@ -266,7 +243,7 @@ class InvoiceController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'orderCount', 'ppn', 'totalBilling', 'customer.name', 'price'])
+                ->rawColumns(['action', 'orderCount', 'customer.name', 'price'])
                 ->toJson();
         }
     }

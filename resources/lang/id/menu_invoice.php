@@ -19,6 +19,7 @@ return [
     'overdue_date' => 'Tanggal Jatuh Tempo',
     'billing_address' => 'Alamat Penagihan',
     'notes' => 'Catatan',
+    'use_ppn' => 'Gunakan PPN',
     'data_pic' => 'Data PIC',
     'add' => 'Tambah',
     'edit' => 'Ubah',
