@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_order', function (Blueprint $table) {
+        Schema::create('order', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('shipmentNumber', 255)->unique()->nullable();
@@ -39,19 +39,19 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('customerCode')->references('code')->on('fms_customer')->onDelete('set null')->onUpdate('cascade');
-            $table->foreign('materialCode')->references('code')->on('fms_material')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('unitCode')->references('code')->on('fms_unit')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('fleetDriverCode')->references('code')->on('fms_fleet_driver')->onDelete('set null')->onUpdate('cascade');
-            $table->foreign('driverCode')->references('code')->on('fms_employee')->onDelete('set null')->onUpdate('cascade');
-            $table->foreign('routeCode')->references('code')->on('fms_route')->onDelete('set null')->onUpdate('cascade');
-            $table->foreign('fleetTypeCode')->references('code')->on('fms_fleet_type')->onDelete('set null')->onUpdate('cascade');
-            $table->foreign('fleetCode')->references('code')->on('fms_fleet')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('customerCode')->references('code')->on('customer')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('materialCode')->references('code')->on('material')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('unitCode')->references('code')->on('unit')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetDriverCode')->references('code')->on('fleet_driver')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('driverCode')->references('code')->on('employee')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('routeCode')->references('code')->on('route')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('fleetTypeCode')->references('code')->on('fleet_type')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('fleetCode')->references('code')->on('fleet')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_order');
+        Schema::dropIfExists('order');
     }
 };

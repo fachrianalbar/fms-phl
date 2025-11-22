@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_order_status', function (Blueprint $table) {
+        Schema::create('order_status', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->tinyInteger('code')->unique()->nullable();
             $table->string('name', 255)->nullable();
@@ -20,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_order_status');
+        Schema::dropIfExists('order_status');
     }
 };

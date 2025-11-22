@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_mutations', function (Blueprint $table) {
+        Schema::create('mutations', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('userBankCode', 30)->nullable();
@@ -22,13 +22,13 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('userBankCode')->references('code')->on('fms_user_bank')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('transactionTypeCode')->references('code')->on('fms_transaction_type')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('userBankCode')->references('code')->on('user_bank')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('transactionTypeCode')->references('code')->on('transaction_type')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_mutations');
+        Schema::dropIfExists('mutations');
     }
 };

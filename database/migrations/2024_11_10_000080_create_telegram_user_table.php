@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_telegram_user', function (Blueprint $table) {
+        Schema::create('telegram_user', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->nullable();
             $table->string('chatId', 50);
@@ -24,6 +24,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_telegram_user');
+        Schema::dropIfExists('telegram_user');
     }
 };

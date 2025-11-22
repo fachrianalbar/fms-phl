@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_activity_log', function (Blueprint $table) {
+        Schema::create('activity_log', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('log_name', 255)->nullable();
             $table->text('description');
@@ -31,6 +31,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_activity_log');
+        Schema::dropIfExists('activity_log');
     }
 };

@@ -26,8 +26,8 @@ class DashboardService
         return $this->fleet->select([
             'fleet.code',
             'fleet.plateNumber',
-            DB::raw('COUNT(DISTINCT fms_maintenance.code) as total'),
-            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price'),
+            DB::raw('COUNT(DISTINCT maintenance.code) as total'),
+            DB::raw('SUM(item.price * maintenance_detail.qty) as price'),
         ])
             ->leftjoin('maintenance', 'maintenance.fleetCode', 'fleet.code')
             ->leftjoin('maintenance_detail', 'maintenance_detail.maintenanceCode', 'maintenance.code')
@@ -50,7 +50,7 @@ class DashboardService
             ->join('employee', 'employee.code', '=', 'o1.driverCode')
             ->join(DB::raw('(
             SELECT fleetCode, MAX(created_at) as latest 
-            FROM fms_order 
+            FROM `order` 
             GROUP BY fleetCode
         ) as `o2`'), function ($join) {
                 $join->on('o1.fleetCode', '=', DB::raw('o2.fleetCode'))

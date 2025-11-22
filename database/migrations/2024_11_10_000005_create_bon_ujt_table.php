@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_bon_ujt', function (Blueprint $table) {
+        Schema::create('bon_ujt', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('bon', 50)->nullable();
@@ -23,12 +23,12 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('fleetTypeCode')->references('code')->on('fms_fleet_type')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetTypeCode')->references('code')->on('fleet_type')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_bon_ujt');
+        Schema::dropIfExists('bon_ujt');
     }
 };

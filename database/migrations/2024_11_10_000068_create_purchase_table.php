@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_purchase', function (Blueprint $table) {
+        Schema::create('purchase', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->nullable();
             $table->date('date')->nullable();
@@ -26,14 +26,14 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('supplierCode')->references('code')->on('fms_supplier')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('warehouseCode')->references('code')->on('fms_warehouse')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('userBankCode')->references('code')->on('fms_user_bank')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('supplierCode')->references('code')->on('supplier')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('warehouseCode')->references('code')->on('warehouse')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('userBankCode')->references('code')->on('user_bank')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_purchase');
+        Schema::dropIfExists('purchase');
     }
 };

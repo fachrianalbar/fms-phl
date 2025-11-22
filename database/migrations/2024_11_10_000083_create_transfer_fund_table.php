@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_transfer_fund', function (Blueprint $table) {
+        Schema::create('transfer_fund', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('mutationCode', 30)->nullable();
@@ -23,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_transfer_fund');
+        Schema::dropIfExists('transfer_fund');
     }
 };

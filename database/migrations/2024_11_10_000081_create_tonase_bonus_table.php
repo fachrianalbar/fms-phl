@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_tonase_bonus', function (Blueprint $table) {
+        Schema::create('tonase_bonus', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->unsignedFloat('min')->nullable();
@@ -22,6 +22,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_tonase_bonus');
+        Schema::dropIfExists('tonase_bonus');
     }
 };

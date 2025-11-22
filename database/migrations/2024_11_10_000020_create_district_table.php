@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_district', function (Blueprint $table) {
+        Schema::create('district', function (Blueprint $table) {
             $table->increments('id');
             $table->string('code', 30)->nullable();
             $table->string('name', 100);
@@ -17,12 +17,12 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('city_id')->references('id')->on('fms_city')->onDelete('restrict')->onUpdate('restrict');
+            $table->foreign('city_id')->references('id')->on('city')->onDelete('restrict')->onUpdate('restrict');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_district');
+        Schema::dropIfExists('district');
     }
 };

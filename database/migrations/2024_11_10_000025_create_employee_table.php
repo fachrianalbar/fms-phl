@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_employee', function (Blueprint $table) {
+        Schema::create('employee', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->text('name')->nullable();
@@ -33,16 +33,16 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('positionCode')->references('code')->on('fms_position')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('provinceId')->references('id')->on('fms_province')->onDelete('restrict')->onUpdate('restrict');
-            $table->foreign('cityId')->references('id')->on('fms_city')->onDelete('restrict')->onUpdate('restrict');
-            $table->foreign('districtId')->references('id')->on('fms_district')->onDelete('restrict')->onUpdate('restrict');
-            $table->foreign('bankCode')->references('code')->on('fms_bank_account')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('positionCode')->references('code')->on('position')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('provinceId')->references('id')->on('province')->onDelete('restrict')->onUpdate('restrict');
+            $table->foreign('cityId')->references('id')->on('city')->onDelete('restrict')->onUpdate('restrict');
+            $table->foreign('districtId')->references('id')->on('district')->onDelete('restrict')->onUpdate('restrict');
+            $table->foreign('bankCode')->references('code')->on('bank_account')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_employee');
+        Schema::dropIfExists('employee');
     }
 };

@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_fleet', function (Blueprint $table) {
+        Schema::create('fleet', function (Blueprint $table) {
             $table->string('id', 50)->primary();
             $table->string('code', 30)->nullable();
             $table->string('plateNumber', 20)->nullable();
@@ -32,15 +32,15 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->unique(['plateNumber', 'deviceName', 'code']);
-            $table->foreign('fleetBrandCode')->references('code')->on('fms_fleet_brand')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('fleetTypeCode')->references('code')->on('fms_fleet_type')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('fleetCompanyCode')->references('code')->on('fms_fleet_company')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('driverCode')->references('code')->on('fms_employee')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('fleetBrandCode')->references('code')->on('fleet_brand')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetTypeCode')->references('code')->on('fleet_type')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetCompanyCode')->references('code')->on('fleet_company')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('driverCode')->references('code')->on('employee')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_fleet');
+        Schema::dropIfExists('fleet');
     }
 };

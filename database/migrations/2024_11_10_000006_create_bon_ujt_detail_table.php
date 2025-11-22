@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_bon_ujt_detail', function (Blueprint $table) {
+        Schema::create('bon_ujt_detail', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('bonUjtCode', 30)->nullable();
@@ -17,13 +17,13 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('bonUjtCode')->references('code')->on('fms_bon_ujt')->onDelete('cascade')->onUpdate('cascade');
-            $table->foreign('orderCode')->references('code')->on('fms_order')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('bonUjtCode')->references('code')->on('bon_ujt')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('orderCode')->references('code')->on('order')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_bon_ujt_detail');
+        Schema::dropIfExists('bon_ujt_detail');
     }
 };

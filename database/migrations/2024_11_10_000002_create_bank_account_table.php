@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_bank_account', function (Blueprint $table) {
+        Schema::create('bank_account', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('bankCode', 10)->nullable();
@@ -23,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_bank_account');
+        Schema::dropIfExists('bank_account');
     }
 };

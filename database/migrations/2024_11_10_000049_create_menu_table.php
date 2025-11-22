@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_menu', function (Blueprint $table) {
+        Schema::create('menu', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->nullable();
             $table->text('name')->nullable();
@@ -25,6 +25,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_menu');
+        Schema::dropIfExists('menu');
     }
 };

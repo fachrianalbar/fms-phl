@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_due_date', function (Blueprint $table) {
+        Schema::create('due_date', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->integer('days')->nullable();
@@ -20,6 +20,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_due_date');
+        Schema::dropIfExists('due_date');
     }
 };

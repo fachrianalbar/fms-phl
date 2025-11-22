@@ -61,7 +61,7 @@ class DashboardController extends Controller
 
         // Customer dengan order terbanyak
         $topCustomers = Order::join('customer', 'order.customerCode', '=', 'customer.code')
-            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(fms_order.created_at) as latest_order'))
+            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(`order`.created_at) as latest_order'))
             ->when($currentYear, function ($query) use ($currentYear) {
                 return $query->whereYear('order.created_at', $currentYear);
             })
@@ -75,7 +75,7 @@ class DashboardController extends Controller
 
         // Fleet dengan order terbanyak
         $topFleets = Order::join('fleet', 'order.fleetCode', '=', 'fleet.code')
-            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(fms_order.created_at) as latest_order'))
+            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(`order`.created_at) as latest_order'))
             ->when($currentYear, function ($query) use ($currentYear) {
                 return $query->whereYear('order.created_at', $currentYear);
             })
@@ -95,7 +95,7 @@ class DashboardController extends Controller
                 'invoice.invoiceDate',
                 'invoice.overdueDate',
                 'customer.name as customer_name',
-                DB::raw('DATEDIFF(fms_invoice.overdueDate, CURDATE()) as days_remaining'),
+                DB::raw('DATEDIFF(invoice.overdueDate, CURDATE()) as days_remaining'),
             )
             ->join('customer', 'invoice.customerCode', '=', 'customer.code')
             ->orderBy('invoice.overdueDate', 'asc')
@@ -132,7 +132,7 @@ class DashboardController extends Controller
             $join->on('order_status.code', '=', 'order.code')
                 ->whereYear('order.created_at', $currentYear);
         })
-            ->select('order_status.name', 'order_status.code', DB::raw('COUNT(fms_order.status) as total'))
+            ->select('order_status.name', 'order_status.code', DB::raw('COUNT(`order`.status) as total'))
             ->groupBy('order_status.name', 'order_status.code')
             ->orderBy('order_status.code')
             ->get();
@@ -164,7 +164,7 @@ class DashboardController extends Controller
 
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view.'home', [
+        return view($this->view . 'home', [
             'monthlyOrders' => $monthlyOrders,
             'monthlyOrderData' => $monthlyOrderData,
             'monthlyPurchases' => $monthlyPurchases,
@@ -285,7 +285,7 @@ class DashboardController extends Controller
         $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
         $mpdf->WriteHTML(
-            view($this->view.'report.fleet-maintenance-pdf')
+            view($this->view . 'report.fleet-maintenance-pdf')
                 ->with('data', $data->get())
         );
 
@@ -304,7 +304,7 @@ class DashboardController extends Controller
         $month = $request->get('month');
 
         $query = Order::join('customer', 'order.customerCode', '=', 'customer.code')
-            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(fms_order.created_at) as latest_order'))
+            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(`order`.created_at) as latest_order'))
             ->whereYear('order.created_at', $year);
 
         if ($month) {
@@ -326,7 +326,7 @@ class DashboardController extends Controller
         $month = $request->get('month');
 
         $query = Order::join('fleet', 'order.fleetCode', '=', 'fleet.code')
-            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(fms_order.created_at) as latest_order'))
+            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(`order`.created_at) as latest_order'))
             ->whereYear('order.created_at', $year);
 
         if ($month) {

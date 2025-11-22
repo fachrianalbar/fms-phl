@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_fleet_driver', function (Blueprint $table) {
+        Schema::create('fleet_driver', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique();
             $table->string('fleetTypeCode', 20)->nullable();
@@ -21,13 +21,13 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('fleetTypeCode')->references('code')->on('fms_fleet_type')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('fleetCode')->references('code')->on('fms_fleet')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetTypeCode')->references('code')->on('fleet_type')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('fleetCode')->references('code')->on('fleet')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_fleet_driver');
+        Schema::dropIfExists('fleet_driver');
     }
 };

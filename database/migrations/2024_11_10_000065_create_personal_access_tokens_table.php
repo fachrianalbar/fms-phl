@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_personal_access_tokens', function (Blueprint $table) {
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('tokenable_type', 255);
             $table->unsignedBigInteger('tokenable_id');
@@ -26,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_personal_access_tokens');
+        Schema::dropIfExists('personal_access_tokens');
     }
 };

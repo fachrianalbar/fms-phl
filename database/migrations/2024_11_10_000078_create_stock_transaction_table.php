@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_stock_transaction', function (Blueprint $table) {
+        Schema::create('stock_transaction', function (Blueprint $table) {
             $table->char('id', 36)->primary();
             $table->string('code', 30)->nullable();
             $table->date('date')->nullable();
@@ -23,13 +23,13 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('itemCode')->references('code')->on('fms_item')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('warehouseCode')->references('code')->on('fms_warehouse')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('itemCode')->references('code')->on('item')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('warehouseCode')->references('code')->on('warehouse')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_stock_transaction');
+        Schema::dropIfExists('stock_transaction');
     }
 };

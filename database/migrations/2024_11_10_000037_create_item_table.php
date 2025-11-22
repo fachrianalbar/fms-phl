@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_item', function (Blueprint $table) {
+        Schema::create('item', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('name', 100)->nullable();
@@ -24,15 +24,15 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->unique('id');
-            $table->foreign('categoryCode')->references('code')->on('fms_item_category')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('warehouseCode')->references('code')->on('fms_warehouse')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('unitCode')->references('code')->on('fms_unit')->onDelete('restrict')->onUpdate('cascade');
-            $table->foreign('supplierCode')->references('code')->on('fms_supplier')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('categoryCode')->references('code')->on('item_category')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('warehouseCode')->references('code')->on('warehouse')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('unitCode')->references('code')->on('unit')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('supplierCode')->references('code')->on('supplier')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_item');
+        Schema::dropIfExists('item');
     }
 };

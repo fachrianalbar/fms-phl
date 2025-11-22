@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_cache_locks', function (Blueprint $table) {
+        Schema::create('cache_locks', function (Blueprint $table) {
             $table->string('key', 255)->primary();
             $table->string('owner', 255);
             $table->integer('expiration');
@@ -17,6 +17,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_cache_locks');
+        Schema::dropIfExists('cache_locks');
     }
 };

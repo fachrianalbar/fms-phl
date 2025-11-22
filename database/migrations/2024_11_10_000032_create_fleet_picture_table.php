@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_fleet_picture', function (Blueprint $table) {
+        Schema::create('fleet_picture', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('fleetCode', 30)->nullable();
@@ -16,12 +16,12 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
 
-            $table->foreign('fleetCode')->references('code')->on('fms_fleet')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('fleetCode')->references('code')->on('fleet')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_fleet_picture');
+        Schema::dropIfExists('fleet_picture');
     }
 };

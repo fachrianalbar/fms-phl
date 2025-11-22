@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_invoice', function (Blueprint $table) {
+        Schema::create('invoice', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('invoiceNumber', 100)->nullable();
@@ -22,12 +22,12 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('customerCode')->references('code')->on('fms_customer')->onDelete('set null')->onUpdate('cascade');
+            $table->foreign('customerCode')->references('code')->on('customer')->onDelete('set null')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_invoice');
+        Schema::dropIfExists('invoice');
     }
 };

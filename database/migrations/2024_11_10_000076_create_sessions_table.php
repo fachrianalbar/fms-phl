@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_sessions', function (Blueprint $table) {
+        Schema::create('sessions', function (Blueprint $table) {
             $table->string('id', 255)->primary();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->string('ip_address', 45)->nullable();
@@ -23,6 +23,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_sessions');
+        Schema::dropIfExists('sessions');
     }
 };

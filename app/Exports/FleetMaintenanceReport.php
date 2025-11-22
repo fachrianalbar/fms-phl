@@ -39,8 +39,8 @@ class FleetMaintenanceReport implements FromView, ShouldAutoSize, WithColumnForm
         $data = Fleet::select([
             'fleet.code',
             'fleet.plateNumber',
-            DB::raw('COUNT(DISTINCT fms_maintenance.code) as total'),
-            DB::raw('SUM(fms_item.price * fms_maintenance_detail.qty) as price'),
+            DB::raw('COUNT(DISTINCT maintenance.code) as total'),
+            DB::raw('SUM(item.price * maintenance_detail.qty) as price'),
         ])
             ->leftjoin('maintenance', 'maintenance.fleetCode', 'fleet.code')
             ->leftjoin('maintenance_detail', 'maintenance_detail.maintenanceCode', 'maintenance.code')

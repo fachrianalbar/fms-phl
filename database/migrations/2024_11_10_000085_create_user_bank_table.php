@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_user_bank', function (Blueprint $table) {
+        Schema::create('user_bank', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('accountNumber', 100)->nullable();
@@ -20,12 +20,12 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('bankCode')->references('code')->on('fms_bank_account')->onDelete('restrict')->onUpdate('cascade');
+            $table->foreign('bankCode')->references('code')->on('bank_account')->onDelete('restrict')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_user_bank');
+        Schema::dropIfExists('user_bank');
     }
 };

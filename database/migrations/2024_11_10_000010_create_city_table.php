@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_city', function (Blueprint $table) {
+        Schema::create('city', function (Blueprint $table) {
             $table->increments('id');
             $table->string('code', 30)->unique()->nullable();
             $table->string('name', 100);
@@ -18,12 +18,12 @@ return new class extends Migration
             $table->softDeletes();
             $table->string('provinceCode', 20)->nullable();
 
-            $table->foreign('province_id')->references('id')->on('fms_province');
+            $table->foreign('province_id')->references('id')->on('province');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_city');
+        Schema::dropIfExists('city');
     }
 };

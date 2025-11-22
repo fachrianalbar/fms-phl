@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_expense', function (Blueprint $table) {
+        Schema::create('expense', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 30)->unique()->nullable();
             $table->string('driverCode', 30)->nullable();
@@ -18,12 +18,12 @@ return new class extends Migration
             $table->timestamp('updated_at')->nullable();
             $table->softDeletes();
 
-            $table->foreign('mutationCode')->references('code')->on('fms_mutations')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('mutationCode')->references('code')->on('mutations')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_expense');
+        Schema::dropIfExists('expense');
     }
 };

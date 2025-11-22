@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('fms_order_cost', function (Blueprint $table) {
+        Schema::create('order_cost', function (Blueprint $table) {
             $table->string('id', 36)->primary();
             $table->string('code', 20)->nullable();
             $table->string('orderCode', 20)->nullable();
@@ -19,12 +19,12 @@ return new class extends Migration
             $table->timestamp('created_at')->nullable();
             $table->timestamp('updated_at')->nullable();
 
-            $table->foreign('orderCode')->references('code')->on('fms_order')->onDelete('cascade')->onUpdate('cascade');
+            $table->foreign('orderCode')->references('code')->on('order')->onDelete('cascade')->onUpdate('cascade');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('fms_order_cost');
+        Schema::dropIfExists('order_cost');
     }
 };
