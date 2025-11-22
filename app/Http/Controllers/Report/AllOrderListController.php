@@ -119,7 +119,7 @@ class AllOrderListController extends Controller
                 'customer',
                 'route.destinationLocation',
                 'material',
-                'route.routeDetail',
+                'route.routeDetail.costComponent',
                 'fleet',
                 'fleet.type',
             ])->orderBy('created_at', 'desc');

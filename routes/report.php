@@ -4,6 +4,7 @@ use App\Http\Controllers\Report\AllOrderListController;
 use App\Http\Controllers\Report\DriverSalaryController;
 use App\Http\Controllers\Report\DriverTonaseController;
 use App\Http\Controllers\Report\FleetTonaseController;
+use App\Http\Controllers\Report\OrderDetailController;
 use App\Http\Controllers\Report\ProfitLossController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,9 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('excel-fleet-tonase', [FleetTonaseController::class, 'excelFleetTonase'])->name('fleet-tonase.excel-fleet-tonase');
     Route::resource('all-order-list', AllOrderListController::class);
     Route::get('excel-all-order-list', [AllOrderListController::class, 'excelAllOrderList'])->name('all-order-list.excel-all-order-list');
+    Route::resource('order-detail', OrderDetailController::class);
+    Route::get('excel-order-detail', [OrderDetailController::class, 'excelOrderDetail'])->name('order-detail.excel-order-detail');
+    Route::get('pdf-order-detail', [OrderDetailController::class, 'pdfOrderDetail'])->name('order-detail.pdf-order-detail');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -28,6 +32,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('fleet-tonase', [FleetTonaseController::class, 'datatable'])->name('fleet-tonase');
     Route::get('driver-tonase', [DriverTonaseController::class, 'datatable'])->name('driver-tonase');
     Route::get('all-order-list', [AllOrderListController::class, 'datatable'])->name('all-order-list');
+    Route::get('order-detail', [OrderDetailController::class, 'datatable'])->name('order-detail');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
