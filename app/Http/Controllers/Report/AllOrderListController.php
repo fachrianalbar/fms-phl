@@ -98,7 +98,7 @@ class AllOrderListController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -277,16 +277,16 @@ class AllOrderListController extends Controller
                         $this->totalCost = $allowance;
                     }
 
-                    return ''.number_format($allowance, 0, ',', '.');
+                    return '' . number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return ''.number_format($row->route->price, 0, ',', '.');
+                            return '' . number_format($row->route->price, 0, ',', '.');
                         }
                     }
 
-                    return ''. 0;
+                    return '' . 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -295,10 +295,10 @@ class AllOrderListController extends Controller
                     if ($bonus) {
                         $this->totalCost += $bonus->value;
 
-                        return ''.number_format($bonus->value, 0, ',', '.');
+                        return '' . number_format($bonus->value, 0, ',', '.');
                     }
 
-                    return ''. 0;
+                    return '' . 0;
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -309,10 +309,10 @@ class AllOrderListController extends Controller
                     }
                     $this->totalCost += $cost;
 
-                    return ''.number_format($cost, 0, ',', '.');
+                    return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return ''.number_format($this->totalPrice, 0, ',', '.');
+                    return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
 
                 ->editColumn('orderDate', function ($row) {
