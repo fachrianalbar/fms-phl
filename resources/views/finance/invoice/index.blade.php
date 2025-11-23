@@ -4,7 +4,6 @@
 'firstSegment' => 'Finance',
 'secondSegment' => $title,
 ])
-
 @push('style')
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
@@ -16,6 +15,7 @@
     href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+
 <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
 @endpush
 
@@ -44,6 +44,7 @@
                             <th>{{ __('menu_invoice.price') }}</th>
                             <th>{{ __('menu_invoice.ppn') }}</th>
                             <th>{{ __('menu_invoice.total_billing') }}</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,6 +52,68 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Pembayaran Invoice -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="payment-form" method="POST" enctype="multipart/form-data">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Proses Pembayaran Invoice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="invoiceId" id="invoiceId">
+                    <input type="hidden" name="invoiceCode" id="invoiceCode">
+
+                    <div class="mb-3">
+                        <label class="form-label">Invoice Number</label>
+                        <input type="text" class="form-control" id="invoiceNumber" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Total Tagihan (Invoice Amount + PPN)</label>
+                        <input type="text" class="form-control" id="totalBilling" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="paymentDate">Tanggal Pembayaran <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="paymentDate" id="paymentDate" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="amount">Jumlah Pembayaran <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="amount" id="amount" readonly required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="userBankCode">Bank Tujuan <span class="text-danger">*</span></label>
+                        <select class="form-select" name="userBankCode" id="userBankCode" required>
+                            <option value="">Pilih Bank</option>
+                            <option value="" disabled>-- Loading data bank --</option>
+                        </select>
+                        <small class="form-text text-muted">Data bank akan dimuat otomatis</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="description">Keterangan</label>
+                        <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="paymentReceipt">Bukti Pembayaran</label>
+                        <input type="file" class="form-control" name="paymentReceipt" id="paymentReceipt">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary">Proses Pembayaran</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -117,6 +180,9 @@
                 {
                     "data": 'totalBilling'
                 },
+                {
+                    "data": 'status'
+                },
             ],
             "columnDefs": [{
                     "searchable": false,
@@ -151,5 +217,95 @@
             }
         });
     }
+
+    // Load bank data saat halaman dimuat
+    $(document).ready(function() {
+        loadBankData();
+    });
+
+    function loadBankData() {
+        $.ajax({
+            url: "{{ route('api.user-bank.company') }}",
+            type: "GET",
+            success: function(response) {
+                console.log('Bank data loaded:', response);
+                let options = '<option value="">Pilih Bank</option>';
+                if (response && response.length > 0) {
+                    response.forEach(function(bank) {
+                        let bankLabel = bank.bank_name || 'Unknown Bank';
+                        options += `<option value="${bank.code}">${bankLabel} - ${bank.account_number} (${bank.account_name})</option>`;
+                    });
+                } else {
+                    console.warn('Tidak ada data bank yang ditemukan');
+                    options += '<option value="" disabled>Tidak ada data bank</option>';
+                }
+                $('#userBankCode').html(options);
+            },
+            error: function(xhr) {
+                console.error('Gagal memuat data bank:', xhr.status, xhr.statusText);
+                console.error('Response:', xhr.responseText);
+                let options = '<option value="">Pilih Bank</option>';
+                options += '<option value="" disabled>Error memuat data</option>';
+                $('#userBankCode').html(options);
+            }
+        });
+    }
+
+    // Handle tombol pembayaran
+    $(document).on('click', '.btn-payment', function() {
+        var invoiceId = $(this).data('id');
+        var invoiceCode = $(this).data('invoice-code');
+        var invoiceNumber = $(this).data('invoice-number');
+        var total = $(this).data('total');
+
+        $('#invoiceId').val(invoiceId);
+        $('#invoiceCode').val(invoiceCode);
+        $('#invoiceNumber').val(invoiceNumber);
+        $('#totalBilling').val(new Intl.NumberFormat('id-ID').format(total));
+        $('#amount').val(total);
+        $('#paymentDate').val(new Date().toISOString().split('T')[0]);
+        $('#description').val('');
+        $('#paymentReceipt').val('');
+
+        $('#paymentModal').modal('show');
+    });
+
+    // Handle submit form pembayaran
+    $('#payment-form').on('submit', function(e) {
+        e.preventDefault();
+
+        var formData = new FormData(this);
+        var invoiceId = $('#invoiceId').val();
+        var url = "{{ route('finance.invoice.index') }}/" + invoiceId + "/payment";
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                $('#paymentModal').modal('hide');
+                swal({
+                    title: "Berhasil!",
+                    text: "Pembayaran berhasil diproses",
+                    icon: "success",
+                }).then(function() {
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                var errorMsg = 'Terjadi kesalahan saat memproses pembayaran';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                swal({
+                    title: "Gagal!",
+                    text: errorMsg,
+                    icon: "error",
+                });
+            }
+        });
+    });
 </script>
 @endpush

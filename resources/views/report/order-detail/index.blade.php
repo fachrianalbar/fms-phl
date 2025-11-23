@@ -81,13 +81,13 @@
                 </div>
 
                 <a href="{{ route($view . 'excel-order-detail') }}" target="_blank" id="export-excel"
-                    class="btn btn-icon btn-sm bg-success-subtle">
-                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    class="btn btn-sm btn-success">
+                    <i class="mdi mdi-file-excel"></i> Export Excel
                 </a>
 
                 <a href="{{ route($view . 'pdf-order-detail') }}" target="_blank" id="export-pdf"
-                    class="btn btn-icon btn-sm bg-danger-subtle">
-                    <i class="mdi mdi-file-pdf fs-14 text-danger"></i>
+                    class="btn btn-sm btn-danger">
+                    <i class="mdi mdi-file-pdf"></i> Export PDF
                 </a>
             </div>
         </div>

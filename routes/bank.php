@@ -30,3 +30,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('list-user-bank', [ConfigBankController::class, 'listUserBank'])->name('list-user-bank');
 });
+
+Route::prefix('api')->name('api.')->group(function () {
+    Route::get('user-bank/company', [UserBankController::class, 'getCompanyBanks'])->name('user-bank.company');
+});

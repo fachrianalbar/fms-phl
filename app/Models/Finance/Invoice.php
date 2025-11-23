@@ -16,6 +16,10 @@ class Invoice extends Model
 
     public $incrementing = false;
 
+    public const STATUS_CREATE = 1;
+    public const STATUS_PARTIAL = 2;
+    public const STATUS_FULL = 3;
+
     protected $fillable = [
         'code',
         'invoiceNumber',
@@ -29,6 +33,13 @@ class Invoice extends Model
         'usePpn',
         'customerCode',
         'status',
+    ];
+
+    protected $casts = [
+        'invoiceAmount' => 'integer',
+        'ppnAmount' => 'integer',
+        'usePpn' => 'boolean',
+        'status' => 'integer',
     ];
 
     public function customer()

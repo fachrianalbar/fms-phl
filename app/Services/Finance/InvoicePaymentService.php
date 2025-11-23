@@ -76,15 +76,35 @@ class InvoicePaymentService
             'nominal' => $request->amount,
             'type' => 'In',
             'date' => Carbon::now(),
-            'description' => 'Invoice Payment with amount '.number_format((int) $request->amount, 0, '.', ','),
+            'description' => 'Invoice Payment with amount ' . number_format((int) $request->amount, 0, '.', ','),
             'transactionTypeCode' => 'FTT250306114138',
         ]);
 
         $this->logActivity($title, $data, 'Create');
+
+        // Update invoice status based on payments (1: created, 2: partial, 3: full)
+        try {
+            $sumPayments = (int) $this->service->where('invoiceCode', $data->code)->sum('amount');
+            $invoiceTotal = (int) (($data->invoiceAmount ?? 0) + ($data->ppnAmount ?? 0));
+
+            $nextStatus = Invoice::STATUS_CREATE;
+            if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
+                $nextStatus = Invoice::STATUS_FULL;
+            } elseif ($sumPayments > 0) {
+                $nextStatus = Invoice::STATUS_PARTIAL;
+            }
+
+            $this->invoice->where('id', $data->id)->update(['status' => $nextStatus]);
+        } catch (\Exception $e) {
+            // if updating status fails do not block payment creation, but log error
+            logger()->error('Failed to update invoice status for invoice ' . $data->code . ': ' . $e->getMessage());
+        }
     }
 
     public function datatable()
     {
-        return $this->invoice->with(['details'])->get();
+        return $this->invoice->with(['details', 'payments.userBank.bank', 'customer'])
+            ->whereHas('payments')
+            ->get();
     }
 }

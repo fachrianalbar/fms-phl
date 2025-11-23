@@ -14,6 +14,9 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::put('invoice-detail/{id}', [InvoiceController::class, 'storeInvoiceDetail'])->name('invoice-detail.store');
     Route::delete('invoice-detail/{id}', [InvoiceController::class, 'destroyInvoiceDetail'])->name('invoice-detail.destroy');
     Route::get('pdf-invoice/{id}', [InvoiceController::class, 'pdfInvoice'])->name('invoice.pdf-invoice');
+    Route::post('invoice/{id}/payment', [InvoiceController::class, 'processPayment'])->name('invoice.process-payment');
+    Route::get('invoice-payment/export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('invoice-payment.export-pdf');
+    Route::get('invoice-payment/export/excel', [InvoicePaymentController::class, 'exportExcel'])->name('invoice-payment.export-excel');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {

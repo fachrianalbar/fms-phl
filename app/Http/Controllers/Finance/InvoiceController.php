@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Helpers\FilterHelper;
+use App\Models\Finance\Invoice as InvoiceModel;
 use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
 use App\Services\Finance\InvoiceService;
@@ -11,6 +12,7 @@ use App\Services\MenuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
@@ -46,7 +48,7 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -58,7 +60,7 @@ class InvoiceController extends Controller
     {
         $customer = $this->customerSvc->findAll();
 
-        return view($this->view.'create')
+        return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('customer', $customer)
             ->with('title', $this->title);
@@ -74,7 +76,7 @@ class InvoiceController extends Controller
             'invoiceNumber' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -85,11 +87,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -109,7 +111,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -117,18 +119,20 @@ class InvoiceController extends Controller
         $order = $this->service->getOrderDetail($id);
 
         $status = 0;
-
         if (count($data->payments) > 0) {
             $status = 1;
         }
+        // invoiceStatus is the numeric status for invoice
+        $invoiceStatus = (int) ($data->status ?? 1);
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
             ->with('order', $order)
             ->with('customerData', $customerData)
             ->with('status', $status)
+            ->with('invoiceStatus', $invoiceStatus)
             ->with('data', $data);
     }
 
@@ -142,7 +146,7 @@ class InvoiceController extends Controller
             'invoiceNumber' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -151,11 +155,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -166,7 +170,7 @@ class InvoiceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -193,7 +197,7 @@ class InvoiceController extends Controller
                     // invoiceAmount stores subtotal (without PPN)
                     $subtotal = (float) ($row->invoiceAmount ?? 0);
 
-                    return ''.number_format($subtotal, 0, ',', '.');
+                    return '' . number_format($subtotal, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
                     $ppnAmount = (float) ($row->ppnAmount ?? 0);
@@ -203,50 +207,73 @@ class InvoiceController extends Controller
                 ->addColumn('totalBilling', function ($row) {
                     $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
 
-                    return ''.number_format($total, 0, ',', '.');
+                    return '' . number_format($total, 0, ',', '.');
                 })
 
-                ->addColumn('action', function ($row) {
+                ->addColumn('status', function ($row) {
+                    $statusText = '';
+                    $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
 
-                    $btn = ' <td>
-                            <a target="_blank" href="'.route($this->view.'pdf-invoice', $row->id).'"
+                    if ($status === InvoiceModel::STATUS_FULL) {
+                        $statusText = '<span class="badge bg-success">Full Payment</span>';
+                    } elseif ($status === InvoiceModel::STATUS_PARTIAL) {
+                        $statusText = '<span class="badge bg-warning">Partial Payment</span>';
+                    } else {
+                        $statusText = '<span class="badge bg-secondary">Invoice Created</span>';
+                    }
+
+                    return $statusText;
+                })
+                ->addColumn('action', function ($row) {
+                    $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+
+                    $btn = '<td>
+                            <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
                             class="btn btn-icon btn-sm bg-success-subtle me-1"
                             data-bs-toggle="tooltip" title="Print PDF">
                                 <i class="mdi mdi-file fs-14 text-success"></i>
-                            </a>
+                            </a>';
 
-                            <a href="'.route($this->view.'edit', $row->id).'"
+                    // Tombol pembayaran hanya muncul jika status bukan Full Payment
+                    if ($status !== InvoiceModel::STATUS_FULL) {
+                        $btn .= '
+                            <a href="javascript:void(0)" 
+                            class="btn btn-icon btn-sm bg-info-subtle me-1 btn-payment"
+                            data-bs-toggle="tooltip" title="Payment"
+                            data-id="' . $row->id . '"
+                            data-invoice-code="' . $row->code . '"
+                            data-invoice-number="' . $row->invoiceNumber . '"
+                            data-total="' . $totalBilling . '">
+                                <i class="mdi mdi-cash fs-14 text-info"></i>
+                            </a>';
+                    }
+
+                    // Tombol edit hanya muncul jika belum full payment
+                    if ($status !== InvoiceModel::STATUS_FULL) {
+                        $btn .= '
+                            <a href="' . route($this->view . 'edit', $row->id) . '"
                             class="btn btn-icon btn-sm bg-primary-subtle me-1"
                             data-bs-toggle="tooltip" title="Edit">
                                 <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-                            </a>
+                            </a>';
+                    }
 
-                            <a href="javascript:deleteData(\''.$row->id.'\')"
+                    // Tombol delete hanya muncul jika belum ada pembayaran
+                    if (count($row->payments) == 0) {
+                        $btn .= '
+                            <a href="javascript:deleteData(\'' . $row->id . '\')"
                             class="btn btn-icon btn-sm bg-danger-subtle"
                             data-bs-toggle="tooltip" title="Delete">
                                 <i class="mdi mdi-delete fs-14 text-danger"></i>
-                            </a>
-                        </td>';
-
-                    if (count($row->payments) > 0) {
-                        $btn = ' <td>
-                            <a target="_blank" href="'.route($this->view.'pdf-invoice', $row->id).'"
-                            class="btn btn-icon btn-sm bg-success-subtle me-1"
-                            data-bs-toggle="tooltip" title="Print PDF">
-                                <i class="mdi mdi-file-pdf fs-14 text-success"></i>
-                            </a>
-
-                            <a href="'.route($this->view.'edit', $row->id).'"
-                            class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                            data-bs-toggle="tooltip" title="Edit">
-                                <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-                            </a>
-                        </td>';
+                            </a>';
                     }
+
+                    $btn .= '</td>';
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'orderCount', 'customer.name', 'price'])
+                ->rawColumns(['action', 'orderCount', 'customer.name', 'price', 'status'])
                 ->toJson();
         }
     }
@@ -316,13 +343,13 @@ class InvoiceController extends Controller
                     }
                     $this->totalPrice = $cost;
 
-                    return ''.number_format($cost, 0, ',', '.');
+                    return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('totalPrice', function () {
-                    return ''.number_format($this->totalPrice, 0, ',', '.');
+                    return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
+                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
 
                     return $btn;
                 })
@@ -352,11 +379,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -372,7 +399,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $company = CompanySetting::first();
@@ -404,7 +431,7 @@ class InvoiceController extends Controller
         }
 
         if ($customer && $customer->invoicePdf) {
-            $pdfTemplatePath = 'finance.invoice.pdf.customer.'.$customer->invoicePdf;
+            $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
 
             // Cek apakah view-nya ada, kalau tidak gunakan default general
             if (view()->exists($pdfTemplatePath)) {
@@ -433,7 +460,7 @@ class InvoiceController extends Controller
                 ->with('customer', $customer)
         );
 
-        return $mpdf->Output('Invoice-'.$data->invoiceNumber.'.pdf', 'I');
+        return $mpdf->Output('Invoice-' . $data->invoiceNumber . '.pdf', 'I');
     }
 
     public function customerInvoice($customerCode)
@@ -447,5 +474,120 @@ class InvoiceController extends Controller
         $data = $this->service->invoiceNumberFormat($id, $invoiceDate);
 
         return $data;
+    }
+
+    public function processPayment(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'paymentDate' => 'required|date',
+            'amount' => 'required|numeric|min:0',
+            'userBankCode' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $invoice = $this->service->getById($id);
+
+            if (!$invoice) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invoice tidak ditemukan'
+                ], 404);
+            }
+
+            // Hitung total tagihan (invoiceAmount + ppnAmount)
+            $totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0);
+
+            // Hitung total yang sudah dibayar
+            $totalPaid = 0;
+            foreach ($invoice->payments as $payment) {
+                $totalPaid += $payment->amount;
+            }
+
+            // Hitung sisa tagihan
+            $remaining = $totalBilling - $totalPaid;
+
+            // Validasi jumlah pembayaran tidak melebihi sisa tagihan
+            if ($request->amount > $remaining) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Jumlah pembayaran melebihi sisa tagihan'
+                ], 422);
+            }
+
+            // Proses upload bukti pembayaran jika ada
+            $paymentReceipt = null;
+            if ($request->hasFile('paymentReceipt')) {
+                $file = $request->file('paymentReceipt');
+                $paymentReceipt = time() . '_' . $file->getClientOriginalName();
+                $paymentReceipt = str_replace(' ', '_', $paymentReceipt);
+                $path = 'public/invoice-payment';
+                Storage::putFileAs($path, $file, $paymentReceipt);
+            }
+
+            // Buat payment record
+            $payment = \App\Models\Finance\InvoicePayment::create([
+                'code' => \App\Helpers\GenerateCode::generateCode('INVP'),
+                'invoiceCode' => $invoice->code,
+                'userBankCode' => $request->userBankCode,
+                'paymentDate' => $request->paymentDate,
+                'amount' => $request->amount,
+                'description' => $request->description,
+                'paymentReceipt' => $paymentReceipt,
+            ]);
+
+            // Update live mutation
+            \App\Helpers\LiveMutationHelper::updateLiveMutation(
+                $request->userBankCode,
+                (int) $request->amount,
+                'debit'
+            );
+
+            // Create mutation record
+            \App\Models\Mutation::create([
+                'code' => \App\Helpers\GenerateCode::generateCode('FMT'),
+                'userBankCode' => $request->userBankCode,
+                'nominal' => $request->amount,
+                'type' => 'In',
+                'date' => \Carbon\Carbon::now(),
+                'description' => 'Invoice Payment ' . $invoice->invoiceNumber . ' with amount ' . number_format((int) $request->amount, 0, '.', ','),
+                'transactionTypeCode' => 'FTT250306114138',
+            ]);
+
+            // Hitung ulang total yang sudah dibayar setelah payment baru
+            $newTotalPaid = $totalPaid + $request->amount;
+
+            // Update status invoice
+            $newStatus = InvoiceModel::STATUS_CREATE;
+            if ($newTotalPaid >= $totalBilling) {
+                $newStatus = InvoiceModel::STATUS_FULL; // Full Payment
+            } elseif ($newTotalPaid > 0) {
+                $newStatus = InvoiceModel::STATUS_PARTIAL; // Partial Payment
+            }
+
+            InvoiceModel::where('id', $id)->update(['status' => $newStatus]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pembayaran berhasil diproses'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage()
+            ], 500);
+        }
     }
 }
