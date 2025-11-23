@@ -306,13 +306,13 @@ class InvoiceService
         $lastNumber = 0;
 
         // Format: INV/{FORMAT-COMPANY}/{CODE-CUSTOMER}/{NO-URUT}/{BULAN}/{TAHUN}
-        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
+        if ($lastInvoice && preg_match('/INV\/'.preg_quote($customer->company->format, '/').'\/'.preg_quote($customer->code, '/').'\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
             $lastNumber = (int) $matches[1];
         }
 
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
         $companyFormat = $customer->company->format ?? 'DEFAULT';
 
-        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $increment . '/' . $currentMonth . '/' . $currentYear;
+        return 'INV/'.$companyFormat.'/'.$customer->code.'/'.$increment.'/'.$currentMonth.'/'.$currentYear;
     }
 }

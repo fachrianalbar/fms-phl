@@ -50,7 +50,7 @@ class InvoicePaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -63,7 +63,7 @@ class InvoicePaymentController extends Controller
         $data = $this->invoiceSvc->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -87,7 +87,7 @@ class InvoicePaymentController extends Controller
             $status = 2;
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -114,7 +114,7 @@ class InvoicePaymentController extends Controller
         $remaining = (int) ($invoiceAmount - $totalPaid);
 
         $validator = Validator::make($request->all(), [
-            'amount' => ['required', 'numeric', 'max:' . $remaining],
+            'amount' => ['required', 'numeric', 'max:'.$remaining],
             'paymentDate' => ['required'],
             'userBankCode' => ['required'],
         ], [
@@ -122,7 +122,7 @@ class InvoicePaymentController extends Controller
             'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -131,11 +131,11 @@ class InvoicePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -154,20 +154,24 @@ class InvoicePaymentController extends Controller
                     if (isset($row->customer->name)) {
                         $customer = $row->customer->name;
                     }
+
                     return $customer;
                 })
                 ->addColumn('totalPrice', function ($row) {
                     // invoiceAmount now stores SUBTOTAL (without PPN)
                     $subtotal = (float) ($row->invoiceAmount ?? 0);
-                    return '' . number_format($subtotal, 0, ',', '.');
+
+                    return ''.number_format($subtotal, 0, ',', '.');
                 })
                 ->addColumn('ppn', function ($row) {
                     $ppnAmount = (float) ($row->ppnAmount ?? 0);
+
                     return number_format($ppnAmount, 0, '.', ',');
                 })
                 ->addColumn('totalBilling', function ($row) {
                     $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
-                    return '' . number_format($totalBilling, 0, ',', '.');
+
+                    return ''.number_format($totalBilling, 0, ',', '.');
                 })
                 ->addColumn('statusPayment', function ($row) {
                     $status = '';
@@ -185,6 +189,7 @@ class InvoicePaymentController extends Controller
                     if (count($row->payments) == 0) {
                         $status = 'No Payment';
                     }
+
                     return $status;
                 })
                 ->addColumn('totalPayment', function ($row) {
@@ -194,12 +199,14 @@ class InvoicePaymentController extends Controller
                             $totalPayment += $item->amount;
                         }
                     }
+
                     return number_format($totalPayment, 0, '.', ',');
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<ul class="action">
-                                        <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-credit-card"></i></a></li>
+                                        <li class="edit"> <a href="'.route($this->view.'edit', $row->id).'"><i class="icon-credit-card"></i></a></li>
                                     </ul>';
+
                     return $btn;
                 })
                 ->rawColumns(['action', 'orderCount', 'totalPrice', 'ppn', 'totalBilling', 'customer.name', 'statusPayment', 'totalPayment'])
