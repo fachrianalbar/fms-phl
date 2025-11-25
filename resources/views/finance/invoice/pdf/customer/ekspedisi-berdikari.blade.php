@@ -97,15 +97,15 @@
         </tr>
         <tr>
             <td style="width: 20%;">A/N</td>
-            <td>: {{ $company->account_name ?? ($company->director_name ?? 'HENDRI WIJAYA') }}</td>
+            <td>: PT PUTRI HOKI LOGISTIK</td>
         </tr>
         <tr>
             <td>NO. REK</td>
-            <td>: {{ $company->bank_account ?? '0-200514866' }}</td>
+            <td>: 0208888351</td>
         </tr>
         <tr>
             <td>CABANG</td>
-            <td>: {{ $company->bank_branch ?? 'BUMI WARAS - B Lampung' }}</td>
+            <td>: KCU - Bumi Waras - B. Lampung</td>
         </tr>
     </table>
 

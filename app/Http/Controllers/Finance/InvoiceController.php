@@ -416,17 +416,19 @@ class InvoiceController extends Controller
             'order.route.destinationLocation',
         ])->get();
 
+
         // Tentukan template PDF berdasarkan customer invoicePdf field
         $customer = $data->customer;
         $pdfTemplate = 'finance.invoice.pdf.general-phl'; // Default template
 
+
         // pribadi
-        if ($customer->company->format == 'HW') {
+        if ($customer->company->format == 'P') {
             $pdfTemplate = 'finance.invoice.pdf.pribadi';
         }
 
         // wijaya trans
-        if ($customer->company->format == 'WT') {
+        if ($customer->company->format == 'WTMS' || $customer->company->format == 'WT') {
             $pdfTemplate = 'finance.invoice.pdf.general-wt';
         }
 
