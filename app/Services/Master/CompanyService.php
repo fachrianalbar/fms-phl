@@ -44,7 +44,7 @@ class CompanyService
 
         $this->service->where('id', $id)->update([
             'name' => $request->name,
-            'format' => $request->format,
+            // 'format' => $request->format,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
