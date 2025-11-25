@@ -86,7 +86,7 @@
             <td colspan="2">Kepada YTH :</td>
         </tr>
         <tr>
-            <td colspan="2"><strong>Berdikari Exp</strong></td>
+            <td colspan="2"><strong>{{ strtoupper($customer->name) }}</strong></td>
         </tr>
     </table>
 

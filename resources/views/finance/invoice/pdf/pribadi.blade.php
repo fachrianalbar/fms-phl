@@ -65,7 +65,7 @@
 <body>
 
     <htmlpageheader name="page-header">
-        @include('finance.invoice.pdf.header.phl')
+        @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
     @php
