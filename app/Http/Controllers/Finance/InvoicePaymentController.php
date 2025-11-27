@@ -2,21 +2,21 @@
 
 namespace App\Http\Controllers\Finance;
 
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Services\MenuService;
-use Yajra\DataTables\DataTables;
-use Illuminate\Support\Facades\DB;
+use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Services\Bank\UserBankService;
+use App\Services\Finance\InvoicePaymentService;
 use App\Services\Finance\InvoiceService;
 use App\Services\Master\CustomerService;
+use App\Services\MenuService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Helpers\FilterHelper;
 use Illuminate\Support\Facades\View;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
-use App\Services\Finance\InvoicePaymentService;
+use Yajra\DataTables\DataTables;
 
 class InvoicePaymentController extends Controller
 {
@@ -55,7 +55,7 @@ class InvoicePaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -68,7 +68,7 @@ class InvoicePaymentController extends Controller
         $data = $this->invoiceSvc->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -92,7 +92,7 @@ class InvoicePaymentController extends Controller
             $status = 2;
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -119,7 +119,7 @@ class InvoicePaymentController extends Controller
         $remaining = (int) ($invoiceAmount - $totalPaid);
 
         $validator = Validator::make($request->all(), [
-            'amount' => ['required', 'numeric', 'max:' . $remaining],
+            'amount' => ['required', 'numeric', 'max:'.$remaining],
             'paymentDate' => ['required'],
             'userBankCode' => ['required'],
         ], [
@@ -127,7 +127,7 @@ class InvoicePaymentController extends Controller
             'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -136,11 +136,11 @@ class InvoicePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -167,15 +167,16 @@ class InvoicePaymentController extends Controller
                     if (count($row->payments) > 0) {
                         $lastPayment = $row->payments->last();
                         if ($lastPayment && $lastPayment->userBank) {
-                            $bank = $lastPayment->userBank->bank->name . ' - ' . $lastPayment->userBank->accountNumber;
+                            $bank = $lastPayment->userBank->bank->name.' - '.$lastPayment->userBank->accountNumber;
                         }
                     }
+
                     return $bank;
                 })
                 ->addColumn('totalBilling', function ($row) {
                     $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
 
-                    return '' . number_format($totalBilling, 0, ',', '.');
+                    return ''.number_format($totalBilling, 0, ',', '.');
                 })
                 ->addColumn('paymentDetails', function ($row) {
                     $details = '';
@@ -184,10 +185,10 @@ class InvoicePaymentController extends Controller
                             $paymentDate = \Carbon\Carbon::parse($payment->paymentDate)->format('d-M-Y');
                             $amount = number_format($payment->amount, 0, ',', '.');
                             $details .= '<div class="mb-1">';
-                            $details .= '<small><strong>Tgl:</strong> ' . $paymentDate . ' | ';
-                            $details .= '<strong>Jumlah:</strong> Rp ' . $amount . '</small>';
+                            $details .= '<small><strong>Tgl:</strong> '.$paymentDate.' | ';
+                            $details .= '<strong>Jumlah:</strong> Rp '.$amount.'</small>';
                             if ($payment->description) {
-                                $details .= '<br><small class="text-muted">Ket: ' . $payment->description . '</small>';
+                                $details .= '<br><small class="text-muted">Ket: '.$payment->description.'</small>';
                             }
                             $details .= '</div>';
                         }
@@ -229,7 +230,6 @@ class InvoicePaymentController extends Controller
         }
     }
 
-
     public function exportPdf(Request $request)
     {
         // Define filters - can be extended
@@ -257,7 +257,7 @@ class InvoicePaymentController extends Controller
 
         $mpdf = new Mpdf([
             'orientation' => 'P',
-            'format' => 'A4'
+            'format' => 'A4',
         ]);
 
         $mpdf->setAutoTopMargin = 'stretch';
@@ -300,6 +300,6 @@ class InvoicePaymentController extends Controller
 
     public function exportExcel(Request $request)
     {
-        return Excel::download(new \App\Exports\InvoicePaymentExport($request), 'invoice-payment-list-' . Carbon::now()->format('Y-m-d H:i:s') . '.xlsx');
+        return Excel::download(new \App\Exports\InvoicePaymentExport($request), 'invoice-payment-list-'.Carbon::now()->format('Y-m-d H:i:s').'.xlsx');
     }
 }

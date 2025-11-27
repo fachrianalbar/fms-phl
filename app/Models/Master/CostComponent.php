@@ -19,5 +19,10 @@ class CostComponent extends Model
         'code',
         'name',
         'type',
+        'price',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
     ];
 }

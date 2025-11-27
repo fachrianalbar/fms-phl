@@ -104,7 +104,6 @@
                 <a href="javascript:void(0)" onclick="exportExcel()" class="btn btn-success" id="btn-export">
                     <i class="mdi mdi-file-excel"></i> Export Excel
                 </a>
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
             </div>
 
         </div>
@@ -117,11 +116,13 @@
                 <table class="table table-striped w-100 nowrap" id="dt">
                     <thead>
                         <tr>
-                            <th>#</th>
                             <th>No</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            {{-- <th>Type</th> --}}
+                            <th>Date</th>
+                            <th>Cost Component Code</th>
+                            <th>Cost Component Name</th>
+                            <th>Old Price</th>
+                            <th>New Price</th>
+                            <th>Changed By</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -132,11 +133,6 @@
         </div>
     </div>
 </div>
-
-<form id="delete-form" method="post">
-    @csrf
-    @method('DELETE')
-</form>
 @endsection
 
 @push('script')
@@ -166,32 +162,41 @@
             "serverSide": true,
             "destroy": true,
             "ajax": {
-                "url": "{{ route('dt.cost-component') }}",
+                "url": "{{ route('dt.cost-component-price-log') }}",
             },
             "columns": [{
-                    "data": 'action'
-                },
-                {
                     "data": 'DT_RowIndex'
                 },
                 {
-                    "data": 'name'
+                    "data": 'formatted_date'
                 },
                 {
-                    "data": 'formatted_price'
+                    "data": 'costComponentCode'
+                },
+                {
+                    "data": 'costComponentName'
+                },
+                {
+                    "data": 'formatted_old_price'
+                },
+                {
+                    "data": 'formatted_new_price'
+                },
+                {
+                    "data": 'changedBy'
                 },
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0, 1]
+                    "targets": [0]
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1]
+                    "targets": [0]
                 }
             ],
             "order": [
-                [2, 'asc']
+                [1, 'desc']
             ]
         })
     });
@@ -206,7 +211,7 @@
         // Create a hidden iframe to handle the download
         var iframe = document.createElement('iframe');
         iframe.style.display = 'none';
-        iframe.src = "{{ route('master.cost-component.export-excel') }}";
+        iframe.src = "{{ route('master.cost-component-price-log.export-excel') }}";
         document.body.appendChild(iframe);
 
         // Hide loader and show success message after download starts
@@ -220,26 +225,6 @@
                 document.getElementById('exportSuccessMessage').style.display = 'none';
             }, 5000);
         }, 3000);
-    }
-
-    function deleteData(uuid) {
-        var url = '{{ route('
-        master.cost - component.index ') }}/' + uuid;
-        $('#delete-form').attr('action', url);
-
-        swal({
-            title: "{{ __('general.are_you_sure') }}",
-            text: "{{ __('general.want_to_delete_this_data') }}",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-        }).then((willDelete) => {
-            if (willDelete) {
-                $('#delete-form').submit();
-            } else {
-                swal("{{ __('general.your_data_is_save') }}");
-            }
-        });
     }
 </script>
 @endpush

@@ -4,6 +4,7 @@ use App\Http\Controllers\Master\BankReceiverController;
 use App\Http\Controllers\Master\BankSenderController;
 use App\Http\Controllers\Master\CompanyController;
 use App\Http\Controllers\Master\CostComponentController;
+use App\Http\Controllers\Master\CostComponentPriceLogController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\DueDateController;
 use App\Http\Controllers\Master\EmployeeController;
@@ -33,6 +34,9 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::delete('customer-detail/{id}', [CustomerController::class, 'deleteCustomerDetail'])->name('customer-detail.destroy');
     Route::delete('customer-pic/{id}', [CustomerController::class, 'deleteCustomerPic'])->name('customer-pic.destroy');
     Route::resource('cost-component', CostComponentController::class);
+    Route::get('cost-component-export/excel', [CostComponentController::class, 'exportExcel'])->name('cost-component.export-excel');
+    Route::get('cost-component-price-log', [CostComponentPriceLogController::class, 'index'])->name('cost-component-price-log.index');
+    Route::get('cost-component-price-log-export/excel', [CostComponentPriceLogController::class, 'exportExcel'])->name('cost-component-price-log.export-excel');
     Route::resource('location', LocationController::class);
     Route::resource('material', MaterialController::class);
     Route::resource('bank-sender', BankSenderController::class);
@@ -52,6 +56,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('company', [CompanyController::class, 'datatable'])->name('company');
     Route::get('customer', [CustomerController::class, 'datatable'])->name('customer');
     Route::get('cost-component', [CostComponentController::class, 'datatable'])->name('cost-component');
+    Route::get('cost-component-price-log', [CostComponentPriceLogController::class, 'datatable'])->name('cost-component-price-log');
     Route::get('location', [LocationController::class, 'datatable'])->name('location');
     Route::get('material', [MaterialController::class, 'datatable'])->name('material');
     Route::get('bank-sender', [BankSenderController::class, 'datatable'])->name('bank-sender');

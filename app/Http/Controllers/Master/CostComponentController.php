@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Master;
 
 use App\Enums\CostComponentType;
+use App\Exports\CostComponentExport;
 use App\Http\Controllers\Controller;
 use App\Services\Master\CostComponentService;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class CostComponentController extends Controller
@@ -148,6 +150,9 @@ class CostComponentController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->addColumn('formatted_price', function ($row) {
+                    return $row->price ? number_format($row->price, 0, ',', '.') : '-';
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="'.route($this->view.'edit', $row->id).'"
@@ -175,5 +180,10 @@ class CostComponentController extends Controller
         $costComponents = $this->service->findAll();
 
         return response()->json($costComponents);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new CostComponentExport($request), 'Cost-Component-Report.xlsx');
     }
 }

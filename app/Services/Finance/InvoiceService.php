@@ -127,7 +127,7 @@ class InvoiceService
             }
             $this->service->where('id', $data->id)->update(['status' => $nextStatus]);
         } catch (\Exception $e) {
-            logger()->error('Failed to update invoice status after recalculation for invoice ' . $data->code . ': ' . $e->getMessage());
+            logger()->error('Failed to update invoice status after recalculation for invoice '.$data->code.': '.$e->getMessage());
         }
         // Update invoice status after recalc
         try {
@@ -141,7 +141,7 @@ class InvoiceService
             }
             $this->service->where('id', $data->id)->update(['status' => $nextStatus]);
         } catch (\Exception $e) {
-            logger()->error('Failed to update invoice status after recalc for invoice ' . $data->code . ': ' . $e->getMessage());
+            logger()->error('Failed to update invoice status after recalc for invoice '.$data->code.': '.$e->getMessage());
         }
         $this->logActivity($title, $data, 'Create');
     }
@@ -246,7 +246,7 @@ class InvoiceService
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
             } catch (\Exception $e) {
-                logger()->error('Failed to update invoice status after adding details for invoice ' . $invoice->code . ': ' . $e->getMessage());
+                logger()->error('Failed to update invoice status after adding details for invoice '.$invoice->code.': '.$e->getMessage());
             }
         }
     }
@@ -286,7 +286,7 @@ class InvoiceService
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
             } catch (\Exception $e) {
-                logger()->error('Failed to update invoice status after removing details for invoice ' . $invoice->code . ': ' . $e->getMessage());
+                logger()->error('Failed to update invoice status after removing details for invoice '.$invoice->code.': '.$e->getMessage());
             }
         }
     }
@@ -366,13 +366,13 @@ class InvoiceService
         $lastNumber = 0;
 
         // Format: INV/{FORMAT-COMPANY}/{CODE-CUSTOMER}/{NO-URUT}/{BULAN}/{TAHUN}
-        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
+        if ($lastInvoice && preg_match('/INV\/'.preg_quote($customer->company->format, '/').'\/'.preg_quote($customer->code, '/').'\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
             $lastNumber = (int) $matches[1];
         }
 
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
         $companyFormat = $customer->company->format ?? 'DEFAULT';
 
-        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $increment . '/' . $currentMonth . '/' . $currentYear;
+        return 'INV/'.$companyFormat.'/'.$customer->code.'/'.$increment.'/'.$currentMonth.'/'.$currentYear;
     }
 }

@@ -42,6 +42,7 @@ class UpdateInvoiceAmounts extends Command
 
         if ($totalInvoices === 0) {
             $this->info('No invoices found to update.');
+
             return Command::SUCCESS;
         }
 
@@ -82,7 +83,7 @@ class UpdateInvoiceAmounts extends Command
                 $processed++;
             } catch (\Exception $e) {
                 $errors++;
-                $this->error("\nError updating invoice {$invoice->code}: " . $e->getMessage());
+                $this->error("\nError updating invoice {$invoice->code}: ".$e->getMessage());
             }
 
             $bar->advance();
@@ -91,7 +92,7 @@ class UpdateInvoiceAmounts extends Command
         $bar->finish();
 
         $this->newLine(2);
-        $this->info("Update completed!");
+        $this->info('Update completed!');
         $this->info("✓ Processed: {$processed}");
         $this->info("✗ Errors: {$errors}");
 

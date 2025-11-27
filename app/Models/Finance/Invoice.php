@@ -17,7 +17,9 @@ class Invoice extends Model
     public $incrementing = false;
 
     public const STATUS_CREATE = 1;
+
     public const STATUS_PARTIAL = 2;
+
     public const STATUS_FULL = 3;
 
     protected $fillable = [
