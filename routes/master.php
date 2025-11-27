@@ -14,6 +14,7 @@ use App\Http\Controllers\Master\FleetController;
 use App\Http\Controllers\Master\FleetTypeController;
 use App\Http\Controllers\Master\LocationController;
 use App\Http\Controllers\Master\MaterialController;
+use App\Http\Controllers\Master\MenuController;
 use App\Http\Controllers\Master\PositionController;
 use App\Http\Controllers\Master\TransactionTypeController;
 use App\Http\Controllers\Master\UnitController;
@@ -44,6 +45,11 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('transaction-type', TransactionTypeController::class);
     Route::resource('due-date', DueDateController::class);
     Route::resource('fleet-company', FleetCompanyController::class);
+
+    // Menu routes
+    Route::resource('menu', MenuController::class);
+    Route::get('menu/sub-menu/{parentCode}', [MenuController::class, 'subMenu'])->name('menu.sub-menu');
+    Route::get('menu/create-sub-menu/{parentCode}', [MenuController::class, 'createSubMenu'])->name('menu.create-sub-menu');
 });
 // });
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -64,6 +70,10 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('transaction-type', [TransactionTypeController::class, 'datatable'])->name('transaction-type');
     Route::get('due-date', [DueDateController::class, 'datatable'])->name('due-date');
     Route::get('fleet-company', [FleetCompanyController::class, 'datatable'])->name('fleet-company');
+
+    // Menu datatables
+    Route::get('menu', [MenuController::class, 'datatable'])->name('menu');
+    Route::get('menu-sub/{parentCode}', [MenuController::class, 'datatableSubMenu'])->name('menu-sub');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
