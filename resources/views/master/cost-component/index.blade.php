@@ -160,13 +160,19 @@
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
 
 <script>
+    const ROUTES = {
+        costComponentIndex: @json(route('master.cost-component.index')),
+        dtCostComponent: @json(route('dt.cost-component')),
+        exportExcel: @json(route('master.cost-component.export-excel'))
+    };
+
     $(document).ready(function() {
         $('#dt').DataTable({
             "processing": true,
             "serverSide": true,
             "destroy": true,
             "ajax": {
-                "url": "{{ route('dt.cost-component') }}",
+                "url": ROUTES.dtCostComponent,
             },
             "columns": [{
                     "data": 'action'
@@ -206,7 +212,7 @@
         // Create a hidden iframe to handle the download
         var iframe = document.createElement('iframe');
         iframe.style.display = 'none';
-        iframe.src = "{{ route('master.cost-component.export-excel') }}";
+        iframe.src = ROUTES.exportExcel;
         document.body.appendChild(iframe);
 
         // Hide loader and show success message after download starts
@@ -223,8 +229,7 @@
     }
 
     function deleteData(uuid) {
-        var url = '{{ route('
-        master.cost - component.index ') }}/' + uuid;
+        var url = ROUTES.costComponentIndex + '/' + uuid;
         $('#delete-form').attr('action', url);
 
         swal({
