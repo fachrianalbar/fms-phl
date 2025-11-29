@@ -16,45 +16,45 @@
                 </thead>
                 <tbody>
                     @php
-                        $totalPrice = 0;
+                    $totalPrice = 0;
                     @endphp
                     @foreach ($data->routeDetail as $item)
-                        <tr>
-                            <td>
-                                <a href="javascript:deleteCostComponent('{{ $item->id }}')"
-                                    class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
-                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
+                    <tr>
+                        <td>
+                            <a href="javascript:deleteCostComponent('{{ $item->id }}')"
+                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
+                                <i class="mdi mdi-delete fs-14 text-danger"></i>
 
 
-                                    {{-- <ul class="action">
+                                {{-- <ul class="action">
                                         <li class="delete">
                                             <a href="javascript:deleteCostComponent('{{ $item->id }}')"><i
-                                                    class="icon-trash"></i></a>
-                                        </li>
-                                    </ul> --}}
-                            </td>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ $item->costComponent?->name }}</td>
-                            {{-- <td>{{ $item->type }} =
-                                {{ $item->type == 'Amount' ? number_format($item->amount, 0, ',', '.') : $item->percentage . '%' }}
-                            </td> --}}
-                            <td>
-                                @php
-                                    $price =
-                                        $item->type == 'Percentage'
-                                            ? $data->price * ($item->percentage / 100)
-                                            : $item->amount;
-                                    $totalPrice += $price;
-                                @endphp
-                                Rp {{ number_format($price, 0, ',', '.') }}
-                            </td>
+                                    class="icon-trash"></i></a>
+                            </li>
+                            </ul> --}}
+                        </td>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $item->costComponent?->name }}</td>
+                        {{-- <td>{{ $item->type }} =
+                        {{ $item->type == 'Amount' ? number_format($item->amount, 0, ',', '.') : $item->percentage . '%' }}
+                        </td> --}}
+                        <td>
+                            @php
+                            $price =
+                            $item->type == 'Percentage'
+                            ? $data->price * ($item->percentage / 100)
+                            : $item->amount;
+                            $totalPrice += $price;
+                            @endphp
+                            Rp {{ number_format($price, 0, ',', '.') }}
+                        </td>
 
-                        </tr>
+                    </tr>
                     @endforeach
                     {{-- <tr>
                         <td colspan="3" class="fw-bold text-start h5">Total:</td>
                         <td>Rp {{ number_format($totalPrice, 0, ',', '.') }}</td>
-                        <td></td>
+                    <td></td>
                     </tr> --}}
                 </tbody>
             </table>
@@ -76,7 +76,7 @@
         const selectedOption = componentSelect.options[componentSelect.selectedIndex];
         const price = selectedOption.getAttribute('data-price');
         const priceInput = document.getElementById('amounts');
-        
+
         if (price) {
             // Format price dengan format xxx.xxx.xxx
             const formattedPrice = formatNumberPrice(parseFloat(price));

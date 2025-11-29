@@ -9,7 +9,7 @@
             <select class="js-example-basic-single" name="componentCode" id="componentCode" required="" onchange="getCostComponentPrice(this.value)">
                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 @foreach ($component as $item)
-                    <option value="{{ $item->code }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
+                <option value="{{ $item->code }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
                 @endforeach
             </select>
         </div>
@@ -23,8 +23,8 @@
             {{-- <select class="js-example-basic-single" name="`componentType" id="componentType"
                 onchange="toggleFields(this.value)" required="">
                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                <option value="Amount">Amount</option>
-                <option value="Percentage">Percentage</option>
+            <option value="Amount">Amount</option>
+            <option value="Percentage">Percentage</option>
             </select> --}}
         </div>
     </div>

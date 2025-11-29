@@ -8,7 +8,7 @@
                 <select class="js-example-basic-single" name="name" id="costComponentSelect" required="" onchange="getCostComponentPriceForAdd(this)">
                     <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                     @foreach ($component as $item)
-                        <option value="{{ $item->name }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
+                    <option value="{{ $item->name }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -23,19 +23,19 @@
                 <label class="form-label" for="type">Type</label>
                 <select class="js-example-basic-single" name="type" id="type" required="">
                     <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                    @foreach ($componentType as $item)
-                        <option value="{{ $item->value }}\">{{ $item->value }}</option>
-                    @endforeach
-                </select>
-                <div class="invalid-tooltip">Please select a valid state.</div>
-            </div> --}}
+            @foreach ($componentType as $item)
+            <option value="{{ $item->value }}\">{{ $item->value }}</option>
+            @endforeach
+            </select>
+            <div class="invalid-tooltip">Please select a valid state.</div>
+    </div> --}}
 
 
-            <div class="col-12">
-                <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
-            </div>
-        </form>
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit">{{ __('general.add') }}</button>
     </div>
+    </form>
+</div>
 </div>
 
 <script>
@@ -43,7 +43,7 @@
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         const price = selectedOption.getAttribute('data-price');
         const priceInput = document.getElementById('costComponentPrice');
-        
+
         if (price) {
             // Format price dengan format xxx.xxx.xxx
             const formattedPrice = formatNumber(Math.round(parseFloat(price)));
