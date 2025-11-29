@@ -70,6 +70,26 @@
     const amountDiv = document.getElementById('amount');
     const percentageDiv = document.getElementById('percentage');
 
+    // Function to get cost component price and auto-fill
+    function getCostComponentPrice(code) {
+        const componentSelect = document.getElementById('componentCode');
+        const selectedOption = componentSelect.options[componentSelect.selectedIndex];
+        const price = selectedOption.getAttribute('data-price');
+        const priceInput = document.getElementById('amounts');
+        
+        if (price) {
+            // Format price dengan format xxx.xxx.xxx
+            const formattedPrice = formatNumberPrice(parseFloat(price));
+            priceInput.value = formattedPrice;
+        } else {
+            priceInput.value = '';
+        }
+    }
+
+    function formatNumberPrice(num) {
+        return Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
     // function toggleFields(id) {
     //     if (componentSelect.value === 'Amount') {
     //         amountDiv.classList.remove('d-none');

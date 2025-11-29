@@ -6,18 +6,18 @@
     <div class="row">
         <div class="col-md-6 position-relative">
             <label class="form-label" for="componentCode">{{ __('menu_route.cost_component_name') }}</label>
-            <select class="js-example-basic-single" name="componentCode" id="componentCode" required="">
+            <select class="js-example-basic-single" name="componentCode" id="componentCode" required="" onchange="getCostComponentPrice(this.value)">
                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 @foreach ($component as $item)
-                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    <option value="{{ $item->code }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
                 @endforeach
             </select>
         </div>
 
         <div class="col-md-6" id="amount">
             <label class="form-label" for="amount">{{ __('menu_route.price') }}</label>
-            <input class="form-control" name="amount" id="amounts" oninput="formatAngka(this)" type="text"
-                placeholder="{{ __('menu_route.price') }}" max="{{ $data->price }}">
+            <input class="form-control" name="amount" id="amounts" type="text"
+                placeholder="{{ __('menu_route.price') }}" max="{{ $data->price }}" readonly style="background-color: #e9ecef;">
             {{-- <label class="form-label" for="componentType">Cost Component Type</label> --}}
             <input type="hidden" name="componentType" value="Amount">
             {{-- <select class="js-example-basic-single" name="`componentType" id="componentType"

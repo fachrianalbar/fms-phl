@@ -258,4 +258,21 @@ class RouteController extends Controller
 
         return $this->locationSvc->getByCustomer($customer->code);
     }
+
+    public function getCostComponentPrice($code)
+    {
+        $costComponent = $this->costComponentSvc->getByCode($code);
+
+        if ($costComponent) {
+            return response()->json([
+                'success' => true,
+                'price' => $costComponent->price,
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'price' => 0,
+        ]);
+    }
 }
