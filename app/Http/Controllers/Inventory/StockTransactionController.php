@@ -119,8 +119,7 @@ class StockTransactionController extends Controller
         // Detail transaksi
         $details = StockTransaction::with(['item'])
             ->where('warehouseCode', $warehouseCode)
-            ->orderBy('date', 'desc')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($item) {
                 // Determine transaction type based on transactionCode prefix
@@ -190,9 +189,8 @@ class StockTransactionController extends Controller
 
             // Detail transaksi
             $details = StockTransaction::with(['item'])
-                ->where('warehouseCode', $warehouse->code)
-                ->orderBy('date', 'desc')
-                ->orderBy('created_at', 'desc')
+                ->where('warehouseCode', $warehouseCode)
+                ->orderBy('created_at', 'asc')
                 ->get()
                 ->map(function ($item) {
                     $transactionType = '-';

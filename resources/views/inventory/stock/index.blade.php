@@ -17,6 +17,33 @@
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
+<style>
+    /* Small adjustments for detail modal */
+    #detailModal .table th,
+    #detailModal .table td {
+        font-size: 13px;
+    }
+
+    #detailModal .created-at {
+        font-size: 11px;
+        color: #6c757d;
+    }
+
+    #detailModal .badge-status {
+        padding: .35em .5em;
+        font-size: .75em;
+    }
+
+    #detailTableFooter th,
+    #detailTableFooter td {
+        font-weight: 600;
+    }
+
+    #detailModal .text-end,
+    #detailModal .text-right {
+        text-align: right;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -40,13 +67,12 @@
                 <table class="table table-striped w-100 nowrap" id="dt">
                     <thead>
                         <tr>
-                            <th>#</th>
+                            <th>Aksi</th>
                             <th>No</th>
                             <th>Item Code</th>
                             <th>Item Name</th>
-                            {{-- <th>Stock In </th>
-                                <th>Stock Out</th> --}}
-                            <th>Outstanding Stock</th>
+                            <th>Warehouse</th>
+                            <th>Stock</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -74,10 +100,16 @@
             <form id="editStockForm">
                 <div class="modal-body">
                     <input type="hidden" id="editItemCode" name="itemCode">
+                    <input type="hidden" id="editWarehouseCode" name="warehouseCode">
 
                     <div class="mb-3">
                         <label for="editItemName" class="form-label">Nama Item</label>
                         <input type="text" class="form-control" id="editItemName" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editWarehouseName" class="form-label">Warehouse</label>
+                        <input type="text" class="form-control" id="editWarehouseName" readonly>
                     </div>
 
                     <div class="mb-3">
@@ -91,6 +123,49 @@
                     <button type="submit" class="btn btn-primary">Simpan</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Detail Transaksi -->
+<div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailModalLabel">Detail Transaksi Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Tanggal</th>
+                                <th>Kode Transaksi</th>
+                                <th>Tipe Transaksi</th>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th>Qty In</th>
+                                <th>Qty Out</th>
+                                <th>Created At</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailTableBody"></tbody>
+                        <tfoot id="detailTableFooter">
+                            <tr class="table-active">
+                                <th colspan="6" class="text-end">Total</th>
+                                <th class="text-end">0</th>
+                                <th class="text-end">0</th>
+                                <th class="text-end">0</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -125,9 +200,7 @@
             "ajax": {
                 "url": "{{ route('dt.stock') }}"
             },
-            "columns": [
-
-                {
+            "columns": [{
                     "data": 'action',
                     "orderable": false,
                     "searchable": false
@@ -136,64 +209,60 @@
                     "data": 'DT_RowIndex'
                 },
                 {
-                    "data": 'code'
+                    "data": 'itemCode'
                 },
                 {
-                    "data": 'name'
+                    "data": 'itemName'
                 },
-                // {
-                //     "data": "stockIn"
-                // },
-                // {
-                //     "data": 'stockOut'
-                // },
                 {
-                    "data": 'total'
+                    "data": 'warehouseName'
+                },
+                {
+                    "data": 'stock'
                 }
-
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0, 1, 4]
+                    "targets": [0, 1, 5]
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1, 4]
+                    "targets": [0, 1]
                 }
             ],
             "order": [
-                [3, 'asc']
+                [2, 'asc']
             ]
         })
 
         $('#print-pdf').click(function(e) {
             const printPdf = "{{ route($view . 'pdf-stock') }}";
-
             window.open(printPdf);
         });
 
-        // Handle modal edit stock
-        $(document).on('click', '.btn-edit-stock', function() {
+        // Handle modal edit stock awal
+        $(document).on('click', '.btn-edit-stock-awal', function() {
             const itemCode = $(this).data('item-code');
             const itemName = $(this).data('item-name');
+            const warehouseCode = $(this).data('warehouse-code');
+            const warehouseName = $(this).data('warehouse-name');
 
             $('#editItemCode').val(itemCode);
             $('#editItemName').val(itemName);
+            $('#editWarehouseCode').val(warehouseCode);
+            $('#editWarehouseName').val(warehouseName);
             $('#editQty').val('');
-
-            // Load warehouse data
 
             $('#editStockModal').modal('show');
         });
 
-
-
-        // Handle form submit
+        // Handle form submit edit stock awal
         $('#editStockForm').on('submit', function(e) {
             e.preventDefault();
 
             const formData = {
                 itemCode: $('#editItemCode').val(),
+                warehouseCode: $('#editWarehouseCode').val(),
                 qty: $('#editQty').val(),
                 _token: '{{ csrf_token() }}'
             };
@@ -218,6 +287,81 @@
                     } else {
                         swal("Error", "Terjadi kesalahan, silakan coba lagi", "error");
                     }
+                }
+            });
+        });
+
+        // Handle modal detail transaksi
+        $(document).on('click', '.btn-detail', function() {
+            const itemCode = $(this).data('item-code');
+            const warehouseCode = $(this).data('warehouse-code');
+
+            $.ajax({
+                url: "{{ route('inventory.stock.detail') }}",
+                type: "GET",
+                data: {
+                    itemCode: itemCode,
+                    warehouseCode: warehouseCode
+                },
+                success: function(response) {
+                    if (response.success) {
+                        let html = '';
+                        let totalIn = 0;
+                        let totalOut = 0;
+                        const fmt = new Intl.NumberFormat('id-ID');
+
+                        if (response.data.length > 0) {
+                            response.data.forEach((item, index) => {
+                                const inQty = Number(item.qtyIn) || 0;
+                                const outQty = Number(item.qtyOut) || 0;
+                                totalIn += inQty;
+                                totalOut += outQty;
+
+                                // badge class by type
+                                let badgeClass = 'bg-secondary';
+                                if (item.transactionType === 'Pembelian') {
+                                    badgeClass = 'bg-success';
+                                } else if (item.transactionType === 'Pemeliharaan') {
+                                    badgeClass = 'bg-warning text-dark';
+                                }
+
+                                const typeHtml = `<span class="badge badge-status ${badgeClass}">${item.transactionType}</span>`;
+
+                                html += `<tr>
+                                    <td>${index + 1}</td>
+                                    <td>${item.date}</td>
+                                    <td class="text-nowrap">${item.transactionCode}</td>
+                                    <td>${typeHtml}</td>
+                                    <td class="text-nowrap">${item.itemCode}</td>
+                                    <td class="text-start">${item.itemName}</td>
+                                    <td class="text-end">${fmt.format(inQty)}</td>
+                                    <td class="text-end">${fmt.format(outQty)}</td>
+                                    <td class="created-at text-end">${item.createdAt}</td>
+                                </tr>`;
+                            });
+                        } else {
+                            html = '<tr><td colspan="9" class="text-center">Tidak ada data transaksi</td></tr>';
+                        }
+
+                        $('#detailTableBody').html(html);
+
+                        // render footer totals
+                        const net = totalIn - totalOut;
+                        const footerHtml = `<tr class="table-active">
+                            <th colspan="6" class="text-end">Total</th>
+                            <th class="text-end">${fmt.format(totalIn)}</th>
+                            <th class="text-end">${fmt.format(totalOut)}</th>
+                            <th class="text-end">${fmt.format(net)}</th>
+                        </tr>`;
+                        $('#detailTableFooter').html(footerHtml);
+
+                        $('#detailModal').modal('show');
+                    } else {
+                        swal("Error", "Gagal memuat data transaksi", "error");
+                    }
+                },
+                error: function() {
+                    swal("Error", "Terjadi kesalahan, silakan coba lagi", "error");
                 }
             });
         });

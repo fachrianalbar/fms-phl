@@ -13,6 +13,7 @@ use App\Services\Inventory\StockService;
 use App\Services\Inventory\WarehouseService;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -53,11 +54,30 @@ class StockController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
+            $prefix = DB::getTablePrefix();
 
-            $data = FilterHelper::applyFilters($data, [], [], []);
+            // Use Eloquent with joins to get real-time stock per item per warehouse
+            $query = \App\Models\Inventory\Item::query()
+                ->select([
+                    'item.code as itemCode',
+                    'item.name as itemName',
+                    'warehouse.code as warehouseCode',
+                    'warehouse.name as warehouseName',
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) as totalIn'),
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock')
+                ])
+                ->crossJoin('warehouse')
+                ->whereNull('warehouse.deleted_at')
+                ->leftJoin('stock_transaction', function ($join) {
+                    $join->on(DB::raw('CAST(' . DB::getTablePrefix() . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . DB::getTablePrefix() . 'item.code AS CHAR)'))
+                        ->on(DB::raw('CAST(' . DB::getTablePrefix() . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . DB::getTablePrefix() . 'warehouse.code AS CHAR)'));
+                })
+                ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name');
 
-            return Datatables::of($data)
+            $query = FilterHelper::applyFilters($query, [], [], []);
+
+            return Datatables::of($query)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
@@ -66,53 +86,125 @@ class StockController extends Controller
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(code) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%']);
+                            $q->whereRaw('LOWER(item.code) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(item.name) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(warehouse.name) LIKE ?', ['%' . $search . '%']);
                         });
                     }
                 })
-                ->addColumn('total', function ($row) {
-                    $total = 0;
-                    if (isset($row->stock)) {
-                        $total = $row->stock->stockIn - $row->stock->stockOut;
-                    }
-
-                    return $total;
-                })
                 ->addColumn('action', function ($row) {
-                    $action = '<button type="button" class="btn btn-sm btn-info btn-edit-stock" 
-                                data-item-code="' . $row->code . '" 
-                                data-item-name="' . ($row->name ?? '') . '"
-                                title="Edit Stock Awal">
-                                <i class="mdi mdi-pencil"></i>
-                              </button>';
-
-                    if (isset($row->hasPurchase) || isset($row->hasMaintenance)) {
-                        $action = '';
-                    }
-
-                    return $action;
+                    return '<div class="btn-group" role="group">
+                                <button type="button" class="btn btn-sm btn-primary btn-detail" 
+                                    data-item-code="' . $row->itemCode . '" 
+                                    data-warehouse-code="' . $row->warehouseCode . '"
+                                    title="Detail Transaksi">
+                                    <i class="mdi mdi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-warning btn-edit-stock-awal" 
+                                    data-item-code="' . $row->itemCode . '" 
+                                    data-item-name="' . $row->itemName . '"
+                                    data-warehouse-code="' . $row->warehouseCode . '"
+                                    data-warehouse-name="' . $row->warehouseName . '"
+                                    title="Edit Stock Awal">
+                                    <i class="mdi mdi-database-edit"></i>
+                                </button>
+                            </div>';
                 })
-                ->rawColumns(['item.name', 'total', 'action'])
+                ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function getItemDetail(Request $request)
+    {
+        $itemCode = $request->itemCode;
+        $warehouseCode = $request->warehouseCode;
+
+        // Get all transactions for this item and warehouse
+        $transactions = StockTransaction::with(['item'])
+            ->where('itemCode', $itemCode)
+            ->where('warehouseCode', $warehouseCode)
+            ->orderBy('created_at', 'asc')
+            ->get()
+            ->map(function ($item) {
+                // Map transaction type to readable labels
+                $typeLabel = $item->transactionType ?? '-';
+
+                if ($item->transactionType === 'INITIAL') {
+                    $typeLabel = 'Stock Awal';
+                } elseif ($item->transactionType === 'IN') {
+                    $typeLabel = 'Pembelian';
+                } elseif ($item->transactionType === 'OUT') {
+                    $typeLabel = 'Pemeliharaan';
+                }
+
+                return [
+                    'date' => $item->date ? date('d/m/Y', strtotime($item->date)) : '-',
+                    'transactionCode' => $item->transactionCode ?? '-',
+                    'transactionType' => $typeLabel,
+                    'itemCode' => $item->itemCode,
+                    'itemName' => $item->item->name ?? '-',
+                    'qtyIn' => (int) $item->qtyIn,
+                    'qtyOut' => (int) $item->qtyOut,
+                    'createdAt' => date('d/m/Y H:i', strtotime($item->created_at)),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $transactions,
+        ]);
     }
 
     public function pdfStock(Request $request)
     {
         $mpdf = new Mpdf(
             [
-                'orientation' => 'P',
-                'format' => [215, 330],
+                'orientation' => 'L',
+                'format' => 'A4',
                 'tempDir' => storage_path('app/mpdf-temp'),
             ]
         );
 
-        $data = $this->service->findAll();
+        $warehouseCode = $request->warehouseCode;
+
+        // Get data per warehouse
+        if ($warehouseCode) {
+            $warehouses = Warehouse::where('code', $warehouseCode)->whereNull('deleted_at')->get();
+        } else {
+            $warehouses = Warehouse::whereNull('deleted_at')->get();
+        }
+
+        $reportData = [];
+
+        foreach ($warehouses as $warehouse) {
+            $prefix = DB::getTablePrefix();
+
+            $stocks = \App\Models\Inventory\Item::query()
+                ->select([
+                    'item.code as itemCode',
+                    'item.name as itemName',
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) as totalIn'),
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
+                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock')
+                ])
+                ->leftJoin('stock_transaction', function ($join) use ($warehouse, $prefix) {
+                    $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
+                        ->where(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', $warehouse->code);
+                })
+                ->groupBy('item.code', 'item.name')
+                ->havingRaw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) > 0')
+                ->get();
+
+            $reportData[] = [
+                'warehouse' => $warehouse,
+                'stocks' => $stocks,
+            ];
+        }
 
         $mpdf->WriteHTML(
             view($this->view . 'report.stock-pdf')
-                ->with('data', $data)
+                ->with('reportData', $reportData)
         );
 
         return $mpdf->Output('Laporan Stock.pdf', 'I');
@@ -123,23 +215,24 @@ class StockController extends Controller
         try {
             $request->validate([
                 'itemCode' => 'required|string',
+                'warehouseCode' => 'required|string',
                 'qty' => 'required|numeric|min:0',
             ]);
 
             $itemCode = $request->itemCode;
+            $warehouseCode = $request->warehouseCode;
             $qty = $request->qty;
-            $warehouseCode = Warehouse::first()->code; // Ambil warehouseCode dari warehouse pertama
 
-            // Cek apakah sudah ada transaksi IN atau OUT
-            $hasInOutTransaction = StockTransaction::where('itemCode', $itemCode)
+            // Cek apakah sudah ada transaksi selain INITIAL
+            $hasOtherTransaction = StockTransaction::where('itemCode', $itemCode)
                 ->where('warehouseCode', $warehouseCode)
-                ->whereIn('transactionType', ['IN', 'OUT'])
+                ->where('transactionType', '!=', 'INITIAL')
                 ->exists();
 
-            if ($hasInOutTransaction) {
+            if ($hasOtherTransaction) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak dapat mengubah stock awal karena sudah ada transaksi masuk/keluar untuk item ini',
+                    'message' => 'Tidak dapat mengubah stock awal karena sudah ada transaksi lain untuk item ini',
                 ], 422);
             }
 
@@ -149,19 +242,16 @@ class StockController extends Controller
                 ->where('transactionType', 'INITIAL')
                 ->first();
 
+            $date = now()->format('ymd');
+            $randomDigits = str_pad(rand(0, 9999), 4, '0', STR_PAD_LEFT);
+
             if ($existingInitial) {
                 // Update existing INITIAL transaction
-                StockTransaction::where('id', $existingInitial->id)
-                    ->update([
-                        'qtyIn' => $qty,
-                        'qtyOut' => 0,
-                        'date' => now(),
-                    ]);
-                PurchaseDetail::where('itemCode', $itemCode)->whereNull('purchaseCode')
-                    ->update([
-                        'qty' => $qty,
-                        'receivedQty' => $qty,
-                    ]);
+                $existingInitial->update([
+                    'qtyIn' => $qty,
+                    'qtyOut' => 0,
+                    'date' => now(),
+                ]);
             } else {
                 // Insert new INITIAL transaction
                 StockTransaction::create([
@@ -170,39 +260,10 @@ class StockController extends Controller
                     'warehouseCode' => $warehouseCode,
                     'qtyIn' => $qty,
                     'qtyOut' => 0,
-                    'transactionCode' => null,
-                    'transactionDetailCode' => null,
+                    'transactionCode' => 'INITIAL-' . $date . $randomDigits,
+                    'transactionDetailCode' => 'INITIALD-' . $itemCode . $randomDigits,
                     'transactionType' => 'INITIAL',
                     'date' => now(),
-                ]);
-
-                PurchaseDetail::create([
-                    'code' => GenerateCode::generateCode('FPD', true),
-                    'purchaseCode' => null,
-                    'itemCode' => $itemCode,
-                    'qty' => $qty,
-                    'receivedQty' => $qty,
-                    'status' => 1,
-                    'price' => null,
-                    'qtyUsed' => 0,
-                ]);
-            }
-
-            // Update atau insert ke table stock
-            $existingStock = Stock::where('itemCode', $itemCode)
-                ->first();
-
-            if ($existingStock) {
-                Stock::where('id', $existingStock->id)
-                    ->update([
-                        'stockIn' => $qty,
-                        'stockOut' => 0,
-                    ]);
-            } else {
-                Stock::create([
-                    'itemCode' => $itemCode,
-                    'stockIn' => $qty,
-                    'stockOut' => 0,
                 ]);
             }
 
