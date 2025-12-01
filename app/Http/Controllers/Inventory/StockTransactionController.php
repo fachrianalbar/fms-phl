@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Inventory;
 
-use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Warehouse;
 use App\Models\StockTransaction;
 use App\Services\Inventory\StockTransactionService;
-use App\Services\MenuService;
+use App\Services\Inventory\WarehouseService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -16,15 +17,16 @@ class StockTransactionController extends Controller
 {
     protected $service;
 
+    protected $warehouseSvc;
+
     protected $title;
 
     protected $view;
 
-    protected $menuSvc;
-
-    public function __construct(StockTransactionService $stockTransactionSvc, MenuService $menuSvc)
+    public function __construct(StockTransactionService $stockTransactionSvc, WarehouseService $warehouseSvc)
     {
         $this->service = $stockTransactionSvc;
+        $this->warehouseSvc = $warehouseSvc;
         $this->title = 'Stock Transaction';
         $this->view = 'inventory.transaction-stock.';
     }
@@ -34,142 +36,213 @@ class StockTransactionController extends Controller
      */
     public function index()
     {
-        $data = $this->service->findAll();
-
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
-            ->with('data', $data)
             ->with('title', $this->title);
     }
 
+    /**
+     * Datatable untuk list warehouse dengan summary total IN/OUT
+     */
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
+            $prefix = DB::getTablePrefix();
+            $alias = $prefix . 'st';
+            $warehouseTable = $prefix . 'warehouse';
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'itemCode' => $request->itemCode,
-                'purchase_data' => $request->purchaseCode,
-                'maintenance_data' => $request->maintenanceCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'purchase_data' => 'purchase.purchaseCode',
-                'maintenance_data' => 'maintenance.maintenanceCode',
-            ];
-
-            $dateFilters = [
-                'date' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = Warehouse::select('warehouse.*')
+                ->selectRaw('COALESCE(SUM(' . $alias . '.qtyIn), 0) as totalIn')
+                ->selectRaw('COALESCE(SUM(' . $alias . '.qtyOut), 0) as totalOut')
+                ->leftJoin('stock_transaction as st', function ($join) use ($warehouseTable, $alias) {
+                    $join->on(DB::raw($warehouseTable . '.code COLLATE utf8mb4_unicode_ci'), '=', DB::raw($alias . '.warehouseCode COLLATE utf8mb4_unicode_ci'))
+                        ->whereNull('st.deleted_at');
+                })
+                ->whereNull('warehouse.deleted_at')
+                ->groupBy('warehouse.id', 'warehouse.code', 'warehouse.name', 'warehouse.address', 'warehouse.created_at', 'warehouse.updated_at', 'warehouse.deleted_at');
 
             return Datatables::of($data)
                 ->addIndexColumn()
-                ->addColumn('in', function ($row) {
-                    $in = 0;
-
-                    if ($row->type == 'IN') {
-                        $in = $row->qty;
-                    }
-
-                    return $in;
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
                 })
-                ->addColumn('out', function ($row) {
-                    $out = 0;
-
-                    if ($row->type == 'OUT') {
-                        $out = $row->qty;
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && !empty($request->search['value'])) {
+                        $search = strtolower($request->search['value']);
+                        $query->where(function ($q) use ($search) {
+                            $q->whereRaw('LOWER(warehouse.code) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(warehouse.name) LIKE ?', ['%' . $search . '%']);
+                        });
                     }
-
-                    return $out;
                 })
-                ->editColumn('item.name', function ($row) {
-                    $item = '';
-
-                    if (isset($row->item->name)) {
-                        $item = $row->item->name;
-                    }
-
-                    return $item;
+                ->addColumn('totalStock', function ($row) {
+                    return $row->totalIn - $row->totalOut;
                 })
-                ->addColumn('bon', function ($row) {
-                    $bon = '';
-
-                    if ($row->type == 'IN' && $row->transactionType == 1) {
-                        $bon = $row->purchase->purchaseCode;
-                    } elseif ($row->type == 'OUT') {
-                        $bon = $row->maintenance->maintenanceCode;
-                    }
-
-                    return $bon;
+                ->addColumn('action', function ($row) {
+                    return '<button type="button" class="btn btn-sm btn-primary btn-detail" 
+                            data-warehouse-code="' . $row->code . '" 
+                            data-warehouse-name="' . $row->name . '"
+                            title="Lihat Detail">
+                            <i class="mdi mdi-eye"></i> Detail
+                          </button>';
                 })
-                // ->addColumn('action', function ($row) {
-                //     $btn = '<ul class="action">
-                //                         <li class="edit"> <a href="' . route($this->view . 'edit', $row->id) . '"><i class="icon-pencil-alt"></i></a></li>
-                //                         <li class="delete"><a href="javascript:deleteData(\'' . $row->id . '\')"><i class="icon-trash"></i></a></li>
-                //                     </ul>';
-
-                //     return $btn;
-                // })
-                ->rawColumns(['in', 'out', 'bon', 'item.name'])
+                ->rawColumns(['action'])
                 ->toJson();
         }
     }
 
+    /**
+     * Get detail transaksi per warehouse
+     */
+    public function getWarehouseDetail(Request $request)
+    {
+        $warehouseCode = $request->warehouseCode;
+
+        // Summary per item
+        $summary = StockTransaction::select('itemCode')
+            ->selectRaw('SUM(qtyIn) as totalIn')
+            ->selectRaw('SUM(qtyOut) as totalOut')
+            ->where('warehouseCode', $warehouseCode)
+            ->groupBy('itemCode')
+            ->with('item')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'itemCode' => $item->itemCode,
+                    'itemName' => $item->item->name ?? '-',
+                    'totalIn' => (int) $item->totalIn,
+                    'totalOut' => (int) $item->totalOut,
+                    'stock' => (int) $item->totalIn - (int) $item->totalOut,
+                ];
+            });
+
+        // Detail transaksi
+        $details = StockTransaction::with(['item'])
+            ->where('warehouseCode', $warehouseCode)
+            ->orderBy('date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($item) {
+                // Determine transaction type based on transactionCode prefix
+                $transactionType = '-';
+                $transactionCode = $item->transactionCode ?? '';
+
+                if (str_starts_with($transactionCode, 'PO')) {
+                    $transactionType = 'Pembelian';
+                } elseif (str_starts_with($transactionCode, 'MNT')) {
+                    $transactionType = 'Pemeliharaan';
+                } elseif ($item->transactionType === 'INITIAL') {
+                    $transactionType = 'Stock Awal';
+                }
+
+                return [
+                    'date' => Carbon::parse($item->date)->format('d-m-Y'),
+                    'itemCode' => $item->itemCode,
+                    'itemName' => $item->item->name ?? '-',
+                    'transactionCode' => $item->transactionCode ?? '-',
+                    'transactionType' => $transactionType,
+                    'qtyIn' => (int) $item->qtyIn,
+                    'qtyOut' => (int) $item->qtyOut,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'summary' => $summary,
+            'details' => $details,
+        ]);
+    }
+
+    /**
+     * Generate PDF report
+     */
     public function pdfStockTransaction(Request $request)
     {
-        $data = StockTransaction::with([
-            'item',
-            'purchase',
-            'maintenance',
-        ])->orderBy('created_at', 'desc');
+        $warehouseCode = $request->warehouseCode;
 
-        // Definisikan kolom filter dengan alias
-        $filters = [
-            'itemCode' => $request->itemCode,
-            'purchase_data' => $request->purchaseCode,
-            'maintenance_data' => $request->maintenanceCode,
-        ];
+        // Get all warehouses or specific one
+        if ($warehouseCode) {
+            $warehouses = Warehouse::where('code', $warehouseCode)->get();
+        } else {
+            $warehouses = Warehouse::all();
+        }
 
-        // Hubungkan alias ke relasi dan kolom yang sesuai
-        $relations = [
-            'purchase_data' => 'purchase.purchaseCode',
-            'maintenance_data' => 'maintenance.maintenanceCode',
-        ];
+        $reportData = [];
 
-        $dateFilters = [
-            'date' => [
-                'start' => $request->startDate,
-                'end' => $request->endDate,
-            ],
-        ];
+        foreach ($warehouses as $warehouse) {
+            // Summary per item
+            $summary = StockTransaction::select('itemCode')
+                ->selectRaw('SUM(qtyIn) as totalIn')
+                ->selectRaw('SUM(qtyOut) as totalOut')
+                ->where('warehouseCode', $warehouse->code)
+                ->groupBy('itemCode')
+                ->with('item')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'itemCode' => $item->itemCode,
+                        'itemName' => $item->item->name ?? '-',
+                        'totalIn' => (int) $item->totalIn,
+                        'totalOut' => (int) $item->totalOut,
+                        'stock' => (int) $item->totalIn - (int) $item->totalOut,
+                    ];
+                });
 
-        $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            // Detail transaksi
+            $details = StockTransaction::with(['item'])
+                ->where('warehouseCode', $warehouse->code)
+                ->orderBy('date', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($item) {
+                    $transactionType = '-';
+                    $transactionCode = $item->transactionCode ?? '';
 
-        $mpdf = new Mpdf(
-            [
-                'orientation' => 'P',
-                'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp'),
-            ]
-        );
+                    if (str_starts_with($transactionCode, 'PO')) {
+                        $transactionType = 'Pembelian';
+                    } elseif (str_starts_with($transactionCode, 'MNT')) {
+                        $transactionType = 'Pemeliharaan';
+                    } elseif ($item->transactionType === 'INITIAL') {
+                        $transactionType = 'Stock Awal';
+                    }
 
-        $startDate = Carbon::parse($request->startDate)->format('d-m-Y');
-        $endDate = Carbon::parse($request->endDate)->format('d-m-Y');
+                    return [
+                        'date' => Carbon::parse($item->date)->format('d-m-Y'),
+                        'itemCode' => $item->itemCode,
+                        'itemName' => $item->item->name ?? '-',
+                        'transactionCode' => $item->transactionCode ?? '-',
+                        'transactionType' => $transactionType,
+                        'qtyIn' => (int) $item->qtyIn,
+                        'qtyOut' => (int) $item->qtyOut,
+                    ];
+                });
+
+            // Total summary
+            $totalIn = $summary->sum('totalIn');
+            $totalOut = $summary->sum('totalOut');
+
+            $reportData[] = [
+                'warehouse' => $warehouse,
+                'summary' => $summary,
+                'details' => $details,
+                'totalIn' => $totalIn,
+                'totalOut' => $totalOut,
+                'totalStock' => $totalIn - $totalOut,
+            ];
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format' => [215, 330],
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
 
         $mpdf->WriteHTML(
-            view($this->view.'report.transaction-stock-pdf')
-                ->with('data', $data->get())
-                ->with('startDate', $startDate)
-                ->with('endDate', $endDate)
+            view($this->view . 'report.transaction-stock-pdf')
+                ->with('reportData', $reportData)
+                ->with('printDate', Carbon::now()->format('d-m-Y H:i'))
         );
 
-        return $mpdf->Output('Laporan Kartu Stock.pdf', 'I');
+        return $mpdf->Output('Laporan Transaksi Stock.pdf', 'I');
     }
 }

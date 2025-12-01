@@ -42,12 +42,10 @@ class StockController extends Controller
      */
     public function index()
     {
-        $stock = $this->service->findAll();
         $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
-            ->with('stock', $stock)
             ->with('warehouse', $warehouse)
             ->with('title', $this->title);
     }
@@ -57,20 +55,22 @@ class StockController extends Controller
         if ($request->ajax()) {
             $data = $this->service->datatable();
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'itemCode' => $request->itemCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
-
-            $dateFilters = [];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = FilterHelper::applyFilters($data, [], [], []);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && ! empty($request->search['value'])) {
+                        $search = strtolower($request->search['value']);
+                        $query->where(function ($q) use ($search) {
+                            $q->whereRaw('LOWER(code) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%']);
+                        });
+                    }
+                })
                 ->addColumn('total', function ($row) {
                     $total = 0;
                     if (isset($row->stock)) {
@@ -81,8 +81,8 @@ class StockController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $action = '<button type="button" class="btn btn-sm btn-info btn-edit-stock" 
-                                data-item-code="'.$row->code.'" 
-                                data-item-name="'.($row->name ?? '').'"
+                                data-item-code="' . $row->code . '" 
+                                data-item-name="' . ($row->name ?? '') . '"
                                 title="Edit Stock Awal">
                                 <i class="mdi mdi-pencil"></i>
                               </button>';
@@ -111,7 +111,7 @@ class StockController extends Controller
         $data = $this->service->findAll();
 
         $mpdf->WriteHTML(
-            view($this->view.'report.stock-pdf')
+            view($this->view . 'report.stock-pdf')
                 ->with('data', $data)
         );
 
@@ -213,7 +213,7 @@ class StockController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);
         }
     }
