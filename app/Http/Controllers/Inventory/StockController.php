@@ -56,8 +56,8 @@ class StockController extends Controller
         if ($request->ajax()) {
             $prefix = DB::getTablePrefix();
 
-            // Use Eloquent with joins to get real-time stock per item per warehouse
-            $query = \App\Models\Inventory\Item::query()
+            // Use Query Builder with joins to get real-time stock per item per warehouse (avoid Eloquent aliasing/soft delete mismatches)
+            $query = DB::table('item')
                 ->select([
                     'item.code as itemCode',
                     'item.name as itemName',
@@ -67,28 +67,29 @@ class StockController extends Controller
                     DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
                     DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock')
                 ])
-                ->crossJoin('warehouse')
+                ->crossJoin(DB::raw($prefix . 'warehouse'))
                 ->whereNull('warehouse.deleted_at')
-                ->leftJoin('stock_transaction', function ($join) {
-                    $join->on(DB::raw('CAST(' . DB::getTablePrefix() . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . DB::getTablePrefix() . 'item.code AS CHAR)'))
-                        ->on(DB::raw('CAST(' . DB::getTablePrefix() . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . DB::getTablePrefix() . 'warehouse.code AS CHAR)'));
+                ->whereNull('item.deleted_at')
+                ->leftJoin(DB::raw($prefix . 'stock_transaction'), function ($join) use ($prefix) {
+                    $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
+                        ->on(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'warehouse.code AS CHAR)'));
                 })
                 ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name');
 
-            $query = FilterHelper::applyFilters($query, [], [], []);
+            // No FilterHelper (Query Builder), apply search filter manually via DataTables filter closure
 
             return Datatables::of($query)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
                 })
-                ->filter(function ($query) use ($request) {
+                ->filter(function ($query) use ($request, $prefix) {
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
-                        $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(item.code) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(item.name) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(warehouse.name) LIKE ?', ['%' . $search . '%']);
+                        $query->where(function ($q) use ($search, $prefix) {
+                            $q->whereRaw('LOWER(' . $prefix . 'item.code) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(' . $prefix . 'item.name) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(' . $prefix . 'warehouse.name) LIKE ?', ['%' . $search . '%']);
                         });
                     }
                 })
@@ -180,7 +181,7 @@ class StockController extends Controller
         foreach ($warehouses as $warehouse) {
             $prefix = DB::getTablePrefix();
 
-            $stocks = \App\Models\Inventory\Item::query()
+            $stocks = DB::table('item')
                 ->select([
                     'item.code as itemCode',
                     'item.name as itemName',
@@ -188,7 +189,7 @@ class StockController extends Controller
                     DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
                     DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock')
                 ])
-                ->leftJoin('stock_transaction', function ($join) use ($warehouse, $prefix) {
+                ->leftJoin(DB::raw($prefix . 'stock_transaction'), function ($join) use ($warehouse, $prefix) {
                     $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
                         ->where(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', $warehouse->code);
                 })
