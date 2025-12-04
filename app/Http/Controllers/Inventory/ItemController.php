@@ -97,16 +97,16 @@ class ItemController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => ['required', Rule::unique('item', 'code')->whereNull('deleted_at')],
             'name' => 'required',
-            'brandName' => 'required',
-            'categoryCode' => 'required',
+            // 'brandName' => 'required',
+            // 'categoryCode' => 'required',
             // 'itemLocationCode' => 'required',
-            'warehouseCode' => 'required',
+            // 'warehouseCode' => 'required',
             'unitCode' => 'required',
-            'supplierCode' => 'required',
+            // 'supplierCode' => 'required',
             // 'price' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
         try {
             DB::beginTransaction();
@@ -164,18 +164,18 @@ class ItemController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'code' => 'required',
+            // 'code' => 'required',
             'name' => 'required',
-            'brandName' => 'required',
-            'categoryCode' => 'required',
+            // 'brandName' => 'required',
+            // 'categoryCode' => 'required',
             // 'itemLocationCode' => 'required',
-            'warehouseCode' => 'required',
+            // 'warehouseCode' => 'required',
             'unitCode' => 'required',
-            'supplierCode' => 'required',
+            // 'supplierCode' => 'required',
             // 'price' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->back()->withErrors($validator)->withInput();
         }
         try {
             DB::beginTransaction();
@@ -229,22 +229,9 @@ class ItemController extends Controller
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search) {
                             $q->whereRaw('LOWER(code) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(brandName) LIKE ?', ['%' . $search . '%']);
+                                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%']);
                         });
                     }
-                })
-                ->editColumn('price', function ($row) {
-                    return number_format($row->price, 0, ',', '.');
-                })
-                ->editColumn('category.name', function ($row) {
-                    $category = '';
-
-                    if (isset($row->category->name)) {
-                        $category = $row->category->name;
-                    }
-
-                    return $category;
                 })
                 ->editColumn('unit.name', function ($row) {
                     $unit = '';
@@ -254,33 +241,6 @@ class ItemController extends Controller
                     }
 
                     return $unit;
-                })
-                ->editColumn('warehouse.name', function ($row) {
-                    $warehouse = '';
-
-                    if (isset($row->warehouse->name)) {
-                        $warehouse = $row->warehouse->name;
-                    }
-
-                    return $warehouse;
-                })
-                ->editColumn('supplier.name', function ($row) {
-                    $supplier = '';
-
-                    if (isset($row->supplier->name)) {
-                        $supplier = $row->supplier->name;
-                    }
-
-                    return $supplier;
-                })
-                ->editColumn('location.name', function ($row) {
-                    $location = '';
-
-                    if (isset($row->location->name)) {
-                        $location = $row->location->name;
-                    }
-
-                    return $location;
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
@@ -299,7 +259,7 @@ class ItemController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'category', 'unit.name', 'warehouse.name', 'supplier.name', 'location.name'])
+                ->rawColumns(['action', 'unit.name'])
                 ->make();
         }
     }

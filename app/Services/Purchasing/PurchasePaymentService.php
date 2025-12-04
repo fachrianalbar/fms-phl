@@ -89,10 +89,15 @@ class PurchasePaymentService
 
         $data = $this->getById($id);
 
-        foreach ($data->details as $item) {
-            Stock::where('itemCode', $item->item->code)->decrement('stockIn', $item->qty);
-            StockTransaction::where('transactionCode', $item->code)->delete();
+        // Rollback stock: kurangi stockIn berdasarkan total qtyIn dari StockTransaction
+        $stockTransactions = StockTransaction::withTrashed()->where('transactionCode', $data->code)->get();
+
+        foreach ($stockTransactions as $transaction) {
+            Stock::withTrashed()->where('itemCode', $transaction->itemCode)->decrement('stockIn', $transaction->qtyIn);
         }
+
+        // Delete semua StockTransaction untuk purchase ini
+        StockTransaction::withTrashed()->where('transactionCode', $data->code)->delete();
 
         $data->details()->delete();
 

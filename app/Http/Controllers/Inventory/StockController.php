@@ -74,6 +74,7 @@ class StockController extends Controller
                     $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
                         ->on(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'warehouse.code AS CHAR)'));
                 })
+                ->whereNull('stock_transaction.deleted_at')
                 ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name');
 
             // No FilterHelper (Query Builder), apply search filter manually via DataTables filter closure
