@@ -21,10 +21,16 @@ class VendorPayment extends Model
         'orderCode',
         'amount',
         'description',
+        'date',
     ];
 
     public function order()
     {
         return $this->belongsTo(Order::class, 'orderCode', 'code');
+    }
+
+    public function mutation()
+    {
+        return $this->hasOne(\App\Models\Mutation::class, 'transactionTypeCode', 'code');
     }
 }

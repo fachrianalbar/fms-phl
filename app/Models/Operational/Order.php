@@ -6,6 +6,7 @@ use App\Models\Data\FleetDriver;
 use App\Models\Data\Route;
 use App\Models\Finance\OrderPayment;
 use App\Models\Finance\OrderPaymentHistory;
+use App\Models\Finance\VendorPayment;
 use App\Models\Master\Customer;
 use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
@@ -54,6 +55,8 @@ class Order extends Model
         'is_order_tax',
         'returnDescription',
         'routeAmount',
+        'vendor_price',
+        'personal_vendor_price',
     ];
 
     public function customer()
@@ -134,5 +137,10 @@ class Order extends Model
     public function customerDetailOrders()
     {
         return $this->hasMany(CustomerDetailOrder::class, 'orderCode', 'code');
+    }
+
+    public function vendorPayments()
+    {
+        return $this->hasMany(VendorPayment::class, 'orderCode', 'code');
     }
 }

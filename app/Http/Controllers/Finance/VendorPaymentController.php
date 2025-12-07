@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Finance;
 use App\Http\Controllers\Controller;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
+use App\Models\Finance\VendorPayment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -36,7 +37,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -46,9 +47,10 @@ class VendorPaymentController extends Controller
         $validator = Validator::make($request->all(), [
             'amount' => 'required',
             'date' => 'required',
+            'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -56,11 +58,11 @@ class VendorPaymentController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -121,6 +123,10 @@ class VendorPaymentController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
+                ->editColumn('personalVendorPrice', function ($row) {
+                    $amount = $row->personalVendorPrice ?? 0;
+                    return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
+                })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
                     $badgeClass = 'primary';
@@ -129,23 +135,36 @@ class VendorPaymentController extends Controller
                         $statusText = Auth::user()->languange == 'id' ? $row->orderStatus->nama : $row->orderStatus->name;
                     }
 
-                    if ($row->status == 3) {
-                        $badgeClass = 'primary';
+                    if ($row->status == 4) {
+                        $badgeClass = 'warning';
                     } elseif ($row->status == 6) {
                         $badgeClass = 'success';
+                    } elseif ($row->status == 3) {
+                        $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '';
 
-                    if ($row->status == 3) {
+                    if ($row->status == 4 || $row->status == 5) {
+                        $billingAmount = $row->personalVendorPrice ?? 0;
                         $btn = ' <td>
-                            <a href="javascript:showModal(\''.$row->code.'\')"
+                            <a href="javascript:showModal(\'' . $row->code . '\', ' . $billingAmount . ')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
-                                    <i class="mdi mdi-check-bold fs-14 text-success"></i>
+                                    <i class="mdi mdi-cash fs-14 text-success"></i>
+                             </a>
+                            </td>';
+                    }
+
+                    if ($row->status == 6 && $row->vendorPayments->isNotEmpty()) {
+                        $btn .= ' <td>
+                            <a href="javascript:showDetailModal(\'' . $row->code . '\')"
+                                class="btn btn-icon btn-sm bg-info-subtle me-1"
+                                data-bs-toggle="tooltip" title="Detail">
+                                    <i class="mdi mdi-eye fs-14 text-info"></i>
                              </a>
                             </td>';
                     }
@@ -155,5 +174,31 @@ class VendorPaymentController extends Controller
                 ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status'])
                 ->toJson();
         }
+    }
+
+    public function getDetail($orderCode)
+    {
+        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer'])
+            ->where('orderCode', $orderCode)
+            ->first();
+
+        if ($vendorPayment) {
+            // Get mutation record for bank information
+            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
+                ->where('type', 'Out')
+                ->with('userBank.bank')
+                ->first();
+
+            $vendorPayment->bankInfo = $mutation && $mutation->userBank ? [
+                'bank_name' => $mutation->userBank->bank->name ?? 'N/A',
+                'account_number' => $mutation->userBank->accountNumber ?? 'N/A',
+                'account_name' => $mutation->userBank->accountName ?? 'N/A',
+            ] : null;
+
+            // Add transaction date from created_at
+            $vendorPayment->transaction_date = $vendorPayment->created_at;
+        }
+
+        return response()->json($vendorPayment);
     }
 }

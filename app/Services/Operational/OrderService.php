@@ -69,7 +69,8 @@ class OrderService
             'fleet',
             'fleet.type',
             'unit',
-        ])->orderBy('orderDate', 'asc')->where('status', 0);
+            'orderStatus',
+        ])->orderBy('orderDate', 'asc');
     }
 
     public function getById($id)
@@ -148,8 +149,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code.'-del-'.Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
+            'code' => $data->code . '-del-' . Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -236,6 +237,8 @@ class OrderService
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
             'routeAmount' => $isUpdate ? (int) $request->routeAmount : $route->price,
+            'vendorPrice' => $isUpdate ? (int) $request->vendorPrice : $route->vendorPrice,
+            'personalVendorPrice' => $isUpdate ? (int) $request->personalVendorPrice : $route->personalVendorPrice,
             'customerCode' => $request->customerCode,
         ];
 
@@ -269,7 +272,7 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
+            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi
