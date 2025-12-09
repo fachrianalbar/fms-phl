@@ -25,6 +25,10 @@ class MaintenanceDetail extends Model
         'status',
     ];
 
+    protected $casts = [
+        'qty' => 'decimal:1',
+    ];
+
     public function maintenance()
     {
         return $this->belongsTo(Maintenance::class, 'maintenanceCode', 'code');

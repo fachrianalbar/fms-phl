@@ -117,7 +117,7 @@
                                 <th>Code</th>
                                 <th>{{ __('menu_maintenance.date') }}</th>
                                 <th>{{ __('menu_maintenance.plate_no') }}</th>
-                                <th>Items</th>
+                                <th>Warehouse</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -133,6 +133,62 @@
         @csrf
         @method('DELETE')
     </form>
+
+    <!-- Detail Modal -->
+    <div class="modal fade" id="detailModal" tabindex="-1" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detailModalLabel">Maintenance Detail</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Code:</strong>
+                            <p id="detail-code"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Date:</strong>
+                            <p id="detail-date"></p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Fleet:</strong>
+                            <p id="detail-fleet"></p>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Warehouse:</strong>
+                            <p id="detail-warehouse"></p>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>Items:</strong>
+                            <div class="table-responsive mt-2">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Item Code</th>
+                                            <th>Item Name</th>
+                                            <th>Qty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detail-items">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script')
@@ -192,7 +248,7 @@
                         "data": 'fleet.plateNumber'
                     },
                     {
-                        "data": "items"
+                        "data": "warehouse"
                     },
 
                 ],
@@ -251,6 +307,47 @@
 
 
         });
+
+        function showDetail(id) {
+            // Make AJAX request to get maintenance detail
+            $.ajax({
+                url: '{{ route("warehouse.maintenance.index") }}/' + id,
+                method: 'GET',
+                success: function(response) {
+                    // Populate modal with data
+                    $('#detail-code').text(response.code);
+                    $('#detail-date').text(response.date + ' ' + response.time);
+                    $('#detail-fleet').text(response.fleet ? response.fleet.plateNumber : '-');
+                    $('#detail-warehouse').text(response.warehouse ? response.warehouse.name : '-');
+                    
+                    // Populate items table
+                    let itemsHtml = '';
+                    if (response.details && response.details.length > 0) {
+                        response.details.forEach(function(item, index) {
+                            itemsHtml += '<tr>';
+                            itemsHtml += '<td>' + (index + 1) + '</td>';
+                            itemsHtml += '<td>' + item.itemCode + '</td>';
+                            itemsHtml += '<td>' + (item.item ? item.item.name : '-') + '</td>';
+                            itemsHtml += '<td>' + item.qty + '</td>';
+                            itemsHtml += '</tr>';
+                        });
+                    } else {
+                        itemsHtml = '<tr><td colspan="4" class="text-center">No items found</td></tr>';
+                    }
+                    $('#detail-items').html(itemsHtml);
+                    
+                    // Show modal
+                    $('#detailModal').modal('show');
+                },
+                error: function() {
+                    swal({
+                        title: "Error",
+                        text: "Failed to load maintenance details",
+                        icon: "error",
+                    });
+                }
+            });
+        }
 
         function deleteData(uuid) {
             var url = '{{ route('warehouse.maintenance.index') }}/' + uuid;

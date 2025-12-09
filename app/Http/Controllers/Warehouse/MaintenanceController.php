@@ -12,6 +12,7 @@ use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\Inventory\StockService;
+use App\Services\Inventory\WarehouseService;
 use App\Services\Master\FleetService;
 use App\Services\MenuService;
 use App\Services\Warehouse\MaintenanceService;
@@ -31,17 +32,20 @@ class MaintenanceController extends Controller
 
     protected $stockSvc;
 
+    protected $warehouseSvc;
+
     protected $title;
 
     protected $view;
 
     protected $menuSvc;
 
-    public function __construct(MaintenanceService $maintenanceService, FleetService $fleetSvc, StockService $stockSvc, MenuService $menuSvc)
+    public function __construct(MaintenanceService $maintenanceService, FleetService $fleetSvc, StockService $stockSvc, WarehouseService $warehouseSvc, MenuService $menuSvc)
     {
         $this->service = $maintenanceService;
         $this->fleetSvc = $fleetSvc;
         $this->stockSvc = $stockSvc;
+        $this->warehouseSvc = $warehouseSvc;
         $this->title = 'Maintenance';
         $this->menuSvc = $menuSvc->getByName('Maintenance');
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
@@ -56,7 +60,7 @@ class MaintenanceController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $stock = $this->stockSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('stock', $stock)
@@ -69,12 +73,12 @@ class MaintenanceController extends Controller
     public function create()
     {
         $fleet = $this->fleetSvc->findAll();
-        $stock = $this->stockSvc->findAll();
+        $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view.'create')
+        return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
-            ->with('stock', $stock)
+            ->with('warehouse', $warehouse)
             ->with('title', $this->title);
     }
 
@@ -87,11 +91,12 @@ class MaintenanceController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required',
             'fleetCode' => 'required',
+            'warehouseCode' => 'required',
             'date' => 'required',
             'time' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -100,11 +105,11 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -113,7 +118,16 @@ class MaintenanceController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $data = $this->service->getById($id);
+        
+        if (!$data) {
+            return response()->json(['error' => 'Data not found'], 404);
+        }
+
+        // Load relationships
+        $data->load(['fleet', 'warehouse', 'details.item']);
+
+        return response()->json($data);
     }
 
     /**
@@ -124,17 +138,17 @@ class MaintenanceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
-        $stock = $this->stockSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
+        $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
-            ->with('stock', $stock)
+            ->with('warehouse', $warehouse)
             ->with('data', $data);
     }
 
@@ -151,7 +165,7 @@ class MaintenanceController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         try {
@@ -161,11 +175,11 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -176,7 +190,7 @@ class MaintenanceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }
 
     public function deleteMaintenanceDetail($id)
@@ -204,7 +218,7 @@ class MaintenanceController extends Controller
         $maintenanceId = $md->maintenance->id;
         $md->delete();
 
-        return redirect()->route($this->view.'edit', $maintenanceId)
+        return redirect()->route($this->view . 'edit', $maintenanceId)
             ->with('success', 'Delete Data Success');
     }
 
@@ -241,7 +255,7 @@ class MaintenanceController extends Controller
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
 
-                    return $date.' '.$time;
+                    return $date . ' ' . $time;
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -253,23 +267,24 @@ class MaintenanceController extends Controller
                     return $fleet;
                 })
 
-                ->addColumn('items', function ($row) {
-                    $items = '';
-                    foreach ($row->details as $item) {
-                        $items .= $item->itemCode.': '.$item->item->name.' Qty : '.$item->qty.'<br>';
-                    }
-
-                    return $items;
+                ->addColumn('warehouse', function ($row) {
+                    return $row->warehouse ? $row->warehouse->name : '-';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
+        <button type="button" class="btn btn-icon btn-sm bg-info-subtle me-1" 
+           onclick="showDetail(\'' . $row->id . '\')"
+           data-bs-toggle="tooltip" title="Detail">
+            <i class="mdi mdi-eye-outline fs-14 text-info"></i>
+        </button>
+
+        <a href="' . route($this->view . 'edit', $row->id) . '"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\''.$row->id.'\')"
+        <a href="javascript:deleteData(\'' . $row->id . '\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -278,7 +293,7 @@ class MaintenanceController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'items', 'action'])
+                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'warehouse', 'action'])
                 ->toJson();
         }
     }
@@ -324,7 +339,7 @@ class MaintenanceController extends Controller
         $endDate = Carbon::parse($request->endDate)->format('d-m-Y');
 
         $mpdf->WriteHTML(
-            view($this->view.'report.maintenance-pdf')
+            view($this->view . 'report.maintenance-pdf')
                 ->with('data', $data->get())
                 ->with('plateNumber', $request->plateNumber)
                 ->with('startDate', $startDate)
@@ -346,5 +361,35 @@ class MaintenanceController extends Controller
         );
 
         return response()->json(['code' => $code]);
+    }
+
+    /**
+     * Get stock items by warehouse
+     */
+    public function getStockByWarehouse(Request $request)
+    {
+        $warehouseCode = $request->warehouseCode;
+
+        if (!$warehouseCode) {
+            return response()->json(['success' => false, 'message' => 'Warehouse code is required'], 400);
+        }
+
+        // Get stock per item from stock_transaction grouped by warehouse and item
+        $stocks = StockTransaction::select('itemCode')
+            ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as stock')
+            ->where('warehouseCode', $warehouseCode)
+            ->groupBy('itemCode')
+            ->havingRaw('SUM(qtyIn) - SUM(qtyOut) > 0')
+            ->with('item')
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'code' => $item->item->code,
+                    'name' => $item->item->name,
+                    'stock' => $item->stock
+                ];
+            });
+
+        return response()->json(['success' => true, 'data' => $stocks]);
     }
 }

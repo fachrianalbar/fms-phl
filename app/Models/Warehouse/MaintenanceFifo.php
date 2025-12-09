@@ -20,4 +20,8 @@ class MaintenanceFifo extends Model
         'purchaseDetailCode',
         'qty',
     ];
+
+    protected $casts = [
+        'qty' => 'decimal:1',
+    ];
 }

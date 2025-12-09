@@ -85,6 +85,22 @@
                         </div>
                     </div>
 
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <label class="form-label" for="warehouseCode">Warehouse <i
+                                    class="icofont icofont-warning-alt text-danger"></i></label>
+                            <select class="js-example-basic-single" name="warehouseCode" id="warehouseCode" required>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                </option>
+                                @foreach ($warehouse as $item)
+                                <option value="{{ $item->code }}">
+                                    {{ $item->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -107,32 +123,21 @@
                     </thead>
                     <tbody id="purchaseDetails">
                         <tr>
-                            <td class="remove-btn"></td> <!-- Remove button will be here -->
+                            <td class="remove-btn"></td>
                             <td>
                                 <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1" required
-                                    onchange="loadItemDetails(1)">
+                                    onchange="loadItemDetails(1)" disabled>
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                     </option>
-                                    @foreach ($stock as $item)
-                                    <option value="{{ $item->item->code }}" data-name="{{ $item->item->name }}"
-                                        data-qty="{{ $item->stockIn - $item->stockOut }}">
-                                        {{ $item->item->code . ' - ' . $item->item->name }}
-                                    </option>
-                                    @endforeach
                                 </select>
                             </td>
-                            {{-- <td>
-                                    <div class="mx-5">
-                                        <input class="form-control" type="text" id="itemName_1" required readonly>
-                                    </div>
-                                </td> --}}
                             <td>
                                 <input class="form-control" type="number" name="qty_exist[]" id="qty_exist_1" readonly
                                     value="0">
                             </td>
                             <td>
                                 <input class="form-control" type="number" name="qty[]" id="qty_1" required
-                                    min="1" value="1">
+                                    min="0.01" step="0.01" value="1">
                             </td>
                         </tr>
                     </tbody>
@@ -179,20 +184,68 @@
 
 
 <script>
-    let dataItem;
+    let dataItem = [];
+    let selectedWarehouse = null;
+
     $(document).ready(function() {
         $('#dt').DataTable();
-        // Initialize Select2 on the first row
-
-        dataItem = @json($stock);
 
         generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
 
-
+        // Disable add button initially
+        $('#save').prop('disabled', true);
     });
 
     $('input[name="date"]').on('change', function() {
         generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
+    });
+
+    // When warehouse is selected, load stock items
+    $('#warehouseCode').on('change', function() {
+        selectedWarehouse = $(this).val();
+
+        if (!selectedWarehouse) {
+            return;
+        }
+
+        // Load stock items for this warehouse
+        $.ajax({
+            url: '/ajax/maintenance-stock-by-warehouse',
+            method: 'GET',
+            data: {
+                warehouseCode: selectedWarehouse
+            },
+            success: function(response) {
+                if (response.success) {
+                    dataItem = response.data;
+
+                    // Enable item selects and add button
+                    $('select[name="itemCode[]"]').prop('disabled', false);
+                    $('#save').prop('disabled', false);
+
+                    // Populate first row
+                    let html = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
+                    dataItem.forEach(i => {
+                        html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}">${i.code} - ${i.name}</option>`;
+                    });
+                    $('#itemCode_1').html(html);
+                    $('#itemCode_1').select2();
+                } else {
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: response.message,
+                        icon: "warning",
+                    });
+                }
+            },
+            error: function() {
+                swal({
+                    title: "{{ __('general.error') }}",
+                    text: "Failed to load stock items",
+                    icon: "error",
+                });
+            }
+        });
     });
 
     // Load item details (name, price)
@@ -210,7 +263,7 @@
     function updateTotalPrice(row) {
         let qty = $(`#qty_${row}`).val();
         let price = $(`#price_${row}`).val();
-        let totalPrice = qty * parseInt(price.replace(/\./g, ''));
+        let totalPrice = qty * parseFloat(price.replace(/\./g, ''));
 
         totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
 
@@ -226,8 +279,8 @@
 
         // Loop through each row to validate quantities
         $('#purchaseDetails tr').each(function() {
-            let qtyInput = parseInt($(this).find('input[name="qty[]"]').val());
-            let qtyExisting = parseInt($(this).find('input[name="qty_exist[]"]').val());
+            let qtyInput = parseFloat($(this).find('input[name="qty[]"]').val());
+            let qtyExisting = parseFloat($(this).find('input[name="qty_exist[]"]').val());
             let code = $(this).find('select[name="itemCode[]"]').val();
             let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
             // Get the item name
@@ -265,6 +318,15 @@
 
 
     $('#save').on('click', function() {
+        if (!selectedWarehouse) {
+            swal({
+                title: "{{ __('general.warning') }}",
+                text: "Please select a warehouse first",
+                icon: "warning",
+            });
+            return;
+        }
+
         let row = $('#purchaseDetails tr').length + 1;
 
         let newRow = `<tr>
@@ -284,7 +346,7 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control" type="number" name="qty[]" id="qty_${row}" required value="1">
+                                <input class="form-control" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
                             </td>
                           </tr>`;
         $('#purchaseDetails').append(newRow);
@@ -292,8 +354,7 @@
         let html = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
 
         dataItem.forEach(i => {
-            html +=
-                `<option value="${i.item.code}" data-name="${i.item.name}" data-qty="${i.stockIn - i.stockOut}">${i.item.code} - ${i.item.name}</option>`;
+            html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}">${i.code} - ${i.name}</option>`;
         });
 
         $(`#itemCode_${row}`).html(html);

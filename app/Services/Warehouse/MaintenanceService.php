@@ -37,6 +37,7 @@ class MaintenanceService
     {
         return $this->service->with([
             'fleet',
+            'warehouse',
             'details',
             'details.item',
         ])->where('status', 0)->orderBy('created_at', 'desc');
@@ -49,15 +50,16 @@ class MaintenanceService
 
     public function store($request, $title)
     {
+        $warehouseCode = $request->warehouseCode ?? Warehouse::first()->code;
+
         // 1. Simpan data maintenance utama
         $data = $this->service->create([
             'code' => $request->code,
             'date' => $request->date,
             'time' => $request->time,
             'fleetCode' => $request->fleetCode,
+            'warehouseCode' => $warehouseCode,
         ]);
-
-        $warehouseCode = Warehouse::first()->code;
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
@@ -65,21 +67,21 @@ class MaintenanceService
 
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $itemCode = $filtered['itemCode'][$i];
-                $requestedQty = (int) $filtered['qty'][$i];
+                $requestedQty = (float) $filtered['qty'][$i];
 
                 // Validasi jumlah tidak boleh nol atau negatif
                 if ($requestedQty <= 0) {
                     throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
                 }
 
-                // 3. Validasi stok FIFO tersedia
-                $totalAvailableQty = PurchaseDetail::where('itemCode', $itemCode)
-                    ->where('status', 1)
-                    ->selectRaw('SUM(receivedQty - COALESCE(qtyUsed, 0)) as available')
-                    ->value('available') ?? 0;
+                // 3. Validasi stok tersedia dari stock_transaction berdasarkan warehouse
+                $availableStock = StockTransaction::where('itemCode', $itemCode)
+                    ->where('warehouseCode', $warehouseCode)
+                    ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as totalStock')
+                    ->value('totalStock') ?? 0;
 
-                if ($totalAvailableQty < $requestedQty) {
-                    throw new \Exception("Stok tidak cukup untuk item {$itemCode}. Tersedia: {$totalAvailableQty}, Diminta: {$requestedQty}");
+                if ($availableStock < $requestedQty) {
+                    throw new \Exception("Stok tidak cukup untuk item {$itemCode} di gudang {$warehouseCode}. Tersedia: {$availableStock}, Diminta: {$requestedQty}");
                 }
 
                 // 4. Buat MaintenanceDetail terlebih dahulu
@@ -194,8 +196,8 @@ class MaintenanceService
             // STEP 2: Alokasi ulang
             for ($i = 0; $i < count($itemCodes); $i++) {
                 $itemCode = $itemCodes[$i];
-                $qty = (int) $qtys[$i];
-                $originalQty = (int) $originalQtys[$i];
+                $qty = (float) $qtys[$i];
+                $originalQty = (float) $originalQtys[$i];
                 // $isLifo = $qty < $originalQty;
 
                 if ($qty <= 0) {

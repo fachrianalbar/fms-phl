@@ -21,12 +21,18 @@ class Maintenance extends Model
         'date',
         'time',
         'fleetCode',
+        'warehouseCode',
         'status',
     ];
 
     public function fleet()
     {
         return $this->belongsTo(Fleet::class, 'fleetCode', 'code');
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(\App\Models\Inventory\Warehouse::class, 'warehouseCode', 'code');
     }
 
     public function details()
