@@ -134,12 +134,12 @@
                                     id="qty_1" value="1" required onchange="updateTotalPrice(1)">
                             </td>
                             <td>
-                                <input class="form-control" type="text" name="description[]" id="description_1" placeholder="Description">
-                            </td>
-                            <td>
                                 <input class="form-control" type="text" id="price_1"
                                     oninput="formatAngka(this)" onchange="updateTotalPrice(1)" name="price[]"
                                     required value="0">
+                            </td>
+                            <td>
+                                <input class="form-control" type="text" name="description[]" id="description_1" placeholder="Description">
                             </td>
                             <td>
                                 <input class="form-control" type="text" id="totalPrice_1" readonly
@@ -204,8 +204,7 @@
 
     // Load items based on supplier
     function itemBySupplier(supplierCode) {
-        let html = '<option selected="" disabled="" value="">{{ __('
-        general.choose ') }}...</option>';
+        let html = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
         $('#itemCode_1').html(html);
 
         $.get("{{ url('ajax/item-by-supplier') }}/" + supplierCode, function(data) {
@@ -277,10 +276,7 @@
         let itemName = $(`#itemCode_${row} option:selected`).data('name');
         let itemPrice = $(`#itemCode_${row} option:selected`).data('price');
 
-        itemPrice = Intl.NumberFormat('id-ID').format(Math.round(itemPrice))
-
-
-
+        itemPrice = new Intl.NumberFormat('id-ID').format(Math.round(itemPrice));
 
         $(`#itemName_${row}`).val(itemName);
         $(`#price_${row}`).val(itemPrice);
@@ -294,9 +290,7 @@
         let priceNumber = parseInt(price.replace(/\./g, '')) || 0;
         let totalPrice = qty * priceNumber;
 
-        totalPrice = Intl.NumberFormat('id-ID').format(Math.round(totalPrice))
-
-
+        totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
 
         $(`#totalPrice_${row}`).val(totalPrice);
     }
@@ -305,8 +299,7 @@
     $('#save').on('click', function() {
         let row = $('#purchaseDetails tr').length + 1;
 
-        let options = '<option selected="" disabled="" value="">{{ __('
-        general.choose ') }}...</option>';
+        let options = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
 
         // Mengisi options berdasarkan data items
         itemsData.forEach(item => {
@@ -335,10 +328,10 @@
                              <input class="form-control" type="number" min="0.1" step="0.1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
                          </td>
                          <td>
-                             <input class="form-control" type="text" name="description[]" id="description_${row}" placeholder="Description">
+                             <input class="form-control" type="text" id="price_${row}" name="price[]" min="1" onchange="updateTotalPrice(${row})" oninput="formatAngka(this)" required value="0">
                          </td>
                          <td>
-                             <input class="form-control" type="text" id="price_${row}" name="price[]" min="1" onchange="updateTotalPrice(${row})" oninput="formatAngka(this)" required value="0">
+                             <input class="form-control" type="text" name="description[]" id="description_${row}" placeholder="Description">
                          </td>
                          <td>
                              <input class="form-control" type="text" id="totalPrice_${row}" readonly value="0">

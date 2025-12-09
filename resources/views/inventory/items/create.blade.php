@@ -17,13 +17,12 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
-            <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+            <a href="{{ route('inventory.items.index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
         </div>
         <div class="card-body col-md-12">
             @include('partials.alert')
-            <form class="row g-3" method="post" novalidate="" action="{{ route($view . 'store') }}"
-                onsubmit="return submitForm('price')">
+            <form class="row g-3" method="post" novalidate="" action="{{ route('inventory.items.store') }}">
                 @csrf
                 <div class="row mt-4">
                     <div class="col-md-6">

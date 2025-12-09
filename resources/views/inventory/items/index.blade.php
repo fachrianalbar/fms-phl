@@ -39,7 +39,7 @@
                 </div>
 
 
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+                <a href="{{ route('inventory.items.create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
             </div>
         </div>
 
@@ -167,8 +167,7 @@
     });
 
     function deleteData(uuid) {
-        var url = '{{ route('
-        inventory.items.index ') }}/' + uuid;
+        var url = '/inventory/items/' + uuid;
         $('#delete-form').attr('action', url);
 
         swal({

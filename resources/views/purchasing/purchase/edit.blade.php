@@ -332,7 +332,7 @@
         let itemName = $(`#itemCode_${row} option:selected`).data('name');
         let itemPrice = $(`#itemCode_${row} option:selected`).data('price');
 
-        itemPrice = Intl.NumberFormat('id-ID').format(Math.round(itemPrice))
+        itemPrice = new Intl.NumberFormat('id-ID').format(Math.round(itemPrice));
 
         $(`#itemName_${row}`).val(itemName);
         $(`#price_${row}`).val(itemPrice);
@@ -346,8 +346,7 @@
         let priceNumber = parseInt(price.replace(/\./g, '')) || 0;
         let totalPrice = qty * priceNumber;
 
-        totalPrice = Intl.NumberFormat('id-ID').format(Math.round(totalPrice))
-
+        totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
 
         $(`#totalPrice_${row}`).val(totalPrice);
     }
@@ -356,8 +355,7 @@
     $('#save').on('click', function() {
         let row = $('#purchaseDetails tr').length + 1;
 
-        let options = '<option selected="" disabled="" value="">{{ __('
-        general.choose ') }}...</option>';
+        let options = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
 
         // Mengisi options berdasarkan data items
         itemsData.forEach(item => {
