@@ -80,10 +80,10 @@
                 @foreach ($cost as $item)
                     <tr>
                         <td>
-                            <a href="javascript:deleteCost('{{ $item->id }}')"
+                            {{-- <a href="javascript:deleteCost('{{ $item->id }}')"
                                 class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
                                 <i class="mdi mdi-delete fs-14 text-danger"></i>
-                            </a>
+                            </a> --}}
                         </td>
                         {{-- <td>{{ $i++ }}</td> --}}
                         <td>
@@ -97,10 +97,12 @@
                             <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
                                 readonly min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
                         </td>
+
                         <td>
                             <input class="form-control" name="type[]"
                                 value="{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}" readonly>
                         </td>
+
 
                     </tr>
                 @endforeach
@@ -171,9 +173,8 @@
              <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1  value="${nominal}">
         </td>
          <td>
-            <input class="form-control"  name="type[]" value="Tidak Ditagihkan" readonly>
+            <input class="form-control"  name="type[]" value="Ditagihkan" readonly>
         </td>
-        
    
     `;
 

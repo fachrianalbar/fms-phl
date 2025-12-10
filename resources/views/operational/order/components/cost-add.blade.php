@@ -53,10 +53,11 @@
             <thead>
                 <tr>
                     <th style="width: 5%">#</th>
-                    <th style="width: 40%">{{ __('menu_order.component_name') }}</th>
+                    <th style="width: 30%">{{ __('menu_order.component_name') }}</th>
                     {{-- <th>Component Type</th> --}}
-                    <th style="width: 40%">{{ __('menu_order.description') }}</th>
+                    <th style="width: 35%">{{ __('menu_order.description') }}</th>
                     <th style="width: 15%">Nominal</th>
+                    <th style="width: 15%">Tipe</th>
                 </tr>
             </thead>
             <tbody id="component-list">
@@ -159,6 +160,9 @@
         </td>
         <td>
              <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1  value="${nominal}">
+        </td>
+          <td>
+            <input class="form-control"  name="type[]" value="Tidak Ditagihkan" readonly>
         </td>
        
     `;

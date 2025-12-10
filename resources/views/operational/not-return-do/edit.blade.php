@@ -338,7 +338,7 @@
                         </li>
                     </ul>
                     <div class="tab-content" id="icon-tabContent">
-                        @include('operational.order.components.cost-edit')
+                        @include('operational.order.components.cost-edit-on-charge')
                     </div>
                 </div>
             </div>

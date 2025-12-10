@@ -119,8 +119,13 @@ class OrderService
         if (isset($request->nominal)) {
             if (empty($request->not_return_do)) {
                 $data->cost()->whereNull('type')->delete();
+                $this->storeOrderCost($request);
             }
-            $this->storeOrderCost($request);
+
+            if (isset($request->not_return_do)) {
+                $data->cost()->where('type', 'On Charge')->delete();
+                $this->storeOrderCostOnCharge($request);
+            }
         }
 
         if (isset($request->customerDetailCode)) {
@@ -168,9 +173,13 @@ class OrderService
 
     private function storeOrderCost($request)
     {
-        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal']);
+        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type']);
 
         for ($i = 0; $i < count($request->nominal); $i++) {
+
+            if ($filtered['type'][$i] == 'Ditagihkan') {
+                continue;
+            }
 
             $orderCost = $this->orderCost->create([
                 'code' => GenerateCode::generateCode('TOC', true),
@@ -182,6 +191,29 @@ class OrderService
             ]);
 
             $this->logActivity('Order Cost', $orderCost, 'Create');
+        }
+    }
+
+    private function storeOrderCostOnCharge($request)
+    {
+        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type']);
+
+        for ($i = 0; $i < count($request->nominal); $i++) {
+
+            if ($filtered['type'][$i] == 'Tidak Ditagihkan') {
+                continue;
+            }
+
+            $orderCost = $this->orderCost->create([
+                'code' => GenerateCode::generateCode('TOC', true),
+                'componentType' => $filtered['componentName'][$i],
+                'orderCode' => $request->code,
+                'nominal' => (int) str_replace('.', '', $filtered['nominal'][$i]),
+                'description' => $filtered['description'][$i],
+                'type' => isset($request->not_return_do) ? 'On Charge' : null,
+            ]);
+
+            $this->logActivity('Order Cost On Charge', $orderCost, 'Create');
         }
     }
 

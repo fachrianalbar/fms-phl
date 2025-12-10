@@ -266,6 +266,7 @@
                                     {{-- <th>Component Type</th> --}}
                                     <th>{{ __('menu_order.description') }}</th>
                                     <th>Nominal</th>
+                                    <th>Tipe</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -314,6 +315,7 @@
                                         {{-- <td>{{ $item->type }}</td> --}}
                                         <td>{{ $item->description }}</td>
                                         <td>{{ 'Rp ' . number_format($item->nominal, 0, ',', '.') }}</td>
+                                        <td>{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}</td>
 
                                     </tr>
                                 @endforeach

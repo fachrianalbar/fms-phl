@@ -88,7 +88,7 @@ class NotReturnDoController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -119,7 +119,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -148,11 +148,11 @@ class NotReturnDoController extends Controller
         $material = $this->materialSvc->findAll();
         $customerDetailOrder = $this->orderSvc->getCustomerDetailOrder($data->code);
         $component = CostComponent::get();
-        $cost = OrderCost::where('orderCode', $data->code)->where('type', 'On Charge')->get();
+        $cost = OrderCost::where('orderCode', $data->code)->get();
 
         $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -195,12 +195,12 @@ class NotReturnDoController extends Controller
             if ($request->has('confirm_return')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: '.$th->getMessage(),
+                    'message' => 'Error: ' . $th->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()
-                ->with('fail', 'Error: '.$th->getMessage())
+                ->with('fail', 'Error: ' . $th->getMessage())
                 ->withInput();
         }
     }
@@ -227,7 +227,7 @@ class NotReturnDoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$th->getMessage(),
+                'message' => 'Error: ' . $th->getMessage(),
             ], 500);
         }
     }
@@ -313,7 +313,7 @@ class NotReturnDoController extends Controller
                 })
 
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('operational.not-return-do.edit', $row->code).'" class="btn btn-sm btn-info" title="Edit">
+                    $btn = '<a href="' . route('operational.not-return-do.edit', $row->code) . '" class="btn btn-sm btn-info" title="Edit">
                                 <i class="mdi mdi-pencil"></i>
                             </a>';
 
