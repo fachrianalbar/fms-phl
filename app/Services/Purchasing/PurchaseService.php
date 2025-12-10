@@ -152,6 +152,7 @@ class PurchaseService
 
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
+
                     Item::where('code', $filtered['itemCode'][$i])->update([
                         'price' => $price,
                     ]);
@@ -214,6 +215,7 @@ class PurchaseService
 
                         $pd->update([
                             'qty' => $newQty,
+                            'price' => $price,
                             'description' => $filtered['description'][$i] ?? $pd->description,
                         ]);
 
