@@ -116,15 +116,41 @@ class OrderService
             array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
         );
 
-        if (isset($request->nominal)) {
-            if (empty($request->not_return_do)) {
-                $data->cost()->whereNull('type')->delete();
-                $this->storeOrderCost($request);
-            }
+        // Check if route has changed - if yes, delete old order costs and generate new ones
+        if ($data->routeCode !== $request->routeData) {
+            // Delete all existing order costs for this order
+            $data->cost()->delete();
 
-            if (isset($request->not_return_do)) {
-                $data->cost()->where('type', 'On Charge')->delete();
-                $this->storeOrderCostOnCharge($request);
+            // Get the new route data
+            $newRoute = $this->route->where('code', $request->routeData)->first();
+
+            // Generate new order costs from the route details
+            if ($newRoute && $newRoute->routeDetail) {
+                foreach ($newRoute->routeDetail as $detail) {
+                    $orderCost = $this->orderCost->create([
+                        'code' => GenerateCode::generateCode('TOC', true),
+                        'componentType' => $detail->costComponentCode,
+                        'orderCode' => $data->code,
+                        'nominal' => $detail->nominal,
+                        'description' => $detail->description ?? '',
+                        'type' => null,
+                    ]);
+
+                    $this->logActivity('Order Cost', $orderCost, 'Create');
+                }
+            }
+        } else {
+            // If route doesn't change, handle cost updates normally
+            if (isset($request->nominal)) {
+                if (empty($request->not_return_do)) {
+                    $data->cost()->whereNull('type')->delete();
+                    $this->storeOrderCost($request);
+                }
+
+                if (isset($request->not_return_do)) {
+                    $data->cost()->where('type', 'On Charge')->delete();
+                    $this->storeOrderCostOnCharge($request);
+                }
             }
         }
 
