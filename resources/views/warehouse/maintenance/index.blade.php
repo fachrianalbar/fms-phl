@@ -313,7 +313,7 @@
     function showDetail(id) {
         // Make AJAX request to get maintenance detail
         $.ajax({
-            url: '{{ route("warehouse.maintenance.index") }}/' + id,
+            url: '{{ route("warehouse.maintenance.show", ":id") }}'.replace(':id', id),
             method: 'GET',
             success: function(response) {
                 // Populate modal with data
@@ -352,8 +352,7 @@
     }
 
     function deleteData(uuid) {
-        var url = '{{ route('
-        warehouse.maintenance.index ') }}/' + uuid;
+        var url = '{{ route("warehouse.maintenance.destroy", ":uuid") }}'.replace(':uuid', uuid);
         $('#delete-form').attr('action', url);
 
         swal({
