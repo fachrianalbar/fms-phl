@@ -350,8 +350,8 @@ class OrderController extends Controller
     {
         $data = $this->service->getById($id);
 
-        // Check if status is 5 or 6 - cannot edit
-        if (in_array($data->status, [5, 6])) {
+        // Check if status is 5 or 6 - cannot edit for non-authorized roles
+        if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']) && in_array($data->status, [5, 6])) {
             return redirect()->route($this->view . 'index')->with('fail', 'Cannot update order with status 5 or 6');
         }
 

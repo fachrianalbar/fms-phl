@@ -158,6 +158,35 @@ use Carbon\Carbon;
 
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
+        <h4>Summary</h4>
+
+        <button type="button" class="btn btn-warning btn-sm" onclick="recalculateInvoice()" title="Recalculate invoice amount based on current order data">
+            <i class="mdi mdi-calculator"></i> Hitung Ulang
+        </button>
+    </div>
+
+    <div class="card-body col-md-12">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">{{ __('menu_invoice.price') }}</label>
+                <input type="text" class="form-control" readonly value="Rp {{ number_format($data->invoiceAmount, 0, ',', '.') }}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">{{ __('menu_invoice.ppn') }}</label>
+                <input type="text" class="form-control" readonly value="Rp {{ number_format($data->ppnAmount, 0, ',', '.') }}">
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label"><strong>Total Tagihan</strong></label>
+                <input type="text" class="form-control" readonly value="Rp {{ number_format($data->invoiceAmount + $data->ppnAmount, 0, ',', '.') }}">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
         <h4>{{ __('menu_invoice.order_data_title') }}</h4>
 
         <div class="d-flex gap-5">
@@ -275,6 +304,10 @@ use Carbon\Carbon;
 <form id="delete-form" method="post">
     @csrf
     @method('DELETE')
+</form>
+
+<form id="recalculate-form" method="post" action="{{ route($view . 'recalculate', $data->id) }}">
+    @csrf
 </form>
 @endsection
 
@@ -472,6 +505,23 @@ use Carbon\Carbon;
                 $('#delete-form').submit();
             } else {
                 swal("{{ __('general.your_data_is_save') }}");
+            }
+        });
+    }
+
+    function recalculateInvoice() {
+        swal({
+            title: "{{ __('general.are_you_sure') }}",
+            text: "Proses ini akan membatalkan SEMUA pembayaran untuk invoice ini dan mengembalikan status ke CREATE. Anda harus input ulang pembayaran invoice.",
+            icon: "warning",
+            buttons: {
+                cancel: "Batal",
+                confirm: "Ya, Hitung Ulang"
+            },
+            dangerMode: true,
+        }).then((willRecalculate) => {
+            if (willRecalculate) {
+                document.getElementById('recalculate-form').submit();
             }
         });
     }

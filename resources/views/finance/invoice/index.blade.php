@@ -307,5 +307,48 @@
             }
         });
     });
+
+    function recalculateInvoice(id) {
+        swal({
+            title: "Hitung Ulang Invoice?",
+            text: "Proses ini akan membatalkan SEMUA pembayaran untuk invoice ini dan mengembalikan status ke CREATE. Anda harus input ulang pembayaran invoice.",
+            icon: "warning",
+            buttons: {
+                cancel: "Batal",
+                confirm: "Ya, Hitung Ulang"
+            },
+            dangerMode: true,
+        }).then((willRecalculate) => {
+            if (willRecalculate) {
+                $.ajax({
+                    url: "{{ route('finance.invoice.recalculate', ':id') }}".replace(':id', id),
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        swal({
+                            title: "Berhasil!",
+                            text: response.message,
+                            icon: "success",
+                        }).then(function() {
+                            $('#dt').DataTable().ajax.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Terjadi kesalahan saat menghitung ulang invoice';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMsg = xhr.responseJSON.message;
+                        }
+                        swal({
+                            title: "Gagal!",
+                            text: errorMsg,
+                            icon: "error",
+                        });
+                    }
+                });
+            }
+        });
+    }
 </script>
 @endpush

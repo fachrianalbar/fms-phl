@@ -2,6 +2,7 @@
 
 return [
     'name' => 'Fleet Type',
+    'fleet_type' => 'Fleet Type',
     'customer' => 'Customer',
     'origin' => 'Origin',
     'destination' => 'Destination',

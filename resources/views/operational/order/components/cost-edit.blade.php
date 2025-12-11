@@ -8,7 +8,7 @@
                     <select class="js-example-basic-single" id="componentName">
                         <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                         @foreach ($component as $item)
-                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                        <option value="{{ $item->code }}">{{ $item->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -51,58 +51,62 @@
             <tbody>
 
                 @php
-                    $i = 1;
+                $i = 1;
                 @endphp
                 {{-- @if ($data->route->routeTypeCode == 'TONASE')
                     <tr>
                         <td></td>
                         <td>{{ $i++ }}</td>
-                        <td>Bonus Tonase</td>
-                        <td>Bonus</td>
-                        <td>-</td>
-                        <td>
-                            @php
-                                $bonus = 0;
+                <td>Bonus Tonase</td>
+                <td>Bonus</td>
+                <td>-</td>
+                <td>
+                    @php
+                    $bonus = 0;
 
-                                $bonusTonase = App\Models\Data\TonaseBonus::where('min', '<=', $data->qty)
-                                    ->where('max', '>=', $data->qty)
-                                    ->first();
+                    $bonusTonase = App\Models\Data\TonaseBonus::where('min', '<=', $data->qty)
+                        ->where('max', '>=', $data->qty)
+                        ->first();
 
-                                if ($bonusTonase) {
-                                    $bonus += $bonusTonase->value;
-                                }
-                            @endphp
-                            {{ 'Rp ' . number_format($bonus, 0, ',', '.') }}
+                        if ($bonusTonase) {
+                        $bonus += $bonusTonase->value;
+                        }
+                        @endphp
+                        {{ 'Rp ' . number_format($bonus, 0, ',', '.') }}
 
-                        </td>
-                    </tr>
+                </td>
+                </tr>
                 @endif --}}
                 @foreach ($cost as $item)
-                    <tr>
-                        <td>
-                            <a href="javascript:deleteCost('{{ $item->id }}')"
-                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
-                                <i class="mdi mdi-delete fs-14 text-danger"></i>
-                            </a>
-                        </td>
-                        {{-- <td>{{ $i++ }}</td> --}}
-                        <td>
-                            <input type="hidden" class="form-control" name="componentName[]"
-                                value="{{ $item->costComponent->code }}"> {{ $item->costComponent->name }}
-                        </td>
-                        <td>
-                            <input class="form-control" name="description[]" value="{{ $item->description }}">
-                        </td>
-                        <td>
-                            <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
-                                readonly min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
-                        </td>
-                        <td>
-                            <input class="form-control" name="type[]"
-                                value="{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}" readonly>
-                        </td>
+                <tr>
+                    <td>
+                        <a href="javascript:deleteCost('{{ $item->id }}')"
+                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
+                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                        </a>
+                    </td>
+                    {{-- <td>{{ $i++ }}</td> --}}
+                    <td>
+                        @if ($item->costComponent)
+                        <input type="hidden" class="form-control" name="componentName[]"
+                            value="{{ $item->costComponent->code }}"> {{ $item->costComponent->name }}
+                        @else
+                        <span class="text-danger">Component not found</span>
+                        @endif
+                    </td>
+                    <td>
+                        <input class="form-control" name="description[]" value="{{ $item->description }}">
+                    </td>
+                    <td>
+                        <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
+                            readonly min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
+                    </td>
+                    <td>
+                        <input class="form-control" name="type[]"
+                            value="{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}" readonly>
+                    </td>
 
-                    </tr>
+                </tr>
                 @endforeach
                 <!-- New rows will be added here -->
             </tbody>

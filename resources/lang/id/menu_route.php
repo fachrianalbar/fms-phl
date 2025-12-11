@@ -2,6 +2,7 @@
 
 return [
     'name' => 'Jenis Kendaraan',
+    'fleet_type' => 'Jenis Kendaraan',
     'customer' => 'Pelanggan',
     'origin' => 'Asal',
     'destination' => 'Tujuan',

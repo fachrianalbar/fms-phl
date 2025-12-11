@@ -375,4 +375,34 @@ class InvoiceService
 
         return 'INV/'.$companyFormat.'/'.$customer->code.'/'.$increment.'/'.$currentMonth.'/'.$currentYear;
     }
+
+    public function recalculate($invoiceId)
+    {
+        $invoice = $this->getById($invoiceId);
+
+        if (! $invoice) {
+            return null;
+        }
+
+        // Delete all invoice payments for this invoice
+        $invoice->payments()->delete();
+
+        // Calculate new amounts
+        $totals = $this->calculateInvoiceAmount($invoice);
+
+        // Update invoice: reset status to CREATE and update amounts
+        $this->service->where('id', $invoiceId)->update([
+            'status' => Invoice::STATUS_CREATE, // Reset to CREATE status
+            'invoiceAmount' => $totals['subtotal'],
+            'ppnAmount' => $totals['ppn'],
+        ]);
+
+        $this->logActivity('Invoice', $invoice, 'Recalculate Amount and Cancel Payments');
+
+        return [
+            'invoiceAmount' => $totals['subtotal'],
+            'ppnAmount' => $totals['ppn'],
+            'total' => $totals['total'],
+        ];
+    }
 }

@@ -129,10 +129,10 @@ class OrderService
                 foreach ($newRoute->routeDetail as $detail) {
                     $orderCost = $this->orderCost->create([
                         'code' => GenerateCode::generateCode('TOC', true),
-                        'componentType' => $detail->costComponentCode,
+                        'componentType' => $detail->componentCode,
                         'orderCode' => $data->code,
-                        'nominal' => $detail->nominal,
-                        'description' => $detail->description ?? '',
+                        'nominal' => $detail->amount,
+                        'description' => '',
                         'type' => null,
                     ]);
 

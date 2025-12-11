@@ -21,6 +21,7 @@ return [
     'data_not_found' => 'Data tidak ditemukan',
     'warning' => 'Peringatan',
     'delete_data' => 'Hapus Data',
+    'filter' => 'Filter',
     'reset' => 'Reset',
 
 ];

@@ -23,6 +23,11 @@ class RouteService
         return $this->service->with(['customer', 'originLocation', 'destinationLocation', 'fleetType', 'routeDetail', 'routeType'])->get();
     }
 
+    public function datatable()
+    {
+        return $this->service->with(['customer', 'originLocation', 'destinationLocation', 'fleetType', 'routeDetail', 'routeType']);
+    }
+
     public function getById($id)
     {
         return $this->service->where('id', $id)->with(['routeDetail', 'routeDetail.costComponent'])->first();

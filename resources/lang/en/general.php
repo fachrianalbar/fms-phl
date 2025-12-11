@@ -21,5 +21,6 @@ return [
     'data_not_found' => 'Data not found',
     'warning' => 'Warning',
     'delete_data' => 'Delete Data',
+    'filter' => 'Filter',
     'reset' => 'Reset',
 ];

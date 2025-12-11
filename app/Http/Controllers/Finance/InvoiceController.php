@@ -173,6 +173,48 @@ class InvoiceController extends Controller
         return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
+    /**
+     * Recalculate invoice amount and PPN
+     */
+    public function recalculate(Request $request, string $id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $result = $this->service->recalculate($id);
+
+            DB::commit();
+
+            // Jika request dari AJAX (dari list), return JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Invoice amount recalculated successfully. Invoice Amount: Rp ' . number_format($result['invoiceAmount'], 0, ',', '.') . ', PPN: Rp ' . number_format($result['ppnAmount'], 0, ',', '.') . '. Semua pembayaran untuk invoice ini telah dibatalkan.',
+                    'invoiceAmount' => $result['invoiceAmount'],
+                    'ppnAmount' => $result['ppnAmount'],
+                    'total' => $result['total'],
+                ]);
+            }
+
+            // Jika request dari form (dari edit page), redirect dengan message
+            $message = 'Invoice amount recalculated successfully. Invoice Amount: Rp ' . number_format($result['invoiceAmount'], 0, ',', '.') . ', PPN: Rp ' . number_format($result['ppnAmount'], 0, ',', '.') . '. <br><br><strong>Semua pembayaran untuk invoice ini telah dibatalkan.</strong> Silakan input ulang pembayaran invoice.';
+
+            return redirect()->route($this->view.'edit', $id)->with('success', $message);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            // Jika request dari AJAX, return JSON error
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Line : ' . $th->getLine() . ' - ' . $th->getMessage(),
+                ], 400);
+            }
+
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
@@ -258,6 +300,14 @@ class InvoiceController extends Controller
                                 <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                             </a>';
                     }
+
+                    // Tombol recalculate
+                    $btn .= '
+                        <a href="javascript:recalculateInvoice(\''.$row->id.'\')"
+                        class="btn btn-icon btn-sm bg-warning-subtle me-1"
+                        data-bs-toggle="tooltip" title="Recalculate">
+                            <i class="mdi mdi-calculator fs-14 text-warning"></i>
+                        </a>';
 
                     // Tombol delete hanya muncul jika belum ada pembayaran
                     if (count($row->payments) == 0) {
