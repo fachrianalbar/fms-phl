@@ -76,7 +76,7 @@ class InvoicePaymentService
             'nominal' => $request->amount,
             'type' => 'In',
             'date' => Carbon::now(),
-            'description' => 'Invoice Payment with amount ' . number_format((int) $request->amount, 0, '.', ','),
+            'description' => 'Invoice Payment with amount '.number_format((int) $request->amount, 0, '.', ','),
             'transactionTypeCode' => 'FTT250306114138',
         ]);
 
@@ -97,7 +97,7 @@ class InvoicePaymentService
             $this->invoice->where('id', $data->id)->update(['status' => $nextStatus]);
         } catch (\Exception $e) {
             // if updating status fails do not block payment creation, but log error
-            logger()->error('Failed to update invoice status for invoice ' . $data->code . ': ' . $e->getMessage());
+            logger()->error('Failed to update invoice status for invoice '.$data->code.': '.$e->getMessage());
         }
     }
 

@@ -145,13 +145,12 @@ class PurchaseService
             for ($i = 0; $i < count($request->itemCode); $i++) {
 
                 // Check if purchaseDetailCode exists AND is not empty (existing item)
-                if (isset($filtered['purchaseDetailCode'][$i]) && !empty($filtered['purchaseDetailCode'][$i])) {
+                if (isset($filtered['purchaseDetailCode'][$i]) && ! empty($filtered['purchaseDetailCode'][$i])) {
                     $pd = PurchaseDetail::where('code', $filtered['purchaseDetailCode'][$i])->first();
 
                     $stock = Stock::where('itemCode', $pd->item->code)->first();
 
                     $price = (int) str_replace('.', '', $filtered['price'][$i]);
-
 
                     Item::where('code', $filtered['itemCode'][$i])->update([
                         'price' => $price,

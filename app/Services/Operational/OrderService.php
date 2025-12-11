@@ -154,8 +154,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code . '-del-' . Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
+            'code' => $data->code.'-del-'.Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -304,7 +304,7 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi

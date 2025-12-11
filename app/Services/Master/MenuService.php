@@ -145,6 +145,7 @@ class MenuService
         if ($parentCode == '0') {
             return $this->service->mainMenu()->max('sort') ?? 0;
         }
+
         return $this->service->subMenuOf($parentCode)->max('sort') ?? 0;
     }
 }

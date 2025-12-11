@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\Finance\VendorPayment;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
-use App\Models\Finance\VendorPayment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -37,7 +37,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -50,7 +50,7 @@ class VendorPaymentController extends Controller
             'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -58,11 +58,11 @@ class VendorPaymentController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -125,6 +125,7 @@ class VendorPaymentController extends Controller
                 })
                 ->editColumn('personalVendorPrice', function ($row) {
                     $amount = $row->personalVendorPrice ?? 0;
+
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->editColumn('status', function ($row) {
@@ -143,7 +144,7 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '';
@@ -151,7 +152,7 @@ class VendorPaymentController extends Controller
                     if ($row->status == 4 || $row->status == 5) {
                         $billingAmount = $row->personalVendorPrice ?? 0;
                         $btn = ' <td>
-                            <a href="javascript:showModal(\'' . $row->code . '\', ' . $billingAmount . ')"
+                            <a href="javascript:showModal(\''.$row->code.'\', '.$billingAmount.')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
                                     <i class="mdi mdi-cash fs-14 text-success"></i>
@@ -161,7 +162,7 @@ class VendorPaymentController extends Controller
 
                     if ($row->status == 6 && $row->vendorPayments->isNotEmpty()) {
                         $btn .= ' <td>
-                            <a href="javascript:showDetailModal(\'' . $row->code . '\')"
+                            <a href="javascript:showDetailModal(\''.$row->code.'\')"
                                 class="btn btn-icon btn-sm bg-info-subtle me-1"
                                 data-bs-toggle="tooltip" title="Detail">
                                     <i class="mdi mdi-eye fs-14 text-info"></i>
@@ -184,7 +185,7 @@ class VendorPaymentController extends Controller
 
         if ($vendorPayment) {
             // Get mutation record for bank information
-            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
+            $mutation = \App\Models\Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->first();

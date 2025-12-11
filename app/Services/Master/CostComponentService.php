@@ -75,7 +75,7 @@ class CostComponentService
                 'oldPrice' => $oldPrice,
                 'newPrice' => $newPrice,
                 'changedBy' => Auth::check() ? Auth::user()->name : 'System',
-                'notes' => 'Price updated from ' . ($oldPrice ?: 0) . ' to ' . ($newPrice ?: 0),
+                'notes' => 'Price updated from '.($oldPrice ?: 0).' to '.($newPrice ?: 0),
             ]);
         }
 

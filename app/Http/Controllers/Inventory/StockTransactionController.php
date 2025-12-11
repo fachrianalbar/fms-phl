@@ -36,7 +36,7 @@ class StockTransactionController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -48,14 +48,14 @@ class StockTransactionController extends Controller
     {
         if ($request->ajax()) {
             $prefix = DB::getTablePrefix();
-            $alias = $prefix . 'st';
-            $warehouseTable = $prefix . 'warehouse';
+            $alias = $prefix.'st';
+            $warehouseTable = $prefix.'warehouse';
 
             $data = Warehouse::select('warehouse.*')
-                ->selectRaw('COALESCE(SUM(' . $alias . '.qtyIn), 0) as totalIn')
-                ->selectRaw('COALESCE(SUM(' . $alias . '.qtyOut), 0) as totalOut')
+                ->selectRaw('COALESCE(SUM('.$alias.'.qtyIn), 0) as totalIn')
+                ->selectRaw('COALESCE(SUM('.$alias.'.qtyOut), 0) as totalOut')
                 ->leftJoin('stock_transaction as st', function ($join) use ($warehouseTable, $alias) {
-                    $join->on(DB::raw($warehouseTable . '.code COLLATE utf8mb4_unicode_ci'), '=', DB::raw($alias . '.warehouseCode COLLATE utf8mb4_unicode_ci'))
+                    $join->on(DB::raw($warehouseTable.'.code COLLATE utf8mb4_unicode_ci'), '=', DB::raw($alias.'.warehouseCode COLLATE utf8mb4_unicode_ci'))
                         ->whereNull('st.deleted_at');
                 })
                 ->whereNull('warehouse.deleted_at')
@@ -67,11 +67,11 @@ class StockTransactionController extends Controller
                     return $query;
                 })
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && !empty($request->search['value'])) {
+                    if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(warehouse.code) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(warehouse.name) LIKE ?', ['%' . $search . '%']);
+                            $q->whereRaw('LOWER(warehouse.code) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(warehouse.name) LIKE ?', ['%'.$search.'%']);
                         });
                     }
                 })
@@ -80,8 +80,8 @@ class StockTransactionController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     return '<button type="button" class="btn btn-sm btn-primary btn-detail" 
-                            data-warehouse-code="' . $row->code . '" 
-                            data-warehouse-name="' . $row->name . '"
+                            data-warehouse-code="'.$row->code.'" 
+                            data-warehouse-name="'.$row->name.'"
                             title="Lihat Detail">
                             <i class="mdi mdi-eye"></i> Detail
                           </button>';
@@ -236,7 +236,7 @@ class StockTransactionController extends Controller
         ]);
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.transaction-stock-pdf')
+            view($this->view.'report.transaction-stock-pdf')
                 ->with('reportData', $reportData)
                 ->with('printDate', Carbon::now()->format('d-m-Y H:i'))
         );

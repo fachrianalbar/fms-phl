@@ -29,7 +29,7 @@ class MenuController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -39,7 +39,7 @@ class MenuController extends Controller
      */
     public function create()
     {
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('isSubMenu', false)
@@ -54,11 +54,11 @@ class MenuController extends Controller
     {
         $parentMenu = $this->service->getByCode($parentCode);
 
-        if (!$parentMenu) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Parent menu not found');
+        if (! $parentMenu) {
+            return redirect()->route($this->view.'index')->with('fail', 'Parent menu not found');
         }
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('isSubMenu', true)
@@ -98,15 +98,15 @@ class MenuController extends Controller
             // Redirect based on whether it's a sub menu or main menu
             if ($request->parentCode && $request->parentCode != '0') {
                 return redirect()->route('master.menu.sub-menu', $request->parentCode)
-                    ->with('success', 'Sub Menu ' . __('general.data_was_save_successfully'));
+                    ->with('success', 'Sub Menu '.__('general.data_was_save_successfully'));
             }
 
-            return redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage())->withInput();
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage())->withInput();
         }
     }
 
@@ -117,11 +117,11 @@ class MenuController extends Controller
     {
         $parentMenu = $this->service->getByCode($parentCode);
 
-        if (!$parentMenu) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Parent menu not found');
+        if (! $parentMenu) {
+            return redirect()->route($this->view.'index')->with('fail', 'Parent menu not found');
         }
 
-        return view($this->view . 'sub-menu')
+        return view($this->view.'sub-menu')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('parentMenu', $parentMenu)
@@ -135,8 +135,8 @@ class MenuController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $isSubMenu = $data->parentCode != '0' && $data->parentCode !== null;
@@ -147,7 +147,7 @@ class MenuController extends Controller
             $parentName = $parent ? $parent->name : null;
         }
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -183,15 +183,15 @@ class MenuController extends Controller
             // Redirect based on whether it's a sub menu or main menu
             if ($menu->parentCode && $menu->parentCode != '0') {
                 return redirect()->route('master.menu.sub-menu', $menu->parentCode)
-                    ->with('success', 'Sub Menu ' . __('general.data_was_update_succesfully'));
+                    ->with('success', 'Sub Menu '.__('general.data_was_update_succesfully'));
             }
 
-            return redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage())->withInput();
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage())->withInput();
         }
     }
 
@@ -211,7 +211,7 @@ class MenuController extends Controller
                 ->with('success', 'Delete Data Success');
         }
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     /**
@@ -228,37 +228,38 @@ class MenuController extends Controller
                     if ($row->hasChildren()) {
                         return '<span class="badge bg-success">Yes</span>';
                     }
+
                     return '<span class="badge bg-secondary">No</span>';
                 })
                 ->addColumn('submenu_count', function ($row) {
                     return $row->children()->count();
                 })
                 ->addColumn('action', function ($row) {
-                    $subMenuBtn = '<a href="' . route('master.menu.sub-menu', $row->code) . '"
+                    $subMenuBtn = '<a href="'.route('master.menu.sub-menu', $row->code).'"
                        class="btn btn-icon btn-sm bg-info-subtle me-1"
                        data-bs-toggle="tooltip" title="View Sub Menu">
                         <i class="mdi mdi-menu fs-14 text-info"></i>
                     </a>';
 
-                    $addSubMenuBtn = '<a href="' . route('master.menu.create-sub-menu', $row->code) . '"
+                    $addSubMenuBtn = '<a href="'.route('master.menu.create-sub-menu', $row->code).'"
                        class="btn btn-icon btn-sm bg-success-subtle me-1"
                        data-bs-toggle="tooltip" title="Add Sub Menu">
                         <i class="mdi mdi-plus fs-14 text-success"></i>
                     </a>';
 
-                    $editBtn = '<a href="' . route('master.menu.edit', $row->id) . '"
+                    $editBtn = '<a href="'.route('master.menu.edit', $row->id).'"
                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
                        data-bs-toggle="tooltip" title="Edit">
                         <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                     </a>';
 
-                    $deleteBtn = '<a href="javascript:deleteData(\'' . $row->id . '\')"
+                    $deleteBtn = '<a href="javascript:deleteData(\''.$row->id.'\')"
                        class="btn btn-icon btn-sm bg-danger-subtle"
                        data-bs-toggle="tooltip" title="Delete">
                         <i class="mdi mdi-delete fs-14 text-danger"></i>
                     </a>';
 
-                    return '<td>' . $subMenuBtn . $addSubMenuBtn . $editBtn . $deleteBtn . '</td>';
+                    return '<td>'.$subMenuBtn.$addSubMenuBtn.$editBtn.$deleteBtn.'</td>';
                 })
                 ->rawColumns(['has_submenu', 'action'])
                 ->toJson();
@@ -276,19 +277,19 @@ class MenuController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $editBtn = '<a href="' . route('master.menu.edit', $row->id) . '"
+                    $editBtn = '<a href="'.route('master.menu.edit', $row->id).'"
                        class="btn btn-icon btn-sm bg-primary-subtle me-1"
                        data-bs-toggle="tooltip" title="Edit">
                         <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                     </a>';
 
-                    $deleteBtn = '<a href="javascript:deleteData(\'' . $row->id . '\', \'' . $row->parentCode . '\')"
+                    $deleteBtn = '<a href="javascript:deleteData(\''.$row->id.'\', \''.$row->parentCode.'\')"
                        class="btn btn-icon btn-sm bg-danger-subtle"
                        data-bs-toggle="tooltip" title="Delete">
                         <i class="mdi mdi-delete fs-14 text-danger"></i>
                     </a>';
 
-                    return '<td>' . $editBtn . $deleteBtn . '</td>';
+                    return '<td>'.$editBtn.$deleteBtn.'</td>';
                 })
                 ->rawColumns(['action'])
                 ->toJson();

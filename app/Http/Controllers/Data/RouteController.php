@@ -63,7 +63,7 @@ class RouteController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -78,7 +78,7 @@ class RouteController extends Controller
         $routeType = $this->routeTypeSvc->findAll();
         $location = $this->locationSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -101,11 +101,11 @@ class RouteController extends Controller
             'price' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         if ($request->originLocationCode === $request->destinationLocationCode) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Origin and destination location cannot be same');
+            return redirect()->route($this->view.'index')->with('fail', 'Origin and destination location cannot be same');
         }
 
         try {
@@ -115,11 +115,11 @@ class RouteController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -139,7 +139,7 @@ class RouteController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -149,7 +149,7 @@ class RouteController extends Controller
         $component = $this->costComponentSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -169,7 +169,7 @@ class RouteController extends Controller
         if ($request->page == 'cost-component') {
             $this->costComponentSvc->store($request, 'Cost Component');
 
-            return redirect()->route($this->view . 'edit', $id)->with('success', 'Data was saved successfully');
+            return redirect()->route($this->view.'edit', $id)->with('success', 'Data was saved successfully');
         }
 
         $validator = Validator::make($request->all(), [
@@ -182,11 +182,11 @@ class RouteController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         if ($request->originLocationCode === $request->destinationLocationCode) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Origin and destination location cannot be same');
+            return redirect()->route($this->view.'index')->with('fail', 'Origin and destination location cannot be same');
         }
 
         try {
@@ -196,11 +196,11 @@ class RouteController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -211,7 +211,7 @@ class RouteController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -222,23 +222,23 @@ class RouteController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('price', function ($row) {
-                    return 'Rp ' . number_format($row->price, 0, ',', '.');
+                    return 'Rp '.number_format($row->price, 0, ',', '.');
                 })
                 ->editColumn('vendorPrice', function ($row) {
-                    return 'Rp ' . number_format($row->vendorPrice, 0, ',', '.');
+                    return 'Rp '.number_format($row->vendorPrice, 0, ',', '.');
                 })
                 ->editColumn('personalVendorPrice', function ($row) {
-                    return 'Rp ' . number_format($row->personalVendorPrice, 0, ',', '.');
+                    return 'Rp '.number_format($row->personalVendorPrice, 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
+        <a href="'.route($this->view.'edit', $row->id).'"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
+        <a href="javascript:deleteData(\''.$row->id.'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
