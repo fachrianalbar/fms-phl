@@ -17,7 +17,7 @@
         <div class="col-md-6" id="amount">
             <label class="form-label" for="amount">{{ __('menu_route.price') }}</label>
             <input class="form-control" name="amount" id="amounts" type="text"
-                placeholder="{{ __('menu_route.price') }}" max="{{ $data->price }}" readonly style="background-color: #e9ecef;">
+                placeholder="{{ __('menu_route.price') }}" max="{{ $data->price }}" oninput="formatAngka(this)" required>
             {{-- <label class="form-label" for="componentType">Cost Component Type</label> --}}
             <input type="hidden" name="componentType" value="Amount">
             {{-- <select class="js-example-basic-single" name="`componentType" id="componentType"
