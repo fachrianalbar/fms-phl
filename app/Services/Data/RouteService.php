@@ -25,7 +25,13 @@ class RouteService
 
     public function datatable()
     {
-        return $this->service->with(['customer', 'originLocation', 'destinationLocation', 'fleetType', 'routeDetail', 'routeType']);
+        return $this->service->with(['customer', 'originLocation', 'destinationLocation', 'fleetType', 'routeDetail', 'routeType'])
+            ->leftJoin('customer', 'customer.code', 'route.customerCode')
+            ->leftJoin('location as origin_location', 'origin_location.code', 'route.originLocationCode')
+            ->leftJoin('location as destination_location', 'destination_location.code', 'route.destinationLocationCode')
+            ->leftJoin('route_type', 'route_type.code', 'route.routeTypeCode')
+            ->leftJoin('fleet_type', 'fleet_type.code', 'route.fleetTypeCode')
+            ->select('route.*');
     }
 
     public function getById($id)

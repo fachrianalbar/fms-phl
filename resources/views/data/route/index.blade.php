@@ -230,7 +230,7 @@
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0]
+                    "targets": [0, 1]
                 },
                 {
                     "orderable": false,
