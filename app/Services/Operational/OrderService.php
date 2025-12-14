@@ -91,9 +91,29 @@ class OrderService
             array_merge(['code' => $request->code, 'shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
         );
 
-        if (isset($request->nominal)) {
-            $this->storeOrderCost($request);
+        // Copy cost dari route_detail dengan is_route = 1
+        if (isset($request->routeData)) {
+            $route = $this->route->where('code', $request->routeData)
+                ->with('routeDetail')
+                ->first();
+
+            if ($route && $route->routeDetail) {
+                foreach ($route->routeDetail as $detail) {
+                    $this->orderCost->create([
+                        'code' => GenerateCode::generateCode('TOC', true),
+                        'componentType' => $detail->componentCode,
+                        'orderCode' => $data->code,
+                        'nominal' => $detail->amount,
+                        'description' => '',
+                        'type' => null,
+                        'is_route' => 1, // Dari route_detail
+                    ]);
+                }
+            }
         }
+
+        // Jangan panggil storeOrderCost() saat create - komponen route sudah auto-copy
+        // User hanya bisa tambah komponen custom SETELAH order dibuat via separate form
 
         if (isset($request->customerDetailCode)) {
             $this->storeCustomerDetailOrder($request);
@@ -116,13 +136,16 @@ class OrderService
             array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
         );
 
-        // Always delete existing order costs and regenerate from current route detail
-        $data->cost()->delete();
+        // Delete hanya cost dengan is_route = 1 (dari route_detail lama)
+        // Preserve cost dengan is_route = 0 (custom/tambahan user)
+        $data->cost()->where('is_route', 1)->delete();
 
         // Get the current route data (from request routeData)
-        $currentRoute = $this->route->where('code', $request->routeData)->first();
+        $currentRoute = $this->route->where('code', $request->routeData)
+            ->with('routeDetail')
+            ->first();
 
-        // Generate new order costs from the route details
+        // Generate new order costs from the route details dengan is_route = 1
         if ($currentRoute && $currentRoute->routeDetail) {
             foreach ($currentRoute->routeDetail as $detail) {
                 $orderCost = $this->orderCost->create([
@@ -132,10 +155,16 @@ class OrderService
                     'nominal' => $detail->amount,
                     'description' => '',
                     'type' => null,
+                    'is_route' => 1, // Dari route_detail
                 ]);
 
                 $this->logActivity('Order Cost', $orderCost, 'Create');
             }
+        }
+
+        // Store komponen custom yang user input di form (is_route = 0)
+        if (isset($request->nominal)) {
+            $this->storeOrderCost($request);
         }
 
         if (isset($request->customerDetailCode)) {
@@ -183,21 +212,28 @@ class OrderService
 
     private function storeOrderCost($request)
     {
-        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type']);
+        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type', 'is_route']);
 
         for ($i = 0; $i < count($request->nominal); $i++) {
 
+            // Skip jika adalah komponen dari route (is_route = 1)
+            if (isset($filtered['is_route'][$i]) && $filtered['is_route'][$i] == 1) {
+                continue;
+            }
+
+            // Skip jika tipe adalah 'Ditagihkan'
             if ($filtered['type'][$i] == 'Ditagihkan') {
                 continue;
             }
 
             $orderCost = $this->orderCost->create([
                 'code' => GenerateCode::generateCode('TOC', true),
-                'componentType' => $filtered['componentName'][$i],
+                'componentType' => $filtered['componentName'][$i], // Gunakan component code dari select
                 'orderCode' => $request->code,
                 'nominal' => (int) str_replace('.', '', $filtered['nominal'][$i]),
                 'description' => $filtered['description'][$i],
                 'type' => isset($request->not_return_do) ? 'On Charge' : null,
+                'is_route' => 0, // Custom/tambahan user, bukan dari route
             ]);
 
             $this->logActivity('Order Cost', $orderCost, 'Create');
@@ -206,21 +242,28 @@ class OrderService
 
     private function storeOrderCostOnCharge($request)
     {
-        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type']);
+        $filtered = Arr::only($request->all(), ['componentName', 'description', 'nominal', 'type', 'is_route']);
 
         for ($i = 0; $i < count($request->nominal); $i++) {
 
+            // Skip jika adalah komponen dari route (is_route = 1)
+            if (isset($filtered['is_route'][$i]) && $filtered['is_route'][$i] == 1) {
+                continue;
+            }
+
+            // Skip jika tipe adalah 'Tidak Ditagihkan'
             if ($filtered['type'][$i] == 'Tidak Ditagihkan') {
                 continue;
             }
 
             $orderCost = $this->orderCost->create([
                 'code' => GenerateCode::generateCode('TOC', true),
-                'componentType' => $filtered['componentName'][$i],
+                'componentType' => $filtered['componentName'][$i], // Gunakan component code dari select
                 'orderCode' => $request->code,
                 'nominal' => (int) str_replace('.', '', $filtered['nominal'][$i]),
                 'description' => $filtered['description'][$i],
                 'type' => isset($request->not_return_do) ? 'On Charge' : null,
+                'is_route' => 0, // Custom/tambahan user, bukan dari route
             ]);
 
             $this->logActivity('Order Cost On Charge', $orderCost, 'Create');

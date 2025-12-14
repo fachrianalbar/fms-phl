@@ -22,6 +22,7 @@ class OrderCost extends Model
         'nominal',
         'type',
         'description',
+        'is_route',
     ];
 
     public function order()

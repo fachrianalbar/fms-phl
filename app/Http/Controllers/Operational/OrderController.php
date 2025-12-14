@@ -818,31 +818,17 @@ class OrderController extends Controller
                 ->with('fail', 'Validation failed');
         }
 
-        $orderCost = OrderCost::where('orderCode', $request->orderCode)
-            ->where('componentType', $request->componentType)
-            ->first();
-
-        if ($orderCost) {
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Komponen biaya sudah ada untuk order ini',
-                ]);
-            }
-
-            return redirect()->back()->with('fail', 'Komponen biaya sudah ada untuk order ini');
-        }
-
         try {
             DB::beginTransaction();
 
             $orderCost = new OrderCost;
             $orderCost->code = GenerateCode::generateCode('OCT');
             $orderCost->orderCode = $request->orderCode;
-            $orderCost->componentType = $request->componentType;
+            $orderCost->componentType = $request->componentType; // Simpan component code dari select
             $orderCost->nominal = (int) str_replace('.', '', $request->nominal);
             $orderCost->type = 'On Charge';
             $orderCost->description = $request->description ?? null;
+            $orderCost->is_route = 0; // Custom/tambahan user, bukan dari route
             $orderCost->save();
 
             DB::commit();

@@ -89,7 +89,9 @@
                     <td>
                         @if ($item->costComponent)
                         <input type="hidden" class="form-control" name="componentName[]"
-                            value="{{ $item->costComponent->code }}"> {{ $item->costComponent->name }}
+                            value="{{ $item->costComponent->code }}">
+                        <input type="hidden" name="is_route[]" value="{{ $item->is_route }}">
+                        {{ $item->costComponent->name }}
                         @else
                         <span class="text-danger">Component not found</span>
                         @endif
@@ -165,7 +167,9 @@
             </a>
         </td>
         <td>
-            <input type="hidden" name="componentName[]" value="${componentName}"> ${componentNameText}
+            <input type="hidden" name="componentName[]" value="${componentName}">
+            <input type="hidden" name="is_route[]" value="0">
+            ${componentNameText}
 
         </td>
          <td>
