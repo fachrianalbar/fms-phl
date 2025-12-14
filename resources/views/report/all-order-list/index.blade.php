@@ -165,7 +165,7 @@
                             <tr>
                                 <th colspan="11" class="text-center">All Order Data</th>
                                 <th colspan="1" class="text-center">Sales</th>
-                                <th colspan="5" class="text-center">Cost</th>
+                                <th colspan="6" class="text-center">Cost</th>
                                 <th colspan="1" class="text-center">Margin</th>
                             </tr>
                             <tr>
@@ -183,6 +183,7 @@
                                 <th>Basic Sales</th>
                                 <th>Basic Allowance</th>
                                 <th>Additional Cost</th>
+                                <th>Bonus</th>
                                 <th>Tonase</th>
                                 <th>Gaji</th>
                                 <th>Total Cost</th>

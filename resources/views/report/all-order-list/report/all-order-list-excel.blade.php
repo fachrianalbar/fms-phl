@@ -12,14 +12,14 @@
     <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
         <thead>
             <tr>
-                <th colspan="18" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
+                <th colspan="19" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
                     All Order List Report Data</th>
             </tr>
             <tr>
                 <th colspan="11" style="font-size: 14px; font-weight: bold; text-align: center">All Order Data</th>
                 <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center">Sales</th>
-                <th colspan="4" style="font-size: 14px; font-weight: bold; text-align: center">Cost</th>
-                <th rowspan="1" style="font-size: 14px; font-weight: bold; text-align: center">Margin</th>
+                <th colspan="6" style="font-size: 14px; font-weight: bold; text-align: center">Cost</th>
+                <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center">Margin</th>
             </tr>
             <!-- Sub-header -->
             <tr>
@@ -30,12 +30,14 @@
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Origin</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Destination</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Fleet</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Fleet Type</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Driver</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Material</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Qty Tonase</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Basic Sales</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Basic Allowance</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Additional Cost</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Bonus</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Tonase</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Gaji</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Total Cost</th>
@@ -64,6 +66,9 @@
                     </td>
                     <td style="text-align: center">
                         {{ isset($item->fleet->plateNumber) ? $item->fleet->plateNumber : '' }}
+                    </td>
+                    <td style="text-align: center">
+                        {{ isset($item->fleet->type->name) ? $item->fleet->type->name : '' }}
                     </td>
                     <td style="text-align: center">
                         {{ isset($item->driver->name) ? $item->driver->name : '' }}
@@ -136,15 +141,25 @@
                                 ->where('max', '>=', $item->qty)
                                 ->first();
 
-                            $bonus = 0;
+                            $bonusValue = 0;
 
                             if ($tonaseBonus) {
-                                $bonus = number_format($tonaseBonus->value, 0, '.', ',');
-                                $totalCost += $tonaseBonus->value;
+                                $bonusValue = $tonaseBonus->value;
+                                $totalCost += $bonusValue;
                             }
 
                         @endphp
-                        {{ $bonus }}
+                        {{ number_format($bonusValue, 0, '.', ',') }}
+                    </td>
+                    <td style="text-align: center">
+                        @php
+                            $tonaseVal = 0;
+                            if (isset($item->route->routeTypeCode) && $item->route->routeTypeCode == 'TONASE') {
+                                $tonaseVal = $item->route->price;
+                                $totalCost += $tonaseVal;
+                            }
+                        @endphp
+                        {{ number_format($tonaseVal, 0, '.', ',') }}
                     </td>
                     <td style="text-align: center">
                         @php
