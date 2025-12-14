@@ -16,7 +16,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('down-payment-detail', DownPaymentDetailController::class);
     Route::resource('monitoring-order', OrderMonitoringController::class);
     Route::resource('return-do', ReturnDoController::class);
-    Route::resource('not-return-do', NotReturnDoController::class);
+    Route::resource('not-return-do', NotReturnDoController::class)->except(['update']);
     Route::resource('order-tax', OrderTaxController::class);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::put('not-return-do/update/{code}', [NotReturnDoController::class, 'update'])->name('not-return-do.update');
@@ -30,7 +30,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::get('order-costs', [OrderController::class, 'getOrderCosts'])->name('order.get-order-costs');
     Route::delete('order-cost', [OrderController::class, 'deleteOrderCost'])->name('order.delete-order-cost');
 
-    // Route::put('finish-order/{id}', [OrderMonitoringController::class, 'finishOrder'])->name('finish-order');
+    // (commented duplicate removed)
     Route::get('pdf-down-payment/{id}', [DownPaymentController::class, 'pdfDownPayment'])->name('down-payment.pdf-down-payment');
     Route::resource('bon-ujt', BonUjtController::class);
     Route::put('bon-ujt-detail/{id}', [BonUjtController::class, 'storeBonUjtDetail'])->name('bon-ujt-detail.store');
@@ -63,7 +63,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('route-order/{customerId}/{routeTypeCode}', [OrderController::class, 'routeOrder'])->name('route-order');
     Route::get('origin-by-customer/{customerCode}/{routeTypeCode}', [OrderController::class, 'originCustomer'])->name('origin-by-customer');
-    Route::get('destination-by-customer/{customerCode}/{routeTypeCode}/{originLocationCode}', [OrderController::class, 'destinationCustomer'])->name('destination-by-customer');
     Route::get('destination-by-customer/{customerCode}/{routeTypeCode}/{originLocationCode}', [OrderController::class, 'destinationCustomer'])->name('destination-by-customer');
     Route::get('route-order-detail/{routeCode}', [OrderController::class, 'routeOrderDetail'])->name('route-order-detail');
     Route::get('down-payment-data/{id}', [DownPaymentController::class, 'data'])->name('down-payment-data');
