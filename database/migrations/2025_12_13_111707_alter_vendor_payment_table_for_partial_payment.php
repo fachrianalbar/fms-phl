@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('vendor_payment', function (Blueprint $table) {
 
             if (!Schema::hasColumn('vendor_payment', 'paid_amount')) {
-                $table->decimal('paid_amount', 15, 2)->default(0)->after('initial_amount');
+                $table->decimal('paid_amount', 15, 2)->default(0);
             }
             if (!Schema::hasColumn('vendor_payment', 'remaining_amount')) {
                 $table->decimal('remaining_amount', 15, 2)->nullable()->after('paid_amount');
