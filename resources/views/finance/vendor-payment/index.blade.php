@@ -41,7 +41,10 @@
                             <th>{{ __('menu_vendor_payment.customer') }}</th>
                             <th>{{ __('menu_vendor_payment.origin') }}</th>
                             <th>{{ __('menu_vendor_payment.destination') }}</th>
-                            <th>Amount</th>
+                            <th>Tagihan</th>
+                            <th>Terbayar</th>
+                            <th>Sisa</th>
+                            <th>Status Bayar</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -75,6 +78,16 @@
                                 </div>
 
                                 <div class="col-md-12">
+                                    <label class="form-label">Sisa Tagihan</label>
+                                    <input class="form-control" id="remainingAmount" type="text" readonly>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Sudah Terbayar</label>
+                                    <input class="form-control" id="paidAmount" type="text" readonly>
+                                </div>
+
+                                <div class="col-md-12">
                                     <label class="form-label"
                                         for="itemNameModal">{{ __('menu_vendor_payment.payment_date') }}</label>
                                     <input class="form-control" name="date" id="date" type="date"
@@ -85,8 +98,9 @@
                                     <label class="form-label"
                                         for="amount">{{ __('menu_vendor_payment.amount') }}</label>
                                     <input class="form-control" name="amount" id="amount" type="text"
-                                        oninput="formatAngka(this)"
+                                        oninput="formatAngka(this); validatePaymentAmount()"
                                         placeholder="{{ __('menu_vendor_payment.amount') }}" required>
+                                    <small class="form-text text-muted" id="amountWarning"></small>
                                 </div>
 
                                 <div class="col-md-12">
@@ -136,8 +150,8 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">{{ __('menu_vendor_payment.payment_date') }}</label>
-                                <input class="form-control" id="detail-date" type="text" readonly>
+                                <label class="form-label">Status Pembayaran</label>
+                                <input class="form-control" id="detail-payment-status" type="text" readonly>
                             </div>
 
                             <div class="col-md-6">
@@ -160,9 +174,19 @@
                                 <input class="form-control" id="detail-customer" type="text" readonly>
                             </div>
 
-                            <div class="col-md-12">
-                                <label class="form-label">{{ __('menu_vendor_payment.amount') }}</label>
-                                <input class="form-control" id="detail-amount" type="text" readonly>
+                            <div class="col-md-4">
+                                <label class="form-label">Tagihan</label>
+                                <input class="form-control" id="detail-billing-amount" type="text" readonly>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Terbayar</label>
+                                <input class="form-control" id="detail-paid-amount" type="text" readonly>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label">Sisa</label>
+                                <input class="form-control" id="detail-remaining-amount" type="text" readonly>
                             </div>
 
                             <div class="col-md-12">
@@ -172,7 +196,25 @@
 
                             <div class="col-md-12">
                                 <label class="form-label">{{ __('menu_vendor_payment.description') }}</label>
-                                <textarea class="form-control" id="detail-description" rows="3" readonly></textarea>
+                                <textarea class="form-control" id="detail-description" rows="2" readonly></textarea>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label">Riwayat Pembayaran</label>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered" id="payment-history-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Jumlah</th>
+                                                <th>Bank</th>
+                                                <th>Keterangan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="payment-history-body">
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -251,7 +293,16 @@
                     "data": 'route.destinationLocation.name'
                 },
                 {
-                    "data": 'personalVendorPrice'
+                    "data": 'billingAmount'
+                },
+                {
+                    "data": 'paidAmount'
+                },
+                {
+                    "data": 'remainingAmount'
+                },
+                {
+                    "data": 'paymentStatus'
                 },
                 {
                     "data": 'status'
@@ -303,16 +354,36 @@
         });
     }
 
-    function showModal(orderCode, billingAmount) {
-        console.log('Order Code:', orderCode, 'Billing Amount:', billingAmount);
+    function showModal(orderCode, billingAmount, remainingAmount) {
+        console.log('Order Code:', orderCode, 'Billing Amount:', billingAmount, 'Remaining:', remainingAmount);
 
         $('#payment-modal').modal('show');
         $('#orderCode').val(orderCode);
         $('#billingAmount').val(new Intl.NumberFormat('id-ID').format(billingAmount));
-        $('#amount').val(billingAmount);
+        $('#remainingAmount').val(new Intl.NumberFormat('id-ID').format(remainingAmount));
+        $('#paidAmount').val(new Intl.NumberFormat('id-ID').format(billingAmount - remainingAmount));
+        $('#amount').val('');
         $('#date').val(new Date().toISOString().split('T')[0]);
         $('#description').val('');
         $('#userBankCode').val('');
+        $('#amountWarning').text('').html('');
+    }
+
+    function validatePaymentAmount() {
+        const amountInput = $('#amount').val();
+        // Remove formatting
+        const amount = parseInt(amountInput.replace(/[^\d]/g, '')) || 0;
+        const remainingAmount = parseInt($('#remainingAmount').val().replace(/[^\d]/g, '')) || 0;
+
+        const warningEl = $('#amountWarning');
+
+        if (amount > remainingAmount) {
+            warningEl.html('<span class="text-danger">⚠️ Jumlah pembayaran melebihi sisa tagihan!</span>');
+        } else if (amount > 0 && amount < remainingAmount) {
+            warningEl.html('<span class="text-info">ℹ️ Ini adalah pembayaran partial. Sisa tagihan: Rp ' + new Intl.NumberFormat('id-ID').format(remainingAmount - amount) + '</span>');
+        } else {
+            warningEl.text('');
+        }
     }
 
     function showDetailModal(orderCode) {
@@ -322,20 +393,27 @@
             success: function(data) {
                 if (data) {
                     $('#detail-code').val(data.code || '');
-
-                    // Use payment date if exists, otherwise use transaction date
-                    let displayDate = data.date || data.transaction_date;
-                    $('#detail-date').val(displayDate ? new Date(displayDate).toLocaleDateString('id-ID', {
-                        year: 'numeric',
-                        month: '2-digit',
-                        day: '2-digit'
-                    }) : '');
-
                     $('#detail-order-code').val(data.order ? data.order.code : '');
                     $('#detail-plate-number').val(data.order && data.order.fleet ? data.order.fleet.plateNumber : '');
                     $('#detail-driver').val(data.order && data.order.driver ? data.order.driver.name : '');
                     $('#detail-customer').val(data.order && data.order.customer ? data.order.customer.name : '');
-                    $('#detail-amount').val(data.amount ? 'Rp ' + new Intl.NumberFormat('id-ID').format(data.amount) : '');
+
+                    // Menampilkan amount details
+                    const billingAmount = data.amount || 0;
+                    const paidAmount = data.paid_amount || 0;
+                    const remainingAmount = data.remaining_amount || 0;
+
+                    $('#detail-billing-amount').val('Rp ' + new Intl.NumberFormat('id-ID').format(billingAmount));
+                    $('#detail-paid-amount').val('Rp ' + new Intl.NumberFormat('id-ID').format(paidAmount));
+                    $('#detail-remaining-amount').val('Rp ' + new Intl.NumberFormat('id-ID').format(remainingAmount));
+
+                    // Payment status
+                    const statusMapping = {
+                        'pending': 'Menunggu Pembayaran',
+                        'partial': 'Pembayaran Sebagian',
+                        'paid': 'Sudah Dibayar Penuh'
+                    };
+                    $('#detail-payment-status').val(statusMapping[data.payment_status] || data.payment_status);
 
                     let bankInfo = '';
                     if (data.bankInfo) {
@@ -344,6 +422,30 @@
                     $('#detail-bank').val(bankInfo);
 
                     $('#detail-description').val(data.description || '');
+
+                    // Populate payment history
+                    const historyBody = $('#payment-history-body');
+                    historyBody.html('');
+
+                    if (data.payment_histories && data.payment_histories.length > 0) {
+                        data.payment_histories.forEach(function(history) {
+                            const paymentDate = new Date(history.payment_date).toLocaleDateString('id-ID', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit'
+                            });
+                            const row = `<tr>
+                                <td>${paymentDate}</td>
+                                <td>Rp ${new Intl.NumberFormat('id-ID').format(history.amount)}</td>
+                                <td>${history.user_bank_code || '-'}</td>
+                                <td>${history.description || '-'}</td>
+                            </tr>`;
+                            historyBody.append(row);
+                        });
+                    } else {
+                        historyBody.html('<tr><td colspan="4" class="text-center">Belum ada riwayat pembayaran</td></tr>');
+                    }
+
                     $('#detail-modal').modal('show');
                 } else {
                     alert('Data pembayaran tidak ditemukan.');

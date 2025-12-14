@@ -37,7 +37,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -50,7 +50,7 @@ class VendorPaymentController extends Controller
             'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -58,11 +58,11 @@ class VendorPaymentController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -128,6 +128,46 @@ class VendorPaymentController extends Controller
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
+                ->addColumn('billingAmount', function ($row) {
+                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $amount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
+                    return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
+                })
+                ->addColumn('paidAmount', function ($row) {
+                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $amount = $vendorPayment ? ($vendorPayment->paid_amount ?? 0) : 0;
+                    return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
+                })
+                ->addColumn('remainingAmount', function ($row) {
+                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    if ($vendorPayment) {
+                        $amount = $vendorPayment->remaining_amount ?? 0;
+                    } else {
+                        // Jika belum ada vendor payment, sisa = tagihan penuh
+                        $amount = $row->personalVendorPrice ?? 0;
+                    }
+                    return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
+                })
+                ->addColumn('paymentStatus', function ($row) {
+                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $status = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
+
+                    $statusText = '';
+                    $badgeClass = 'secondary';
+
+                    if ($status === 'pending') {
+                        $statusText = 'Pending';
+                        $badgeClass = 'warning';
+                    } elseif ($status === 'partial') {
+                        $statusText = 'Partial';
+                        $badgeClass = 'info';
+                    } elseif ($status === 'paid') {
+                        $statusText = 'Paid';
+                        $badgeClass = 'success';
+                    }
+
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
                     $badgeClass = 'primary';
@@ -144,15 +184,21 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '';
+                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $remainingAmount = $vendorPayment ? ($vendorPayment->remaining_amount ?? 0) : ($row->personalVendorPrice ?? 0);
+                    $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
 
-                    if ($row->status == 4 || $row->status == 5) {
-                        $billingAmount = $row->personalVendorPrice ?? 0;
+                    // Show payment button only if:
+                    // 1. Fleet is external type
+                    // 2. Payment status is NOT 'paid' (sudah lunas)
+                    if (isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid') {
+                        $billingAmount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
                         $btn = ' <td>
-                            <a href="javascript:showModal(\''.$row->code.'\', '.$billingAmount.')"
+                            <a href="javascript:showModal(\'' . $row->code . '\', ' . $billingAmount . ', ' . $remainingAmount . ')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
                                     <i class="mdi mdi-cash fs-14 text-success"></i>
@@ -160,9 +206,10 @@ class VendorPaymentController extends Controller
                             </td>';
                     }
 
-                    if ($row->status == 6 && $row->vendorPayments->isNotEmpty()) {
+                    // Show detail button only if payment history exists
+                    if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
                         $btn .= ' <td>
-                            <a href="javascript:showDetailModal(\''.$row->code.'\')"
+                            <a href="javascript:showDetailModal(\'' . $row->code . '\')"
                                 class="btn btn-icon btn-sm bg-info-subtle me-1"
                                 data-bs-toggle="tooltip" title="Detail">
                                     <i class="mdi mdi-eye fs-14 text-info"></i>
@@ -172,20 +219,20 @@ class VendorPaymentController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status'])
+                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus'])
                 ->toJson();
         }
     }
 
     public function getDetail($orderCode)
     {
-        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer'])
+        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer', 'paymentHistory'])
             ->where('orderCode', $orderCode)
             ->first();
 
         if ($vendorPayment) {
             // Get mutation record for bank information
-            $mutation = \App\Models\Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
+            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->first();
@@ -198,6 +245,19 @@ class VendorPaymentController extends Controller
 
             // Add transaction date from created_at
             $vendorPayment->transaction_date = $vendorPayment->created_at;
+
+            // Format payment history
+            if ($vendorPayment->paymentHistory) {
+                $vendorPayment->payment_histories = $vendorPayment->paymentHistory->map(function ($history) {
+                    return [
+                        'amount' => $history->amount,
+                        'payment_date' => $history->payment_date,
+                        'user_bank_code' => $history->user_bank_code,
+                        'description' => $history->description,
+                        'created_at' => $history->created_at,
+                    ];
+                });
+            }
         }
 
         return response()->json($vendorPayment);

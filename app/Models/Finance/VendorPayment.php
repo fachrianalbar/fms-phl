@@ -20,6 +20,9 @@ class VendorPayment extends Model
         'code',
         'orderCode',
         'amount',
+        'paid_amount',
+        'remaining_amount',
+        'payment_status',
         'description',
         'date',
     ];
@@ -32,5 +35,10 @@ class VendorPayment extends Model
     public function mutation()
     {
         return $this->hasOne(\App\Models\Mutation::class, 'transactionTypeCode', 'code');
+    }
+
+    public function paymentHistory()
+    {
+        return $this->hasMany(\App\Models\Finance\VendorPaymentHistory::class, 'vendor_payment_id', 'id');
     }
 }
