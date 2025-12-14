@@ -14,7 +14,7 @@ return new class extends Migration
         if (!Schema::hasTable('vendor_payment_history')) {
             Schema::create('vendor_payment_history', function (Blueprint $table) {
                 $table->uuid('id')->primary();
-                $table->string('vendor_payment_id');
+                $table->uuid('vendor_payment_id');
                 $table->decimal('amount', 15, 2);
                 $table->date('payment_date');
                 $table->string('user_bank_code')->nullable();
@@ -22,7 +22,11 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->foreign('vendor_payment_id')->references('id')->on('vendor_payment')->onDelete('cascade');
+                $table->foreign('vendor_payment_id')
+                    ->references('id')
+                    ->on('vendor_payment')
+                    ->onDelete('cascade');
+
                 $table->index('vendor_payment_id');
             });
         }
