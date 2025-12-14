@@ -37,7 +37,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -50,7 +50,7 @@ class VendorPaymentController extends Controller
             'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -58,11 +58,11 @@ class VendorPaymentController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -131,11 +131,13 @@ class VendorPaymentController extends Controller
                 ->addColumn('billingAmount', function ($row) {
                     $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
                     $amount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
+
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('paidAmount', function ($row) {
                     $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
                     $amount = $vendorPayment ? ($vendorPayment->paid_amount ?? 0) : 0;
+
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('remainingAmount', function ($row) {
@@ -146,6 +148,7 @@ class VendorPaymentController extends Controller
                         // Jika belum ada vendor payment, sisa = tagihan penuh
                         $amount = $row->personalVendorPrice ?? 0;
                     }
+
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('paymentStatus', function ($row) {
@@ -166,7 +169,7 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'success';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
                 })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
@@ -184,7 +187,7 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '';
@@ -198,7 +201,7 @@ class VendorPaymentController extends Controller
                     if (isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid') {
                         $billingAmount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
                         $btn = ' <td>
-                            <a href="javascript:showModal(\'' . $row->code . '\', ' . $billingAmount . ', ' . $remainingAmount . ')"
+                            <a href="javascript:showModal(\''.$row->code.'\', '.$billingAmount.', '.$remainingAmount.')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
                                     <i class="mdi mdi-cash fs-14 text-success"></i>
@@ -209,7 +212,7 @@ class VendorPaymentController extends Controller
                     // Show detail button only if payment history exists
                     if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
                         $btn .= ' <td>
-                            <a href="javascript:showDetailModal(\'' . $row->code . '\')"
+                            <a href="javascript:showDetailModal(\''.$row->code.'\')"
                                 class="btn btn-icon btn-sm bg-info-subtle me-1"
                                 data-bs-toggle="tooltip" title="Detail">
                                     <i class="mdi mdi-eye fs-14 text-info"></i>
@@ -232,7 +235,7 @@ class VendorPaymentController extends Controller
 
         if ($vendorPayment) {
             // Get mutation record for bank information
-            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
+            $mutation = \App\Models\Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->first();

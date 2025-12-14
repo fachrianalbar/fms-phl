@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('vendor_payment_history')) {
+        if (! Schema::hasTable('vendor_payment_history')) {
             Schema::create('vendor_payment_history', function (Blueprint $table) {
                 $table->uuid('id')->primary();
                 $table->uuid('vendor_payment_id');

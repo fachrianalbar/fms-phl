@@ -36,7 +36,7 @@
             @foreach ($order as $item)
             <tr>
                 <td style="text-align: center; border: 1px solid black;">{{ $loop->iteration }}</td>
-                <td style="text-align: center; border: 1px solid black;">{{ $item->shipmentNumber }}</td>
+                <td style="text-align: center; border: 1px solid black;">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>
                 <td style="text-align: center; border: 1px solid black;">{{ $item->orderDate ? date('d-m-Y', strtotime($item->orderDate)) : '' }}</td>
                 <td style="text-align: left; border: 1px solid black;">{{ $item->customer->name ?? '' }}</td>
                 <td style="text-align: left; border: 1px solid black;">{{ $item->route->originLocation->name ?? '' }}</td>

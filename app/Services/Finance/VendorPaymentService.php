@@ -54,7 +54,7 @@ class VendorPaymentService
         // Tagihan awal dari order
         $billingAmount = (float) ($order->personalVendorPrice ?? 0);
 
-        if (!$vendorPayment) {
+        if (! $vendorPayment) {
             // Pertama kali: buat vendor payment baru
             // amount = tagihan awal, bukan jumlah pembayaran!
             $vendorPayment = $this->service->create([
@@ -117,7 +117,7 @@ class VendorPaymentService
             'nominal' => $paymentAmount,
             'type' => 'Out', // Out untuk pengeluaran
             'date' => $request->date,
-            'description' => 'Vendor Payment for Order ' . $order->code . ' with amount ' . number_format($paymentAmount, 0, '.', ','),
+            'description' => 'Vendor Payment for Order '.$order->code.' with amount '.number_format($paymentAmount, 0, '.', ','),
             'transactionTypeCode' => 'FTT251208001130', // Vendor Payment transaction type
         ]);
 
