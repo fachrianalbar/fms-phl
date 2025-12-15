@@ -68,7 +68,7 @@ class OrderDetailController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -145,7 +145,8 @@ class OrderDetailController extends Controller
                     return $row->route->destinationLocation->name ?? '';
                 })
                 ->addColumn('sales', function ($row) {
-                    $sales = $row->qty * $row->routeAmount;
+                    // `routeAmount` now stored as total for the order (unit price * qty)
+                    $sales = $row->routeAmount;
 
                     return number_format($sales, 0, ',', '.');
                 })
@@ -154,7 +155,7 @@ class OrderDetailController extends Controller
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
                             $costName = $cost->costComponent->name ?? 'N/A';
-                            $costDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                            $costDetails[] = $costName . ': ' . number_format($cost->nominal, 0, ',', '.');
                         }
                     }
 
@@ -165,7 +166,7 @@ class OrderDetailController extends Controller
                     // Render cost details as vertical list in detail cell
                     $html = '<div class="cost-detail-list" style="font-size: 12px;">';
                     foreach ($costDetails as $key => $detail) {
-                        $html .= '<div class="cost-detail-item">'.($key + 1).'. '.$detail.'</div>';
+                        $html .= '<div class="cost-detail-item">' . ($key + 1) . '. ' . $detail . '</div>';
                     }
                     $html .= '</div>';
 
@@ -182,7 +183,8 @@ class OrderDetailController extends Controller
                     return number_format($totalCost, 0, ',', '.');
                 })
                 ->addColumn('profit', function ($row) {
-                    $sales = $row->qty * $row->routeAmount;
+                    // `routeAmount` is total for the order
+                    $sales = $row->routeAmount;
                     $totalCost = 0;
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
@@ -256,7 +258,7 @@ class OrderDetailController extends Controller
         $mpdf->setAutoBottomMargin = 'stretch';
 
         // Write header
-        $headerHtml = View::make($this->view.'report.order-detail-pdf-header')->render();
+        $headerHtml = View::make($this->view . 'report.order-detail-pdf-header')->render();
         $mpdf->WriteHTML($headerHtml);
 
         // Write data in chunks and keep a running start index so numbering continues
@@ -265,7 +267,7 @@ class OrderDetailController extends Controller
 
         $start = 0;
         foreach ($chunks as $chunk) {
-            $rowHtml = View::make($this->view.'report.order-detail-pdf-rows')
+            $rowHtml = View::make($this->view . 'report.order-detail-pdf-rows')
                 ->with('data', $chunk)
                 ->with('start', $start)
                 ->render();
@@ -274,7 +276,7 @@ class OrderDetailController extends Controller
         }
 
         // Write footer
-        $footerHtml = View::make($this->view.'report.order-detail-pdf-footer')
+        $footerHtml = View::make($this->view . 'report.order-detail-pdf-footer')
             ->with('data', $data)
             ->render();
         $mpdf->WriteHTML($footerHtml);

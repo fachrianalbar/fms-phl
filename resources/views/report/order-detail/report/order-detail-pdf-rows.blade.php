@@ -13,7 +13,8 @@ $startIndex = isset($start) ? (int) $start : 0;
     <td class="text-left">{{ $item->driver->name ?? '' }}</td>
     <td class="text-right">
         @php
-        $sales = $item->qty * $item->routeAmount;
+        // `routeAmount` stored as total (unit price * qty)
+        $sales = $item->routeAmount;
         @endphp
         {{ number_format($sales, 0, ',', '.') }}
     </td>
@@ -50,7 +51,7 @@ $startIndex = isset($start) ? (int) $start : 0;
     </td>
     <td class="text-right">
         @php
-        $profit = ($item->qty * $item->routeAmount) - $totalCost;
+        $profit = $item->routeAmount - $totalCost;
         @endphp
         {{ number_format($profit, 0, ',', '.') }}
     </td>

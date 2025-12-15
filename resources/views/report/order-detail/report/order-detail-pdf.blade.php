@@ -95,7 +95,8 @@
                 <td class="text-center">{{ $item->qty }}</td>
                 <td class="text-right">
                     @php
-                    $sales = $item->qty * $item->routeAmount;
+                    // `routeAmount` stored as total for the order
+                    $sales = $item->routeAmount;
                     $grandTotalSales += $sales;
                     @endphp
                     {{ number_format($sales, 0, ',', '.') }}

@@ -46,7 +46,8 @@
                 <td style="text-align: left; border: 1px solid black;">{{ $item->driver->name ?? '' }}</td>
                 <td style="text-align: right; border: 1px solid black;">
                     @php
-                    $sales = $item->qty * $item->routeAmount;
+                    // `routeAmount` stored as total for the order
+                    $sales = $item->routeAmount;
                     @endphp
                     {{ number_format($sales, 0, ',', '.') }}
                 </td>
