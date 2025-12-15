@@ -506,6 +506,8 @@ use App\Models\Data\Route;
 <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<!-- DataTables Core MUST be loaded first -->
+<script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <!-- dataTables.bootstrap5 -->
 <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
@@ -734,135 +736,139 @@ use App\Models\Data\Route;
 
                 $.get("/ajax/order-shipment-format/" + customerId, function(data) {
                     $('#shipmentNumber').val(String(data).toUpperCase());
-
-
-
-                    if (customerCode) {
-                        $.get("/ajax/customer-detail/" + customerId, function(data) {
-                            const $detailCard = $('#card-customer-detail');
-                            const $cardBody = $detailCard.find('.card-body');
-                            $cardBody.empty(); // Bersihkan isinya
-
-                            if (data.length > 0) {
-                                $detailCard.removeClass('d-none');
-
-                                // Disable input #notes
-                                $('#notes').prop('disabled', true);
-
-                                data.forEach(item => {
-                                    let html = `
-                        <input type="hidden" name="customerDetailCode[]" value="${item.code}">
-                        <div class="mb-3">
-                            <label class="form-label">${item.name} <i class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="value[]" type="text" required placeholder="${item.name}">
-                        </div>`;
-                                    $cardBody.append(html);
-                                });
-                            } else {
-                                $detailCard.addClass('d-none');
-                                $cardBody.empty();
-
-                                // Enable input #notes
-                                $('#notes').prop('disabled', false);
-                            }
-                        });
-                    } else {
-                        $('#card-customer-detail').addClass('d-none');
-                        $('#card-customer-detail .card-body').empty();
-
-                        // Enable input #notes
-                        $('#notes').prop('disabled', false);
-                    }
                 });
 
-                $('#add-material').on('click', function() {
-                    let row = $('#materialForm tr').length + 1;
-                    console.log(row);
+                if (customerCode) {
+                    $.get("/ajax/customer-detail/" + customerId, function(data) {
+                        const $detailCard = $('#card-customer-detail');
+                        const $cardBody = $detailCard.find('.card-body');
+                        $cardBody.empty(); // Bersihkan isinya
 
-                    let newRow = `
-        <tr>
-            <td class="remove-btn">
-                <a href="javascript:removeDetailRow(${row})"
-                    class="btn btn-icon btn-sm bg-danger-subtle"
-                    data-bs-toggle="tooltip" title="Delete">
-                    <i class="mdi mdi-delete fs-14 text-danger"></i>
-                </a>
-            </td>
-            <td>
-                <select class="form-control js-example-basic-single" name="materialCode[]" id="materialCode_${row}" >
-                    <option selected disabled value="">
-                        {{ __('general.choose') }}...
-                    </option>
-                    @foreach ($material as $item)
-                        <option value="{{ $item->code }}">{{ $item->name }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td>
-                <select class="form-control js-example-basic-single" name="unitCode[]" id="unitCode_${row}" >
-                    <option selected disabled value="">
-                        {{ __('general.choose') }}...
-                    </option>
-                    @foreach ($unit as $item)
-                        <option value="{{ $item->code }}">{{ $item->name }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td>
-                <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number"
-                    min="1" placeholder="Material Qty">
-            </td>
-            <td>
-                <select class="form-control js-example-basic-single" name="unitCode2[]" id="unitCode2_${row}" >
-                    <option selected disabled value="">
-                        {{ __('general.choose') }}...
-                    </option>
-                    @foreach ($unit as $item)
-                        <option value="{{ $item->code }}">{{ $item->name }}</option>
-                    @endforeach
-                </select>
-            </td>
-            <td>
-                <input class="form-control" name="materialQty2[]" id="materialQty2_${row}" type="number"
-                    min="1" placeholder="Qty">
-            </td>
-        </tr>
-    `;
+                        if (data.length > 0) {
+                            $detailCard.removeClass('d-none');
 
-                    $('#materialForm').append(newRow);
+                            // Disable input #notes
+                            $('#notes').prop('disabled', true);
 
-                    // Reinitialize select2 (jika pakai select2)
-                    $(`#materialCode_${row}`).select2();
-                    $(`#unitCode_${row}`).select2();
-                    $(`#materialCode2_${row}`).select2();
-                    $(`#unitCode2_${row}`).select2();
-                });
-
-                function removeDetailRow(row) {
-                    $(`#materialCode_${row}`).closest('tr').remove();
-                }
-
-                function deleteOrderMaterial(id) {
-                    var url = '{{ route('operational.order-material.destroy', ':id') }}';
-                    url = url.replace(':id', id);
-
-                    $('#delete-form').attr('action', url);
-
-                    swal({
-                        title: "{{ __('general.are_you_sure') }}",
-                        text: "{{ __('general.want_to_delete_this_data') }}",
-                        icon: "warning",
-                        buttons: true,
-                        dangerMode: true,
-                    }).then((willDelete) => {
-                        if (willDelete) {
-                            $('#delete-form').submit();
+                            data.forEach(item => {
+                                let html = `
+                    <input type="hidden" name="customerDetailCode[]" value="${item.code}">
+                    <div class="mb-3">
+                        <label class="form-label">${item.name} <i class="mdi mdi-information text-danger"></i></label>
+                        <input class="form-control" name="value[]" type="text" required placeholder="${item.name}">
+                    </div>`;
+                                $cardBody.append(html);
+                            });
                         } else {
-                            swal("{{ __('general.your_data_is_save') }}");
+                            $detailCard.addClass('d-none');
+                            $cardBody.empty();
+
+                            // Enable input #notes
+                            $('#notes').prop('disabled', false);
                         }
                     });
-                }
+                } else {
+                    $('#card-customer-detail').addClass('d-none');
+                    $('#card-customer-detail .card-body').empty();
 
-                $('#dt').DataTable()
+                    // Enable input #notes
+                    $('#notes').prop('disabled', false);
+                }
+    });
+
+    $('#add-material').on('click', function() {
+        let row = $('#materialForm tr').length + 1;
+        console.log(row);
+
+        let newRow = `
+    <tr>
+        <td class="remove-btn">
+            <a href="javascript:removeDetailRow(${row})"
+                class="btn btn-icon btn-sm bg-danger-subtle"
+                data-bs-toggle="tooltip" title="Delete">
+                <i class="mdi mdi-delete fs-14 text-danger"></i>
+            </a>
+        </td>
+        <td>
+            <select class="form-control js-example-basic-single" name="materialCode[]" id="materialCode_${row}" >
+                <option selected disabled value="">
+                    {{ __('general.choose') }}...
+                </option>
+                @foreach ($material as $item)
+                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                @endforeach
+            </select>
+        </td>
+        <td>
+            <select class="form-control js-example-basic-single" name="unitCode[]" id="unitCode_${row}" >
+                <option selected disabled value="">
+                    {{ __('general.choose') }}...
+                </option>
+                @foreach ($unit as $item)
+                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                @endforeach
+            </select>
+        </td>
+        <td>
+            <input class="form-control" name="materialQty[]" id="materialQty_${row}" type="number"
+                min="1" placeholder="Material Qty">
+        </td>
+        <td>
+            <select class="form-control js-example-basic-single" name="unitCode2[]" id="unitCode2_${row}" >
+                <option selected disabled value="">
+                    {{ __('general.choose') }}...
+                </option>
+                @foreach ($unit as $item)
+                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                @endforeach
+            </select>
+        </td>
+        <td>
+            <input class="form-control" name="materialQty2[]" id="materialQty2_${row}" type="number"
+                min="1" placeholder="Qty">
+        </td>
+    </tr>
+`;
+
+        $('#materialForm').append(newRow);
+
+        // Reinitialize select2 (jika pakai select2)
+        $(`#materialCode_${row}`).select2();
+        $(`#unitCode_${row}`).select2();
+        $(`#materialCode2_${row}`).select2();
+        $(`#unitCode2_${row}`).select2();
+    });
+
+    function removeDetailRow(row) {
+        $(`#materialCode_${row}`).closest('tr').remove();
+    }
+
+    function deleteOrderMaterial(id) {
+        var url = '{{ route('operational.order-material.destroy', ':id') }}';
+        url = url.replace(':id', id);
+
+        $('#delete-form').attr('action', url);
+
+        swal({
+            title: "{{ __('general.are_you_sure') }}",
+            text: "{{ __('general.want_to_delete_this_data') }}",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $('#delete-form').submit();
+            } else {
+                swal("{{ __('general.your_data_is_save') }}");
+            }
+        });
+    }
+
+    // Initialize DataTable only if element exists
+    $(document).ready(function() {
+        if ($('#dt').length) {
+            $('#dt').DataTable();
+        }
+    });
 </script>
 @endpush

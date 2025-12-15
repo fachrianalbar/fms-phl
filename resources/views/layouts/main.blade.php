@@ -20,6 +20,8 @@
 
     <!-- Icons -->
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
+    <!-- Flatpickr CSS shim (loads actual css from libs) -->
+    <link href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
 
     <script src="{{ asset('assets/js/head.js') }}"></script>
 
@@ -142,6 +144,11 @@
     <script src="{{ asset('assets/libs/feather-icons/feather.min.js') }}"></script>
 
 
+
+    <!-- Global shims/helpers -->
+    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/js/helpers/delete-cost.js') }}"></script>
 
     @stack('script')
 
