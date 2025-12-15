@@ -417,8 +417,7 @@
                     }
                 },
                 error: function(xhr) {
-                    let errorMessage = '{{ __('
-                    general.an_error_occurred ') }}';
+                    let errorMessage = '{{ __('general.an_error_occurred') }}';
 
                     if (xhr.responseJSON && xhr.responseJSON.message) {
                         errorMessage = xhr.responseJSON.message;
@@ -432,9 +431,7 @@
                     });
 
                     // Enable button kembali
-                    submitButton.prop('disabled', false).html(
-                        '{{ __('
-                        general.save_changes ') }}');
+                    submitButton.prop('disabled', false).html('{{ __('general.save_changes') }}');
                 }
             });
         });
@@ -450,8 +447,7 @@
         const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
         if (customerCode && routeTypeCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('
-            general.choose ') }}...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
             $('#originLocationCode').html(html);
 
             $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
@@ -471,8 +467,7 @@
 
 
         if (customerCode && routeTypeCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('
-            general.choose ') }}...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
             $('#originLocationCode').html(html);
 
             $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
@@ -689,8 +684,7 @@
         const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
         if (customerCode && routeTypeCode && originLocationCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('
-            general.choose ') }}...</option>';
+            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
             $('#destinationLocationCode').html(html);
 
             $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +

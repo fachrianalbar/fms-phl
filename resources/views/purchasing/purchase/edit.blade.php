@@ -289,8 +289,7 @@
 
     // Load items based on supplier
     function itemBySupplier(supplierCode) {
-        let html = '<option selected="" disabled="" value="">{{ __('
-        general.choose ') }}...</option>';
+        let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
         $('#itemCode_1').html(html);
 
 

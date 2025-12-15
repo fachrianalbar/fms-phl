@@ -438,8 +438,7 @@ use App\Models\Data\Route;
             const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
             if (customerCode && routeTypeCode) {
-                let html = '<option selected="" disabled="" value="">{{ __('
-                general.choose ') }}...</option>';
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#originLocationCode').html(html);
 
                 $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
@@ -511,8 +510,7 @@ use App\Models\Data\Route;
             const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
             if (customerCode && routeTypeCode && originLocationCode) {
-                let html = '<option selected="" disabled="" value="">{{ __('
-                general.choose ') }}...</option>';
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#destinationLocationCode').html(html);
 
                 $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +

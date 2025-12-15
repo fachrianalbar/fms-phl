@@ -293,8 +293,7 @@
     $('#save').on('click', function() {
         let row = $('#purchaseDetails tr').length + 1;
 
-        let options = '<option selected="" disabled="" value="">{{ __('
-        general.choose ') }}...</option>';
+        let options = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
 
         // Mengisi options berdasarkan data items
         itemsData.forEach(item => {
