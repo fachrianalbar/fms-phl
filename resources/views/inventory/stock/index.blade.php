@@ -253,7 +253,33 @@
             $('#editWarehouseName').val(warehouseName);
             $('#editQty').val('');
 
-            $('#editStockModal').modal('show');
+            // Load existing INITIAL (Stock Awal) if any
+            $.ajax({
+                url: "{{ route('inventory.stock.detail') }}",
+                type: "GET",
+                data: {
+                    itemCode: itemCode,
+                    warehouseCode: warehouseCode
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Find the INITIAL transaction (mapped to 'Stock Awal')
+                        const initial = response.data.find(t => t.transactionType === 'Stock Awal');
+                        if (initial) {
+                            $('#editQty').val(initial.qtyIn);
+                        } else {
+                            $('#editQty').val('');
+                        }
+                    }
+
+                    $('#editStockModal').modal('show');
+                },
+                error: function() {
+                    // On error, still show modal with empty qty
+                    $('#editQty').val('');
+                    $('#editStockModal').modal('show');
+                }
+            });
         });
 
         // Handle form submit edit stock awal
