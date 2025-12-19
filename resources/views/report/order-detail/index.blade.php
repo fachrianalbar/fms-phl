@@ -276,7 +276,7 @@
                     "data": 'orderDate'
                 },
                 {
-                    "data": 'customer.name'
+                    "data": 'customer_name'
                 },
                 {
                     "data": 'route.originLocation.name'

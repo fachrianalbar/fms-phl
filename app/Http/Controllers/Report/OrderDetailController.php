@@ -135,6 +135,9 @@ class OrderDetailController extends Controller
                 ->editColumn('customer.name', function ($row) {
                     return $row->customer->name ?? '';
                 })
+                ->addColumn('customer_name', function ($row) {
+                    return $row->customer->name ?? '';
+                })
                 ->editColumn('driver.name', function ($row) {
                     return $row->driver->name ?? '';
                 })
