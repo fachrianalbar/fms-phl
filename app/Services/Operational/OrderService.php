@@ -143,9 +143,35 @@ class OrderService
         $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $this->service->where('id', $id)->update(
-            array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
-        );
+        // Prepare update data and sanitize numeric fields (pass isUpdate = true)
+        $updateData = array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request, true));
+
+        // Compute route's expected amount based on selected route and qty
+        $selectedRoute = $this->route->where('code', $request->routeData)->first();
+        $computedRouteAmount = null;
+        if ($selectedRoute) {
+            $computedRouteAmount = (int) ($selectedRoute->price * $request->qty);
+        }
+
+        // Get submitted (sanitized) routeAmount from update data
+        $submittedRouteAmount = isset($updateData['routeAmount']) ? (int) $updateData['routeAmount'] : null;
+
+        // Perform update
+        $this->service->where('id', $id)->update($updateData);
+
+        // If submitted route amount differs from computed route price, record it
+        if ($computedRouteAmount !== null && $submittedRouteAmount !== null && $submittedRouteAmount !== $computedRouteAmount) {
+            $message = 'Route price diperbarui dari ' . number_format($computedRouteAmount, 0, ',', '.') . ' menjadi ' . number_format($submittedRouteAmount, 0, ',', '.');
+            // Flash message (controller will show this on redirect)
+            try {
+                session()->flash('info', $message);
+            } catch (\Exception $e) {
+                // ignore if session not available in this context
+            }
+
+            // Log activity for audit
+            $this->logActivity('Route Price Changed', ['orderId' => $data->id, 'from' => $computedRouteAmount, 'to' => $submittedRouteAmount], 'Update');
+        }
 
         // Refresh $data setelah update agar relasi tetap konsisten
         $data = $this->getById($id);
@@ -385,6 +411,11 @@ class OrderService
     {
         $route = $this->route->where('code', $request->routeData)->first();
 
+        // sanitize numeric inputs that may contain thousand separators
+        $routeAmount = $isUpdate ? (int) preg_replace('/\D/', '', ($request->routeAmount ?? '')) : (int) ($route->price * $request->qty);
+        $vendorPrice = $isUpdate ? (int) preg_replace('/\D/', '', ($request->vendorPrice ?? '')) : $route->vendorPrice;
+        $personalVendorPrice = $isUpdate ? (int) preg_replace('/\D/', '', ($request->personalVendorPrice ?? '')) : (int) ($route->personalVendorPrice * $request->qty);
+
         $data = [
             'orderDate' => $request->orderDate,
             'notes' => $request->notes,
@@ -396,10 +427,10 @@ class OrderService
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
             // store routeAmount as total (unit price * qty)
-            'routeAmount' => $isUpdate ? (int) $request->routeAmount : (int) ($route->price * $request->qty),
-            'vendorPrice' => $isUpdate ? (int) $request->vendorPrice : $route->vendorPrice,
+            'routeAmount' => $routeAmount,
+            'vendorPrice' => $vendorPrice,
             // store personalVendorPrice as total (unit personal vendor price * qty)
-            'personalVendorPrice' => $isUpdate ? (int) $request->personalVendorPrice : (int) ($route->personalVendorPrice * $request->qty),
+            'personalVendorPrice' => $personalVendorPrice,
             'customerCode' => $request->customerCode,
         ];
 

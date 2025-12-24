@@ -35,7 +35,7 @@ use App\Models\Data\Route;
 @endpush
 
 @section('content')
-<form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
+<form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}" onsubmit="return submitForm('routeAmount')">
     @csrf
     @method('PUT')
     <div class="col-sm-12">
@@ -225,7 +225,7 @@ use App\Models\Data\Route;
                 </div>
             </div>
 
-            @role('SPRADMIN', 'SPRUSER')
+            @role('SPRADMIN', 'SPRUSER', 'DO')
             <div class="row mt-4">
                 <div class="col-md-6">
                     <label class="form-label" for="routeAmount">{{ __('menu_order.route_price') }}</label>
@@ -237,7 +237,7 @@ use App\Models\Data\Route;
             </div>
             @endrole
 
-            @unlessrole('SPRADMIN', 'SPRUSER')
+            @unlessrole('SPRADMIN', 'SPRUSER', 'DO')
             <input type="hidden" name="routeAmount" value="{{ $data->routeAmount }}">
             @endunlessrole
 

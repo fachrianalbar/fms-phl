@@ -195,7 +195,7 @@ use App\Models\Data\Route;
                         </div>
                     </div>
 
-                    @role('SPRADMIN', 'SPRUSER')
+                    @role('SPRADMIN', 'SPRUSER', 'DO')
                     <div class="row mt-4">
                         <div class="col-md-6">
                             <label class="form-label" for="routeAmount">{{ __('menu_order.route_price') }}</label>
@@ -207,7 +207,7 @@ use App\Models\Data\Route;
                     </div>
                     @endrole
 
-                    @unlessrole('SPRADMIN', 'SPRUSER')
+                    @unlessrole('SPRADMIN', 'SPRUSER', 'DO')
                     <input type="hidden" id="routeAmount" name="routeAmount" value="{{ $data->routeAmount }}">
                     @endunlessrole
 

@@ -920,7 +920,13 @@
                     swal("Sukses", "{{ __('menu_order.change_driver_success') }}", "success");
                     $('#driverCode').val('').trigger('change');
                     $('#description').val('');
-                    loadOrderDrivers($('#orderCode').val()); // Reload data
+                    loadOrderDrivers($('#orderCode').val()); // Reload modal list
+                    $('#modal-add-driver').modal('hide'); // Close modal
+
+                    // Reload main order table if present
+                    if ($('#dt').length) {
+                        $('#dt').DataTable().ajax.reload(null, false);
+                    }
                 } else {
                     swal("Error", response.message ||
                         "{{ __('menu_order.change_driver_failed') }}", "error");
