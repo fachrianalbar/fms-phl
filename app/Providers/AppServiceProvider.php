@@ -42,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
 
             return ! $user || ! in_array($user->roleCode, $roles);
         });
+
+        // Register maintenance middleware to web group (skipped in console)
+        if (! $this->app->runningInConsole()) {
+            $this->app['router']->pushMiddlewareToGroup('web', \App\Http\Middleware\CheckMaintenance::class);
+        }
     }
 }
