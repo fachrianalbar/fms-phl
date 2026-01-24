@@ -161,7 +161,7 @@ class OrderService
 
         // If submitted route amount differs from computed route price, record it
         if ($computedRouteAmount !== null && $submittedRouteAmount !== null && $submittedRouteAmount !== $computedRouteAmount) {
-            $message = 'Route price diperbarui dari ' . number_format($computedRouteAmount, 0, ',', '.') . ' menjadi ' . number_format($submittedRouteAmount, 0, ',', '.');
+            $message = 'Route price diperbarui dari '.number_format($computedRouteAmount, 0, ',', '.').' menjadi '.number_format($submittedRouteAmount, 0, ',', '.');
             // Flash message (controller will show this on redirect)
             try {
                 session()->flash('info', $message);
@@ -251,8 +251,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code . '-del-' . Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
+            'code' => $data->code.'-del-'.Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -464,7 +464,7 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
+            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi
