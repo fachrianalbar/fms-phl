@@ -17,7 +17,7 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 
-    <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
 @endpush
 
 @section('content')
@@ -116,7 +116,7 @@
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
 
-    <script src="../assets/js/sweet-alert/sweetalert.min.js"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
     <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}

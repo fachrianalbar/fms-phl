@@ -16,7 +16,7 @@
         href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
 @endpush
 
 @section('content')
