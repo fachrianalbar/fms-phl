@@ -419,13 +419,15 @@
                                 <th>No</th>
                                 <th>{{ __('menu_order.order_date') }}</th>
                                 <th>{{ __('menu_order.plate_number') }}</th>
-                                <th>{{ __('menu_order.fleet_type') }}</th>
+                                <th>Route Name</th>
                                 <th>{{ __('menu_order.driver') }}</th>
-                                <th>Type</th>
+                                <th>Order Type</th>
                                 <th>{{ __('menu_order.shipment_no') }}</th>
                                 <th>{{ __('menu_order.customer') }}</th>
                                 <th>{{ __('menu_order.origin') }}</th>
                                 <th>{{ __('menu_order.destination') }}</th>
+                                <th>Price</th>
+                                <th>Harga Vendor</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -674,6 +676,8 @@
                     { data: 'customer.name' },
                     { data: 'route.originLocation.name' },
                     { data: 'route.destinationLocation.name' },
+                    { data: 'price' },
+                    { data: 'harga_vendor' },
                     { data: 'status' }
                 ],
                 columnDefs: [
@@ -683,7 +687,7 @@
                     },
                     {
                         orderable: false,
-                        targets: [0,1,3,4,5,6,7,8,9,10,11]
+                        targets: [0,1,3,4,5,6,7,8,9,10,11,12,13]
                     },
                 ],
                 order: [

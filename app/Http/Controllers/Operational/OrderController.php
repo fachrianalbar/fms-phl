@@ -587,6 +587,12 @@ class OrderController extends Controller
                 ->addColumn('totalPrice', function () {
                     return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
+                ->addColumn('price', function ($row) {
+                    return 'Rp ' . number_format($row->routeAmount ?? 0, 0, ',', '.');
+                })
+                ->addColumn('harga_vendor', function ($row) {
+                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                })
                 ->addColumn('action', function ($row) {
 
                     $note = '';
@@ -674,7 +680,7 @@ class OrderController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice'])
+                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice', 'price', 'harga_vendor'])
                 ->toJson();
         }
     }

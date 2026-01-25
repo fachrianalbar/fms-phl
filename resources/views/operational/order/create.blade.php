@@ -676,30 +676,32 @@
             $.get("{{ url('ajax/route-order-detail') }}/" + routeData,
                 function(data) {
                     const componentList = document.getElementById('component-list');
-                    componentList.innerHTML = '';
-                    index = 0;
+                    if (componentList) {
+                        componentList.innerHTML = '';
+                        index = 0;
 
-                    data.forEach((item, i) => {
-                        let row = `
-                        <tr>
-                            <td>
-                                <a href="javascript:removeRow(${i})"
-                                    class="btn btn-icon btn-sm bg-danger-subtle me-1"
-                                    data-bs-toggle="tooltip" title="Delete">
-                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
-                                </a>
-                            </td>
-                            <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
-                            <td><input class="form-control" name="description[]" value=""></td>
-                             <td>
-                                <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
-                             </td>
-                            <td><input class="form-control" name="type[]" value="Tidak Ditagihkan"></td>
+                        data.forEach((item, i) => {
+                            let row = `
+                            <tr>
+                                <td>
+                                    <a href="javascript:removeRow(${i})"
+                                        class="btn btn-icon btn-sm bg-danger-subtle me-1"
+                                        data-bs-toggle="tooltip" title="Delete">
+                                        <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                    </a>
+                                </td>
+                                <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
+                                <td><input class="form-control" name="description[]" value=""></td>
+                                 <td>
+                                    <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
+                                 </td>
+                                <td><input class="form-control" name="type[]" value="Tidak Ditagihkan"></td>
 
-                        </tr>`;
-                        componentList.insertAdjacentHTML('beforeend', row);
-                        index++;
-                    });
+                            </tr>`;
+                            componentList.insertAdjacentHTML('beforeend', row);
+                            index++;
+                        });
+                    }
                 });
         }
     }

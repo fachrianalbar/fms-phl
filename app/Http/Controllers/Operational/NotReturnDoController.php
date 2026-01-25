@@ -367,6 +367,12 @@ class NotReturnDoController extends Controller
 
                     return $type;
                 })
+                ->addColumn('price', function ($row) {
+                    return 'Rp ' . number_format($row->routeAmount ?? 0, 0, ',', '.');
+                })
+                ->addColumn('harga_vendor', function ($row) {
+                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                })
                 ->editColumn('status', function ($row) {
                     $status = '';
 
@@ -379,7 +385,7 @@ class NotReturnDoController extends Controller
                 ->addColumn('action', function ($row) {
                     return '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
                 })
-                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status'])
+                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
                 ->toJson();
         }
     }
