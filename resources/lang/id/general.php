@@ -23,5 +23,9 @@ return [
     'delete_data' => 'Hapus Data',
     'filter' => 'Filter',
     'reset' => 'Reset',
+    'error' => 'Error',
+    'error_occurred' => 'Terjadi kesalahan!',
+    'success' => 'Sukses',
+    'must_filled' => 'harus diisi',
 
 ];

@@ -23,4 +23,8 @@ return [
     'delete_data' => 'Delete Data',
     'filter' => 'Filter',
     'reset' => 'Reset',
+    'error' => 'Error',
+    'error_occurred' => 'An error occurred!',
+    'success' => 'Success',
+    'must_filled' => 'must be filled',
 ];

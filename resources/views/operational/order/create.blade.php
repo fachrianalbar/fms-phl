@@ -347,6 +347,17 @@
     </div>
     </div>
 </form>
+
+<!-- Preloader -->
+<div id="preloader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="text-align: center; color: white;">
+        <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p style="font-size: 1.2rem; margin: 0;">Sedang menyimpan data...</p>
+    </div>
+</div>
+
 @endsection
 
 @push('script')
@@ -390,48 +401,64 @@
             e.preventDefault();
 
             const form = $(this);
-            const formData = new FormData(this);
             const submitButton = $('#save');
 
-            // Disable button saat proses
-            submitButton.prop('disabled', true).html(
-                '<i class="mdi mdi-loading mdi-spin"></i> Loading...');
-
-            $.ajax({
-                url: form.attr('action'),
-                method: 'POST',
-                data: formData,
-                processData: false,
-                contentType: false,
-                success: function(response) {
-                    if (response.success) {
-                        swal({
-                            title: "Sukses",
-                            text: response.message,
-                            icon: "success",
-                            buttons: false,
-                            timer: 1500
-                        }).then(() => {
-                            window.location.href = response.redirect;
-                        });
-                    }
+            // Show confirmation dialog
+            swal({
+                title: "Konfirmasi Simpan",
+                text: "Apakah Anda yakin ingin menyimpan data order ini?",
+                icon: "warning",
+                buttons: {
+                    cancel: "Batal",
+                    confirm: "Ya, Simpan"
                 },
-                error: function(xhr) {
-                    let errorMessage = '{{ __('general.an_error_occurred') }}';
+                dangerMode: false,
+            }).then((willSave) => {
+                if (willSave) {
+                    // Show preloader
+                    showPreloader();
 
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    }
+                    const formData = new FormData(form[0]);
 
-                    swal({
-                        title: "Error",
-                        text: errorMessage,
-                        icon: "error",
-                        button: "OK"
+                    $.ajax({
+                        url: form.attr('action'),
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            hidePreloader();
+                            if (response.success) {
+                                swal({
+                                    title: "Sukses",
+                                    text: response.message,
+                                    icon: "success",
+                                    buttons: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    window.location.href = response.redirect;
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            hidePreloader();
+                            let errorMessage = '{{ __('general.an_error_occurred') }}';
+
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            swal({
+                                title: "Error",
+                                text: errorMessage,
+                                icon: "error",
+                                button: "OK"
+                            });
+
+                            // Enable button kembali
+                            submitButton.prop('disabled', false).html('{{ __('general.save_changes') }}');
+                        }
                     });
-
-                    // Enable button kembali
-                    submitButton.prop('disabled', false).html('{{ __('general.save_changes') }}');
                 }
             });
         });
@@ -893,5 +920,14 @@
             $('#notes').prop('disabled', false);
         }
     });
+
+    // Preloader functions
+    function showPreloader() {
+        $('#preloader').css('display', 'flex');
+    }
+
+    function hidePreloader() {
+        $('#preloader').css('display', 'none');
+    }
 </script>
 @endpush

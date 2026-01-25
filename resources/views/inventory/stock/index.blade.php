@@ -54,8 +54,8 @@
 
             <div class="d-flex align-items-center gap-3">
                 <a href="{{ route($view . 'pdf-stock') }}" target="_blank" id="print-pdf"
-                    class="btn btn-icon btn-sm bg-danger-subtle">
-                    <i class="mdi mdi-file fs-14 text-danger"></i>
+                    class="btn btn-sm btn-danger">
+                    <i class="mdi mdi-file-pdf-box me-1"></i> Download PDF
                 </a>
 
                 {{-- <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a> --}}
@@ -132,38 +132,65 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="detailModalLabel">Detail Transaksi Stock</h5>
+                <div>
+                    <h5 class="modal-title" id="detailModalLabel">Detail Transaksi Stock</h5>
+                    <p class="text-muted mb-0 fs-6" id="headerItemInfo">
+                        <strong><span id="headerItemCode"></span> - <span id="headerItemName"></span></strong>
+                    </p>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Stock Summary Card -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted mb-2">Total Masuk</h6>
+                                <h4 class="text-success" id="summaryTotalIn">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted mb-2">Total Keluar</h6>
+                                <h4 class="text-danger" id="summaryTotalOut">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="card-title text-muted mb-2">Stock Saat Ini</h6>
+                                <h4 class="text-primary" id="summaryCurrentStock">0</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive">
-                    <table class="table table-bordered table-sm table-striped table-hover align-middle">
+                    <table class="table table-bordered table-sm table-striped table-hover align-middle" id="detailDataTable">
                         <thead>
                             <tr>
                                 <th>No</th>
                                 <th>Tanggal</th>
                                 <th>Kode Transaksi</th>
                                 <th>Tipe Transaksi</th>
-                                <th>Item Code</th>
-                                <th>Item Name</th>
                                 <th>Qty In</th>
                                 <th>Qty Out</th>
+                                <th>Current Stock</th>
                                 <th>Created At</th>
                             </tr>
                         </thead>
-                        <tbody id="detailTableBody"></tbody>
-                        <tfoot id="detailTableFooter">
-                            <tr class="table-active">
-                                <th colspan="6" class="text-end">Total</th>
-                                <th class="text-end">0</th>
-                                <th class="text-end">0</th>
-                                <th class="text-end">0</th>
-                            </tr>
-                        </tfoot>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
             <div class="modal-footer">
+                <a href="#" id="printDetailPdf" class="btn btn-sm btn-danger" target="_blank">
+                    <i class="mdi mdi-file-pdf-box me-1"></i> Download PDF
+                </a>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
@@ -318,12 +345,23 @@
         });
 
         // Handle modal detail transaksi
+        let detailDataTable = null;
+
         $(document).on('click', '.btn-detail', function() {
             const itemCode = $(this).data('item-code');
             const warehouseCode = $(this).data('warehouse-code');
+            const itemName = $(this).closest('tr').find('td:eq(3)').text(); // Get item name from table row
 
+            // Set header info
+            $('#headerItemCode').text(itemCode);
+            $('#headerItemName').text(itemName);
+
+            // Update PDF download link
+            $('#printDetailPdf').attr('href', "{{ route('inventory.stock.pdf-stock-detail') }}?itemCode=" + itemCode + "&warehouseCode=" + warehouseCode);
+
+            // Load summary data
             $.ajax({
-                url: "{{ route('inventory.stock.detail') }}",
+                url: "{{ route('inventory.stock.detail-summary') }}",
                 type: "GET",
                 data: {
                     itemCode: itemCode,
@@ -331,65 +369,103 @@
                 },
                 success: function(response) {
                     if (response.success) {
-                        let html = '';
-                        let totalIn = 0;
-                        let totalOut = 0;
                         const fmt = new Intl.NumberFormat('id-ID');
-
-                        if (response.data.length > 0) {
-                            response.data.forEach((item, index) => {
-                                const inQty = Number(item.qtyIn) || 0;
-                                const outQty = Number(item.qtyOut) || 0;
-                                totalIn += inQty;
-                                totalOut += outQty;
-
-                                // badge class by type
-                                let badgeClass = 'bg-secondary';
-                                if (item.transactionType === 'Pembelian') {
-                                    badgeClass = 'bg-success';
-                                } else if (item.transactionType === 'Pemeliharaan') {
-                                    badgeClass = 'bg-warning text-dark';
-                                }
-
-                                const typeHtml = `<span class="badge badge-status ${badgeClass}">${item.transactionType}</span>`;
-
-                                html += `<tr>
-                                    <td>${index + 1}</td>
-                                    <td>${item.date}</td>
-                                    <td class="text-nowrap">${item.transactionCode}</td>
-                                    <td>${typeHtml}</td>
-                                    <td class="text-nowrap">${item.itemCode}</td>
-                                    <td class="text-start">${item.itemName}</td>
-                                    <td class="text-end">${fmt.format(inQty)}</td>
-                                    <td class="text-end">${fmt.format(outQty)}</td>
-                                    <td class="created-at text-end">${item.createdAt}</td>
-                                </tr>`;
-                            });
-                        } else {
-                            html = '<tr><td colspan="9" class="text-center">Tidak ada data transaksi</td></tr>';
-                        }
-
-                        $('#detailTableBody').html(html);
-
-                        // render footer totals
-                        const net = totalIn - totalOut;
-                        const footerHtml = `<tr class="table-active">
-                            <th colspan="6" class="text-end">Total</th>
-                            <th class="text-end">${fmt.format(totalIn)}</th>
-                            <th class="text-end">${fmt.format(totalOut)}</th>
-                            <th class="text-end">${fmt.format(net)}</th>
-                        </tr>`;
-                        $('#detailTableFooter').html(footerHtml);
-
-                        $('#detailModal').modal('show');
-                    } else {
-                        swal("Error", "Gagal memuat data transaksi", "error");
+                        $('#summaryTotalIn').text(fmt.format(response.totalIn));
+                        $('#summaryTotalOut').text(fmt.format(response.totalOut));
+                        $('#summaryCurrentStock').text(fmt.format(response.currentStock));
                     }
-                },
-                error: function() {
-                    swal("Error", "Terjadi kesalahan, silakan coba lagi", "error");
                 }
             });
+
+            // Initialize or reinitialize DataTable
+            if (detailDataTable) {
+                detailDataTable.destroy();
+            }
+
+            detailDataTable = $('#detailDataTable').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "destroy": true,
+                "ajax": {
+                    "url": "{{ route('inventory.stock.detail-datatable') }}",
+                    "type": "GET",
+                    "data": {
+                        "itemCode": itemCode,
+                        "warehouseCode": warehouseCode
+                    }
+                },
+                "pageLength": 10,
+                "lengthChange": true,
+                "searching": true,
+                "ordering": true,
+                "info": true,
+                "autoWidth": false,
+                "columns": [
+                    {
+                        "data": "DT_RowIndex",
+                        "orderable": false,
+                        "searchable": false,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "date",
+                        "orderable": true
+                    },
+                    {
+                        "data": "transactionCode",
+                        "orderable": true
+                    },
+                    {
+                        "data": "transactionTypeHtml",
+                        "orderable": false,
+                        "searchable": true
+                    },
+                    {
+                        "data": "qtyIn",
+                        "orderable": true,
+                        "className": "text-end"
+                    },
+                    {
+                        "data": "qtyOut",
+                        "orderable": true,
+                        "className": "text-end"
+                    },
+                    {
+                        "data": "currentStock",
+                        "orderable": false,
+                        "searchable": false,
+                        "className": "text-end"
+                    },
+                    {
+                        "data": "createdAt",
+                        "orderable": true,
+                        "className": "text-end"
+                    }
+                ],
+                "columnDefs": [
+                    {
+                        "searchable": false,
+                        "orderable": false,
+                        "targets": [0]
+                    }
+                ],
+                "order": [[1, 'desc']],
+                "language": {
+                    "search": "Cari:",
+                    "lengthMenu": "Tampilkan _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                    "paginate": {
+                        "first": "Pertama",
+                        "last": "Terakhir",
+                        "next": "Berikutnya",
+                        "previous": "Sebelumnya"
+                    },
+                    "processing": "Memproses...",
+                    "emptyTable": "Tidak ada data transaksi"
+                }
+            });
+
+            $('#detailModal').modal('show');
         });
     });
 </script>

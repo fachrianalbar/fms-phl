@@ -207,11 +207,13 @@
                             <th>No</th>
                             <th>{{ __('menu_order.order_date') }}</th>
                             <th>{{ __('menu_order.plate_number') }}</th>
+                            <th>{{ __('menu_order.fleet_type') }}</th>
                             <th>{{ __('menu_order.driver') }}</th>
                             <th>Type</th>
                             <th>{{ __('menu_order.shipment_no') }}</th>
                             <th>{{ __('menu_order.customer') }}</th>
                             {{-- <th>Material</th> --}}
+                            <th>{{ __('menu_order.origin') }}</th>
                             <th>{{ __('menu_order.destination') }}</th>
                             <th>Status</th>
                         </tr>
@@ -537,6 +539,9 @@
                     "data": 'fleet.plateNumber'
                 },
                 {
+                    "data": 'route.name'
+                },
+                {
                     "data": 'driver.name'
                 },
                 {
@@ -552,6 +557,9 @@
                 //     "data": 'material.name'
                 // },
                 {
+                    "data": 'route.originLocation.name'
+                },
+                {
                     "data": 'route.destinationLocation.name'
                 },
                 {
@@ -566,7 +574,7 @@
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+                    "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
                 }
             ],
 

@@ -88,7 +88,7 @@ class NotReturnDoController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -98,6 +98,25 @@ class NotReturnDoController extends Controller
             ->with('fleet', $fleet)
             ->with('orderType', $orderType)
             ->with('unit', $unit);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($code)
+    {
+        $data = Order::with([
+            'customer',
+            'fleet',
+            'driver',
+            'route.originLocation',
+            'route.destinationLocation',
+        ])->where('code', $code)->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
     }
 
     public function confirmDo(Request $request)
@@ -119,7 +138,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -152,7 +171,7 @@ class NotReturnDoController extends Controller
 
         $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -195,12 +214,12 @@ class NotReturnDoController extends Controller
             if ($request->has('confirm_return')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: '.$th->getMessage(),
+                    'message' => 'Error: ' . $th->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()
-                ->with('fail', 'Error: '.$th->getMessage())
+                ->with('fail', 'Error: ' . $th->getMessage())
                 ->withInput();
         }
     }
@@ -212,8 +231,8 @@ class NotReturnDoController extends Controller
 
             Order::where('code', $code)->update([
                 'status' => 4,
-                'returnDate' => now()->format('Y-m-d'),
-                'returnDescription' => $request->returnDescription ?? 'Order returned via edit',
+                'returnDate' => $request->returnDate,
+                'returnDescription' => $request->returnDescription ?? 'Order returned via modal',
             ]);
 
             DB::commit();
@@ -227,7 +246,7 @@ class NotReturnDoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$th->getMessage(),
+                'message' => 'Error: ' . $th->getMessage(),
             ], 500);
         }
     }
@@ -283,6 +302,24 @@ class NotReturnDoController extends Controller
 
                     return $fleet;
                 })
+                ->editColumn('route.name', function ($row) {
+                    $routeName = '';
+
+                    if (isset($row->route->name)) {
+                        $routeName = $row->route->name;
+                    }
+
+                    return $routeName;
+                })
+                ->editColumn('route.originLocation.name', function ($row) {
+                    $origin = '';
+
+                    if (isset($row->route->originLocation->name)) {
+                        $origin = $row->route->originLocation->name;
+                    }
+
+                    return $origin;
+                })
                 ->editColumn('customer.name', function ($row) {
                     $customer = '';
 
@@ -292,7 +329,15 @@ class NotReturnDoController extends Controller
 
                     return $customer;
                 })
+                ->editColumn('driver.name', function ($row) {
+                    $driver = '';
 
+                    if (isset($row->driver->name)) {
+                        $driver = $row->driver->name;
+                    }
+
+                    return $driver;
+                })
                 ->editColumn('route.originLocation.name', function ($row) {
                     $origin = '';
 
@@ -311,15 +356,30 @@ class NotReturnDoController extends Controller
 
                     return $destination;
                 })
+                ->addColumn('orderType', function ($row) {
+                    // Determine order type from fleet's company.type
+                    $type = '';
 
-                ->addColumn('action', function ($row) {
-                    $btn = '<a href="'.route('operational.not-return-do.edit', $row->code).'" class="btn btn-sm btn-info" title="Edit">
-                                <i class="mdi mdi-pencil"></i>
-                            </a>';
+                    if (isset($row->fleet->company->type)) {
+                        $isExternal = strtolower($row->fleet->company->type) === 'external';
+                        $type = $isExternal ? 'External' : 'Internal';
+                    }
 
-                    return $btn;
+                    return $type;
                 })
-                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
+                ->editColumn('status', function ($row) {
+                    $status = '';
+
+                    if (isset($row->orderStatus->name)) {
+                        $status = Auth::user()->languange == 'id' ? $row->orderStatus->nama : $row->orderStatus->name;
+                    }
+
+                    return $status;
+                })
+                ->addColumn('action', function ($row) {
+                    return '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                })
+                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status'])
                 ->toJson();
         }
     }

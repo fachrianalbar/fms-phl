@@ -29,6 +29,9 @@ class NotReturnDoService
             'route.routeDetail',
             'fleet',
             'fleet.type',
+            'fleet.company',
+            'orderType',
+            'orderStatus',
         ])->get();
     }
 
@@ -45,6 +48,9 @@ class NotReturnDoService
             'route.routeDetail',
             'fleet',
             'fleet.type',
+            'fleet.company',
+            'orderType',
+            'orderStatus',
         ])->orderBy('orderDate', 'asc');
     }
 }

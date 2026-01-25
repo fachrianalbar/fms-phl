@@ -5,6 +5,12 @@ return [
     'confirm_return' => 'Konfirmasi Pengembalian',
     'not_return_data' => 'Data Belum Kembali',
     'save_data' => 'Simpan Data',
+    'process_return' => 'Proses Pengembalian',
+    'return_datetime' => 'Tanggal & Jam Pengembalian',
+    'return_description' => 'Keterangan Pengembalian',
+    'cancel' => 'Batal',
+    'save_return' => 'Simpan Pengembalian',
+    'action' => 'Aksi',
 
     // Field form / placeholder
     'date' => 'Tanggal',
