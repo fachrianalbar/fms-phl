@@ -188,6 +188,7 @@ class OrderController extends Controller
             'shipmentNumber' => ['required', Rule::unique('order', 'shipmentNumber')->whereNull('deleted_at')],
             // 'salesOrder' => ['required', Rule::unique('order', 'salesOrder')],
             'orderDate' => 'required|date',
+            'routeData' => 'required|exists:route,code',
         ]);
 
         if ($validator->fails()) {
@@ -358,6 +359,7 @@ class OrderController extends Controller
         $validator = Validator::make($request->all(), [
             'shipmentNumber' => ['required', Rule::unique('order', 'shipmentNumber')->ignore($data->id)->whereNull('deleted_at')],
             // 'salesOrder' => ['required', Rule::unique('order', 'salesOrder')->ignore($data->id)],
+            'routeData' => 'required|exists:route,code',
         ]);
 
         if ($validator->fails()) {

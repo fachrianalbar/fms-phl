@@ -23,6 +23,9 @@
     <!-- Flatpickr CSS shim (loads actual css from libs) -->
     <link href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet" type="text/css" />
 
+    <!-- DataTables CSS -->
+    <link href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}" rel="stylesheet" type="text/css" />
+
     <script src="{{ asset('assets/js/head.js') }}"></script>
 
 
@@ -142,6 +145,14 @@
     <script src="{{ asset('assets/libs/waypoints/lib/jquery.waypoints.min.js') }}"></script>
     <script src="{{ asset('assets/libs/jquery.counterup/jquery.counterup.min.js') }}"></script>
     <script src="{{ asset('assets/libs/feather-icons/feather.min.js') }}"></script>
+
+
+
+    <!-- jQuery -->
+    <script src="{{ asset('assets/libs/jquery/jquery.min.js') }}"></script>
+    <!-- DataTables JS -->
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 
 
 

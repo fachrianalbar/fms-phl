@@ -35,7 +35,7 @@ use App\Models\Data\Route;
 @endpush
 
 @section('content')
-<form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}" onsubmit="return submitForm('routeAmount')">
+<form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}" id="edit-form">
     @csrf
     @method('PUT')
     <div class="col-sm-12">
@@ -69,7 +69,7 @@ use App\Models\Data\Route;
                                 @foreach ($fleet as $item)
                                 <option value="{{ $item->code }}"
                                     {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
-                                    {{ $item->plateNumber }}
+                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company->type }}
                                 </option>
                                 @endforeach
                             </select>
@@ -496,6 +496,17 @@ use App\Models\Data\Route;
     @csrf
     @method('DELETE')
 </form>
+
+<!-- Preloader -->
+<div id="preloader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+    <div style="text-align: center; color: white;">
+        <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p style="font-size: 1.2rem; margin: 0;">Sedang menyimpan data...</p>
+    </div>
+</div>
+
 @endsection
 
 @push('script')
@@ -529,6 +540,90 @@ use App\Models\Data\Route;
     $(document).ready(function() {
         const selectedType = $('#routeTypeCode').select2('val');
         // loadQty(selectedType)
+
+        // Handle form submit dengan confirmation dan preloader
+        $('#edit-form').on('submit', function(e) {
+            e.preventDefault();
+
+            const form = $(this);
+            const submitButton = $('#save');
+
+            // Show confirmation dialog
+            swal({
+                title: "Konfirmasi Simpan",
+                text: "Apakah Anda yakin ingin menyimpan perubahan order ini?",
+                icon: "warning",
+                buttons: {
+                    cancel: "Batal",
+                    confirm: "Ya, Simpan"
+                },
+                dangerMode: false,
+            }).then((willSave) => {
+                if (willSave) {
+                    // Show preloader
+                    showPreloader();
+
+                    // Validate routeAmount
+                    const routeAmount = $('input[name="routeAmount"]').val();
+                    if (!routeAmount || routeAmount === '') {
+                        hidePreloader();
+                        swal({
+                            title: "Error",
+                            text: "Route Amount tidak boleh kosong",
+                            icon: "error",
+                            button: "OK"
+                        });
+                        return false;
+                    }
+
+                    // Submit form menggunakan AJAX
+                    const formData = new FormData(form[0]);
+
+                    $.ajax({
+                        url: form.attr('action'),
+                        method: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function(response) {
+                            hidePreloader();
+                            swal({
+                                title: "Sukses",
+                                text: "Data order berhasil disimpan",
+                                icon: "success",
+                                buttons: false,
+                                timer: 1500
+                            }).then(() => {
+                                window.location.href = "{{ route($view . 'index') }}";
+                            });
+                        },
+                        error: function(xhr) {
+                            hidePreloader();
+                            let errorMessage = 'Terjadi kesalahan saat menyimpan data';
+
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.responseText) {
+                                // Try to extract error from HTML response
+                                const match = xhr.responseText.match(/<h1[^>]*>([^<]+)<\/h1>/);
+                                if (match) {
+                                    errorMessage = match[1];
+                                }
+                            }
+
+                            swal({
+                                title: "Error",
+                                text: errorMessage,
+                                icon: "error",
+                                button: "OK"
+                            });
+
+                            submitButton.prop('disabled', false);
+                        }
+                    });
+                }
+            });
+        });
     });
 
     function deleteCost(id) {
@@ -870,5 +965,14 @@ use App\Models\Data\Route;
             $('#dt').DataTable();
         }
     });
+
+    // Preloader functions
+    function showPreloader() {
+        $('#preloader').css('display', 'flex');
+    }
+
+    function hidePreloader() {
+        $('#preloader').css('display', 'none');
+    }
 </script>
 @endpush

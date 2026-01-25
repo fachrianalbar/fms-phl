@@ -55,8 +55,8 @@ class Order extends Model
         'is_order_tax',
         'returnDescription',
         'routeAmount',
-        'vendor_price',
-        'personal_vendor_price',
+        'vendorPrice',
+        'personalVendorPrice',
     ];
 
     public function customer()

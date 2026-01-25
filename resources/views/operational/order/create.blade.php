@@ -31,7 +31,7 @@
 @endpush
 
 @section('content')
-<form method="post" action="{{ route($view . 'store') }}">
+<form method="post" action="{{ route($view . 'store') }}" id="create-form">
     @csrf
     <div class="col-sm-12">
         <div class="card">
@@ -63,7 +63,7 @@
                                 </option>
                                 @foreach ($fleet as $item)
                                 <option value="{{ $item->code }}">
-                                    {{ $item->plateNumber }}
+                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company->type }}
                                 </option>
                                 @endforeach
                             </select>
@@ -397,7 +397,7 @@
             '/ajax/order-generate-code');
 
         // Handle form submit dengan AJAX
-        $('form').on('submit', function(e) {
+        $('#create-form').on('submit', function(e) {
             e.preventDefault();
 
             const form = $(this);

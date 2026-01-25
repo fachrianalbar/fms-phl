@@ -411,10 +411,45 @@ class OrderService
     {
         $route = $this->route->where('code', $request->routeData)->first();
 
+        // Guard: jika route tidak ditemukan, jangan lanjut proses
+        if (!$route) {
+            throw new \Exception('Route dengan code ' . $request->routeData . ' tidak ditemukan');
+        }
+
+        // Debug: log route data
+        logger()->info('Route data for order', [
+            'routeCode' => $route->code,
+            'price' => $route->price,
+            'vendorPrice' => $route->vendorPrice,
+            'personalVendorPrice' => $route->personalVendorPrice,
+            'qty' => $request->qty,
+        ]);
+
+        // Check fleet company type
+        $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
+        $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
+
         // Recalculate berdasarkan route, bukan dari user input
-        $routeAmount = (int) ($route->price * $request->qty);
-        $vendorPrice = (int) ($request->qty * $route->vendorPrice);
-        $personalVendorPrice = (int) ($route->personalVendorPrice * $request->qty);
+        // Gunakan null coalescing (?? 0) untuk handle NULL values di master
+        $routeAmount = (int) (($route->price ?? 0) * $request->qty);
+
+        // vendorPrice dan personalVendorPrice hanya untuk fleet EXTERNAL
+        // Jika INTERNAL, set ke 0
+        if ($isExternalFleet) {
+            $vendorPrice = (int) (($request->qty ?? 0) * ($route->vendorPrice ?? 0));
+            $personalVendorPrice = (int) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
+        } else {
+            $vendorPrice = 0;
+            $personalVendorPrice = 0;
+        }
+
+        logger()->info('Calculated order prices', [
+            'routeAmount' => $routeAmount,
+            'vendorPrice' => $vendorPrice,
+            'personalVendorPrice' => $personalVendorPrice,
+            'isExternalFleet' => $isExternalFleet,
+            'fleetCode' => $request->fleetCode,
+        ]);
 
         $data = [
             'orderDate' => $request->orderDate,
@@ -478,7 +513,7 @@ class OrderService
             $fleetArr = $this->service->where('status', 0)->where('fleetCode', '!=', $fleet)->pluck('fleetCode')->toArray();
         }
 
-        return $this->fleet->whereNotIn('code', $fleetArr)->get();
+        return $this->fleet->with('company')->whereNotIn('code', $fleetArr)->get();
     }
 
     public function deleteOrderMaterial($id)
