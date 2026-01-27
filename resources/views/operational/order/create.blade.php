@@ -229,6 +229,74 @@
     </div>
     </div>
 
+    <!-- Card Informasi Harga -->
+    <div class="card shadow-sm border-0" id="priceInfoCard" style="display: none;">
+        <div class="card-header bg-gradient-primary text-white">
+            <h5 class="mb-0">
+                <i class="mdi mdi-cash-multiple"></i> Informasi Harga
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-4">
+                <!-- Fleet Type Info -->
+                <div class="col-md-4">
+                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-white-50 mb-1 small">Tipe Fleet</p>
+                                <h4 class="text-white mb-0" id="fleetTypeDisplay">-</h4>
+                            </div>
+                            <div class="bg-white bg-opacity-25 p-3 rounded">
+                                <i class="mdi mdi-truck fs-2 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Info -->
+                <div class="col-md-4">
+                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-white-50 mb-1 small">Harga</p>
+                                <h4 class="text-white mb-0" id="priceDisplay">Rp 0</h4>
+                            </div>
+                            <div class="bg-white bg-opacity-25 p-3 rounded">
+                                <i class="mdi mdi-currency-usd fs-2 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vendor Price Info -->
+                <div class="col-md-4">
+                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <p class="text-white-50 mb-1 small">Harga Vendor</p>
+                                <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp 0</h4>
+                            </div>
+                            <div class="bg-white bg-opacity-25 p-3 rounded">
+                                <i class="mdi mdi-account-cash fs-2 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="alert alert-info mb-0" role="alert">
+                        <i class="mdi mdi-information"></i>
+                        <strong>Catatan:</strong> 
+                        <span id="priceNote">Harga akan otomatis dihitung setelah memilih Fleet, Route, dan Qty</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>Material Data</h4>
@@ -931,5 +999,70 @@
     function hidePreloader() {
         $('#preloader').css('display', 'none');
     }
+
+    // Function to update price information
+    function updatePriceInfo() {
+        const fleetCode = $('#fleetCode').val();
+        const routeCode = $('#routeData').val();
+        const qty = $('#qty').val() || 1;
+
+        // Check if we have the required data
+        if (!fleetCode || !routeCode) {
+            $('#priceInfoCard').hide();
+            return;
+        }
+
+        // Show the card and make AJAX request
+        $('#priceInfoCard').show();
+
+        $.ajax({
+            url: '{{ route('ajax.order-calculate-price') }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                fleetCode: fleetCode,
+                routeCode: routeCode,
+                qty: qty
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update fleet type
+                    $('#fleetTypeDisplay').text(response.fleetType || '-');
+
+                    // Update price
+                    $('#priceDisplay').text('Rp ' + formatNumber(response.price));
+
+                    // Update vendor price
+                    $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.vendorPrice));
+
+                    // Update note based on fleet type
+                    if (response.isExternal) {
+                        $('#priceNote').html('Fleet type <strong>External</strong> - Harga vendor ditampilkan berdasarkan route yang dipilih × qty');
+                    } else {
+                        $('#priceNote').html('Fleet type <strong>Internal</strong> - Harga vendor tetap Rp 0');
+                    }
+                }
+            },
+            error: function(xhr) {
+                console.error('Error calculating price:', xhr);
+            }
+        });
+    }
+
+    // Attach event listeners for real-time updates
+    $('#fleetCode, #routeData, #qty').on('change keyup', function() {
+        updatePriceInfo();
+    });
+
+    // Also update when route is selected
+    $('#routeData').on('select2:select', function() {
+        updatePriceInfo();
+    });
+
+    // Update when fleet is selected
+    $('#fleetCode').on('select2:select', function() {
+        updatePriceInfo();
+    });
+
 </script>
 @endpush

@@ -107,7 +107,7 @@ class NotReturnDoController extends Controller
     {
         $data = Order::with([
             'customer',
-            'fleet',
+            'fleet.company',
             'driver',
             'route.originLocation',
             'route.destinationLocation',

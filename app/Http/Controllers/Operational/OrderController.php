@@ -11,6 +11,7 @@ use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\CostComponent;
 use App\Models\Master\Customer;
+use App\Models\Master\Fleet;
 use App\Models\Master\Location;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
@@ -1042,5 +1043,57 @@ class OrderController extends Controller
         $this->service->deleteOrderMaterial($id);
 
         return redirect()->back()->with('success', __('general.delete_data_success'));
+    }
+
+    public function calculateOrderPrice(Request $request)
+    {
+        try {
+            $fleetCode = $request->fleetCode;
+            $routeCode = $request->routeCode;
+            $qty = $request->qty ?? 1;
+
+            // Initialize response data
+            $response = [
+                'success' => true,
+                'price' => 0,
+                'vendorPrice' => 0,
+                'isExternal' => false,
+                'fleetType' => '',
+            ];
+
+            // Get fleet data
+            if ($fleetCode) {
+                $fleet = Fleet::with('company')->where('code', $fleetCode)->first();
+
+                if ($fleet && $fleet->company) {
+                    $response['isExternal'] = strtolower($fleet->company->type) === 'external';
+                    $response['fleetType'] = $fleet->company->type;
+                }
+            }
+
+            // Get route data
+            if ($routeCode) {
+                $route = Route::where('code', $routeCode)->first();
+
+                if ($route) {
+                    // Calculate price based on qty
+                    $response['price'] = $route->price * $qty;
+
+                    // Vendor price only if external
+                    if ($response['isExternal']) {
+                        $response['vendorPrice'] = ($route->personalVendorPrice ?? 0) * $qty;
+                    } else {
+                        $response['vendorPrice'] = 0;
+                    }
+                }
+            }
+
+            return response()->json($response);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

@@ -23,27 +23,24 @@
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
     <style>
-        /* Modal Container */
-        #do-modal .modal-dialog {
+        /* Modal */
+        #detailModal .modal-dialog {
             max-width: 700px;
         }
 
-        #do-modal .modal-content {
+        #detailModal .modal-content {
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
-            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
         }
 
-        /* Modal Header */
-        #do-modal .modal-header {
+        #detailModal .modal-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px 28px;
             border: none;
             color: white;
         }
 
-        #do-modal .modal-header .icon-circle {
+        #detailModal .modal-header .icon-circle {
             width: 40px;
             height: 40px;
             background: rgba(255, 255, 255, 0.2);
@@ -52,38 +49,25 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            backdrop-filter: blur(10px);
         }
 
-        #do-modal .modal-title {
-            font-size: 1.15rem;
+        #detailModal .modal-title {
+            font-size: 1.1rem;
             font-weight: 700;
-            color: white;
         }
 
-        #do-modal .modal-header small {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.8rem;
-        }
-
-        #do-modal .btn-close {
+        #detailModal .btn-close {
             background-color: rgba(255, 255, 255, 0.2);
-            opacity: 1;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            padding: 0;
-            backdrop-filter: blur(10px);
         }
 
-        #do-modal .btn-close:hover {
+        #detailModal .btn-close:hover {
             background-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Modal Body */
-        #do-modal .modal-body {
-            padding: 28px;
-            background: #fafbfc;
+        #detailModal .modal-body {
+            padding: 24px;
+            background: #f8f9fa;
         }
 
         /* Detail Order Card */
@@ -204,54 +188,31 @@
             color: #6c757d;
         }
 
-        /* Modal Footer */
-        #do-modal .modal-footer {
-            padding: 18px 28px;
+        #detailModal .modal-footer {
+            padding: 16px 24px;
             background: white;
             border-top: 1px solid #e9ecef;
-            gap: 10px;
+            gap: 8px;
         }
 
-        /* Buttons */
         .btn-cancel {
-            padding: 10px 24px;
-            border: 2px solid #e9ecef;
+            padding: 8px 20px;
+            border: 1px solid #e9ecef;
             background: white;
-            color: #6c757d;
-            font-weight: 600;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            font-size: 0.875rem;
-        }
-
-        .btn-cancel:hover {
-            background: #f8f9fa;
-            border-color: #dee2e6;
-            color: #495057;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
         }
 
         .btn-confirm {
-            padding: 10px 28px;
+            padding: 8px 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            font-weight: 600;
             border: none;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-            font-size: 0.875rem;
+            border-radius: 8px;
+            font-weight: 600;
         }
 
         .btn-confirm:hover {
             background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-confirm:active {
-            transform: translateY(0);
         }
 
         /* Flatpickr Custom Style */
@@ -438,8 +399,8 @@
             </div>
         </div>
 
-        <div class="modal fade" id="do-modal" tabindex="-1" role="dialog"
-            aria-labelledby="doModalLabel" aria-hidden="true">
+        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog"
+            aria-labelledby="detailModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <!-- Header -->
@@ -506,6 +467,24 @@
                                             <div class="info-item">
                                                 <label>Driver</label>
                                                 <p id="singleDriver">-</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <label>Order Type</label>
+                                                <p id="singleOrderType">-</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="info-item">
+                                                <label>Harga</label>
+                                                <p id="singlePrice">-</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6" id="vendorPriceContainer" style="display: none;">
+                                            <div class="info-item">
+                                                <label>Harga Vendor</label>
+                                                <p id="singleVendorPrice">-</p>
                                             </div>
                                         </div>
                                     </div>
@@ -802,6 +781,23 @@
                         $('#singleFleet').text(order.fleet?.plateNumber || '-');
                         $('#singleDriver').text(order.driver?.name || '-');
                         
+                        // Set Order Type from fleet->company->type
+                        const orderType = order.fleet?.company?.type || '-';
+                        $('#singleOrderType').text(orderType);
+                        
+                        // Set Price
+                        const price = order.routeAmount || '-';
+                        $('#singlePrice').text(price !== '-' ? 'Rp ' + parseInt(price).toLocaleString('id-ID') : '-');
+                        
+                        // Show Vendor Price only if External
+                        if (orderType.toLowerCase() === 'external') {
+                            const vendorPrice = order.personalVendorPrice || '-';
+                            $('#singleVendorPrice').text(vendorPrice !== '-' ? 'Rp ' + parseInt(vendorPrice).toLocaleString('id-ID') : '-');
+                            $('#vendorPriceContainer').show();
+                        } else {
+                            $('#vendorPriceContainer').hide();
+                        }
+                        
                         // Check if route exists and has locations
                         if (order.route) {
                             $('#singleOrigin').text(order.route.origin_location?.name || order.route.originLocation?.name || '-');
@@ -831,12 +827,12 @@
         // Function to show modal with minimal content only
         function showMinimalModal() {
             $('#singleItemDetails').hide();
-            $('#do-modal').modal('show');
+            $('#detailModal').modal('show');
         }
 
         // Function to show the modal
         function showDoModal() {
-            $('#do-modal').modal('show');
+            $('#detailModal').modal('show');
         }
 
         // ---------- DataTable init ----------
@@ -920,7 +916,7 @@
             }
         });
 
-        // ---------- Modal Form Submit (do-modal submit) ----------
+        // ---------- Modal Form Submit (detailModal submit) ----------
         // Function to convert date format from d/m/Y, H:i to Y-m-d H:i:s
         function convertDateFormat(dateString) {
             // dateString format: "24/01/2026, 12:00"

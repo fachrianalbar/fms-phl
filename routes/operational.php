@@ -68,4 +68,5 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('down-payment-data/{id}', [DownPaymentController::class, 'data'])->name('down-payment-data');
     Route::get('order-generate-code', [OrderController::class, 'generateCode'])->name('order-generate-code');
     Route::get('order-shipment-format/{id}', [OrderController::class, 'shipmentFormat'])->name('order-shipment-format');
+    Route::post('order-calculate-price', [OrderController::class, 'calculateOrderPrice'])->name('order-calculate-price');
 });
