@@ -44,7 +44,7 @@ class StockController extends Controller
     {
         $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('warehouse', $warehouse)
             ->with('title', $this->title);
@@ -62,16 +62,16 @@ class StockController extends Controller
                     'item.name as itemName',
                     'warehouse.code as warehouseCode',
                     'warehouse.name as warehouseName',
-                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) as totalIn'),
-                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
-                    DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock'),
+                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) as totalIn'),
+                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as totalOut'),
+                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) - COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as stock'),
                 ])
-                ->crossJoin(DB::raw($prefix . 'warehouse'))
+                ->crossJoin(DB::raw($prefix.'warehouse'))
                 ->whereNull('warehouse.deleted_at')
                 ->whereNull('item.deleted_at')
-                ->leftJoin(DB::raw($prefix . 'stock_transaction'), function ($join) use ($prefix) {
-                    $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
-                        ->on(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'warehouse.code AS CHAR)'));
+                ->leftJoin(DB::raw($prefix.'stock_transaction'), function ($join) use ($prefix) {
+                    $join->on(DB::raw('CAST('.$prefix.'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'item.code AS CHAR)'))
+                        ->on(DB::raw('CAST('.$prefix.'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'warehouse.code AS CHAR)'));
                 })
                 ->whereNull('stock_transaction.deleted_at')
                 ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name')
@@ -88,25 +88,25 @@ class StockController extends Controller
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search, $prefix) {
-                            $q->whereRaw('LOWER(' . $prefix . 'item.code) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(' . $prefix . 'item.name) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(' . $prefix . 'warehouse.name) LIKE ?', ['%' . $search . '%']);
+                            $q->whereRaw('LOWER('.$prefix.'item.code) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER('.$prefix.'item.name) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER('.$prefix.'warehouse.name) LIKE ?', ['%'.$search.'%']);
                         });
                     }
                 })
                 ->addColumn('action', function ($row) {
                     return '<div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-primary btn-detail" 
-                                    data-item-code="' . $row->itemCode . '" 
-                                    data-warehouse-code="' . $row->warehouseCode . '"
+                                    data-item-code="'.$row->itemCode.'" 
+                                    data-warehouse-code="'.$row->warehouseCode.'"
                                     title="Detail Transaksi">
                                     <i class="mdi mdi-eye"></i>
                                 </button>
                                 <button type="button" class="btn btn-sm btn-warning btn-edit-stock-awal" 
-                                    data-item-code="' . $row->itemCode . '" 
-                                    data-item-name="' . $row->itemName . '"
-                                    data-warehouse-code="' . $row->warehouseCode . '"
-                                    data-warehouse-name="' . $row->warehouseName . '"
+                                    data-item-code="'.$row->itemCode.'" 
+                                    data-item-name="'.$row->itemName.'"
+                                    data-warehouse-code="'.$row->warehouseCode.'"
+                                    data-warehouse-name="'.$row->warehouseName.'"
                                     title="Edit Stock Awal">
                                     <i class="mdi mdi-database-edit"></i>
                                 </button>
@@ -178,16 +178,16 @@ class StockController extends Controller
                 'item.name as itemName',
                 'warehouse.code as warehouseCode',
                 'warehouse.name as warehouseName',
-                DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) as totalIn'),
-                DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as totalOut'),
-                DB::raw('COALESCE(SUM(' . $prefix . 'stock_transaction.qtyIn), 0) - COALESCE(SUM(' . $prefix . 'stock_transaction.qtyOut), 0) as stock'),
+                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) as totalIn'),
+                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as totalOut'),
+                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) - COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as stock'),
             ])
-            ->crossJoin(DB::raw($prefix . 'warehouse'))
+            ->crossJoin(DB::raw($prefix.'warehouse'))
             ->whereNull('warehouse.deleted_at')
             ->whereNull('item.deleted_at')
-            ->leftJoin(DB::raw($prefix . 'stock_transaction'), function ($join) use ($prefix) {
-                $join->on(DB::raw('CAST(' . $prefix . 'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'item.code AS CHAR)'))
-                    ->on(DB::raw('CAST(' . $prefix . 'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST(' . $prefix . 'warehouse.code AS CHAR)'));
+            ->leftJoin(DB::raw($prefix.'stock_transaction'), function ($join) use ($prefix) {
+                $join->on(DB::raw('CAST('.$prefix.'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'item.code AS CHAR)'))
+                    ->on(DB::raw('CAST('.$prefix.'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'warehouse.code AS CHAR)'));
             })
             ->whereNull('stock_transaction.deleted_at')
             ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name')
@@ -205,7 +205,7 @@ class StockController extends Controller
         ];
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.stock-pdf')
+            view($this->view.'report.stock-pdf')
                 ->with('reportData', $reportData)
         );
 
@@ -249,8 +249,8 @@ class StockController extends Controller
                     'warehouseCode' => $warehouseCode,
                     'qtyIn' => $qty,
                     'qtyOut' => 0,
-                    'transactionCode' => 'INITIAL-' . $date . $randomDigits,
-                    'transactionDetailCode' => 'INITIALD-' . $itemCode . $randomDigits,
+                    'transactionCode' => 'INITIAL-'.$date.$randomDigits,
+                    'transactionDetailCode' => 'INITIALD-'.$itemCode.$randomDigits,
                     'transactionType' => 'INITIAL',
                     'date' => now(),
                 ]);
@@ -263,7 +263,7 @@ class StockController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -292,9 +292,9 @@ class StockController extends Controller
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(itemCode) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(transactionCode) LIKE ?', ['%' . $search . '%'])
-                                ->orWhereRaw('LOWER(transactionType) LIKE ?', ['%' . $search . '%']);
+                            $q->whereRaw('LOWER(itemCode) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(transactionCode) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(transactionType) LIKE ?', ['%'.$search.'%']);
                         });
                     }
                 })
@@ -329,7 +329,7 @@ class StockController extends Controller
                         $badgeClass = 'bg-warning text-dark';
                     }
 
-                    return '<span class="badge badge-status ' . $badgeClass . '">' . $typeLabel . '</span>';
+                    return '<span class="badge badge-status '.$badgeClass.'">'.$typeLabel.'</span>';
                 })
                 ->addColumn('itemName', function ($row) {
                     return $row->item->name ?? '-';
@@ -349,6 +349,7 @@ class StockController extends Controller
                             break;
                         }
                     }
+
                     return number_format($runningBalance, 0, ',', '.');
                 })
                 ->addColumn('createdAt', function ($row) {
@@ -449,11 +450,12 @@ class StockController extends Controller
         ];
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.stock-detail-pdf')
+            view($this->view.'report.stock-detail-pdf')
                 ->with('reportData', $reportData)
         );
 
-        $filename = 'Detail_Stock_' . $itemCode . '_' . date('Y-m-d_His') . '.pdf';
+        $filename = 'Detail_Stock_'.$itemCode.'_'.date('Y-m-d_His').'.pdf';
+
         return $mpdf->Output($filename, 'I');
     }
 }
