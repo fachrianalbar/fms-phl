@@ -269,7 +269,7 @@
                 </div>
 
                 <!-- Vendor Price Info -->
-                <div class="col-md-4">
+                <div class="col-md-4" id="vendorPriceCard">
                     <div class="p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
@@ -1035,11 +1035,13 @@
                     // Update vendor price
                     $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.vendorPrice));
 
-                    // Update note based on fleet type
+                    // Hide/Show vendor price card based on fleet type
                     if (response.isExternal) {
+                        $('#vendorPriceCard').show();
                         $('#priceNote').html('Fleet type <strong>External</strong> - Harga vendor ditampilkan berdasarkan route yang dipilih × qty');
                     } else {
-                        $('#priceNote').html('Fleet type <strong>Internal</strong> - Harga vendor tetap Rp 0');
+                        $('#vendorPriceCard').hide();
+                        $('#priceNote').html('Fleet type <strong>Internal</strong> - Harga vendor tidak ditampilkan');
                     }
                 }
             },
