@@ -122,119 +122,118 @@ class NotReturnDoService
 
         // Handle costs based on fleet type
         if ($isExternalFleet) {
-            // If fleet external, remove all costs (costs are managed separately)
-            $this->orderCost->where('orderCode', $order->code)->delete();
-            logger()->info('OrderCost cleared for external fleet on NotReturnDo update', ['order' => $order->code]);
-        } else {
-            // For internal fleet, handle "On Charge" costs (is_route = 0)
-            // Only delete existing costs if the request actually provides at least one valid component
-            // Log and normalize incoming external cost fields for debugging
-            if ($request->has('externalCostComponent')) {
-                // Normalize to array if single value provided
-                $externalCostComponentsRaw = $request->externalCostComponent;
-                if (!is_array($externalCostComponentsRaw)) {
-                    $externalCostComponentsRaw = [$externalCostComponentsRaw];
-                }
+            // If fleet external, remove route-based costs (is_route = 1) but keep manual costs (is_route = 0)
+            $this->orderCost->where('orderCode', $order->code)->where('is_route', 1)->delete();
+            logger()->info('Route-based OrderCost cleared for external fleet on NotReturnDo update', ['order' => $order->code]);
+        }
 
-                $externalCostNominalsRaw = $request->externalCostNominal ?? [];
-                if (!is_array($externalCostNominalsRaw)) {
-                    $externalCostNominalsRaw = [$externalCostNominalsRaw];
-                }
-
-                $externalCostDescriptionsRaw = $request->externalCostDescription ?? [];
-                if (!is_array($externalCostDescriptionsRaw)) {
-                    $externalCostDescriptionsRaw = [$externalCostDescriptionsRaw];
-                }
-
-                $externalCostIdsRaw = $request->externalCostId ?? [];
-                if (!is_array($externalCostIdsRaw)) {
-                    $externalCostIdsRaw = [$externalCostIdsRaw];
-                }
-
-                $externalCostDeletesRaw = $request->externalCostDelete ?? [];
-                if (!is_array($externalCostDeletesRaw)) {
-                    $externalCostDeletesRaw = [$externalCostDeletesRaw];
-                }
-
-                $externalCostComponents = array_filter($externalCostComponentsRaw, fn($c) => !empty($c));
-
-                if (count($externalCostComponents) > 0) {
-                    // First, delete costs that are marked for deletion
-                    foreach ($externalCostIdsRaw as $index => $costId) {
-                        if (!empty($costId) && isset($externalCostDeletesRaw[$index]) && $externalCostDeletesRaw[$index] == '1') {
-                            $this->orderCost->where('id', $costId)->delete();
-                        }
-                    }
-
-                    // Delete existing external/on-charge costs that are not in the current list
-                    $existingIds = array_filter($externalCostIdsRaw, fn($id) => !empty($id));
-                    if (!empty($existingIds)) {
-                        $this->orderCost->where('orderCode', $order->code)
-                            ->where('type', 'On Charge')
-                            ->where('is_route', 0)
-                            ->whereNotIn('id', $existingIds)
-                            ->delete();
-                    } else {
-                        // If no existing IDs, delete all existing On Charge costs
-                        $this->orderCost->where('orderCode', $order->code)
-                            ->where('type', 'On Charge')
-                            ->where('is_route', 0)
-                            ->delete();
-                    }
-
-                    foreach ($externalCostComponentsRaw as $index => $componentCode) {
-                        if (empty($componentCode)) {
-                            continue;
-                        }
-
-                        $nominalRaw = $externalCostNominalsRaw[$index] ?? 0;
-                        $nominal = (int) str_replace('.', '', (string) $nominalRaw);
-                        $description = $externalCostDescriptionsRaw[$index] ?? null;
-                        $existingId = $externalCostIdsRaw[$index] ?? null;
-                        $isDeleted = $externalCostDeletesRaw[$index] ?? '0';
-
-                        // Skip if this cost is marked for deletion
-                        if ($isDeleted == '1') {
-                            continue;
-                        }
-
-                        // If this is an existing cost, update it
-                        if (!empty($existingId)) {
-                            $this->orderCost->where('id', $existingId)->update([
-                                'componentType' => $componentCode,
-                                'nominal' => $nominal,
-                                'description' => $description,
-                            ]);
-                        } else {
-                            // Create new cost
-                            $this->orderCost->create([
-                                'code' => GenerateCode::generateCode('OCT'),
-                                'orderCode' => $order->code,
-                                'componentType' => $componentCode,
-                                'nominal' => $nominal,
-                                'type' => 'On Charge',
-                                'description' => $description,
-                                'is_route' => 0,
-                            ]);
-                        }
-                    }
-
-                    // Log final state after creating costs
-                    $countAfter = $this->orderCost->where('orderCode', $order->code)->count();
-
-                    logger()->info('Internal fleet external costs updated for NotReturnDo', [
-                        'order' => $order->code,
-                        'requested' => count($externalCostComponentsRaw),
-                        'valid' => count($externalCostComponents),
-                        'count_after' => $countAfter,
-                    ]);
-                } else {
-                    // No valid components provided; keep existing costs untouched
-                    logger()->info('No external cost components provided in request; existing costs kept', ['order' => $order->code]);
-                }
-            } else {
-                logger()->info('No external cost component fields present in request', ['order' => $order->code]);
+        // Handle "On Charge" costs (is_route = 0) for both internal and external fleets
+        // Only delete existing costs if the request actually provides at least one valid component
+        if ($request->has('externalCostComponent')) {
+            // Normalize to array if single value provided
+            $externalCostComponentsRaw = $request->externalCostComponent;
+            if (!is_array($externalCostComponentsRaw)) {
+                $externalCostComponentsRaw = [$externalCostComponentsRaw];
             }
+
+            $externalCostNominalsRaw = $request->externalCostNominal ?? [];
+            if (!is_array($externalCostNominalsRaw)) {
+                $externalCostNominalsRaw = [$externalCostNominalsRaw];
+            }
+
+            $externalCostDescriptionsRaw = $request->externalCostDescription ?? [];
+            if (!is_array($externalCostDescriptionsRaw)) {
+                $externalCostDescriptionsRaw = [$externalCostDescriptionsRaw];
+            }
+
+            $externalCostIdsRaw = $request->externalCostId ?? [];
+            if (!is_array($externalCostIdsRaw)) {
+                $externalCostIdsRaw = [$externalCostIdsRaw];
+            }
+
+            $externalCostDeletesRaw = $request->externalCostDelete ?? [];
+            if (!is_array($externalCostDeletesRaw)) {
+                $externalCostDeletesRaw = [$externalCostDeletesRaw];
+            }
+
+            $externalCostComponents = array_filter($externalCostComponentsRaw, fn($c) => !empty($c));
+
+            if (count($externalCostComponents) > 0) {
+                // First, delete costs that are marked for deletion
+                foreach ($externalCostIdsRaw as $index => $costId) {
+                    if (!empty($costId) && isset($externalCostDeletesRaw[$index]) && $externalCostDeletesRaw[$index] == '1') {
+                        $this->orderCost->where('id', $costId)->delete();
+                    }
+                }
+
+                // Delete existing external/on-charge costs that are not in the current list
+                $existingIds = array_filter($externalCostIdsRaw, fn($id) => !empty($id));
+                if (!empty($existingIds)) {
+                    $this->orderCost->where('orderCode', $order->code)
+                        ->where('type', 'On Charge')
+                        ->where('is_route', 0)
+                        ->whereNotIn('id', $existingIds)
+                        ->delete();
+                } else {
+                    // If no existing IDs, delete all existing On Charge costs
+                    $this->orderCost->where('orderCode', $order->code)
+                        ->where('type', 'On Charge')
+                        ->where('is_route', 0)
+                        ->delete();
+                }
+
+                foreach ($externalCostComponentsRaw as $index => $componentCode) {
+                    if (empty($componentCode)) {
+                        continue;
+                    }
+
+                    $nominalRaw = $externalCostNominalsRaw[$index] ?? 0;
+                    $nominal = (int) str_replace('.', '', (string) $nominalRaw);
+                    $description = $externalCostDescriptionsRaw[$index] ?? null;
+                    $existingId = $externalCostIdsRaw[$index] ?? null;
+                    $isDeleted = $externalCostDeletesRaw[$index] ?? '0';
+
+                    // Skip if this cost is marked for deletion
+                    if ($isDeleted == '1') {
+                        continue;
+                    }
+
+                    // If this is an existing cost, update it
+                    if (!empty($existingId)) {
+                        $this->orderCost->where('id', $existingId)->update([
+                            'componentType' => $componentCode,
+                            'nominal' => $nominal,
+                            'description' => $description,
+                        ]);
+                    } else {
+                        // Create new cost
+                        $this->orderCost->create([
+                            'code' => GenerateCode::generateCode('OCT'),
+                            'orderCode' => $order->code,
+                            'componentType' => $componentCode,
+                            'nominal' => $nominal,
+                            'type' => 'On Charge',
+                            'description' => $description,
+                            'is_route' => 0,
+                        ]);
+                    }
+                }
+
+                // Log final state after creating costs
+                $countAfter = $this->orderCost->where('orderCode', $order->code)->count();
+
+                logger()->info('Internal fleet external costs updated for NotReturnDo', [
+                    'order' => $order->code,
+                    'requested' => count($externalCostComponentsRaw),
+                    'valid' => count($externalCostComponents),
+                    'count_after' => $countAfter,
+                ]);
+            } else {
+                // No valid components provided; keep existing costs untouched
+                logger()->info('No external cost components provided in request; existing costs kept', ['order' => $order->code]);
+            }
+        } else {
+            logger()->info('No external cost component fields present in request', ['order' => $order->code]);
         }
 
         // Log after update

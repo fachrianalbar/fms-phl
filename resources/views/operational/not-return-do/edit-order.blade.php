@@ -440,6 +440,7 @@ use App\Models\Data\Route;
                     @include('operational.not-return-do.components.cost-edit')
                 </div>
             </div>
+            @endif
 
             <div class="card">
                 <div class="card-header">
@@ -449,11 +450,6 @@ use App\Models\Data\Route;
                     @include('operational.not-return-do.components.external-cost-edit')
                 </div>
             </div>
-            @else
-            <div class="alert alert-info" role="alert">
-                <strong>Informasi:</strong> Biaya tidak dapat ditambahkan untuk kendaraan eksternal. Biaya dikelola secara terpisah.
-            </div>
-            @endif
 
             @if ($data->status == 0 || in_array(auth()->user()->roleCode, ['SPRADMIN', 'SPRUSER']))
             <div class="card">
