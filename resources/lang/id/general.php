@@ -27,5 +27,6 @@ return [
     'error_occurred' => 'Terjadi kesalahan!',
     'success' => 'Sukses',
     'must_filled' => 'harus diisi',
+    'no_data' => 'Belum ada data',
 
 ];

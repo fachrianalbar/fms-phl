@@ -25,113 +25,125 @@
     <style>
         /* Modal */
         #detailModal .modal-dialog {
-            max-width: 700px;
+            max-width: 1200px;
         }
 
         #detailModal .modal-content {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
 
         #detailModal .modal-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
-
-        #detailModal .modal-header .icon-circle {
-            width: 40px;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            padding: 16px 20px;
         }
 
         #detailModal .modal-title {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #212529;
         }
 
         #detailModal .btn-close {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
+            opacity: 0.5;
         }
 
         #detailModal .btn-close:hover {
-            background-color: rgba(255, 255, 255, 0.3);
+            opacity: 0.7;
         }
 
         #detailModal .modal-body {
-            padding: 24px;
-            background: #f8f9fa;
+            padding: 16px 20px;
+            background: #fff;
         }
 
         /* Detail Order Card */
         .detail-order-card {
-            background: white;
-            border-radius: 12px;
+            background: transparent;
+            border-radius: 6px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-            margin-bottom: 24px;
+            margin-bottom: 0;
+            border: 1px solid #dee2e6;
         }
 
         .card-header-custom {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 20px;
+            background: #f8f9fa;
+            color: #212529;
+            padding: 12px 16px;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .card-body-custom {
-            padding: 20px;
+            padding: 0;
         }
 
         .info-item {
-            background: #f8f9fa;
-            padding: 12px 16px;
-            border-radius: 10px;
-            border-left: 3px solid #667eea;
-            transition: all 0.3s ease;
+            background: transparent;
+            padding: 8px 16px;
+            border-radius: 0;
+            border-left: none;
+            margin-bottom: 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 38px;
         }
 
-        .info-item:hover {
-            transform: translateX(4px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        .info-item:last-child {
+            margin-bottom: 0;
+            border-bottom: none;
+        }
+
+        .info-item:nth-child(odd) {
+            background: #fafbfc;
         }
 
         .info-item label {
             display: block;
             font-size: 0.75rem;
             color: #6c757d;
-            margin-bottom: 4px;
+            margin-bottom: 0;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             font-weight: 600;
+            min-width: 140px;
+            padding-right: 16px;
         }
 
         .info-item p {
             margin: 0;
             color: #212529;
-            font-weight: 600;
+            font-weight: 500;
             font-size: 0.9rem;
+            text-align: right;
+            flex: 1;
         }
 
         /* Form Section */
         .form-section {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 16px;
+            border: 1px solid #e9ecef;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
         }
 
         .form-group-custom {
+            margin-bottom: 12px;
+        }
+
+        .form-group-custom:last-child {
             margin-bottom: 0;
         }
 
@@ -139,36 +151,37 @@
             display: flex;
             align-items: center;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.85rem;
             color: #495057;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .form-label-custom i {
             color: #667eea;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            margin-right: 6px;
         }
 
         .form-label-custom .required {
             color: #e74c3c;
-            margin-left: 4px;
+            margin-left: 2px;
         }
 
         .form-control-custom {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e9ecef;
-            border-radius: 10px;
-            font-size: 0.875rem;
-            transition: all 0.3s ease;
-            background: #fafbfc;
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+            background: white;
         }
 
         .form-control-custom:focus {
             outline: none;
             border-color: #667eea;
             background: white;
-            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
         }
 
         .form-control-custom::placeholder {
@@ -176,49 +189,52 @@
         }
 
         textarea.form-control-custom {
-            min-height: 100px;
+            min-height: 80px;
             resize: vertical;
             font-family: inherit;
         }
 
         .form-hint {
             display: block;
-            margin-top: 6px;
+            margin-top: 4px;
             font-size: 0.75rem;
             color: #6c757d;
         }
 
         #detailModal .modal-footer {
-            padding: 16px 24px;
-            background: white;
+            padding: 12px 20px;
+            background: #f8f9fa;
             border-top: 1px solid #e9ecef;
-            gap: 8px;
+            gap: 6px;
         }
 
         .btn-cancel {
-            padding: 8px 20px;
-            border: 1px solid #e9ecef;
+            padding: 7px 16px;
+            border: 1px solid #dee2e6;
             background: white;
-            border-radius: 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: 500;
         }
 
         .btn-confirm {
-            padding: 8px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 7px 16px;
+            background: #667eea;
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 4px;
+            font-weight: 500;
+            font-size: 0.9rem;
         }
 
         .btn-confirm:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+            background: #5568d3;
         }
 
         /* Flatpickr Custom Style */
         .flatpickr-calendar {
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
         }
 
         .flatpickr-day.selected {
@@ -259,7 +275,7 @@
 
                     </div>
 
-                    <button type="button" id="saveOrder" class="btn btn-primary">
+                    <button type="button" id="saveOrder" class="btn btn-primary" style="display: none;">
                         <i class="mdi mdi-calendar-check"></i> {{ __('menu_not_return_do.confirm_return') }}
                     </button>
 
@@ -376,7 +392,7 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th><input type="checkbox" id="checkAll"></th>
+                                <th>Aksi</th>
                                 <th>No</th>
                                 <th>{{ __('menu_order.order_date') }}</th>
                                 <th>{{ __('menu_order.plate_number') }}</th>
@@ -426,67 +442,45 @@
                                     <span>Detail Order</span>
                                 </div>
                                 <div class="card-body-custom">
-                                    <div class="row g-4">
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Shipment No.</label>
-                                                <p id="singleShipmentNo">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Order Date</label>
-                                                <p id="singleOrderDate">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Customer</label>
-                                                <p id="singleCustomerName">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Fleet</label>
-                                                <p id="singleFleet">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Origin</label>
-                                                <p id="singleOrigin">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Destination</label>
-                                                <p id="singleDestination">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Driver</label>
-                                                <p id="singleDriver">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Order Type</label>
-                                                <p id="singleOrderType">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="info-item">
-                                                <label>Harga</label>
-                                                <p id="singlePrice">-</p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6" id="vendorPriceContainer" style="display: none;">
-                                            <div class="info-item">
-                                                <label>Harga Vendor</label>
-                                                <p id="singleVendorPrice">-</p>
-                                            </div>
-                                        </div>
+                                    <div class="info-item">
+                                        <label>Shipment No.</label>
+                                        <p id="singleShipmentNo">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Order Date</label>
+                                        <p id="singleOrderDate">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Customer</label>
+                                        <p id="singleCustomerName">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Fleet</label>
+                                        <p id="singleFleet">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Origin</label>
+                                        <p id="singleOrigin">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Destination</label>
+                                        <p id="singleDestination">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Driver</label>
+                                        <p id="singleDriver">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Order Type</label>
+                                        <p id="singleOrderType">-</p>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Harga</label>
+                                        <p id="singlePrice">-</p>
+                                    </div>
+                                    <div class="info-item" id="vendorPriceContainer" style="display: none;">
+                                        <label>Harga Vendor</label>
+                                        <p id="singleVendorPrice">-</p>
                                     </div>
                                 </div>
                             </div>
@@ -530,6 +524,10 @@
                             <i class="mdi mdi-close-circle-outline me-2"></i>
                             Batal
                         </button>
+                        <a href="#" class="btn btn-secondary" id="editOrderBtn">
+                            <i class="mdi mdi-pencil me-2"></i>
+                            Edit Order
+                        </a>
                         <button class="btn btn-confirm" type="submit" id="submitReturnBtn">
                             <i class="mdi mdi-check-circle-outline me-2"></i>
                             Konfirmasi Return
@@ -676,161 +674,81 @@
         });
 
 
-        let selectedOrders = [];
-
         // ---------- Helpers ----------
-        function addSelected(id) {
-            if (!selectedOrders.includes(id)) selectedOrders.push(id);
-        }
-
-        function removeSelected(id) {
-            selectedOrders = selectedOrders.filter(x => x !== id);
-        }
-
         function setAllOnPage(checked) {
-            $('.order-checkbox').each(function() {
-                const id = $(this).val();
-                $(this).prop('checked', checked);
-                if (checked) addSelected(id);
-                else removeSelected(id);
-            });
+            // No longer needed with button actions
         }
 
         function syncHeaderState() {
-            const $rows = $('.order-checkbox');
-            const total = $rows.length;
-            const checked = $rows.filter(':checked').length;
-            const header = document.getElementById('checkAll');
-            if (!header) return;
-
-            if (total === 0) {
-                header.checked = false;
-                header.indeterminate = false;
-                return;
-            }
-
-            if (checked === 0) {
-                header.checked = false;
-                header.indeterminate = false;
-            } else if (checked === total) {
-                header.checked = true;
-                header.indeterminate = false;
-            } else {
-                header.checked = false;
-                header.indeterminate = true;
-            }
+            // No longer needed with button actions
         }
 
-        // ---------- Submit handler ----------
+        // ---------- Submit handler for bulk action ----------
         const saveOrderBtn = document.getElementById('saveOrder');
         if (saveOrderBtn) {
             saveOrderBtn.addEventListener('click', function(event) {
-                if (selectedOrders.length === 0) {
-                    event.preventDefault();
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "Please select at least one item",
-                        icon: "warning",
-                    });
-                    return;
-                }
-
-                // inject hidden input (remove previous if any)
-                $('input[name="selectedOrders"]').remove();
-                $('<input>').attr({
-                    type: 'hidden',
-                    name: 'selectedOrders',
-                    value: JSON.stringify(selectedOrders)
-                }).appendTo('form');
-
                 event.preventDefault();
-                
-                // Show modal with conditional content based on number of selected orders
-                if (selectedOrders.length === 1) {
-                    // Single item - fetch and display full details
-                    const orderCode = selectedOrders[0];
-                    fetchOrderDetailsAndShowModal(orderCode);
-                } else {
-                    // Multiple items - show minimal form only
-                    showMinimalModal();
-                }
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "Please use action button on each row to process returns",
+                    icon: "info",
+                });
             });
         }
 
-        // Function to fetch order details for single item
-        function fetchOrderDetailsAndShowModal(orderCode) {
-            // Fetch full order details via AJAX
-            $.ajax({
-                url: "{{ route('operational.not-return-do.show', ':code') }}".replace(':code', orderCode),
-                type: 'GET',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response && response.data) {
-                        const order = response.data;
-                        
-                        // Debug: Log the response to check data structure
-                        console.log('Order Data:', order);
-                        console.log('Route:', order.route);
-                        
-                        // Populate the order details - use .text() for paragraph elements
-                        $('#singleOrderDate').text(order.orderDate || '-');
-                        $('#singleShipmentNo').text(order.shipmentNumber || '-');
-                        $('#singleCustomerName').text(order.customer?.name || '-');
-                        $('#singleFleet').text(order.fleet?.plateNumber || '-');
-                        $('#singleDriver').text(order.driver?.name || '-');
-                        
-                        // Set Order Type from fleet->company->type
-                        const orderType = order.fleet?.company?.type || '-';
-                        $('#singleOrderType').text(orderType);
-                        
-                        // Set Price
-                        const price = order.routeAmount || '-';
-                        $('#singlePrice').text(price !== '-' ? 'Rp ' + parseInt(price).toLocaleString('id-ID') : '-');
-                        
-                        // Show Vendor Price only if External
-                        if (orderType.toLowerCase() === 'external') {
-                            const vendorPrice = order.personalVendorPrice || '-';
-                            $('#singleVendorPrice').text(vendorPrice !== '-' ? 'Rp ' + parseInt(vendorPrice).toLocaleString('id-ID') : '-');
-                            $('#vendorPriceContainer').show();
-                        } else {
-                            $('#vendorPriceContainer').hide();
-                        }
-                        
-                        // Check if route exists and has locations
-                        if (order.route) {
-                            $('#singleOrigin').text(order.route.origin_location?.name || order.route.originLocation?.name || '-');
-                            $('#singleDestination').text(order.route.destination_location?.name || order.route.destinationLocation?.name || '-');
-                        } else {
-                            $('#singleOrigin').text('-');
-                            $('#singleDestination').text('-');
-                        }
-                        
-                        // Show single item details
-                        $('#singleItemDetails').show();
-                        showDoModal();
-                    } else {
-                        // Fallback if data not found - still show modal but without details
-                        $('#singleItemDetails').hide();
-                        showDoModal();
-                    }
-                },
-                error: function(xhr) {
-                    // On error, still show modal but without details
-                    $('#singleItemDetails').hide();
-                    showDoModal();
-                }
-            });
-        }
-
-        // Function to show modal with minimal content only
-        function showMinimalModal() {
-            $('#singleItemDetails').hide();
+        // ---------- Action button click handler ----------
+        $(document).on('click', '.action-btn', function(e) {
+            e.preventDefault();
+            
+            const orderCode = $(this).data('code');
+            const shipmentNo = $(this).data('shipment');
+            const customerName = $(this).data('customer');
+            const fleetPlate = $(this).data('fleet');
+            const driverName = $(this).data('driver');
+            const orderDate = $(this).data('order-date');
+            const price = $(this).data('price');
+            const vendorPrice = $(this).data('vendor-price');
+            const orderType = $(this).data('order-type');
+            const origin = $(this).data('origin');
+            const destination = $(this).data('destination');
+            
+            // Populate the modal with single item details
+            $('#singleOrderDate').text(orderDate || '-');
+            $('#singleShipmentNo').text(shipmentNo || '-');
+            $('#singleCustomerName').text(customerName || '-');
+            $('#singleFleet').text(fleetPlate || '-');
+            $('#singleDriver').text(driverName || '-');
+            $('#singleOrderType').text(orderType || '-');
+            $('#singlePrice').text(price !== '-' ? 'Rp ' + parseInt(price).toLocaleString('id-ID') : '-');
+            
+            // Show Vendor Price only if External
+            if (orderType.toLowerCase() === 'external') {
+                $('#singleVendorPrice').text(vendorPrice !== '-' ? 'Rp ' + parseInt(vendorPrice).toLocaleString('id-ID') : '-');
+                $('#vendorPriceContainer').show();
+            } else {
+                $('#vendorPriceContainer').hide();
+            }
+            
+            $('#singleOrigin').text(origin || '-');
+            $('#singleDestination').text(destination || '-');
+            
+            // Store the order code in a hidden input for form submission
+            $('input[name="selectedOrders"]').remove();
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'selectedOrders',
+                value: JSON.stringify([orderCode])
+            }).appendTo('form');
+            
+            // Show single item details
+            $('#singleItemDetails').show();
             $('#detailModal').modal('show');
-        }
+            
+            // Set the edit button href
+            $('#editOrderBtn').attr('href', "{{ route('operational.not-return-do.edit-order', ':code') }}".replace(':code', orderCode));
+        });
 
-        // Function to show the modal
+        // Function to show the modal (no longer fetching via AJAX)
         function showDoModal() {
             $('#detailModal').modal('show');
         }
@@ -844,28 +762,15 @@
                 table.ajax.reload();
             });
 
-            // When table draws (paging/sorting/filter), restore checkbox states on visible rows
+            // When table draws (paging/sorting/filter), no need to restore checkbox states
             $('#dt').on('draw.dt', function() {
-                $('.order-checkbox').each(function() {
-                    const id = $(this).val();
-                    $(this).prop('checked', selectedOrders.includes(id));
-                });
-                syncHeaderState();
+                // No checkbox restoration needed
             });
         });
 
-        // ---------- Row checkbox change (delegate) ----------
-        $(document).on('change', '.order-checkbox', function() {
-            const id = $(this).val();
-            if ($(this).is(':checked')) addSelected(id);
-            else removeSelected(id);
-            syncHeaderState();
-        });
-
-        // ---------- Header CheckAll (delegate in case header is re-rendered) ----------
+        // ---------- Header CheckAll (no longer needed) ----------
         $(document).on('click', '#checkAll', function() {
-            setAllOnPage(this.checked);
-            syncHeaderState();
+            // No longer needed
         });
 
 

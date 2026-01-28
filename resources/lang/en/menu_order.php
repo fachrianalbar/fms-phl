@@ -38,4 +38,8 @@ return [
     'order_report' => 'Order Report',
     'total_price' => 'Total Price',
     'return_date' => 'Return Date',
+    'cost_component' => 'Cost Component',
+    'external_company_cost' => 'Additional Cost',
+    'description' => 'Description',
+    'nominal' => 'Nominal',
 ];

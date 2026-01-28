@@ -21,6 +21,8 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::put('not-return-do/update/{code}', [NotReturnDoController::class, 'update'])->name('not-return-do.update');
     Route::put('not-return-do/confirm/{code}', [NotReturnDoController::class, 'confirmReturn'])->name('not-return-do.confirm-return');
+    Route::get('not-return-do-edit/{code}/edit', [NotReturnDoController::class, 'editOrder'])->name('not-return-do.edit-order');
+    Route::put('not-return-do-edit/{code}', [NotReturnDoController::class, 'updateOrder'])->name('not-return-do.update-order');
     Route::post('cancel-do', [ReturnDoController::class, 'cancelDo'])->name('return-do.cancel-do');
     Route::put('finish-order/{id}', [OrderController::class, 'finishOrder'])->name('finish-order');
     Route::post('order-driver', [OrderController::class, 'storeOrderDriver'])->name('store-order-driver');

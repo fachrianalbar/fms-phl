@@ -38,4 +38,8 @@ return [
     'order_report' => 'Laporan Pesanan',
     'total_price' => 'Total Harga',
     'return_date' => 'Tanggal Kembali',
+    'cost_component' => 'Komponen Biaya',
+    'external_company_cost' => 'Biaya Tambahan',
+    'description' => 'Deskripsi',
+    'nominal' => 'Nominal',
 ];

@@ -88,7 +88,7 @@ class NotReturnDoController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -138,7 +138,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -169,9 +169,10 @@ class NotReturnDoController extends Controller
         $component = CostComponent::get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
 
-        $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
+        // abil route menggunakan code dari routeCode di order
+        $route = Route::where('code', $data->routeCode)->firstOrFail();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -214,12 +215,12 @@ class NotReturnDoController extends Controller
             if ($request->has('confirm_return')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: '.$th->getMessage(),
+                    'message' => 'Error: ' . $th->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()
-                ->with('fail', 'Error: '.$th->getMessage())
+                ->with('fail', 'Error: ' . $th->getMessage())
                 ->withInput();
         }
     }
@@ -246,7 +247,7 @@ class NotReturnDoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$th->getMessage(),
+                'message' => 'Error: ' . $th->getMessage(),
             ], 500);
         }
     }
@@ -368,10 +369,10 @@ class NotReturnDoController extends Controller
                     return $type;
                 })
                 ->addColumn('price', function ($row) {
-                    return 'Rp '.number_format($row->routeAmount ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->routeAmount ?? 0, 0, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp '.number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
                 })
                 ->editColumn('status', function ($row) {
                     $status = '';
@@ -383,10 +384,79 @@ class NotReturnDoController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    return '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
+                    return '<button type="button" class="btn btn-sm btn-primary action-btn" title="Return" data-code="' . $row->code . '" data-shipment="' . $row->shipmentNumber . '" data-customer="' . $row->customer->name . '" data-fleet="' . $row->fleet->plateNumber . '" data-driver="' . $row->driver->name . '" data-order-date="' . $row->orderDate . '" data-price="' . $row->routeAmount . '" data-vendor-price="' . $row->personalVendorPrice . '" data-order-type="' . $row->fleet->company->type . '" data-origin="' . $row->route->originLocation->name . '" data-destination="' . $row->route->destinationLocation->name . '"><i class="mdi mdi-calendar"></i></button>';
                 })
                 ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
                 ->toJson();
+        }
+    }
+
+    /**
+     * Show the form for editing the specified order.
+     */
+    public function editOrder(string $code)
+    {
+        $data = Order::where('code', $code)->firstOrFail();
+
+        $material = $this->materialSvc->findAll();
+        $customer = $this->customerSvc->findAll();
+        $orderType = $this->orderTypeSvc->findAll();
+        $routeType = $this->routeTypeSvc->findAll();
+        $fleetType = $this->fleetTypeSvc->findAll();
+        $driver = $this->driverSvc->findAll();
+        $fleet = $this->fleetSvc->findAll();
+        $route = Route::get();
+        $cost = OrderCost::where('orderCode', $data->code)->get();
+        $fleetDetail = $this->fleetSvc->getById($data->fleetCode);
+        $component = CostComponent::get();
+        $unit = $this->unitSvc->findAll();
+
+        return view($this->view . 'edit-order')
+            ->with('view', $this->view)
+            ->with('title', $this->title)
+            ->with('material', $material)
+            ->with('customer', $customer)
+            ->with('orderType', $orderType)
+            ->with('routeType', $routeType)
+            ->with('fleetType', $fleetType)
+            ->with('driver', $driver)
+            ->with('route', $route)
+            ->with('cost', $cost)
+            ->with('component', $component)
+            ->with('fleet', $fleetDetail)
+            ->with('fleets', $fleet)
+            ->with('unit', $unit)
+            ->with('data', $data);
+    }
+
+    /**
+     * Update the specified order in storage.
+     */
+    public function updateOrder(Request $request, string $code)
+    {
+        $data = Order::where('code', $code)->firstOrFail();
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'fleetCode' => 'required',
+            'orderDate' => 'required|date',
+            'routeData' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->service->updateOrder($request, $data->id, $this->title);
+
+            DB::commit();
+
+            return redirect()->route('operational.not-return-do.index')->with('success', 'Order updated successfully');
+        } catch (\Throwable $th) {
+            DB::rollback();
+            return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
         }
     }
 }

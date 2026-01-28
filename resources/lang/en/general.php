@@ -27,4 +27,5 @@ return [
     'error_occurred' => 'An error occurred!',
     'success' => 'Success',
     'must_filled' => 'must be filled',
+    'no_data' => 'No data',
 ];
