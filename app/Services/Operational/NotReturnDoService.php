@@ -7,7 +7,10 @@ use App\Models\Data\Route;
 use App\Models\Master\Fleet;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\OrderDetail;
 use App\Traits\LogActivity;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class NotReturnDoService
 {
@@ -243,5 +246,55 @@ class NotReturnDoService
     public function getById($id)
     {
         return $this->service->where('id', $id)->firstOrFail();
+    }
+
+    /**
+     * Upload Surat Jalan files untuk order
+     * - Generate encrypted filename menggunakan SHA256
+     * - Store file di storage public
+     * - Create OrderDetail record dengan type 'surat_jalan'
+     */
+    public function uploadSuratJalan($request, string $code)
+    {
+        try {
+            DB::beginTransaction();
+
+            $order = $this->service->where('code', $code)->firstOrFail();
+
+            $uploadedCount = 0;
+
+            if ($request->hasFile('files')) {
+                foreach ($request->file('files') as $file) {
+                    // Generate encrypted filename menggunakan SHA256
+                    $originalName = $file->getClientOriginalName();
+                    $encryptedName = hash('sha256', $originalName . time() . uniqid()) . '.' . $file->getClientOriginalExtension();
+
+                    // Store file di storage public
+                    $path = $file->storeAs('order-detail', $encryptedName, 'public');
+
+                    // Create OrderDetail record
+                    OrderDetail::create([
+                        'id' => Str::uuid(),
+                        'order_id' => $order->id,
+                        'file' => $path,
+                        'type' => 'surat_jalan',
+                    ]);
+
+                    $uploadedCount++;
+                }
+            }
+
+            DB::commit();
+
+            return [
+                'success' => true,
+                'message' => "$uploadedCount file berhasil diupload",
+                'count' => $uploadedCount,
+            ];
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            throw $th;
+        }
     }
 }

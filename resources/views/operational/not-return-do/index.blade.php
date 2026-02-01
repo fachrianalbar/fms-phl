@@ -417,7 +417,7 @@
 
         <div class="modal fade" id="detailModal" tabindex="-1" role="dialog"
             aria-labelledby="detailModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-dialog modal-md modal-dialog-centered">
                 <div class="modal-content">
                     <!-- Header -->
                     <div class="modal-header">
@@ -434,6 +434,15 @@
                     </div>
 
                     <div class="modal-body">
+                        <!-- Alert untuk upload wajib -->
+                        <div class="alert alert-warning d-flex align-items-center" role="alert">
+                            <i class="mdi mdi-alert-circle me-2" style="font-size: 20px;"></i>
+                            <div>
+                                <strong>Upload Surat Jalan Wajib!</strong><br>
+                                <small>Minimal 1 file harus diupload sebelum mengkonfirmasi return order.</small>
+                            </div>
+                        </div>
+
                         <!-- Single Item - Full Details -->
                         <div id="singleItemDetails" style="display: none;">
                             <div class="detail-order-card">
@@ -528,7 +537,11 @@
                             <i class="mdi mdi-pencil me-2"></i>
                             Edit Order
                         </a>
-                        <button class="btn btn-confirm" type="submit" id="submitReturnBtn">
+                        <button type="button" class="btn btn-warning" id="uploadSuratJalanBtn">
+                            <i class="mdi mdi-upload me-2"></i>
+                            Upload Surat Jalan
+                        </button>
+                        <button class="btn btn-confirm" type="submit" id="submitReturnBtn" disabled title="Upload minimal 1 file Surat Jalan terlebih dahulu">
                             <i class="mdi mdi-check-circle-outline me-2"></i>
                             Konfirmasi Return
                         </button>
@@ -575,6 +588,50 @@
                         </button>
                         <button type="submit" class="btn btn-primary">
                             <i class="mdi mdi-check"></i> {{ __('menu_not_return_do.save_return') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Upload Surat Jalan -->
+    <div class="modal fade" id="uploadSuratJalanModal" tabindex="-1" aria-labelledby="uploadSuratJalanLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadSuratJalanLabel">Upload Surat Jalan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="uploadSuratJalanForm" enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" id="uploadOrderCode" name="orderCode">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="suratJalanFiles" class="form-label">Pilih File(s) <span class="text-danger">*</span></label>
+                            
+                            <!-- Drag & Drop Zone -->
+                            <div id="dropZone" class="border-2 border-dashed border-primary rounded p-4 text-center bg-light cursor-pointer mb-3" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                                <div>
+                                    <i class="mdi mdi-cloud-upload" style="font-size: 32px; color: #0d6efd;"></i>
+                                    <p class="mb-0 mt-2 text-muted">Drag & drop file(s) atau klik untuk browse</p>
+                                    <small class="text-muted">PDF, JPG, JPEG, PNG | Max 5MB per file</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden File Input -->
+                            <input class="form-control" type="file" id="suratJalanFiles" name="files[]" multiple accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
+                        </div>
+                        
+                        <!-- File Preview -->
+                        <div id="filePreview" class="mb-3">
+                            <div id="fileList"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary" id="uploadBtn">
+                            <i class="mdi mdi-upload"></i> Upload
                         </button>
                     </div>
                 </form>
@@ -746,6 +803,9 @@
             
             // Set the edit button href
             $('#editOrderBtn').attr('href', "{{ route('operational.not-return-do.edit-order', ':code') }}".replace(':code', orderCode));
+            
+            // Reset uploadedCount untuk order baru
+            uploadedCount = 0;
         });
 
         // Function to show the modal (no longer fetching via AJAX)
@@ -906,5 +966,172 @@
                 }
             });
         }
+
+        // ========== UPLOAD SURAT JALAN FUNCTIONALITY ==========
+        
+        // Ambil order code ketika detail modal ditampilkan
+        let currentOrderCode = '';
+        $(document).on('click', '.action-btn', function() {
+            const orderCode = $(this).data('code');
+            currentOrderCode = orderCode;
+            $('#uploadOrderCode').val(orderCode);
+        });
+
+        // Open upload modal
+        $('#uploadSuratJalanBtn').on('click', function() {
+            $('#uploadSuratJalanModal').modal('show');
+        });
+
+        // Handle file input change
+        $('#suratJalanFiles').on('change', function() {
+            updateFilePreview();
+        });
+
+        // Drag & drop functionality
+        const dropZone = $('#dropZone');
+
+        dropZone.on('dragover', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.css({
+                'border-color': '#0d6efd',
+                'background-color': '#e7f1ff'
+            });
+        });
+
+        dropZone.on('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.css({
+                'border-color': '#0d6efd',
+                'background-color': '#f8f9fa'
+            });
+        });
+
+        dropZone.on('drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.css({
+                'border-color': '#0d6efd',
+                'background-color': '#f8f9fa'
+            });
+
+            const files = e.originalEvent.dataTransfer.files;
+            $('#suratJalanFiles')[0].files = files;
+            updateFilePreview();
+        });
+
+        // Click to browse
+        dropZone.on('click', function() {
+            $('#suratJalanFiles').click();
+        });
+
+        function updateFilePreview() {
+            const fileInput = $('#suratJalanFiles')[0];
+            const fileList = $('#fileList');
+            fileList.empty();
+
+            if (fileInput.files.length > 0) {
+                let html = '<div class="list-group">';
+                Array.from(fileInput.files).forEach((file, index) => {
+                    const fileSize = (file.size / 1024 / 1024).toFixed(2);
+                    const fileIcon = getFileIcon(file.type);
+                    html += `
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center flex-grow-1">
+                                <i class="${fileIcon}" style="font-size: 24px; margin-right: 10px;"></i>
+                                <div>
+                                    <div class="small text-dark font-weight-500">${file.name}</div>
+                                    <small class="text-muted">${fileSize} MB</small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-file" data-index="${index}">
+                                <i class="mdi mdi-close"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                fileList.html(html);
+
+                $('.remove-file').on('click', function(e) {
+                    e.preventDefault();
+                    const index = $(this).data('index');
+                    const dt = new DataTransfer();
+                    Array.from(fileInput.files).forEach((file, i) => {
+                        if (i !== index) {
+                            dt.items.add(file);
+                        }
+                    });
+                    fileInput.files = dt.files;
+                    updateFilePreview();
+                });
+            }
+        }
+
+        function getFileIcon(mimeType) {
+            if (mimeType.includes('pdf')) {
+                return 'mdi mdi-file-pdf text-danger';
+            } else if (mimeType.includes('image')) {
+                return 'mdi mdi-file-image text-info';
+            }
+            return 'mdi mdi-file text-secondary';
+        }
+
+        // Handle upload form submission
+        let uploadedCount = 0; // Track jumlah file yang sudah diupload
+        
+        $('#uploadSuratJalanForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const orderCode = $('#uploadOrderCode').val();
+            if (!orderCode) {
+                swal("Error!", "Order code tidak ditemukan", "error");
+                return;
+            }
+            
+            const formData = new FormData(this);
+            
+            $.ajax({
+                url: "{{ route('operational.not-return-do.upload-surat-jalan', ['code' => ':code']) }}".replace(':code', orderCode),
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                beforeSend: function() {
+                    $('#uploadBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Uploading...');
+                },
+                success: function(response) {
+                    if (response.success) {
+                        uploadedCount += response.count; // Tambah jumlah file
+                        
+                        swal({
+                            title: "Berhasil!",
+                            text: response.message,
+                            icon: "success",
+                        }).then(() => {
+                            $('#uploadSuratJalanModal').modal('hide');
+                            $('#uploadSuratJalanForm')[0].reset();
+                            $('#fileList').empty();
+                            $('#uploadBtn').prop('disabled', false).html('<i class="mdi mdi-upload"></i> Upload');
+                            
+                            // Enable tombol konfirmasi jika sudah ada 1 file
+                            if (uploadedCount > 0) {
+                                $('#submitReturnBtn').prop('disabled', false).removeAttr('title');
+                            }
+                        });
+                    } else {
+                        swal("Error!", response.message, "error");
+                        $('#uploadBtn').prop('disabled', false).html('<i class="mdi mdi-upload"></i> Upload');
+                    }
+                },
+                error: function(xhr) {
+                    const response = xhr.responseJSON;
+                    const message = response.message || 'Terjadi kesalahan saat upload';
+                    swal("Error!", message, "error");
+                    $('#uploadBtn').prop('disabled', false).html('<i class="mdi mdi-upload"></i> Upload');
+                }
+            });
+        });
     </script>
 @endpush

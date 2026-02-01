@@ -459,4 +459,30 @@ class NotReturnDoController extends Controller
             return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
         }
     }
+
+    /**
+     * Upload surat jalan file untuk order
+     */
+    public function uploadSuratJalan(Request $request, string $code)
+    {
+        $request->validate([
+            'files' => 'required|array',
+            'files.*' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+        ]);
+
+        try {
+            $result = $this->service->uploadSuratJalan($request, $code);
+
+            return response()->json([
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'count' => $result['count'],
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error: ' . $th->getMessage(),
+            ], 500);
+        }
+    }
 }

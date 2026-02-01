@@ -36,7 +36,7 @@ class ReturnDoController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -60,7 +60,7 @@ class ReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -126,14 +126,14 @@ class ReturnDoController extends Controller
                     $btn = '';
 
                     if ($row->status == 4) {
-                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
+                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
                     }
 
                     return $btn;
                 })
                 ->addColumn('detail', function ($row) {
                     $onChargeCosts = $row->onChargeCost;
-                    $detailBtn = '';
+                    $buttons = '';
 
                     // Filter only costs that actually have a costComponent relation
                     $validCosts = collect([]);
@@ -147,20 +147,54 @@ class ReturnDoController extends Controller
                         $costsData = $validCosts->map(function ($cost) {
                             return [
                                 'component' => $cost->costComponent->name ?? '-',
-                                'nominal' => 'Rp '.number_format($cost->nominal, 0, ',', '.'),
+                                'nominal' => 'Rp ' . number_format($cost->nominal, 0, ',', '.'),
                             ];
                         })->toArray();
 
                         $costsJson = htmlspecialchars(json_encode($costsData), ENT_QUOTES, 'UTF-8');
-                        $detailBtn = '<a href="javascript:void(0)" class="btn btn-icon btn-sm bg-success-subtle me-1 btn-detail-cost" data-costs="'.$costsJson.'" data-shipment="'.$row->shipmentNumber.'" title="Lihat detail biaya" aria-label="Lihat detail biaya">
-                            <i class="mdi mdi-eye fs-14 text-success"></i>
-                        </a>';
+                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success btn-detail-cost me-2" data-costs="' . $costsJson . '" data-shipment="' . $row->shipmentNumber . '" title="Lihat detail biaya">
+                            <i class="mdi mdi-cash-multiple me-1"></i> Biaya
+                        </button>';
                     }
 
-                    return $detailBtn;
+                    // Cek apakah ada file yang diupload
+                    $filesCount = \App\Models\OrderDetail::where('order_id', $row->id)
+                        ->where('type', 'surat_jalan')
+                        ->count();
+
+                    if ($filesCount > 0) {
+                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-info btn-view-files" data-order-id="' . $row->id . '" data-order-code="' . $row->code . '" title="Lihat File Surat Jalan">
+                            <i class="mdi mdi-file-image-multiple me-1"></i> File (' . $filesCount . ')
+                        </button>';
+                    }
+
+                    return $buttons ?: '-';
                 })
                 ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
                 ->toJson();
         }
+    }
+
+    /**
+     * Get uploaded files for specific order
+     */
+    public function getOrderFiles($orderId)
+    {
+        $files = \App\Models\OrderDetail::where('order_id', $orderId)
+            ->where('type', 'surat_jalan')
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'file', 'created_at']);
+
+        return response()->json([
+            'success' => true,
+            'files' => $files->map(function ($file) {
+                return [
+                    'id' => $file->id,
+                    'url' => asset('storage/' . $file->file),
+                    'name' => basename($file->file),
+                    'uploaded_at' => $file->created_at->format('d-m-Y H:i'),
+                ];
+            })
+        ]);
     }
 }

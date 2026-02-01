@@ -392,6 +392,36 @@ use App\Models\Data\Route;
     </div>
 </div>
 
+<!-- Modal Konfirmasi Return -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Konfirmasi Return Order</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin mengkonfirmasi return untuk order <strong>{{ $data->code }}</strong>?</p>
+                <div class="mb-3">
+                    <label for="returnDescription" class="form-label">Deskripsi Return (Opsional)</label>
+                    <textarea class="form-control" id="returnDescription" name="returnDescription" rows="3"
+                        placeholder="Masukkan deskripsi return..."></textarea>
+                </div>
+                <small class="text-muted">
+                    * Return date akan diset ke tanggal hari ini<br>
+                    * Status order akan berubah menjadi "Returned" (Status 4)
+                </small>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-success" id="confirmReturnBtn">
+                    <i class="mdi mdi-check"></i> Ya, Konfirmasi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <form id="delete-form" method="post">
     @csrf
     @method('DELETE')
@@ -421,11 +451,6 @@ use App\Models\Data\Route;
 <script>
     $(document).ready(function() {
         const selectedType = $('#routeTypeCode').select2('val');
-
-        // Show modal when confirm button clicked
-        $('#confirmOrderBtn').on('click', function() {
-            $('#confirmModal').modal('show');
-        });
 
         $('#confirm-btn').on('click', function(e) {
             e.preventDefault();

@@ -4,10 +4,10 @@
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-DROP TABLE IF EXISTS `fms_activity_log`;
+DROP TABLE IF EXISTS `activity_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_activity_log` (
+CREATE TABLE `activity_log` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `log_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -23,13 +23,13 @@ CREATE TABLE `fms_activity_log` (
   PRIMARY KEY (`id`,`subject_id`) USING BTREE,
   KEY `subject` (`subject_type`,`subject_id`),
   KEY `causer` (`causer_type`,`causer_id`),
-  KEY `fms_activity_log_log_name_index` (`log_name`)
+  KEY `activity_log_log_name_index` (`log_name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_bank_account`;
+DROP TABLE IF EXISTS `bank_account`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_bank_account` (
+CREATE TABLE `bank_account` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `bankCode` varchar(10) DEFAULT NULL,
@@ -44,10 +44,10 @@ CREATE TABLE `fms_bank_account` (
   KEY `bank_account_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_bank_receiver`;
+DROP TABLE IF EXISTS `bank_receiver`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_bank_receiver` (
+CREATE TABLE `bank_receiver` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `bankName` varchar(255) DEFAULT NULL,
@@ -62,10 +62,10 @@ CREATE TABLE `fms_bank_receiver` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_bank_sender`;
+DROP TABLE IF EXISTS `bank_sender`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_bank_sender` (
+CREATE TABLE `bank_sender` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `bankName` varchar(100) DEFAULT NULL,
@@ -79,10 +79,10 @@ CREATE TABLE `fms_bank_sender` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_bon_ujt`;
+DROP TABLE IF EXISTS `bon_ujt`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_bon_ujt` (
+CREATE TABLE `bon_ujt` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `bon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -102,10 +102,10 @@ CREATE TABLE `fms_bon_ujt` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_bon_ujt_detail`;
+DROP TABLE IF EXISTS `bon_ujt_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_bon_ujt_detail` (
+CREATE TABLE `bon_ujt_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `bonUjtCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -119,30 +119,30 @@ CREATE TABLE `fms_bon_ujt_detail` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_cache`;
+DROP TABLE IF EXISTS `cache`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_cache` (
+CREATE TABLE `cache` (
   `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `value` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` int NOT NULL,
   PRIMARY KEY (`key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_cache_locks`;
+DROP TABLE IF EXISTS `cache_locks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_cache_locks` (
+CREATE TABLE `cache_locks` (
   `key` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `owner` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `expiration` int NOT NULL,
   PRIMARY KEY (`key`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_cash_old`;
+DROP TABLE IF EXISTS `cash_old`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_cash_old` (
+CREATE TABLE `cash_old` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `date` date DEFAULT NULL,
@@ -166,10 +166,10 @@ CREATE TABLE `fms_cash_old` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_city`;
+DROP TABLE IF EXISTS `city`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_city` (
+CREATE TABLE `city` (
   `id` int NOT NULL AUTO_INCREMENT,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -185,10 +185,10 @@ CREATE TABLE `fms_city` (
   KEY `province_id` (`province_id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_company`;
+DROP TABLE IF EXISTS `company`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_company` (
+CREATE TABLE `company` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -202,10 +202,10 @@ CREATE TABLE `fms_company` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_company_setting`;
+DROP TABLE IF EXISTS `company_setting`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_company_setting` (
+CREATE TABLE `company_setting` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -223,10 +223,10 @@ CREATE TABLE `fms_company_setting` (
   UNIQUE KEY `code_3` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_config_bank`;
+DROP TABLE IF EXISTS `config_bank`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_config_bank` (
+CREATE TABLE `config_bank` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `userCode` varchar(30) DEFAULT NULL,
@@ -239,10 +239,10 @@ CREATE TABLE `fms_config_bank` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_cost_component`;
+DROP TABLE IF EXISTS `cost_component`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_cost_component` (
+CREATE TABLE `cost_component` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -256,10 +256,10 @@ CREATE TABLE `fms_cost_component` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_cost_component_price_logs`;
+DROP TABLE IF EXISTS `cost_component_price_logs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_cost_component_price_logs` (
+CREATE TABLE `cost_component_price_logs` (
   `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `costComponentCode` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `costComponentName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -270,13 +270,13 @@ CREATE TABLE `fms_cost_component_price_logs` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `fms_cost_component_price_logs_costcomponentcode_index` (`costComponentCode`)
+  KEY `cost_component_price_logs_costcomponentcode_index` (`costComponentCode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_customer`;
+DROP TABLE IF EXISTS `customer`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_customer` (
+CREATE TABLE `customer` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -306,10 +306,10 @@ CREATE TABLE `fms_customer` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_customer_detail`;
+DROP TABLE IF EXISTS `customer_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_customer_detail` (
+CREATE TABLE `customer_detail` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -318,14 +318,14 @@ CREATE TABLE `fms_customer_detail` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `UNIQUE` (`code`) USING BTREE,
-  KEY `fms_customer_detail_ibfk_1` (`customerCode`),
-  CONSTRAINT `fms_customer_detail_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `fms_customer` (`code`) ON DELETE CASCADE ON UPDATE CASCADE
+  KEY `customer_detail_ibfk_1` (`customerCode`),
+  CONSTRAINT `customer_detail_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `customer` (`code`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_customer_detail_order`;
+DROP TABLE IF EXISTS `customer_detail_order`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_customer_detail_order` (
+CREATE TABLE `customer_detail_order` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `value` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -337,10 +337,10 @@ CREATE TABLE `fms_customer_detail_order` (
   UNIQUE KEY `UNIQUE` (`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_customer_pic`;
+DROP TABLE IF EXISTS `customer_pic`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_customer_pic` (
+CREATE TABLE `customer_pic` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `picName` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -351,10 +351,10 @@ CREATE TABLE `fms_customer_pic` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_district`;
+DROP TABLE IF EXISTS `district`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_district` (
+CREATE TABLE `district` (
   `id` int NOT NULL AUTO_INCREMENT,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -364,13 +364,13 @@ CREATE TABLE `fms_district` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   KEY `regency_id` (`city_id`) USING BTREE,
-  CONSTRAINT `fms_district_ibfk_1` FOREIGN KEY (`city_id`) REFERENCES `fms_city` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
+  CONSTRAINT `district_ibfk_1` FOREIGN KEY (`city_id`) REFERENCES `city` (`id`) ON DELETE RESTRICT ON UPDATE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_down_payment`;
+DROP TABLE IF EXISTS `down_payment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_down_payment` (
+CREATE TABLE `down_payment` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `price` int DEFAULT NULL,
@@ -386,10 +386,10 @@ CREATE TABLE `fms_down_payment` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_down_payment_detail`;
+DROP TABLE IF EXISTS `down_payment_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_down_payment_detail` (
+CREATE TABLE `down_payment_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `date` date DEFAULT NULL,
@@ -405,10 +405,10 @@ CREATE TABLE `fms_down_payment_detail` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_drop_location`;
+DROP TABLE IF EXISTS `drop_location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_drop_location` (
+CREATE TABLE `drop_location` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -426,10 +426,10 @@ CREATE TABLE `fms_drop_location` (
   KEY `position_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_due_date`;
+DROP TABLE IF EXISTS `due_date`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_due_date` (
+CREATE TABLE `due_date` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `days` int DEFAULT NULL,
@@ -441,10 +441,10 @@ CREATE TABLE `fms_due_date` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_employee`;
+DROP TABLE IF EXISTS `employee`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_employee` (
+CREATE TABLE `employee` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -473,10 +473,10 @@ CREATE TABLE `fms_employee` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_expense`;
+DROP TABLE IF EXISTS `expense`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_expense` (
+CREATE TABLE `expense` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `driverCode` varchar(30) DEFAULT NULL,
@@ -490,10 +490,10 @@ CREATE TABLE `fms_expense` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_failed_jobs`;
+DROP TABLE IF EXISTS `failed_jobs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_failed_jobs` (
+CREATE TABLE `failed_jobs` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `uuid` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `connection` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -502,13 +502,13 @@ CREATE TABLE `fms_failed_jobs` (
   `exception` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `fms_failed_jobs_uuid_unique` (`uuid`) USING BTREE
+  UNIQUE KEY `failed_jobs_uuid_unique` (`uuid`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet`;
+DROP TABLE IF EXISTS `fleet`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet` (
+CREATE TABLE `fleet` (
   `id` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `plateNumber` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -534,10 +534,10 @@ CREATE TABLE `fms_fleet` (
   UNIQUE KEY `Unique` (`plateNumber`,`deviceName`,`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet_brand`;
+DROP TABLE IF EXISTS `fleet_brand`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet_brand` (
+CREATE TABLE `fleet_brand` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -549,10 +549,10 @@ CREATE TABLE `fms_fleet_brand` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet_company`;
+DROP TABLE IF EXISTS `fleet_company`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet_company` (
+CREATE TABLE `fleet_company` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -566,10 +566,10 @@ CREATE TABLE `fms_fleet_company` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet_driver`;
+DROP TABLE IF EXISTS `fleet_driver`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet_driver` (
+CREATE TABLE `fleet_driver` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `fleetTypeCode` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -586,10 +586,10 @@ CREATE TABLE `fms_fleet_driver` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet_picture`;
+DROP TABLE IF EXISTS `fleet_picture`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet_picture` (
+CREATE TABLE `fleet_picture` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `fleetCode` varchar(30) DEFAULT NULL,
@@ -601,10 +601,10 @@ CREATE TABLE `fms_fleet_picture` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_fleet_type`;
+DROP TABLE IF EXISTS `fleet_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_fleet_type` (
+CREATE TABLE `fleet_type` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -616,10 +616,10 @@ CREATE TABLE `fms_fleet_type` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_invoice`;
+DROP TABLE IF EXISTS `invoice`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_invoice` (
+CREATE TABLE `invoice` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `invoiceNumber` varchar(100) DEFAULT NULL,
@@ -641,10 +641,10 @@ CREATE TABLE `fms_invoice` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_invoice_detail`;
+DROP TABLE IF EXISTS `invoice_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_invoice_detail` (
+CREATE TABLE `invoice_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `invoiceCode` varchar(30) DEFAULT NULL,
@@ -657,10 +657,10 @@ CREATE TABLE `fms_invoice_detail` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_invoice_payment`;
+DROP TABLE IF EXISTS `invoice_payment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_invoice_payment` (
+CREATE TABLE `invoice_payment` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `paymentDate` date DEFAULT NULL,
@@ -678,10 +678,10 @@ CREATE TABLE `fms_invoice_payment` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_item`;
+DROP TABLE IF EXISTS `item`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_item` (
+CREATE TABLE `item` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -701,10 +701,10 @@ CREATE TABLE `fms_item` (
   UNIQUE KEY `code_2` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_item_category`;
+DROP TABLE IF EXISTS `item_category`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_item_category` (
+CREATE TABLE `item_category` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -715,32 +715,10 @@ CREATE TABLE `fms_item_category` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_item_copy1`;
+DROP TABLE IF EXISTS `item_location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_item_copy1` (
-  `id` varchar(36) NOT NULL,
-  `code` varchar(30) DEFAULT NULL,
-  `name` varchar(100) DEFAULT NULL,
-  `brandName` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `categoryCode` varchar(30) DEFAULT NULL,
-  `itemLocationCode` varchar(30) DEFAULT NULL,
-  `warehouseCode` varchar(30) DEFAULT NULL,
-  `unitCode` varchar(30) DEFAULT NULL,
-  `supplierCode` varchar(30) DEFAULT NULL,
-  `price` decimal(20,2) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  `deleted_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `unq` (`id`) USING BTREE,
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_item_location`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_item_location` (
+CREATE TABLE `item_location` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -752,10 +730,10 @@ CREATE TABLE `fms_item_location` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_job_batches`;
+DROP TABLE IF EXISTS `job_batches`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_job_batches` (
+CREATE TABLE `job_batches` (
   `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `total_jobs` int NOT NULL,
@@ -769,10 +747,10 @@ CREATE TABLE `fms_job_batches` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_jobs`;
+DROP TABLE IF EXISTS `jobs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_jobs` (
+CREATE TABLE `jobs` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `queue` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -781,13 +759,13 @@ CREATE TABLE `fms_jobs` (
   `available_at` int unsigned NOT NULL,
   `created_at` int unsigned NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  KEY `fms_jobs_queue_index` (`queue`) USING BTREE
+  KEY `jobs_queue_index` (`queue`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_live_mutation`;
+DROP TABLE IF EXISTS `live_mutation`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_live_mutation` (
+CREATE TABLE `live_mutation` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `userBankCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -801,10 +779,10 @@ CREATE TABLE `fms_live_mutation` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_location`;
+DROP TABLE IF EXISTS `location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_location` (
+CREATE TABLE `location` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text,
@@ -821,15 +799,16 @@ CREATE TABLE `fms_location` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_maintenance`;
+DROP TABLE IF EXISTS `maintenance`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_maintenance` (
+CREATE TABLE `maintenance` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `date` date DEFAULT NULL,
   `time` time DEFAULT NULL,
   `fleetCode` varchar(30) DEFAULT NULL,
+  `warehouseCode` varchar(30) DEFAULT NULL,
   `status` tinyint DEFAULT '0',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -838,13 +817,13 @@ CREATE TABLE `fms_maintenance` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_maintenance_detail`;
+DROP TABLE IF EXISTS `maintenance_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_maintenance_detail` (
+CREATE TABLE `maintenance_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
-  `qty` int DEFAULT NULL,
+  `qty` decimal(10,1) NOT NULL,
   `itemCode` varchar(30) DEFAULT NULL,
   `maintenanceCode` varchar(30) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -855,25 +834,25 @@ CREATE TABLE `fms_maintenance_detail` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_maintenance_fifo`;
+DROP TABLE IF EXISTS `maintenance_fifo`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_maintenance_fifo` (
+CREATE TABLE `maintenance_fifo` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `maintenanceDetailCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `purchaseDetailCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `qty` int DEFAULT NULL,
+  `qty` decimal(10,1) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_material`;
+DROP TABLE IF EXISTS `material`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_material` (
+CREATE TABLE `material` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text,
@@ -884,10 +863,10 @@ CREATE TABLE `fms_material` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_menu`;
+DROP TABLE IF EXISTS `menu`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_menu` (
+CREATE TABLE `menu` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -902,20 +881,20 @@ CREATE TABLE `fms_menu` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_migrations`;
+DROP TABLE IF EXISTS `migrations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_migrations` (
+CREATE TABLE `migrations` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `migration` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_mutation`;
+DROP TABLE IF EXISTS `mutation`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_mutation` (
+CREATE TABLE `mutation` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `userBankCode` varchar(30) DEFAULT NULL,
@@ -932,10 +911,10 @@ CREATE TABLE `fms_mutation` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order`;
+DROP TABLE IF EXISTS `order`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order` (
+CREATE TABLE `order` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `shipmentNumber` varchar(255) DEFAULT NULL,
@@ -958,40 +937,43 @@ CREATE TABLE `fms_order` (
   `status` tinyint DEFAULT '0' COMMENT '0 = order dibuat\n1 = dalam perjalanan\n2 = sampai tujuan\n3 = order finish\n4 = return do\n',
   `distance` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `estimatedTime` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `returnDate` date DEFAULT NULL,
+  `returnDate` datetime DEFAULT NULL,
   `returnDescription` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `is_order_tax` tinyint DEFAULT '0',
   `routeAmount` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
+  `vendorPrice` decimal(15,2) DEFAULT NULL,
+  `personalVendorPrice` decimal(15,2) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `shipmentNumber` (`shipmentNumber`),
   UNIQUE KEY `code` (`code`),
-  KEY `fms_order_ibfk_1` (`customerCode`),
-  CONSTRAINT `fms_order_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `fms_customer` (`code`) ON DELETE SET NULL ON UPDATE CASCADE
+  KEY `order_ibfk_1` (`customerCode`),
+  CONSTRAINT `order_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `customer` (`code`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_cost`;
+DROP TABLE IF EXISTS `order_cost`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_cost` (
+CREATE TABLE `order_cost` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `componentType` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `nominal` int DEFAULT NULL,
   `type` varchar(255) DEFAULT NULL,
+  `is_route` tinyint(1) NOT NULL DEFAULT '0' COMMENT '1 = dari route_detail, 0 = custom/tambahan user',
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_detail`;
+DROP TABLE IF EXISTS `order_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_detail` (
+CREATE TABLE `order_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1001,10 +983,10 @@ CREATE TABLE `fms_order_detail` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_driver`;
+DROP TABLE IF EXISTS `order_driver`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_driver` (
+CREATE TABLE `order_driver` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1015,10 +997,10 @@ CREATE TABLE `fms_order_driver` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_log`;
+DROP TABLE IF EXISTS `order_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_log` (
+CREATE TABLE `order_log` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -1028,10 +1010,10 @@ CREATE TABLE `fms_order_log` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_material`;
+DROP TABLE IF EXISTS `order_material`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_material` (
+CREATE TABLE `order_material` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1045,10 +1027,10 @@ CREATE TABLE `fms_order_material` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_payment`;
+DROP TABLE IF EXISTS `order_payment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_payment` (
+CREATE TABLE `order_payment` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1061,10 +1043,10 @@ CREATE TABLE `fms_order_payment` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_payment_history`;
+DROP TABLE IF EXISTS `order_payment_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_payment_history` (
+CREATE TABLE `order_payment_history` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1078,10 +1060,10 @@ CREATE TABLE `fms_order_payment_history` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_status`;
+DROP TABLE IF EXISTS `order_status`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_status` (
+CREATE TABLE `order_status` (
   `id` varchar(36) NOT NULL,
   `code` tinyint DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -1092,10 +1074,10 @@ CREATE TABLE `fms_order_status` (
   UNIQUE KEY `UNIQUE` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_tax`;
+DROP TABLE IF EXISTS `order_tax`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_tax` (
+CREATE TABLE `order_tax` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -1106,10 +1088,10 @@ CREATE TABLE `fms_order_tax` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_tracking`;
+DROP TABLE IF EXISTS `order_tracking`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_tracking` (
+CREATE TABLE `order_tracking` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `latitude` varchar(50) DEFAULT NULL,
@@ -1121,10 +1103,10 @@ CREATE TABLE `fms_order_tracking` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_tracking_backup`;
+DROP TABLE IF EXISTS `order_tracking_backup`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_tracking_backup` (
+CREATE TABLE `order_tracking_backup` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `latitude` varchar(50) DEFAULT NULL,
@@ -1136,10 +1118,10 @@ CREATE TABLE `fms_order_tracking_backup` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_order_type`;
+DROP TABLE IF EXISTS `order_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_order_type` (
+CREATE TABLE `order_type` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text,
@@ -1150,20 +1132,20 @@ CREATE TABLE `fms_order_type` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_password_reset_tokens`;
+DROP TABLE IF EXISTS `password_reset_tokens`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_password_reset_tokens` (
+CREATE TABLE `password_reset_tokens` (
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `token` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`email`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_personal_access_tokens`;
+DROP TABLE IF EXISTS `personal_access_tokens`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_personal_access_tokens` (
+CREATE TABLE `personal_access_tokens` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `tokenable_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `tokenable_id` bigint unsigned NOT NULL,
@@ -1175,14 +1157,14 @@ CREATE TABLE `fms_personal_access_tokens` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `fms_personal_access_tokens_token_unique` (`token`),
-  KEY `fms_personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`)
+  UNIQUE KEY `personal_access_tokens_token_unique` (`token`),
+  KEY `personal_access_tokens_tokenable_type_tokenable_id_index` (`tokenable_type`,`tokenable_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_pickup_location`;
+DROP TABLE IF EXISTS `pickup_location`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_pickup_location` (
+CREATE TABLE `pickup_location` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -1199,10 +1181,10 @@ CREATE TABLE `fms_pickup_location` (
   KEY `position_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_position`;
+DROP TABLE IF EXISTS `position`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_position` (
+CREATE TABLE `position` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
@@ -1214,10 +1196,10 @@ CREATE TABLE `fms_position` (
   KEY `position_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_province`;
+DROP TABLE IF EXISTS `province`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_province` (
+CREATE TABLE `province` (
   `id` int NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -1228,10 +1210,10 @@ CREATE TABLE `fms_province` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_purchase`;
+DROP TABLE IF EXISTS `purchase`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_purchase` (
+CREATE TABLE `purchase` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `date` date DEFAULT NULL,
@@ -1251,10 +1233,10 @@ CREATE TABLE `fms_purchase` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_purchase_detail`;
+DROP TABLE IF EXISTS `purchase_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_purchase_detail` (
+CREATE TABLE `purchase_detail` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `purchaseCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1272,10 +1254,10 @@ CREATE TABLE `fms_purchase_detail` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_purchase_status`;
+DROP TABLE IF EXISTS `purchase_status`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_purchase_status` (
+CREATE TABLE `purchase_status` (
   `id` varchar(36) NOT NULL,
   `code` tinyint DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -1286,25 +1268,25 @@ CREATE TABLE `fms_purchase_status` (
   UNIQUE KEY `UNIQUE` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_role`;
+DROP TABLE IF EXISTS `role`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_role` (
-  `id` varchar(36) NOT NULL,
+CREATE TABLE `role` (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
-  `name` varchar(255) DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `code` (`code`)
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE KEY `code` (`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_role_menu`;
+DROP TABLE IF EXISTS `role_menu`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_role_menu` (
-  `id` varchar(36) NOT NULL,
+CREATE TABLE `role_menu` (
+  `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `roleCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `menuCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1314,10 +1296,10 @@ CREATE TABLE `fms_role_menu` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_route`;
+DROP TABLE IF EXISTS `route`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_route` (
+CREATE TABLE `route` (
   `id` varchar(36) NOT NULL,
   `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text,
@@ -1335,14 +1317,14 @@ CREATE TABLE `fms_route` (
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`),
-  KEY `fms_route_ibfk_1` (`customerCode`),
-  CONSTRAINT `fms_route_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `fms_customer` (`code`) ON DELETE SET NULL ON UPDATE CASCADE
+  KEY `route_ibfk_1` (`customerCode`),
+  CONSTRAINT `route_ibfk_1` FOREIGN KEY (`customerCode`) REFERENCES `customer` (`code`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_route_detail`;
+DROP TABLE IF EXISTS `route_detail`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_route_detail` (
+CREATE TABLE `route_detail` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `type` enum('Percentage','Amount') CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1357,10 +1339,10 @@ CREATE TABLE `fms_route_detail` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_route_type`;
+DROP TABLE IF EXISTS `route_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_route_type` (
+CREATE TABLE `route_type` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
@@ -1371,10 +1353,10 @@ CREATE TABLE `fms_route_type` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_sessions`;
+DROP TABLE IF EXISTS `sessions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_sessions` (
+CREATE TABLE `sessions` (
   `id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_id` bigint unsigned DEFAULT NULL,
   `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -1382,14 +1364,23 @@ CREATE TABLE `fms_sessions` (
   `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_activity` int NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  KEY `fms_sessions_user_id_index` (`user_id`) USING BTREE,
-  KEY `fms_sessions_last_activity_index` (`last_activity`) USING BTREE
+  KEY `sessions_user_id_index` (`user_id`) USING BTREE,
+  KEY `sessions_last_activity_index` (`last_activity`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_stock`;
+DROP TABLE IF EXISTS `settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_stock` (
+CREATE TABLE `settings` (
+  `object` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `value` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`object`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `stock`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `itemCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1402,10 +1393,10 @@ CREATE TABLE `fms_stock` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_stock_transaction`;
+DROP TABLE IF EXISTS `stock_transaction`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_stock_transaction` (
+CREATE TABLE `stock_transaction` (
   `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `date` date DEFAULT NULL,
@@ -1422,10 +1413,10 @@ CREATE TABLE `fms_stock_transaction` (
   PRIMARY KEY (`id`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_supplier`;
+DROP TABLE IF EXISTS `supplier`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_supplier` (
+CREATE TABLE `supplier` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1442,10 +1433,10 @@ CREATE TABLE `fms_supplier` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_telegram_user`;
+DROP TABLE IF EXISTS `telegram_user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_telegram_user` (
+CREATE TABLE `telegram_user` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `chatId` varchar(50) NOT NULL,
@@ -1458,10 +1449,10 @@ CREATE TABLE `fms_telegram_user` (
   UNIQUE KEY `UNIQUE` (`code`,`chatId`,`username`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_tonase_bonus`;
+DROP TABLE IF EXISTS `tonase_bonus`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_tonase_bonus` (
+CREATE TABLE `tonase_bonus` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `min` float unsigned DEFAULT NULL,
@@ -1474,10 +1465,10 @@ CREATE TABLE `fms_tonase_bonus` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_transaction_type`;
+DROP TABLE IF EXISTS `transaction_type`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_transaction_type` (
+CREATE TABLE `transaction_type` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
@@ -1488,10 +1479,10 @@ CREATE TABLE `fms_transaction_type` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_transfer_fund`;
+DROP TABLE IF EXISTS `transfer_fund`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_transfer_fund` (
+CREATE TABLE `transfer_fund` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `mutationCode` varchar(30) DEFAULT NULL,
@@ -1505,10 +1496,10 @@ CREATE TABLE `fms_transfer_fund` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_unit`;
+DROP TABLE IF EXISTS `unit`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_unit` (
+CREATE TABLE `unit` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` text,
@@ -1520,10 +1511,10 @@ CREATE TABLE `fms_unit` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_user_bank`;
+DROP TABLE IF EXISTS `user_bank`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_user_bank` (
+CREATE TABLE `user_bank` (
   `id` varchar(36) NOT NULL,
   `code` varchar(30) DEFAULT NULL,
   `accountNumber` varchar(100) DEFAULT NULL,
@@ -1538,10 +1529,10 @@ CREATE TABLE `fms_user_bank` (
   UNIQUE KEY `code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_users`;
+DROP TABLE IF EXISTS `users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_users` (
+CREATE TABLE `users` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
@@ -1554,14 +1545,14 @@ CREATE TABLE `fms_users` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE KEY `fms_users_email_unique` (`username`) USING BTREE,
-  UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+  UNIQUE KEY `users_email_unique` (`username`) USING BTREE,
+  UNIQUE KEY `code` (`code`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_vendor_payment`;
+DROP TABLE IF EXISTS `vendor_payment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_vendor_payment` (
+CREATE TABLE `vendor_payment` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `orderCode` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1570,14 +1561,34 @@ CREATE TABLE `fms_vendor_payment` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
+  `date` date DEFAULT NULL,
+  `paid_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `remaining_amount` decimal(15,2) DEFAULT NULL,
+  `payment_status` enum('pending','partial','paid') NOT NULL DEFAULT 'pending',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE KEY `UNIQUE` (`code`) USING BTREE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `fms_warehouse`;
+DROP TABLE IF EXISTS `vendor_payment_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `fms_warehouse` (
+CREATE TABLE `vendor_payment_history` (
+  `id` char(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `vendor_payment_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `payment_date` date NOT NULL,
+  `user_bank_code` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+DROP TABLE IF EXISTS `warehouse`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `warehouse` (
   `id` varchar(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
   `code` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -1599,17 +1610,24 @@ CREATE TABLE `fms_warehouse` (
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (1,'0001_01_01_000000_create_users_table',1);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (2,'0001_01_01_000001_create_cache_table',1);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (3,'0001_01_01_000002_create_jobs_table',1);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (4,'2024_08_29_093113_create_personal_access_tokens_table',2);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (5,'2024_08_31_140837_create_activity_log_table',3);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (6,'2024_08_31_140838_add_event_column_to_activity_log_table',4);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (7,'2024_08_31_140839_add_batch_uuid_column_to_activity_log_table',5);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (8,'2025_11_22_000001_add_amount_to_invoice_table',6);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (9,'2025_11_22_000002_add_ppn_and_useppn_to_invoice_table',6);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (10,'2025_11_23_000001_add_status_to_invoice_table',7);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (11,'2025_11_23_000002_change_invoice_amount_to_bigint',7);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (12,'2025_11_27_193446_add_price_to_cost_component_table',8);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (13,'2025_11_27_203954_create_cost_component_price_logs_table',8);
-INSERT INTO `fms_migrations` (`id`, `migration`, `batch`) VALUES (14,'2025_12_04_105227_change_qty_columns_to_decimal',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (1,'0001_01_01_000000_create_users_table',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (2,'0001_01_01_000001_create_cache_table',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (3,'0001_01_01_000002_create_jobs_table',1);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (4,'2024_08_29_093113_create_personal_access_tokens_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (5,'2024_08_31_140837_create_activity_log_table',3);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (6,'2024_08_31_140838_add_event_column_to_activity_log_table',4);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (7,'2024_08_31_140839_add_batch_uuid_column_to_activity_log_table',5);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (8,'2025_11_22_000001_add_amount_to_invoice_table',6);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (9,'2025_11_22_000002_add_ppn_and_useppn_to_invoice_table',6);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (10,'2025_11_23_000001_add_status_to_invoice_table',7);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (11,'2025_11_23_000002_change_invoice_amount_to_bigint',7);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (12,'2025_11_27_193446_add_price_to_cost_component_table',8);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (13,'2025_11_27_203954_create_cost_component_price_logs_table',8);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (14,'2025_12_04_105227_change_qty_columns_to_decimal',9);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (15,'2025_12_07_225827_add_vendor_price_and_personal_vendor_price_to_order_table',10);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (16,'2025_12_09_000001_add_warehouse_code_to_maintenance_table',11);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (17,'2025_12_09_152622_change_qty_columns_to_decimal_in_maintenance_tables',11);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (18,'2025_12_13_111255_add_date_to_vendor_payment_table',12);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (19,'2025_12_13_111707_alter_vendor_payment_table_for_partial_payment',13);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (20,'2025_12_13_111710_create_vendor_payment_history_table',14);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (21,'2025_12_14_add_is_route_to_order_cost_table',15);

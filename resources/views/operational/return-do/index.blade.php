@@ -88,6 +88,39 @@
         </div>
     </div>
 </div>
+
+<!-- Modal Gallery Surat Jalan -->
+<div class="modal fade" id="modalFileGallery" tabindex="-1" aria-labelledby="modalFileGalleryLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="modalFileGalleryLabel">
+                    <i class="mdi mdi-file-image me-2"></i>Gallery Surat Jalan
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Order Code:</strong> <span id="galleryOrderCode"></span></p>
+                <div id="fileGalleryContainer" class="row g-3">
+                    <!-- Files will be loaded here -->
+                </div>
+                <div id="galleryLoading" class="text-center py-5" style="display: none;">
+                    <div class="spinner-border text-info" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Memuat file...</p>
+                </div>
+                <div id="galleryEmpty" class="text-center py-5" style="display: none;">
+                    <i class="mdi mdi-file-alert" style="font-size: 48px; color: #ccc;"></i>
+                    <p class="text-muted mt-2">Tidak ada file</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('script')
@@ -245,6 +278,78 @@
 
             // Show modal
             $('#modalDetailCost').modal('show');
+        });
+
+        // Event handler untuk tombol view files
+        $(document).on('click', '.btn-view-files', function(e) {
+            e.preventDefault();
+            const orderId = $(this).data('order-id');
+            const orderCode = $(this).data('order-code');
+
+            // Set order code
+            $('#galleryOrderCode').text(orderCode);
+
+            // Show loading
+            $('#galleryLoading').show();
+            $('#fileGalleryContainer').hide();
+            $('#galleryEmpty').hide();
+
+            // Show modal
+            $('#modalFileGallery').modal('show');
+
+            // Load files via AJAX
+            $.ajax({
+                url: "{{ route('operational.return-do.get-files', ['orderId' => ':orderId']) }}".replace(':orderId', orderId),
+                type: 'GET',
+                success: function(response) {
+                    $('#galleryLoading').hide();
+                    
+                    if (response.success && response.files.length > 0) {
+                        $('#fileGalleryContainer').show().empty();
+                        
+                        response.files.forEach(function(file) {
+                            const fileExt = file.name.split('.').pop().toLowerCase();
+                            const isPdf = fileExt === 'pdf';
+                            
+                            let cardContent = '';
+                            if (isPdf) {
+                                cardContent = `
+                                    <div class="text-center py-4">
+                                        <i class="mdi mdi-file-pdf" style="font-size: 80px; color: #dc3545;"></i>
+                                        <p class="mt-2 mb-0"><small>${file.name}</small></p>
+                                    </div>
+                                `;
+                            } else {
+                                cardContent = `
+                                    <img src="${file.url}" class="card-img-top" alt="${file.name}" style="height: 200px; object-fit: cover;">
+                                `;
+                            }
+                            
+                            const card = `
+                                <div class="col-md-3 col-sm-6">
+                                    <div class="card">
+                                        ${cardContent}
+                                        <div class="card-body">
+                                            <p class="card-text small mb-1"><i class="mdi mdi-clock-outline me-1"></i>${file.uploaded_at}</p>
+                                            <a href="${file.url}" target="_blank" class="btn btn-sm btn-primary w-100">
+                                                <i class="mdi mdi-download me-1"></i>Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $('#fileGalleryContainer').append(card);
+                        });
+                    } else {
+                        $('#galleryEmpty').show();
+                    }
+                },
+                error: function(xhr) {
+                    $('#galleryLoading').hide();
+                    $('#galleryEmpty').show();
+                    console.error('Error loading files:', xhr);
+                }
+            });
         });
 
     });
