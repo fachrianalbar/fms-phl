@@ -80,16 +80,10 @@
     <!-- Info Pembayaran -->
     <table style="margin-top: 15px;">
         <tr>
-            <td style="width: 15%;">TGL :</td>
-            <td style="width: 35%;">{{ Carbon::parse($vendorPayment->date)->format('d/m/Y') }}</td>
             <td style="width: 15%;">Untuk :</td>
-            <td style="width: 35%;">{{ $order->code }}</td>
-        </tr>
-        <tr>
-            <td>No :</td>
-            <td>{{ $vendorPayment->code ?? '-' }}</td>
-            <td>Arif</td>
-            <td style="font-weight: bold;">{{ $order->code }}</td>
+            <td style="width: 50%;">{{ $order->fleet->company->name ?? '-' }}</td>
+            <td style="width: 15%;">No :</td>
+            <td style="width: 20%; font-weight: bold;">{{ $order->shipmentNumber ?? '-' }}</td>
         </tr>
     </table>
 
@@ -122,24 +116,42 @@
                 <td>{{ number_format($order->route->personalVendorPrice ?? 0, 0, ',', '.') }}</td>
                 <td style="text-align: right;">{{ number_format(($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0), 0, ',', '.') }}</td>
             </tr>
+            @php
+                $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
+                $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+                $totalBefore = $subtotal + $additionalCost;
+                $pph = $order->fleet->company->pph ?? 0;
+                $pphAmount = ($totalBefore * $pph) / 100;
+                $grandTotal = $totalBefore - $pphAmount;
+            @endphp
             <tr>
-                <td colspan="6" style="border-bottom: 1px solid white; border-left: 1px solid white;"></td>
-                <td style="text-align: right; font-weight: bold;">Jumlah</td>
-                <td style="text-align: right; font-weight: bold;">{{ number_format(($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0), 0, ',', '.') }}</td>
+                <td colspan="6" style="border-left: none; border-right: none; border-bottom: none;"></td>
+                <td style="text-align: right; font-weight: bold; border-bottom: none;">Jumlah</td>
+                <td style="text-align: right; font-weight: bold; border-bottom: none;">{{ number_format($subtotal, 0, ',', '.') }}</td>
             </tr>
             @if ($order->cost && $order->cost->count() > 0)
                 @foreach ($order->cost as $cost)
                     <tr>
-                        <td colspan="6"></td>
-                        <td style="text-align: left;">{{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
-                        <td style="text-align: right;">{{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
+                        <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                        <td style="text-align: right; border-bottom: none; border-top: none;">{{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
+                        <td style="text-align: right; border-bottom: none; border-top: none;">{{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             @endif
+            @if ($pph > 0)
+                <tr>
+                    <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                    <td style="text-align: right; border-bottom: none; border-top: none;">PPH {{ number_format($pph, 2, ',', '.') }}%</td>
+                    <td style="text-align: right; border-bottom: none; border-top: none;">{{ number_format($pphAmount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
             <tr>
-                <td colspan="6" style="border-bottom: 1px solid white; border-left: 1px solid white;"></td>
-                <td style="border-bottom: 1px solid white;"></td>
-                <td style="border-bottom: 1px solid white;"></td>
+                <td colspan="8" style="border-left: none; border-right: none; border-top: 2px solid black; border-bottom: none;"></td>
+            </tr>
+            <tr>
+                <td colspan="6" style="border: none;"></td>
+                <td style="text-align: right; font-weight: bold; border: none;">Total</td>
+                <td style="text-align: right; font-weight: bold; border: none;">{{ number_format($grandTotal, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>
@@ -150,46 +162,16 @@
             <td style="width: 50%; border: none; vertical-align: top;">
                 <table style="border: none;">
                     <tr>
-                        <td style="border: none; width: 30%;">Total Bayar :</td>
-                        <td style="border: none; font-weight: bold;">{{ number_format($vendorPayment->amount ?? 0, 0, ',', '.') }}</td>
+                        <td style="border: none; width: 35%;">Pembayaran Via :</td>
+                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->bankName ?? '-' }}</td>
                     </tr>
                     <tr>
-                        <td style="border: none;">Pembayaran Via :</td>
-                        <td style="border: none; font-weight: bold;">
-                            @if ($vendorPayment->paymentHistory && $vendorPayment->paymentHistory->count() > 0)
-                                @php
-                                    $lastPayment = $vendorPayment->paymentHistory->last();
-                                @endphp
-                                {{ $lastPayment->userBank->bank->name ?? 'Transfer' }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                    </tr>
-                    <tr>
-                        <td style="border: none;">Tgl :</td>
-                        <td style="border: none;">
-                            @if ($vendorPayment->paymentHistory && $vendorPayment->paymentHistory->count() > 0)
-                                @php
-                                    $lastPayment = $vendorPayment->paymentHistory->last();
-                                @endphp
-                                {{ Carbon::parse($lastPayment->payment_date)->format('d/m/Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
+                        <td style="border: none;">No Rekening :</td>
+                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->accountNumber ?? '-' }}</td>
                     </tr>
                 </table>
             </td>
             <td style="width: 50%; border: none; vertical-align: top;">
-                <table style="border: none;">
-                    <tr>
-                        <td style="border: none; font-weight: bold;">BCA {{ $company->code ?? 'PHL' }}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: none;">{{ $company->bankCode ?? '0208888351' }}</td>
-                    </tr>
-                </table>
             </td>
         </tr>
     </table>
