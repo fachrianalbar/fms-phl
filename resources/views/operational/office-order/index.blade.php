@@ -434,7 +434,6 @@
                 dataType: 'JSON',
                 cache: false,
                 success: function(data) {
-                    console.log(data);
                     $('#note').val(data.notes)
                     // if (r.success) {
                     //     let data = r.data

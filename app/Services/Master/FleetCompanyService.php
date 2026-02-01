@@ -32,6 +32,9 @@ class FleetCompanyService
         $data = $this->service->create([
             'name' => $request->name,
             'type' => $request->type,
+            'accountNumber' => $request->accountNumber,
+            'bankName' => $request->bankName,
+            'pph' => $request->pph,
             'code' => GenerateCode::generateCode('FFC'),
         ]);
 
@@ -45,6 +48,9 @@ class FleetCompanyService
         $this->service->where('id', $id)->update([
             'name' => $request->name,
             'type' => $request->type,
+            'accountNumber' => $request->accountNumber,
+            'bankName' => $request->bankName,
+            'pph' => $request->pph,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

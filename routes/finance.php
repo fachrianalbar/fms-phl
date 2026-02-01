@@ -14,6 +14,7 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::put('invoice-detail/{id}', [InvoiceController::class, 'storeInvoiceDetail'])->name('invoice-detail.store');
     Route::delete('invoice-detail/{id}', [InvoiceController::class, 'destroyInvoiceDetail'])->name('invoice-detail.destroy');
     Route::get('pdf-invoice/{id}', [InvoiceController::class, 'pdfInvoice'])->name('invoice.pdf-invoice');
+    Route::get('pdf-vendor-payment/{orderCode}', [VendorPaymentController::class, 'pdfVendorPayment'])->name('vendor-payment.pdf');
     Route::post('invoice/{id}/payment', [InvoiceController::class, 'processPayment'])->name('invoice.process-payment');
     Route::post('invoice/{id}/recalculate', [InvoiceController::class, 'recalculate'])->name('invoice.recalculate');
     Route::get('invoice-payment/export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('invoice-payment.export-pdf');

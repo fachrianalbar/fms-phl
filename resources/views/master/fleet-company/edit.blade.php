@@ -42,6 +42,23 @@
                         </select>
                     </div>
 
+                    <div class="col-md-12">
+                        <label class="form-label" for="accountNumber">{{ __('menu_fleet_company.account_number') }}</label>
+                        <input class="form-control" name="accountNumber" id="accountNumber" type="text"
+                            placeholder="{{ __('menu_fleet_company.account_number') }}" value="{{ $data->accountNumber ?? '' }}">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label" for="bankName">{{ __('menu_fleet_company.bank_name') }}</label>
+                        <input class="form-control" name="bankName" id="bankName" type="text"
+                            placeholder="{{ __('menu_fleet_company.bank_name') }}" value="{{ $data->bankName ?? '' }}">
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label" for="pph">{{ __('menu_fleet_company.pph') }}</label>
+                        <input class="form-control" name="pph" id="pph" type="number" step="0.01" min="0" max="100"
+                            placeholder="{{ __('menu_fleet_company.pph') }}" value="{{ $data->pph ?? 0 }}">
+                    </div>
 
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">{{ __('general.edit') }}</button>

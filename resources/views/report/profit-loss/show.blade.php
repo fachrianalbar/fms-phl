@@ -334,7 +334,6 @@
 
 
                     error: function(xhr) {
-                        console.log(xhr.responseText);
                         $('.loader-wrapper').remove();
                     }
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanySetting;
 use App\Models\Finance\VendorPayment;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
@@ -11,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class VendorPaymentController extends Controller
@@ -37,7 +39,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -50,7 +52,7 @@ class VendorPaymentController extends Controller
             'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -58,11 +60,11 @@ class VendorPaymentController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -169,7 +171,7 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'success';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
@@ -187,40 +189,34 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '';
                     $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
                     $remainingAmount = $vendorPayment ? ($vendorPayment->remaining_amount ?? 0) : ($row->personalVendorPrice ?? 0);
                     $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
 
-                    // Show payment button only if:
-                    // 1. Fleet is external type
-                    // 2. Payment status is NOT 'paid' (sudah lunas)
+                    // Build button group for cleaner UI
+                    $buttons = [];
+
+                    // PDF (always show)
+                    $buttons[] = '<a href="' . route('finance.vendor-payment.pdf', $row->code) . '" target="_blank" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Print PDF"><i class="mdi mdi-file fs-14"></i></a>';
+
+                    // Payment (only for external fleets and not fully paid)
                     if (isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid') {
                         $billingAmount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
-                        $btn = ' <td>
-                            <a href="javascript:showModal(\''.$row->code.'\', '.$billingAmount.', '.$remainingAmount.')"
-                                class="btn btn-icon btn-sm bg-success-subtle me-1"
-                                data-bs-toggle="tooltip" title="Action">
-                                    <i class="mdi mdi-cash fs-14 text-success"></i>
-                             </a>
-                            </td>';
+                        $buttons[] = '<button type="button" onclick="showModal(\'' . $row->code . '\',' . $billingAmount . ',' . $remainingAmount . ')" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Payment"><i class="mdi mdi-cash fs-14"></i></button>';
                     }
 
-                    // Show detail button only if payment history exists
+                    // Detail (if payment history exists)
                     if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
-                        $btn .= ' <td>
-                            <a href="javascript:showDetailModal(\''.$row->code.'\')"
-                                class="btn btn-icon btn-sm bg-info-subtle me-1"
-                                data-bs-toggle="tooltip" title="Detail">
-                                    <i class="mdi mdi-eye fs-14 text-info"></i>
-                             </a>
-                            </td>';
+                        $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
                     }
 
-                    return $btn;
+                    // Wrap buttons in a group
+                    $html = '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
+
+                    return $html;
                 })
                 ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus'])
                 ->toJson();
@@ -235,7 +231,7 @@ class VendorPaymentController extends Controller
 
         if ($vendorPayment) {
             // Get mutation record for bank information
-            $mutation = \App\Models\Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
+            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->first();
@@ -264,5 +260,63 @@ class VendorPaymentController extends Controller
         }
 
         return response()->json($vendorPayment);
+    }
+
+    public function pdfVendorPayment($orderCode)
+    {
+        // Cari order berdasarkan code
+        $order = \App\Models\Operational\Order::with([
+            'fleet',
+            'driver',
+            'customer',
+            'route.originLocation',
+            'route.destinationLocation',
+            'orderMaterial.material',
+            'cost',
+        ])->where('code', $orderCode)->first();
+
+        if (!$order) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        }
+
+        $company = CompanySetting::first();
+        $customer = $order->customer;
+
+        // Cari vendor payment jika ada
+        $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $orderCode)->first();
+
+        // Tentukan template PDF berdasarkan customer company format
+        $pdfTemplate = 'finance.vendor-payment.pdf.general-phl'; // Default template
+
+        // pribadi
+        if ($customer->company->format == 'P') {
+            $pdfTemplate = 'finance.vendor-payment.pdf.pribadi';
+        }
+
+        // wijaya trans
+        if ($customer->company->format == 'WTMS' || $customer->company->format == 'WT') {
+            $pdfTemplate = 'finance.vendor-payment.pdf.general-wt';
+        }
+
+        $mpdf = new Mpdf(
+            [
+                'orientation' => 'P',
+                'format' => [215, 330],
+                'tempDir' => storage_path('app/mpdf-temp'),
+            ]
+        );
+
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $mpdf->WriteHTML(
+            view($pdfTemplate)
+                ->with('vendorPayment', $vendorPayment)
+                ->with('order', $order)
+                ->with('customer', $customer)
+                ->with('company', $company)
+        );
+
+        return $mpdf->Output('Nota-Pembayaran-' . $order->code . '.pdf', 'I');
     }
 }

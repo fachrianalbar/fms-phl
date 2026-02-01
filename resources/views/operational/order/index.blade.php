@@ -651,7 +651,6 @@
         })
 
         // $('#modal-tax-btn').click(function() {
-        //     console.log("andi");
         //     $('#modal-tax').modal('show');
         // });
 
@@ -815,7 +814,6 @@
             dataType: 'JSON',
             cache: false,
             success: function(data) {
-                console.log(data);
                 $('#note').val(data.notes)
                 // if (r.success) {
                 //     let data = r.data
@@ -894,7 +892,6 @@
                 }
             },
             error: function() {
-                console.log('Error loading order drivers');
             }
         });
     }
@@ -1008,7 +1005,6 @@
                 $('#componentType').html(options);
             },
             error: function() {
-                console.log('Error loading cost components');
             }
         });
     }
@@ -1051,7 +1047,6 @@
                 $('#total-amount').text(`Total: Rp ${formattedTotal}`);
             },
             error: function() {
-                console.log('Error loading order costs');
             }
         });
     }

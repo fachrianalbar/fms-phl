@@ -343,7 +343,6 @@
                 url: "{{ url('ajax/purchase-detail') }}/" + id,
                 type: "GET",
                 success: function(response) {
-                    console.log(response);
                     $('input[name="itemCodeModal"]').val(response.itemCode);
                     $('input[name="itemNameModal"]').val(response.item.name);
                     $('input[name="qtyModal"]').val(response.qty);
@@ -355,8 +354,6 @@
                     $('.bd-example-modal-lg').modal('show');
                 }
             });
-
-            // console.log(selectedId);
 
         } else if (checkedCount > 1) {
             // Jika lebih dari 1 checkbox dicentang, langsung submit form

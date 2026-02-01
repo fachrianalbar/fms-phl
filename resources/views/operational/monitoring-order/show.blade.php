@@ -186,8 +186,6 @@
 
             const decodedRoute = @json($decodedPolyline);
 
-            console.log(decodedRoute);
-
 
             // Gambar rute utama (garis biru)
             new google.maps.Polyline({

@@ -20,5 +20,8 @@ class FleetCompany extends Model
         'name',
         'type',
         'address',
+        'accountNumber',
+        'bankName',
+        'pph',
     ];
 }

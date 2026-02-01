@@ -38,6 +38,9 @@
                                 <th>No</th>
                                 <th>{{ __('menu_fleet_company.name') }}</th>
                                 <th>{{ __('menu_fleet_company.type') }}</th>
+                                <th>{{ __('menu_fleet_company.account_number') }}</th>
+                                <th>{{ __('menu_fleet_company.bank_name') }}</th>
+                                <th>{{ __('menu_fleet_company.pph') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -95,6 +98,15 @@
                     },
                     {
                         "data": 'type'
+                    },
+                    {
+                        "data": 'accountNumber'
+                    },
+                    {
+                        "data": 'bankName'
+                    },
+                    {
+                        "data": 'pph'
                     },
                 ],
                 "columnDefs": [{

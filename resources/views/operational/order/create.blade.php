@@ -566,7 +566,6 @@
             $('#originLocationCode').html(html);
 
             $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
-                console.log(data);
                 data.forEach(i => {
                     html +=
                         `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
@@ -954,7 +953,6 @@
 
         if (customerCode) {
             $.get("/ajax/customer-detail/" + customerId, function(data) {
-                console.log(data);
                 const $detailCard = $('#card-customer-detail');
                 const $cardBody = $detailCard.find('.card-body');
                 $cardBody.empty(); // Bersihkan isinya

@@ -97,9 +97,12 @@
                                 <div class="col-md-12">
                                     <label class="form-label"
                                         for="amount">{{ __('menu_vendor_payment.amount') }}</label>
-                                    <input class="form-control" name="amount" id="amount" type="text"
-                                        oninput="formatAngka(this); validatePaymentAmount()"
-                                        placeholder="{{ __('menu_vendor_payment.amount') }}" required>
+                                    <div class="input-group">
+                                        <input class="form-control" name="amount" id="amount" type="text"
+                                            oninput="formatAngka(this); validatePaymentAmount()"
+                                            placeholder="{{ __('menu_vendor_payment.amount') }}" required>
+                                        <button class="btn btn-outline-secondary" type="button" id="fullFillBtn" onclick="fillFullAmount()">Full Fill</button>
+                                    </div>
                                     <small class="form-text text-muted" id="amountWarning"></small>
                                 </div>
 
@@ -331,7 +334,6 @@
             url: "{{ route('api.user-bank.company') }}",
             type: "GET",
             success: function(response) {
-                console.log('Bank data loaded:', response);
                 let options = '<option value="">Pilih Bank</option>';
                 if (response && response.length > 0) {
                     response.forEach(function(bank) {
@@ -339,14 +341,11 @@
                         options += `<option value="${bank.code}">${bankLabel} - ${bank.account_number} (${bank.account_name})</option>`;
                     });
                 } else {
-                    console.warn('Tidak ada data bank yang ditemukan');
                     options += '<option value="" disabled>Tidak ada data bank</option>';
                 }
                 $('#userBankCode').html(options);
             },
             error: function(xhr) {
-                console.error('Gagal memuat data bank:', xhr.status, xhr.statusText);
-                console.error('Response:', xhr.responseText);
                 let options = '<option value="">Pilih Bank</option>';
                 options += '<option value="" disabled>Error memuat data</option>';
                 $('#userBankCode').html(options);
@@ -355,8 +354,6 @@
     }
 
     function showModal(orderCode, billingAmount, remainingAmount) {
-        console.log('Order Code:', orderCode, 'Billing Amount:', billingAmount, 'Remaining:', remainingAmount);
-
         $('#payment-modal').modal('show');
         $('#orderCode').val(orderCode);
         $('#billingAmount').val(new Intl.NumberFormat('id-ID').format(billingAmount));
@@ -367,6 +364,13 @@
         $('#description').val('');
         $('#userBankCode').val('');
         $('#amountWarning').text('').html('');
+
+        // Enable/disable Full Fill button based on remaining amount
+        if (remainingAmount > 0) {
+            $('#fullFillBtn').prop('disabled', false);
+        } else {
+            $('#fullFillBtn').prop('disabled', true);
+        }
     }
 
     function validatePaymentAmount() {
@@ -384,6 +388,12 @@
         } else {
             warningEl.text('');
         }
+    }
+
+    function fillFullAmount() {
+        const remainingAmount = parseInt($('#remainingAmount').val().replace(/[^\d]/g, '')) || 0;
+        $('#amount').val(new Intl.NumberFormat('id-ID').format(remainingAmount));
+        validatePaymentAmount();
     }
 
     function showDetailModal(orderCode) {
@@ -452,7 +462,6 @@
                 }
             },
             error: function(xhr) {
-                console.error('Error:', xhr);
                 alert('Gagal memuat data pembayaran.');
             }
         });

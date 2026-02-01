@@ -421,7 +421,6 @@
                     url: "{{ route('ajax.guest-order-shipment', '') }}/" + shipmentNumber,
                     type: "GET",
                     success: function(response) {
-                        console.log(response);
                         if (!response || response.length === 0) {
                             swal({
                                 title: "{{ __('general.warning') }}",
@@ -546,8 +545,6 @@
             // const decodedRoute = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
             const decodedRoute = @json($decodedPolyline);
-
-            console.log(decodedRoute);
 
 
             // Gambar rute utama (garis biru)

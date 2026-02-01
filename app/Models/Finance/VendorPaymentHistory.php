@@ -27,4 +27,12 @@ class VendorPaymentHistory extends Model
     {
         return $this->belongsTo(VendorPayment::class, 'vendor_payment_id', 'id');
     }
+
+    /**
+     * Relasi ke tabel user_bank berdasarkan user_bank_code
+     */
+    public function userBank()
+    {
+        return $this->belongsTo(\App\Models\Bank\UserBank::class, 'user_bank_code', 'code');
+    }
 }

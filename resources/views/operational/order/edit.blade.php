@@ -785,8 +785,6 @@ use App\Models\Data\Route;
 
         const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
 
-        console.log(selectedType);
-
         setTimeout(function() {
 
             loadQty(selectedType)
@@ -877,7 +875,6 @@ use App\Models\Data\Route;
             $('#originLocationCode').html(html);
 
             $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
-                console.log(data);
                 data.forEach(i => {
                     html +=
                         `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name})</option>`;
@@ -951,7 +948,6 @@ use App\Models\Data\Route;
 
     $('#add-material').on('click', function() {
         let row = $('#materialForm tr').length + 1;
-        console.log(row);
 
         let newRow = `
     <tr>

@@ -228,7 +228,6 @@
             url: "{{ route('api.user-bank.company') }}",
             type: "GET",
             success: function(response) {
-                console.log('Bank data loaded:', response);
                 let options = '<option value="">Pilih Bank</option>';
                 if (response && response.length > 0) {
                     response.forEach(function(bank) {

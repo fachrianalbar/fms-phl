@@ -379,7 +379,6 @@
 
             data.pic.forEach((item, i) => {
                 if (item.picName && item.phone) {
-                    console.log("andi");
                     hasValidData = true;
 
                     const html = `

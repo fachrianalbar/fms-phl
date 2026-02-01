@@ -361,7 +361,6 @@
 
 
         let inputFileCount = document.querySelectorAll("input[name^='picName']").length;
-        console.log(inputFileCount);
 
         addInputFile.addEventListener('click', () => {
             listInputFile.appendChild(addFile(inputFileCount));
