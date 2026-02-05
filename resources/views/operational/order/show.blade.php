@@ -464,7 +464,7 @@ use App\Models\Data\Route;
     <script>
         $(document).ready(function() {
 
-            const selectedType = $('#routeTypeCode').select2('val');
+            // const selectedType = $('#routeTypeCode').val();
 
             // loadQty(selectedType)
         });
@@ -491,7 +491,7 @@ use App\Models\Data\Route;
         }
 
         $('#save').click(function(e) {
-            const routeTypeCode = $('#routeTypeCode').select2('val');
+            const routeTypeCode = $('#routeTypeCode').val();
 
             // if (routeTypeCode === 'TONASE') {
             //     const qty = $('#qty').val();
@@ -511,8 +511,8 @@ use App\Models\Data\Route;
 
 
         function checkAndLoadOriginLocation() {
-            const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-            const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+            const customerCode = $('#customerCode').val(); // Get the value
+            const routeTypeCode = $('#routeTypeCode').val(); // Get the value
 
             if (customerCode && routeTypeCode) {
                 let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
@@ -523,8 +523,8 @@ use App\Models\Data\Route;
                         html += '<option value="' + i.code + '">' + i.name + '</option>';
                     });
                     $('#originLocationCode').html(html);
-                    // Reinitialize Select2 for origin location dropdown after updating options
-                    $('#originLocationCode').select2();
+                    // Origin location is readonly input, no need to initialize select2
+                    // $('#originLocationCode').select2();
                 });
             }
         }
@@ -570,7 +570,7 @@ use App\Models\Data\Route;
             </div>
         `);
 
-            const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
+            const selectedType = $('#routeTypeCode').val(); // Get the value
 
             setTimeout(function() {
 
@@ -582,9 +582,9 @@ use App\Models\Data\Route;
 
 
         function checkAndLoadDestinationLocation() {
-            const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-            const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-            const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
+            const customerCode = $('#customerCode').val(); // Get the value
+            const routeTypeCode = $('#routeTypeCode').val(); // Get the value
+            const originLocationCode = $('#originLocationCode').val(); // Get the value
 
             if (customerCode && routeTypeCode && originLocationCode) {
                 let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
@@ -597,17 +597,17 @@ use App\Models\Data\Route;
                             html += '<option value="' + i.code + '">' + i.name + '</option>';
                         });
                         $('#destinationLocationCode').html(html);
-                        // Reinitialize Select2 for destination location dropdown after updating options
-                        $('#destinationLocationCode').select2();
+                    // Destination location is readonly input, no need to initialize select2
+                    // $('#destinationLocationCode').select2();
                     });
             }
         }
 
 
         function checkAndLoadRoute() {
-            const customerCode = $('#customerCode').select2('val');
-            const originLocationCode = $('#originLocationCode').select2('val');
-            const destinationLocationCode = $('#destinationLocationCode').select2('val');
+            const customerCode = $('#customerCode').val();
+            const originLocationCode = $('#originLocationCode').val();
+            const destinationLocationCode = $('#destinationLocationCode').val();
 
             if (customerCode && originLocationCode && destinationLocationCode) {
                 $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
@@ -618,19 +618,19 @@ use App\Models\Data\Route;
             }
         }
 
-        // Trigger origin location when both customer and route type are selected
-        $('#customerCode, #routeTypeCode').on('change', function() {
-            checkAndLoadOriginLocation();
-        });
+        // Event listeners removed since elements are readonly inputs
+        // $('#customerCode, #routeTypeCode').on('change', function() {
+        //     checkAndLoadOriginLocation();
+        // });
 
-        // Trigger destination location when origin location is also selected
-        $('#originLocationCode').on('select2:select', function() {
-            checkAndLoadDestinationLocation();
-        });
+        // // Trigger destination location when origin location is also selected
+        // $('#originLocationCode').on('select2:select', function() {
+        //     checkAndLoadDestinationLocation();
+        // });
 
-        $('#destinationLocationCode').on('select2:select', function() {
-            checkAndLoadRoute();
-        });
+        // $('#destinationLocationCode').on('select2:select', function() {
+        //     checkAndLoadRoute();
+        // });
 
         $('#dt').DataTable()
 
@@ -696,5 +696,9 @@ use App\Models\Data\Route;
                 $('#vendorPriceCard').hide();
             @endif
         });
+
+        function formatNumber(number) {
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
+        }
     </script>
     @endpush

@@ -312,10 +312,10 @@ class OrderController extends Controller
         $fleetType = $this->fleetTypeSvc->findAll();
         $driver = $this->driverSvc->findDriver();
         $company = $this->companySvc->findAll();
-        
+
         // Load routes untuk customer ini, dan pastikan route yang sedang di-edit juga included
         $routes = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
-        
+
         // Jika route order tidak ada di list (misalnya customer berubah), tambahkan route tersebut
         if ($data->routeCode && !$routes->where('code', $data->routeCode)->first()) {
             $currentRoute = Route::where('code', $data->routeCode)->with(['originLocation', 'destinationLocation'])->first();
@@ -323,9 +323,9 @@ class OrderController extends Controller
                 $routes->push($currentRoute);
             }
         }
-        
+
         $route = $routes;
-        
+
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->service->getFleet($data->fleetCode);
         $component = CostComponent::get();
