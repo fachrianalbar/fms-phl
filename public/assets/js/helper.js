@@ -1,20 +1,37 @@
-// Fungsi untuk memformat angka dengan titik sebagai pemisah ribuan
+// Fungsi untuk memformat angka dengan titik sebagai pemisah ribuan, mendukung desimal
 function formatAngka(input) {
-    // Menghapus titik yang sudah ada di dalam input
-    let angka = input.value.replace(/\./g, "");
-
-    // Mengecek apakah input hanya berisi angka
-    if (!/^\d+$/.test(angka)) {
-        // Jika tidak hanya berisi angka, set input menjadi string kosong
-        input.value = "";
+    // Jika input berakhir dengan koma atau titik, jangan format dulu
+    if (input.value.endsWith(',') || input.value.endsWith('.')) {
         return;
     }
 
-    // Mengubah ke format angka dan menambahkan titik pemisah ribuan
-    angka = new Intl.NumberFormat("id-ID").format(angka);
+    // Menghapus titik yang sudah ada di dalam input, kecuali titik desimal
+    let angka = input.value.replace(/\./g, "").replace(",", ".");
 
-    // Mengembalikan nilai yang sudah diformat ke input
-    input.value = angka;
+    // Mengecek apakah input adalah angka valid dengan opsional desimal, atau titik di akhir
+    if (!/^\d+(\.\d{0,2})?$/.test(angka) && !/^\d*\.$/.test(angka)) {
+        // Jika tidak valid, potong ke 2 desimal jika ada
+        if (angka.includes(".")) {
+            let parts = angka.split(".");
+            if (parts[1] && parts[1].length > 2) {
+                angka = parts[0] + "." + parts[1].substring(0, 2);
+            }
+        }
+        let parsed = parseFloat(angka);
+        if (!isNaN(parsed)) {
+            input.value = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parsed);
+        } else {
+            input.value = "";
+        }
+        return;
+    }
+
+    // Jika valid, format
+    let parsed = parseFloat(angka);
+    if (!isNaN(parsed)) {
+        let formatted = new Intl.NumberFormat("id-ID", { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parsed);
+        input.value = formatted;
+    }
 }
 
 // konversi string angka menjadi int

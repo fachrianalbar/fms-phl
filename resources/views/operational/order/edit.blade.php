@@ -225,21 +225,20 @@ use App\Models\Data\Route;
                 </div>
             </div>
 
-            @role('SPRADMIN', 'SPRUSER', 'DO')
+            {{-- @role('SPRADMIN', 'SPRUSER', 'DO')
             <div class="row mt-4">
                 <div class="col-md-6">
                     <label class="form-label" for="routeAmount">{{ __('menu_order.route_price') }}</label>
                     <input class="form-control" name="routeAmount" id="routeAmount"
                         oninput="formatAngka(this)" type="text"
                         placeholder="{{ __('menu_order.route_price') }}"
-                        value="{{ number_format($data->routeAmount, 0, ',', '.') }}">
+                        value="{{ number_format($data->routeAmount, 2, ',', '.') }}">
                 </div>
             </div>
-            @endrole
+            @endrole --}}
 
-            @unlessrole('SPRADMIN', 'SPRUSER', 'DO')
-            <input type="hidden" name="routeAmount" value="{{ $data->routeAmount }}">
-            @endunlessrole
+            <!-- Hidden input untuk semua role -->
+            <input type="hidden" name="routeAmount" value="{{ $data->routeAmount }}"
 
             {{-- <div class="row mt-4">
                             <div class="col-md-6 position-relative">
@@ -328,7 +327,7 @@ use App\Models\Data\Route;
                         <div class="d-flex align-items-center justify-content-between">
                             <div>
                                 <p class="text-white-50 mb-1 small">Harga Vendor</p>
-                                <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</h4>
+                                <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp {{ number_format($data->personalVendorPrice ?? 0, 2, ',', '.') }}</h4>
                             </div>
                             <div class="bg-white bg-opacity-25 p-3 rounded">
                                 <i class="mdi mdi-account-cash fs-2 text-white"></i>
@@ -640,8 +639,8 @@ use App\Models\Data\Route;
                     // Show preloader
                     showPreloader();
 
-                    // Validate routeAmount
-                    const routeAmount = $('input[name="routeAmount"]').val();
+                    // Validate routeAmount (bisa dari input atau hidden)
+                    let routeAmount = $('input[name="routeAmount"]').val();
                     if (!routeAmount || routeAmount === '') {
                         hidePreloader();
                         swal({
@@ -854,7 +853,7 @@ use App\Models\Data\Route;
                                 <td><input type="hidden"  name="componentName[]" readonly value="${item.cost_component.code}"> ${item.cost_component.name}</td>
                                 <td><input class="form-control" name="description[]" value=""></td>
                                  <td>
-             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
+             <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${new Intl.NumberFormat('id-ID').format(item.amount)}">
         </td>
                             </tr>`;
                             componentList.insertAdjacentHTML('beforeend', row);
@@ -1049,6 +1048,12 @@ use App\Models\Data\Route;
         $('#preloader').css('display', 'none');
     }
 
+    // Function to format number with thousand separator
+    function formatNumber(num) {
+        if (!num) return '0';
+        return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num);
+    }
+
     // Function to update price information
     function updatePriceInfo() {
         const fleetCode = $('#fleetCode').val();
@@ -1081,6 +1086,9 @@ use App\Models\Data\Route;
                     // Update vendor price
                     $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.vendorPrice));
 
+                    // Update hidden routeAmount input with calculated price
+                    $('input[name="routeAmount"]').val(response.price);
+
                     // Hide/Show vendor price card based on fleet type
                     if (response.isExternal) {
                         $('#vendorPriceCard').show();
@@ -1110,6 +1118,27 @@ use App\Models\Data\Route;
     // Update when fleet is selected
     $('#fleetCode').on('select2:select', function() {
         updatePriceInfo();
+    });
+
+    // Initialize Select2 and set values
+    $(document).ready(function() {
+        $('.js-example-basic-single').select2({
+            placeholder: "{{ __('general.choose') }}...",
+            allowClear: true,
+            width: '100%'
+        });
+
+        // Set selected values setelah Select2 init
+        $('#fleetCode').val('{{ $data->fleetCode }}').trigger('change');
+        $('#driverCode').val('{{ $data->driverCode }}').trigger('change');
+        $('#customerCode').val('{{ $data->customerCode }}').trigger('select2:select');
+        $('#routeTypeCode').val('{{ $data->route?->routeTypeCode }}');
+        
+        // Set route langsung dengan delay kecil untuk pastikan DOM siap
+        setTimeout(function() {
+            $('#routeData').val('{{ $data->routeCode }}');
+            $('#routeData').trigger('change');
+        }, 100);
     });
 
 </script>

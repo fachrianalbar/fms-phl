@@ -312,10 +312,20 @@ class OrderController extends Controller
         $fleetType = $this->fleetTypeSvc->findAll();
         $driver = $this->driverSvc->findDriver();
         $company = $this->companySvc->findAll();
-        $route = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
-        // $route = Route::where('code', $data->routeCode)->first();
-        // $origin = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->get();
-        // $destination = Route::where('customerCode', $route->customerCode)->where('routeTypeCode', $route->routeTypeCode)->where('originLocationCode', $route->originLocationCode)->get();
+        
+        // Load routes untuk customer ini, dan pastikan route yang sedang di-edit juga included
+        $routes = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
+        
+        // Jika route order tidak ada di list (misalnya customer berubah), tambahkan route tersebut
+        if ($data->routeCode && !$routes->where('code', $data->routeCode)->first()) {
+            $currentRoute = Route::where('code', $data->routeCode)->with(['originLocation', 'destinationLocation'])->first();
+            if ($currentRoute) {
+                $routes->push($currentRoute);
+            }
+        }
+        
+        $route = $routes;
+        
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->service->getFleet($data->fleetCode);
         $component = CostComponent::get();
@@ -538,7 +548,7 @@ class OrderController extends Controller
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 0, ',', '.');
+                            return '' . number_format($row->route->price, 2, ',', '.');
                         }
                     }
 
@@ -583,10 +593,10 @@ class OrderController extends Controller
                     return '' . number_format($this->totalPrice, 0, ',', '.');
                 })
                 ->addColumn('price', function ($row) {
-                    return 'Rp ' . number_format($row->routeAmount ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->routeAmount ?? 0, 2, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
 

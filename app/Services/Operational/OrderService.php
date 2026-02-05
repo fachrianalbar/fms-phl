@@ -150,18 +150,18 @@ class OrderService
         $selectedRoute = $this->route->where('code', $request->routeData)->first();
         $computedRouteAmount = null;
         if ($selectedRoute) {
-            $computedRouteAmount = (int) ($selectedRoute->price * $request->qty);
+            $computedRouteAmount = (float) ($selectedRoute->price * $request->qty);
         }
 
         // Get submitted (sanitized) routeAmount from update data
-        $submittedRouteAmount = isset($updateData['routeAmount']) ? (int) $updateData['routeAmount'] : null;
+        $submittedRouteAmount = isset($updateData['routeAmount']) ? (float) $updateData['routeAmount'] : null;
 
         // Perform update
         $this->service->where('id', $id)->update($updateData);
 
         // If submitted route amount differs from computed route price, record it
         if ($computedRouteAmount !== null && $submittedRouteAmount !== null && $submittedRouteAmount !== $computedRouteAmount) {
-            $message = 'Route price diperbarui dari '.number_format($computedRouteAmount, 0, ',', '.').' menjadi '.number_format($submittedRouteAmount, 0, ',', '.');
+            $message = 'Route price diperbarui dari ' . number_format($computedRouteAmount, 0, ',', '.') . ' menjadi ' . number_format($submittedRouteAmount, 0, ',', '.');
             // Flash message (controller will show this on redirect)
             try {
                 session()->flash('info', $message);
@@ -251,8 +251,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code.'-del-'.Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
+            'code' => $data->code . '-del-' . Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -413,7 +413,7 @@ class OrderService
 
         // Guard: jika route tidak ditemukan, jangan lanjut proses
         if (! $route) {
-            throw new \Exception('Route dengan code '.$request->routeData.' tidak ditemukan');
+            throw new \Exception('Route dengan code ' . $request->routeData . ' tidak ditemukan');
         }
 
         // Debug: log route data
@@ -429,15 +429,18 @@ class OrderService
         $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
 
-        // Recalculate berdasarkan route, bukan dari user input
-        // Gunakan null coalescing (?? 0) untuk handle NULL values di master
-        $routeAmount = (int) (($route->price ?? 0) * $request->qty);
+        // Jika update dan routeAmount disediakan, gunakan input; jika tidak, recalculate
+        if ($isUpdate && isset($request->routeAmount) && $request->routeAmount !== null) {
+            $routeAmount = (float) $request->routeAmount;
+        } else {
+            $routeAmount = (float) (($route->price ?? 0) * $request->qty);
+        }
 
         // vendorPrice dan personalVendorPrice hanya untuk fleet EXTERNAL
         // Jika INTERNAL, set ke 0
         if ($isExternalFleet) {
-            $vendorPrice = (int) (($request->qty ?? 0) * ($route->vendorPrice ?? 0));
-            $personalVendorPrice = (int) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
+            $vendorPrice = (float) (($request->qty ?? 0) * ($route->vendorPrice ?? 0));
+            $personalVendorPrice = (float) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
         } else {
             $vendorPrice = 0;
             $personalVendorPrice = 0;
@@ -497,7 +500,7 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
+            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi

@@ -26,6 +26,13 @@ class Order extends Model
 
     public $incrementing = false;
 
+    protected $casts = [
+        'routeAmount' => 'decimal:2',
+        'vendorPrice' => 'decimal:2',
+        'personalVendorPrice' => 'decimal:2',
+        'qty' => 'float',
+    ];
+
     protected $fillable = [
         'code',
         'shipmentNumber',

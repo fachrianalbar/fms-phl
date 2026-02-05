@@ -51,7 +51,7 @@ class RouteService
                     'customerCode' => $filtered['customerCode'][$i],
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
-                    'price' => (int) $filtered['price'][$i],
+                    'price' => (float) $filtered['price'][$i],
                     // 'vendorPrice' => (int)$filtered['vendorPrice'][$i],
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
                     'code' => GenerateCode::generateCode('TR', true),
@@ -74,10 +74,10 @@ class RouteService
             'originLocationCode' => $request->originLocationCode,
             'destinationLocationCode' => $request->destinationLocationCode,
             // 'fleetTypeCode' => $request->fleetTypeCode,
-            'price' => (int) $request->price,
-            'vendorPrice' => (int) $request->vendorPrice,
+            'price' => (float) $request->price,
+            'vendorPrice' => (float) $request->vendorPrice,
             'routeTypeCode' => $request->routeType,
-            'personalVendorPrice' => (int) $request->personalVendorPrice,
+            'personalVendorPrice' => (float) $request->personalVendorPrice,
             'description' => $request->description,
         ]);
 

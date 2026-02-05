@@ -818,6 +818,9 @@ use App\Models\Data\Route;
                         // Update vendor price
                         $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.vendorPrice));
 
+                        // Update hidden routeAmount input with calculated price
+                        $('input[name="routeAmount"]').val(response.price);
+
                         // Hide/Show vendor price card based on fleet type
                         if (response.isExternal) {
                             $('#vendorPriceCard').show();

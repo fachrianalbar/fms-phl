@@ -139,7 +139,7 @@
                             <label class="form-label" for="price">{{ __('menu_route.price') }}</label>
                             <input class="form-control" name="price" id="price" oninput="formatAngka(this)"
                                 type="text" required placeholder="{{ __('menu_route.price') }}"
-                                value="{{ number_format($data->price, 0, ',', '.') }}">
+                                value="{{ number_format($data->price, 2, ',', '.') }}">
                         </div>
 
 
@@ -152,7 +152,7 @@
                             <label class="form-label" for="vendorPrice">{{ __('menu_route.vendor_price') }}</label>
                             <input class="form-control" name="vendorPrice" id="vendorPrice" oninput="formatAngka(this)"
                                 type="text" required placeholder="{{ __('menu_route.vendor_price') }}"
-                                value="{{ number_format($data->vendorPrice, 0, ',', '.') }}">
+                                value="{{ number_format($data->vendorPrice, 2, ',', '.') }}">
                         </div>
 
                         <div class="col-md-6">
@@ -161,7 +161,7 @@
                             <input class="form-control" name="personalVendorPrice" id="personalVendorPrice"
                                 oninput="formatAngka(this)" type="text" required
                                 placeholder="{{ __('menu_route.personal_vendor_price') }}"
-                                value="{{ number_format($data->personalVendorPrice, 0, ',', '.') }}">
+                                value="{{ number_format($data->personalVendorPrice, 2, ',', '.') }}">
                         </div>
 
 
@@ -263,10 +263,10 @@
             const vendorPriceInput = document.getElementById(vendorPriceId);
             const personalVendorPriceInput = document.getElementById(personalVendorPriceId);
 
-            // Hapus titik pemisah ribuan
-            const price = parseInt(priceInput.value.replace(/\./g, '')) || 0;
-            const vendorPrice = parseInt(vendorPriceInput.value.replace(/\./g, '')) || 0;
-            const personalVendorPrice = parseInt(personalVendorPriceInput.value.replace(/\./g, '')) || 0;
+            // Hapus titik pemisah ribuan dan ganti koma dengan titik untuk desimal
+            const price = parseFloat(priceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+            const vendorPrice = parseFloat(vendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+            const personalVendorPrice = parseFloat(personalVendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
 
             // Validasi vendorPrice tidak boleh lebih besar dari price
             if (vendorPrice > price) {
@@ -288,7 +288,7 @@
             }
 
 
-            // Set nilai input ke angka asli tanpa titik
+            // Set nilai input ke angka asli tanpa titik, dengan desimal
             priceInput.value = price;
             vendorPriceInput.value = vendorPrice;
             personalVendorPriceInput.value = personalVendorPrice;
