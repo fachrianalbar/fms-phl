@@ -384,7 +384,11 @@ class NotReturnDoController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    return '<button type="button" class="btn btn-sm btn-primary action-btn" title="Return" data-code="' . $row->code . '" data-shipment="' . $row->shipmentNumber . '" data-customer="' . $row->customer->name . '" data-fleet="' . $row->fleet->plateNumber . '" data-driver="' . $row->driver->name . '" data-order-date="' . $row->orderDate . '" data-price="' . $row->routeAmount . '" data-vendor-price="' . $row->personalVendorPrice . '" data-order-type="' . $row->fleet->company->type . '" data-origin="' . $row->route->originLocation->name . '" data-destination="' . $row->route->destinationLocation->name . '"><i class="mdi mdi-calendar"></i></button>';
+                    $returnBtn = '<button type="button" class="btn btn-sm btn-primary action-btn me-1" title="Return" data-code="' . $row->code . '" data-shipment="' . $row->shipmentNumber . '" data-customer="' . $row->customer->name . '" data-fleet="' . $row->fleet->plateNumber . '" data-driver="' . $row->driver->name . '" data-order-date="' . $row->orderDate . '" data-price="' . $row->routeAmount . '" data-vendor-price="' . $row->personalVendorPrice . '" data-order-type="' . $row->fleet->company->type . '" data-origin="' . $row->route->originLocation->name . '" data-destination="' . $row->route->destinationLocation->name . '"><i class="mdi mdi-calendar"></i></button>';
+
+                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn me-1" title="Rollback Status" data-id="' . $row->id . '" data-shipment="' . $row->shipmentNumber . '"><i class="mdi mdi-undo"></i></button>';
+
+                    return $returnBtn . $rollbackBtn;
                 })
                 ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
                 ->toJson();
@@ -484,5 +488,18 @@ class NotReturnDoController extends Controller
                 'message' => 'Error: ' . $th->getMessage(),
             ], 500);
         }
+    }
+
+    public function rollbackStatus(string $id)
+    {
+        $data = $this->service->getById($id);
+
+        if (!$data) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        }
+
+        $this->service->rollbackStatus($id);
+
+        return redirect()->route($this->view . 'index')->with('success', 'Berhasil diubah');
     }
 }

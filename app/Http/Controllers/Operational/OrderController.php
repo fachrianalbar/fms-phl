@@ -644,13 +644,11 @@ class OrderController extends Controller
                     }
 
                     // Delete dan finish order - untuk role authorized (SPRADMIN/SPRUSER) atau status < 5 untuk delete
-                    if ($isAuthorized) {
-                        $finishOrder = '<a href="javascript:finishOrder(\'' . $row->id . '\')"
-                                class="btn btn-icon btn-sm bg-success-subtle me-1"
-                                data-bs-toggle="tooltip" title="Finish Order">
-                                    <i class="mdi mdi-check-bold fs-14 text-success"></i>
-                                </a>';
-                    }
+                    $finishOrder = '<a href="javascript:finishOrder(\'' . $row->id . '\')"
+                            class="btn btn-icon btn-sm bg-success-subtle me-1"
+                            data-bs-toggle="tooltip" title="Finish Order">
+                                <i class="mdi mdi-check-bold fs-14 text-success"></i>
+                            </a>';
 
                     // Delete - untuk role authorized atau status < 5
                     if ($isAuthorized || $canEdit) {

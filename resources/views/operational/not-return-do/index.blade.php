@@ -1134,4 +1134,25 @@
             });
         });
     </script>
+
+    <script>
+        // Handler untuk tombol rollback status
+        $(document).on('click', '.rollback-btn', function() {
+            const id = $(this).data('id');
+            const shipment = $(this).data('shipment');
+            
+            swal({
+                title: "Apakah Anda yakin?",
+                text: `Ingin mengembalikan status pesanan ${shipment}?`,
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willRollback) => {
+                if (willRollback) {
+                    // Redirect ke route rollback
+                    window.location.href = "{{ route('operational.not-return-do.rollback-status', ':id') }}".replace(':id', id);
+                }
+            });
+        });
+    </script>
 @endpush

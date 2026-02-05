@@ -297,4 +297,11 @@ class NotReturnDoService
             throw $th;
         }
     }
+
+    public function rollbackStatus($id)
+    {
+        $this->service->where('id', $id)->update([
+            'status' => 0,
+        ]);
+    }
 }
