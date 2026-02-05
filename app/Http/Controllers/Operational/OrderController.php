@@ -386,11 +386,6 @@ class OrderController extends Controller
      */
     public function destroy(string $id)
     {
-        // Check role authorization
-        if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Unauthorized');
-        }
-
         $data = $this->service->getById($id);
 
         // Check if status is 5 or 6 - cannot delete
