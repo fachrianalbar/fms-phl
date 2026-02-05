@@ -118,7 +118,7 @@ class VendorPaymentService
             'nominal' => $paymentAmount,
             'type' => 'Out', // Out untuk pengeluaran
             'date' => $request->date,
-            'description' => 'Vendor Payment for Order ' . $order->code . ' with amount ' . number_format($paymentAmount, 0, '.', ','),
+            'description' => 'Vendor Payment for Order '.$order->code.' with amount '.number_format($paymentAmount, 0, '.', ','),
             'transactionTypeCode' => 'FTT251208001130', // Vendor Payment transaction type
         ]);
 

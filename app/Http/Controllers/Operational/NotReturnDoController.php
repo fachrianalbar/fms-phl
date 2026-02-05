@@ -88,7 +88,7 @@ class NotReturnDoController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -138,7 +138,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -172,7 +172,7 @@ class NotReturnDoController extends Controller
         // abil route menggunakan code dari routeCode di order
         $route = Route::where('code', $data->routeCode)->firstOrFail();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -215,12 +215,12 @@ class NotReturnDoController extends Controller
             if ($request->has('confirm_return')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: ' . $th->getMessage(),
+                    'message' => 'Error: '.$th->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()
-                ->with('fail', 'Error: ' . $th->getMessage())
+                ->with('fail', 'Error: '.$th->getMessage())
                 ->withInput();
         }
     }
@@ -247,7 +247,7 @@ class NotReturnDoController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $th->getMessage(),
+                'message' => 'Error: '.$th->getMessage(),
             ], 500);
         }
     }
@@ -369,10 +369,10 @@ class NotReturnDoController extends Controller
                     return $type;
                 })
                 ->addColumn('price', function ($row) {
-                    return 'Rp ' . number_format($row->routeAmount ?? 0, 0, ',', '.');
+                    return 'Rp '.number_format($row->routeAmount ?? 0, 0, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                    return 'Rp '.number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
                 })
                 ->editColumn('status', function ($row) {
                     $status = '';
@@ -384,11 +384,11 @@ class NotReturnDoController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    $returnBtn = '<button type="button" class="btn btn-sm btn-primary action-btn me-1" title="Return" data-code="' . $row->code . '" data-shipment="' . $row->shipmentNumber . '" data-customer="' . $row->customer->name . '" data-fleet="' . $row->fleet->plateNumber . '" data-driver="' . $row->driver->name . '" data-order-date="' . $row->orderDate . '" data-price="' . $row->routeAmount . '" data-vendor-price="' . $row->personalVendorPrice . '" data-order-type="' . $row->fleet->company->type . '" data-origin="' . $row->route->originLocation->name . '" data-destination="' . $row->route->destinationLocation->name . '"><i class="mdi mdi-calendar"></i></button>';
+                    $returnBtn = '<button type="button" class="btn btn-sm btn-primary action-btn me-1" title="Return" data-code="'.$row->code.'" data-shipment="'.$row->shipmentNumber.'" data-customer="'.$row->customer->name.'" data-fleet="'.$row->fleet->plateNumber.'" data-driver="'.$row->driver->name.'" data-order-date="'.$row->orderDate.'" data-price="'.$row->routeAmount.'" data-vendor-price="'.$row->personalVendorPrice.'" data-order-type="'.$row->fleet->company->type.'" data-origin="'.$row->route->originLocation->name.'" data-destination="'.$row->route->destinationLocation->name.'"><i class="mdi mdi-calendar"></i></button>';
 
-                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn me-1" title="Rollback Status" data-id="' . $row->id . '" data-shipment="' . $row->shipmentNumber . '"><i class="mdi mdi-undo"></i></button>';
+                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn me-1" title="Rollback Status" data-id="'.$row->id.'" data-shipment="'.$row->shipmentNumber.'"><i class="mdi mdi-undo"></i></button>';
 
-                    return $returnBtn . $rollbackBtn;
+                    return $returnBtn.$rollbackBtn;
                 })
                 ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
                 ->toJson();
@@ -415,7 +415,7 @@ class NotReturnDoController extends Controller
         $component = CostComponent::get();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view . 'edit-order')
+        return view($this->view.'edit-order')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('material', $material)
@@ -460,7 +460,8 @@ class NotReturnDoController extends Controller
             return redirect()->route('operational.not-return-do.index')->with('success', 'Order updated successfully');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
+
+            return redirect()->back()->with('error', 'Error: '.$th->getMessage())->withInput();
         }
     }
 
@@ -485,7 +486,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $th->getMessage(),
+                'message' => 'Error: '.$th->getMessage(),
             ], 500);
         }
     }
@@ -494,12 +495,12 @@ class NotReturnDoController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (!$data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $this->service->rollbackStatus($id);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Berhasil diubah');
+        return redirect()->route($this->view.'index')->with('success', 'Berhasil diubah');
     }
 }

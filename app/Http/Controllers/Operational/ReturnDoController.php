@@ -36,7 +36,7 @@ class ReturnDoController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -60,7 +60,7 @@ class ReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -126,7 +126,7 @@ class ReturnDoController extends Controller
                     $btn = '';
 
                     if ($row->status == 4) {
-                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                        $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
                     }
 
                     return $btn;
@@ -147,12 +147,12 @@ class ReturnDoController extends Controller
                         $costsData = $validCosts->map(function ($cost) {
                             return [
                                 'component' => $cost->costComponent->name ?? '-',
-                                'nominal' => 'Rp ' . number_format($cost->nominal, 0, ',', '.'),
+                                'nominal' => 'Rp '.number_format($cost->nominal, 0, ',', '.'),
                             ];
                         })->toArray();
 
                         $costsJson = htmlspecialchars(json_encode($costsData), ENT_QUOTES, 'UTF-8');
-                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success btn-detail-cost me-2" data-costs="' . $costsJson . '" data-shipment="' . $row->shipmentNumber . '" title="Lihat detail biaya">
+                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success btn-detail-cost me-2" data-costs="'.$costsJson.'" data-shipment="'.$row->shipmentNumber.'" title="Lihat detail biaya">
                             <i class="mdi mdi-cash-multiple me-1"></i> Biaya
                         </button>';
                     }
@@ -163,8 +163,8 @@ class ReturnDoController extends Controller
                         ->count();
 
                     if ($filesCount > 0) {
-                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-info btn-view-files" data-order-id="' . $row->id . '" data-order-code="' . $row->code . '" title="Lihat File Surat Jalan">
-                            <i class="mdi mdi-file-image-multiple me-1"></i> File (' . $filesCount . ')
+                        $buttons .= '<button type="button" class="btn btn-sm btn-outline-info btn-view-files" data-order-id="'.$row->id.'" data-order-code="'.$row->code.'" title="Lihat File Surat Jalan">
+                            <i class="mdi mdi-file-image-multiple me-1"></i> File ('.$filesCount.')
                         </button>';
                     }
 
@@ -190,11 +190,11 @@ class ReturnDoController extends Controller
             'files' => $files->map(function ($file) {
                 return [
                     'id' => $file->id,
-                    'url' => asset('storage/' . $file->file),
+                    'url' => asset('storage/'.$file->file),
                     'name' => basename($file->file),
                     'uploaded_at' => $file->created_at->format('d-m-Y H:i'),
                 ];
-            })
+            }),
         ]);
     }
 }

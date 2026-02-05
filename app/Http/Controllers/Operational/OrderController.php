@@ -125,7 +125,7 @@ class OrderController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('customer', $customer)
@@ -154,7 +154,7 @@ class OrderController extends Controller
         $component = CostComponent::get();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('material', $material)
             ->with('fleetDriver', $fleetDriver)
@@ -210,15 +210,15 @@ class OrderController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => $this->title . ' ' . __('general.data_was_save_successfully'),
-                'redirect' => route($this->view . 'index'),
+                'message' => $this->title.' '.__('general.data_was_save_successfully'),
+                'redirect' => route($this->view.'index'),
             ]);
         } catch (\Throwable $th) {
             DB::rollback();
 
             return response()->json([
                 'success' => false,
-                'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage(),
+                'message' => 'Line : '.$th->getLine().'<br>'.$th->getMessage(),
             ], 500);
         }
     }
@@ -277,7 +277,7 @@ class OrderController extends Controller
 
         $totalPrice += $addCost;
 
-        return view($this->view . 'show')
+        return view($this->view.'show')
             ->with('view', $this->view)
             ->with('data', $data)
             ->with('route', $route)
@@ -296,12 +296,12 @@ class OrderController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         // Check if status is 5 or 6 - cannot edit for non-authorized roles
         if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']) && in_array($data->status, [5, 6])) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Cannot edit order with status 5 or 6');
+            return redirect()->route($this->view.'index')->with('fail', 'Cannot edit order with status 5 or 6');
         }
 
         $material = $this->materialSvc->findAll();
@@ -317,7 +317,7 @@ class OrderController extends Controller
         $routes = Route::where('customerCode', $data->customerCode)->with(['originLocation', 'destinationLocation'])->get();
 
         // Jika route order tidak ada di list (misalnya customer berubah), tambahkan route tersebut
-        if ($data->routeCode && !$routes->where('code', $data->routeCode)->first()) {
+        if ($data->routeCode && ! $routes->where('code', $data->routeCode)->first()) {
             $currentRoute = Route::where('code', $data->routeCode)->with(['originLocation', 'destinationLocation'])->first();
             if ($currentRoute) {
                 $routes->push($currentRoute);
@@ -332,7 +332,7 @@ class OrderController extends Controller
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('material', $material)
@@ -364,7 +364,7 @@ class OrderController extends Controller
 
         // Check if status is 5 or 6 - cannot edit for non-authorized roles
         if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']) && in_array($data->status, [5, 6])) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Cannot update order with status 5 or 6');
+            return redirect()->route($this->view.'index')->with('fail', 'Cannot update order with status 5 or 6');
         }
 
         $validator = Validator::make($request->all(), [
@@ -383,11 +383,11 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('error', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Line : '.$th->getLine().'<br>'.$th->getMessage())->withInput();
         }
     }
 
@@ -400,12 +400,12 @@ class OrderController extends Controller
 
         // Check if status is 5 or 6 - cannot delete
         if (in_array($data->status, [5, 6])) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Cannot delete order with status 5 or 6');
+            return redirect()->route($this->view.'index')->with('fail', 'Cannot delete order with status 5 or 6');
         }
 
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function datatable(Request $request)
@@ -548,11 +548,11 @@ class OrderController extends Controller
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
                         if ($row->route->routeTypeCode == 'TONASE') {
-                            return '' . number_format($row->route->price, 2, ',', '.');
+                            return ''.number_format($row->route->price, 2, ',', '.');
                         }
                     }
 
-                    return '' . 0;
+                    return ''. 0;
                 })
 
                 ->addColumn('bonus', function ($row) {
@@ -561,10 +561,10 @@ class OrderController extends Controller
                     if ($bonus) {
                         $this->totalPrice += $bonus->value;
 
-                        return '' . number_format($bonus->value, 0, ',', '.');
+                        return ''.number_format($bonus->value, 0, ',', '.');
                     }
 
-                    return '' . 0;
+                    return ''. 0;
                 })
                 ->addColumn('cost', function ($row) {
                     $cost = 0;
@@ -575,7 +575,7 @@ class OrderController extends Controller
                     }
                     $this->totalPrice += $cost;
 
-                    return '' . number_format($cost, 0, ',', '.');
+                    return ''.number_format($cost, 0, ',', '.');
                 })
 
                 ->addColumn('orderType', function ($row) {
@@ -590,13 +590,13 @@ class OrderController extends Controller
                     return $type;
                 })
                 ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                    return ''.number_format($this->totalPrice, 0, ',', '.');
                 })
                 ->addColumn('price', function ($row) {
-                    return 'Rp ' . number_format($row->routeAmount ?? 0, 2, ',', '.');
+                    return 'Rp '.number_format($row->routeAmount ?? 0, 2, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
+                    return 'Rp '.number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
 
@@ -610,7 +610,7 @@ class OrderController extends Controller
                     $canEdit = $row->status < 4;
 
                     // Tombol Add Driver - muncul di semua status order
-                    $addDriver = '<a href="javascript:addOrderDriver(\'' . $row->id . '\', \'' . $row->code . '\')"
+                    $addDriver = '<a href="javascript:addOrderDriver(\''.$row->id.'\', \''.$row->code.'\')"
                                 class="btn btn-icon btn-sm bg-warning-subtle me-1"
                                 data-bs-toggle="tooltip" title="Add Driver">
                                     <i class="mdi mdi-account-plus fs-14 text-warning"></i>
@@ -618,7 +618,7 @@ class OrderController extends Controller
 
                     // Tombol Cost Component - muncul untuk role authorized (SPRADMIN/SPRUSER)
                     if ($isAuthorized) {
-                        $costComponent = '<a href="javascript:manageCostComponent(\'' . $row->id . '\', \'' . $row->code . '\')"
+                        $costComponent = '<a href="javascript:manageCostComponent(\''.$row->id.'\', \''.$row->code.'\')"
                                     class="btn btn-icon btn-sm bg-secondary-subtle me-1"
                                     data-bs-toggle="tooltip" title="Kelola Komponen Biaya">
                                         <i class="mdi mdi-cash fs-14 text-secondary"></i>
@@ -628,7 +628,7 @@ class OrderController extends Controller
                     // Edit button - untuk role SPRADMIN/SPRUSER atau status < 5
                     if ($isAuthorized || $canEdit) {
 
-                        $edit = '<a href="' . route($this->view . 'edit', $row->id) . '"
+                        $edit = '<a href="'.route($this->view.'edit', $row->id).'"
                         class="btn btn-icon btn-sm bg-primary-subtle me-1"
                         data-bs-toggle="tooltip" title="Edit">
                             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
@@ -636,7 +636,7 @@ class OrderController extends Controller
                     }
 
                     if ($row->notes) {
-                        $note = '<a href="javascript:showModal(\'' . $row->id . '\')"
+                        $note = '<a href="javascript:showModal(\''.$row->id.'\')"
                                 class="btn btn-icon btn-sm bg-info-subtle me-1"
                                 data-bs-toggle="tooltip" title="Note">
                                     <i class="mdi mdi-text-box fs-14 text-info"></i>
@@ -644,7 +644,7 @@ class OrderController extends Controller
                     }
 
                     // Delete dan finish order - untuk role authorized (SPRADMIN/SPRUSER) atau status < 5 untuk delete
-                    $finishOrder = '<a href="javascript:finishOrder(\'' . $row->id . '\')"
+                    $finishOrder = '<a href="javascript:finishOrder(\''.$row->id.'\')"
                             class="btn btn-icon btn-sm bg-success-subtle me-1"
                             data-bs-toggle="tooltip" title="Finish Order">
                                 <i class="mdi mdi-check-bold fs-14 text-success"></i>
@@ -652,7 +652,7 @@ class OrderController extends Controller
 
                     // Delete - untuk role authorized atau status < 5
                     if ($isAuthorized || $canEdit) {
-                        $delete = ' <a href="javascript:deleteData(\'' . $row->id . '\')"
+                        $delete = ' <a href="javascript:deleteData(\''.$row->id.'\')"
                         class="btn btn-icon btn-sm bg-danger-subtle me-1"
                         data-bs-toggle="tooltip" title="Delete">
                             <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -660,17 +660,17 @@ class OrderController extends Controller
                     }
 
                     $btn = '<td>
-                      <a href="' . route($this->view . 'show-order', $row->id) . '"
+                      <a href="'.route($this->view.'show-order', $row->id).'"
                         class="btn btn-icon btn-sm bg-success-subtle me-1"
                         data-bs-toggle="tooltip" title="Show">
                             <i class="mdi mdi-eye fs-14 text-success"></i>
                         </a>
-                        ' . $edit . '
-                        ' . $delete . '
-                        ' . $note . '
-                        ' . $finishOrder . '
-                        ' . $addDriver . '
-                        ' . $costComponent . '
+                        '.$edit.'
+                        '.$delete.'
+                        '.$note.'
+                        '.$finishOrder.'
+                        '.$addDriver.'
+                        '.$costComponent.'
                     </td>';
 
                     return $btn;
@@ -679,7 +679,7 @@ class OrderController extends Controller
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->addColumn('actionTax', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="'.$row->code.'" value="'.$row->code.'">';
 
                     return $btn;
                 })
@@ -693,12 +693,12 @@ class OrderController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $this->service->finishOrder($id);
 
-        return redirect()->route($this->view . 'index')->with('success', __('menu_order.finish_order_was_successfull'));
+        return redirect()->route($this->view.'index')->with('success', __('menu_order.finish_order_was_successfull'));
     }
 
     public function storeOrderDriver(Request $request)
@@ -710,7 +710,7 @@ class OrderController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')
+            return redirect()->route($this->view.'index')
                 ->withErrors($validator)
                 ->withInput()
                 ->with('fail', 'Validation failed');
@@ -728,7 +728,7 @@ class OrderController extends Controller
                     return response()->json(['success' => false, 'message' => 'Order not found']);
                 }
 
-                return redirect()->route($this->view . 'index')->with('fail', 'Order not found');
+                return redirect()->route($this->view.'index')->with('fail', 'Order not found');
             }
 
             // Only SPRADMIN/SPRUSER can change the driver when status >= 4
@@ -740,7 +740,7 @@ class OrderController extends Controller
                     return response()->json(['success' => false, 'message' => $message]);
                 }
 
-                return redirect()->route($this->view . 'index')->with('fail', $message);
+                return redirect()->route($this->view.'index')->with('fail', $message);
             }
 
             $orderDriver = new \App\Models\Operational\OrderDriver;
@@ -760,15 +760,15 @@ class OrderController extends Controller
                 return response()->json(['success' => true, 'message' => __('menu_order.change_driver_success')]);
             }
 
-            return redirect()->route($this->view . 'index')->with('success', __('menu_order.change_driver_success'));
+            return redirect()->route($this->view.'index')->with('success', __('menu_order.change_driver_success'));
         } catch (\Exception $e) {
             DB::rollback();
 
             if ($request->ajax()) {
-                return response()->json(['success' => false, 'message' => __('menu_order.change_driver_failed') . ': ' . $e->getMessage()]);
+                return response()->json(['success' => false, 'message' => __('menu_order.change_driver_failed').': '.$e->getMessage()]);
             }
 
-            return redirect()->route($this->view . 'index')->with('fail', __('menu_order.change_driver_failed') . ': ' . $e->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', __('menu_order.change_driver_failed').': '.$e->getMessage());
         }
     }
 
@@ -820,7 +820,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
 
-            return response()->json(['success' => false, 'message' => 'Gagal menghapus supier: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Gagal menghapus supier: '.$e->getMessage()]);
         }
     }
 
@@ -840,7 +840,7 @@ class OrderController extends Controller
         $orderId = $cost->order->id;
         $cost->delete();
 
-        return redirect()->route($this->view . 'edit', $orderId)->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'edit', $orderId)->with('success', 'Delete Data Success');
     }
 
     public function getOrderCosts(Request $request)
@@ -864,7 +864,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error loading order costs: ' . $e->getMessage(),
+                'message' => 'Error loading order costs: '.$e->getMessage(),
             ]);
         }
     }
@@ -919,11 +919,11 @@ class OrderController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal menambahkan komponen biaya: ' . $e->getMessage(),
+                    'message' => 'Gagal menambahkan komponen biaya: '.$e->getMessage(),
                 ]);
             }
 
-            return redirect()->back()->with('fail', 'Gagal menambahkan komponen biaya: ' . $e->getMessage());
+            return redirect()->back()->with('fail', 'Gagal menambahkan komponen biaya: '.$e->getMessage());
         }
     }
 
@@ -948,7 +948,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gagal menghapus komponen biaya: ' . $e->getMessage(),
+                'message' => 'Gagal menghapus komponen biaya: '.$e->getMessage(),
             ]);
         }
     }
@@ -1011,11 +1011,11 @@ class OrderController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -1094,7 +1094,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage(),
+                'message' => 'Error: '.$e->getMessage(),
             ], 500);
         }
     }

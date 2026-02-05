@@ -164,7 +164,7 @@ class DashboardController extends Controller
 
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view . 'home', [
+        return view($this->view.'home', [
             'monthlyOrders' => $monthlyOrders,
             'monthlyOrderData' => $monthlyOrderData,
             'monthlyPurchases' => $monthlyPurchases,
@@ -285,7 +285,7 @@ class DashboardController extends Controller
         $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.fleet-maintenance-pdf')
+            view($this->view.'report.fleet-maintenance-pdf')
                 ->with('data', $data->get())
         );
 
