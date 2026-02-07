@@ -35,7 +35,7 @@ use App\Models\Data\Route;
 @endpush
 
 @section('content')
-<form class="row g-3" method="post" action="{{ route('operational.not-return-do.update-order', $data->code) }}" id="edit-form">
+<form class="row g-3" method="post" action="{{ route('operational.not-return-do.update-order', $data->code) }}" id="edit-form" enctype="multipart/form-data">
     @csrf
     @method('PUT')
     <div class="col-sm-12">
@@ -194,7 +194,7 @@ use App\Models\Data\Route;
                             <input class="form-control" name="routeAmount" id="routeAmount"
                                 oninput="formatAngka(this)" type="text"
                                 placeholder="{{ __('menu_order.route_price') }}"
-                                value="{{ number_format($data->routeAmount, 0, ',', '.') }}">
+                                value="{{ number_format($data->routeAmount, 2, ',', '.') }}">
                         </div>
                     </div>
                     @endrole --}}
@@ -238,7 +238,7 @@ use App\Models\Data\Route;
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-white-50 mb-1 small">Harga</p>
-                                        <h4 class="text-white mb-0" id="priceDisplay">Rp {{ number_format($data->routeAmount ?? 0, 0, ',', '.') }}</h4>
+                                        <h4 class="text-white mb-0" id="priceDisplay">Rp {{ number_format($data->routeAmount ?? 0, 2, ',', '.') }}</h4>
                                     </div>
                                     <div class="bg-white bg-opacity-25 p-3 rounded">
                                         <i class="mdi mdi-currency-usd fs-2 text-white"></i>
@@ -253,7 +253,7 @@ use App\Models\Data\Route;
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-white-50 mb-1 small">Harga Vendor</p>
-                                        <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</h4>
+                                        <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp {{ number_format($data->personalVendorPrice ?? 0, 2, ',', '.') }}</h4>
                                     </div>
                                     <div class="bg-white bg-opacity-25 p-3 rounded">
                                         <i class="mdi mdi-account-cash fs-2 text-white"></i>
@@ -451,6 +451,62 @@ use App\Models\Data\Route;
                 </div>
             </div>
 
+            <!-- Return Order Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="mdi mdi-calendar-check"></i> Konfirmasi Return Order</h4>
+                </div>
+                <div class="card-body col-md-12">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="returnDate">
+                                <i class="mdi mdi-calendar-clock"></i> Tanggal & Waktu Return
+                            </label>
+                            <input class="form-control" name="returnDate" id="returnDate" 
+                                type="datetime-local" 
+                                placeholder="Tanggal & Waktu Return"
+                                value="{{ $data->returnDate ? date('Y-m-d\TH:i', strtotime($data->returnDate)) : '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="returnDescription">
+                                <i class="mdi mdi-text-box-outline"></i> Deskripsi Return (Opsional)
+                            </label>
+                            <textarea class="form-control" name="returnDescription" id="returnDescription" 
+                                rows="3" placeholder="Masukkan deskripsi return...">{{ $data->returnDescription ?? '' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <label class="form-label" for="suratJalanFiles">
+                                <i class="mdi mdi-file-upload-outline"></i> Upload Surat Jalan (Opsional)
+                            </label>
+                            <input class="form-control" name="suratJalanFiles[]" id="suratJalanFiles" 
+                                type="file" multiple accept=".pdf,.jpg,.jpeg,.png" 
+                                title="Upload file surat jalan (PDF, JPG, JPEG, PNG - Max 5MB per file)">
+                            <small class="text-muted">
+                                Upload file surat jalan dalam format PDF, JPG, JPEG, atau PNG (maksimal 5MB per file)
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Hidden field untuk menandai konfirmasi return -->
+                    <input type="hidden" name="confirm_return" id="confirmReturn" value="0">
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmReturnCheckbox" 
+                                    onchange="document.getElementById('confirmReturn').value = this.checked ? '1' : '0'">
+                                <label class="form-check-label" for="confirmReturnCheckbox">
+                                    <strong>Konfirmasi Return Order</strong> - Centang untuk mengkonfirmasi return order ini
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @if ($data->status == 0 || in_array(auth()->user()->roleCode, ['SPRADMIN', 'SPRUSER']))
             <div class="card">
                 <div class="col-12">
@@ -509,6 +565,11 @@ use App\Models\Data\Route;
 
 
     <script>
+        // Format number with 2 decimal places
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num);
+        }
+
         $(document).ready(function() {
             const selectedType = $('#routeTypeCode').select2('val');
             // loadQty(selectedType)
@@ -850,6 +911,70 @@ use App\Models\Data\Route;
         // Update when fleet is selected
         $('#fleetCode').on('select2:select', function() {
             updatePriceInfo();
+        });
+
+        // File upload validation for surat jalan
+        $('#suratJalanFiles').on('change', function() {
+            const files = this.files;
+            const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                // Check file size
+                if (file.size > maxFileSize) {
+                    swal({
+                        title: "File Terlalu Besar",
+                        text: `File "${file.name}" melebihi batas maksimal 5MB`,
+                        icon: "error",
+                        button: "OK"
+                    });
+                    this.value = ""; // Clear the file input
+                    return;
+                }
+                
+                // Check file type
+                if (!allowedTypes.includes(file.type)) {
+                    swal({
+                        title: "Tipe File Tidak Valid",
+                        text: `File "${file.name}" harus berformat PDF, JPG, JPEG, atau PNG`,
+                        icon: "error",
+                        button: "OK"
+                    });
+                    this.value = ""; // Clear the file input
+                    return;
+                }
+            }
+        });
+
+        // Handle return confirmation checkbox
+        $('#confirmReturnCheckbox').on('change', function() {
+            const isChecked = this.checked;
+            
+            if (isChecked) {
+                // Set current datetime if returnDate is empty
+                if (!$('#returnDate').val()) {
+                    const now = new Date();
+                    const isoString = now.toISOString().slice(0, 16);
+                    $('#returnDate').val(isoString);
+                }
+                
+                swal({
+                    title: "Konfirmasi Return",
+                    text: "Dengan mencentang ini, order akan dikonfirmasi sebagai return setelah data disimpan. Pastikan data return sudah benar!",
+                    icon: "warning",
+                    buttons: {
+                        cancel: "Batal",
+                        confirm: "Ya, Saya Yakin"
+                    }
+                }).then((confirmed) => {
+                    if (!confirmed) {
+                        this.checked = false;
+                        $('#confirmReturn').val('0');
+                    }
+                });
+            }
         });
 
     </script>

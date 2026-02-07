@@ -88,7 +88,7 @@ class NotReturnDoController extends Controller
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('customer', $customer)
@@ -138,7 +138,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -172,7 +172,7 @@ class NotReturnDoController extends Controller
         // abil route menggunakan code dari routeCode di order
         $route = Route::where('code', $data->routeCode)->firstOrFail();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data)
@@ -215,41 +215,20 @@ class NotReturnDoController extends Controller
             if ($request->has('confirm_return')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Error: '.$th->getMessage(),
+                    'message' => 'Error: ' . $th->getMessage(),
                 ], 500);
             }
 
             return redirect()->back()
-                ->with('fail', 'Error: '.$th->getMessage())
+                ->with('fail', 'Error: ' . $th->getMessage())
                 ->withInput();
         }
     }
 
     public function confirmReturn(Request $request, $code)
     {
-        try {
-            DB::beginTransaction();
-
-            Order::where('code', $code)->update([
-                'status' => 4,
-                'returnDate' => $request->returnDate,
-                'returnDescription' => $request->returnDescription ?? 'Order returned via modal',
-            ]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Order berhasil dikonfirmasi return',
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollback();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Error: '.$th->getMessage(),
-            ], 500);
-        }
+        // Langsung redirect ke halaman edit order
+        return redirect()->route('operational.not-return-do.edit-order', $code);
     }
 
     public function datatable(Request $request)
@@ -369,10 +348,10 @@ class NotReturnDoController extends Controller
                     return $type;
                 })
                 ->addColumn('price', function ($row) {
-                    return 'Rp '.number_format($row->routeAmount ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->routeAmount ?? 0, 2, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp '.number_format($row->personalVendorPrice ?? 0, 0, ',', '.');
+                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
                 })
                 ->editColumn('status', function ($row) {
                     $status = '';
@@ -384,11 +363,11 @@ class NotReturnDoController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
-                    $returnBtn = '<button type="button" class="btn btn-sm btn-primary action-btn me-1" title="Return" data-code="'.$row->code.'" data-shipment="'.$row->shipmentNumber.'" data-customer="'.$row->customer->name.'" data-fleet="'.$row->fleet->plateNumber.'" data-driver="'.$row->driver->name.'" data-order-date="'.$row->orderDate.'" data-price="'.$row->routeAmount.'" data-vendor-price="'.$row->personalVendorPrice.'" data-order-type="'.$row->fleet->company->type.'" data-origin="'.$row->route->originLocation->name.'" data-destination="'.$row->route->destinationLocation->name.'"><i class="mdi mdi-calendar"></i></button>';
+                    $returnBtn = '<a href="' . route('operational.not-return-do.edit-order', $row->code) . '" class="btn btn-sm btn-primary me-1" title="Return"><i class="mdi mdi-calendar"></i></a>';
 
-                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn me-1" title="Rollback Status" data-id="'.$row->id.'" data-shipment="'.$row->shipmentNumber.'"><i class="mdi mdi-undo"></i></button>';
+                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn me-1" title="Rollback Status" data-id="' . $row->id . '" data-shipment="' . $row->shipmentNumber . '"><i class="mdi mdi-undo"></i></button>';
 
-                    return $returnBtn.$rollbackBtn;
+                    return $returnBtn . $rollbackBtn;
                 })
                 ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
                 ->toJson();
@@ -415,7 +394,7 @@ class NotReturnDoController extends Controller
         $component = CostComponent::get();
         $unit = $this->unitSvc->findAll();
 
-        return view($this->view.'edit-order')
+        return view($this->view . 'edit-order')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('material', $material)
@@ -444,6 +423,7 @@ class NotReturnDoController extends Controller
             'fleetCode' => 'required',
             'orderDate' => 'required|date',
             'routeData' => 'required',
+            'suratJalanFiles.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($validator->fails()) {
@@ -453,7 +433,30 @@ class NotReturnDoController extends Controller
         try {
             DB::beginTransaction();
 
+            // Update order data
             $this->service->updateOrder($request, $data->id, $this->title);
+
+            // Handle return confirmation
+            if ($request->confirm_return == '1') {
+                $returnDate = $request->returnDate ? $request->returnDate : now();
+                $returnDescription = $request->returnDescription ?? 'Order returned via edit form';
+
+                Order::where('code', $code)->update([
+                    'status' => 4,
+                    'returnDate' => $returnDate,
+                    'returnDescription' => $returnDescription,
+                ]);
+
+                // Handle surat jalan file upload if files exist
+                if ($request->hasFile('suratJalanFiles')) {
+                    $uploadRequest = new Request();
+                    $uploadRequest->files->set('files', $request->file('suratJalanFiles'));
+                    $this->service->uploadSuratJalan($uploadRequest, $code);
+                }
+
+                DB::commit();
+                return redirect()->route('operational.not-return-do.index')->with('success', 'Order updated and return confirmed successfully');
+            }
 
             DB::commit();
 
@@ -461,7 +464,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('error', 'Error: '.$th->getMessage())->withInput();
+            return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
         }
     }
 
@@ -486,7 +489,7 @@ class NotReturnDoController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: '.$th->getMessage(),
+                'message' => 'Error: ' . $th->getMessage(),
             ], 500);
         }
     }
@@ -496,11 +499,11 @@ class NotReturnDoController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $this->service->rollbackStatus($id);
 
-        return redirect()->route($this->view.'index')->with('success', 'Berhasil diubah');
+        return redirect()->route($this->view . 'index')->with('success', 'Berhasil diubah');
     }
 }
