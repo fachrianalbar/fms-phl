@@ -69,6 +69,7 @@
         use Carbon\Carbon;
 
         $totalPrice = 0;
+        $data->details = $data->details->sortBy('order.orderDate');
     @endphp
 
     <table style="margin-top: 20px;">
@@ -106,20 +107,19 @@
     <table class="bordered mt-20">
         <thead>
             <tr>
-                <th style="width: 3%;">No</th>
+                <th style="width: 5%;">No</th>
                 <th style="width: 7%;">Tanggal</th>
                 <th style="width: 9%;">No Kendaraan</th>
-                <th style="width: 10%;">No. SPPB</th>
+                <th style="width: 8%;">No. SPPB</th>
                 <th style="width: 8%;">Gudang Muat</th>
-                <th style="width: 8%;">Nama Pembeli</th>
                 <th style="width: 8%;">Tujuan</th>
-                <th style="width: 11%;">Nama Barang</th>
+                <th style="width: 20%;">Nama Barang</th>
                 <th style="width: 7%;">Kg/Box</th>
                 <th style="width: 6%;">Box</th>
                 <th style="width: 6%;">Tonase</th>
                 <th style="width: 7%;">Total Tonase</th>
                 <th style="width: 7%;">Tarif/Kg</th>
-                <th style="width: 10%;">Ongkos Angkut</th>
+                <th style="width: 10%;" class="text-right">Ongkos Angkut</th>
             </tr>
         </thead>
         <tbody>
@@ -142,13 +142,11 @@
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{-- {{ $detail->order->shipmentNumber ?? '-' }} --}}
 
-                        {{ $detail->order->customerDetailOrders->where('customerDetailCode', 'FCD250801150339746')->value('value') ?? '-' }}
+                        {{ $detail->order->customerDetailOrders->where('customerDetailCode', 'FCD251218084400733')->value('value') ?? '-' }}
 
                     </td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         PT SIL</td>
-                    <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
-                        {{ $detail->order->customer->name ?? '' }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
                     <td>{{ $detail->order->orderMaterial->first()->material->name }}</td>
@@ -185,7 +183,7 @@
                     <td rowspan="{{ $detail->order->orderMaterial->count() }}">
                         {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
                     {{-- Ongkos Angkut --}}
-                    <td rowspan="{{ $detail->order->orderMaterial->count() }}">
+                    <td rowspan="{{ $detail->order->orderMaterial->count() }}" class="text-right">
                         {{ number_format($total * ($detail->order->route->price ?? 0), 0, ',', '.') }}
                     </td>
                     @if ($detail->order->orderMaterial->count() > 1)
@@ -231,7 +229,7 @@
                     <td>-</td>
                     <td>-</td>
                     <td>-</td>
-                    <td>
+                    <td class="text-right">
                         @php
                             $totalPrice += $cost->nominal;
                         @endphp
@@ -242,8 +240,8 @@
             @endforeach
 
             <tr>
-                <td colspan="13" class="text-right bold">TOTAL :</td>
-                <td class="bold">{{ number_format($totalPrice, 0, ',', '.') }}</td>
+                <td colspan="12" class="text-right bold">TOTAL :</td>
+                <td class="bold text-right">{{ number_format($totalPrice, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>
