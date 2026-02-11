@@ -146,7 +146,7 @@
 
                     </td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
-                        PT SIL</td>
+                        {{ explode(' ', $detail->order->route->originLocation->name)[0] }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
                     <td>{{ $detail->order->orderMaterial->first()->material->name }}</td>
