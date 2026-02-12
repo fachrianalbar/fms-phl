@@ -516,7 +516,7 @@ class OrderService
             $fleetArr = $this->service->where('status', 0)->where('fleetCode', '!=', $fleet)->pluck('fleetCode')->toArray();
         }
 
-        return $this->fleet->with('company')->whereNotIn('code', $fleetArr)->get();
+        return $this->fleet->with('company')->whereNotIn('code', $fleetArr)->whereNotNull('fleetCompanyCode')->get();
     }
 
     public function deleteOrderMaterial($id)

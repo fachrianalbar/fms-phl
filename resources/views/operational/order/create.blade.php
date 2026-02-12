@@ -63,7 +63,7 @@
                                 </option>
                                 @foreach ($fleet as $item)
                                 <option value="{{ $item->code }}">
-                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company->type }}
+                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company?->type ?? 'Internal' }}
                                 </option>
                                 @endforeach
                             </select>
