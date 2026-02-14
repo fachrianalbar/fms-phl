@@ -30,6 +30,8 @@ class Order extends Model
         'routeAmount' => 'decimal:2',
         'vendorPrice' => 'decimal:2',
         'personalVendorPrice' => 'decimal:2',
+        'price' => 'decimal:2',
+        'personalVendorPriceSingle' => 'decimal:2',
         'qty' => 'float',
     ];
 
@@ -62,8 +64,10 @@ class Order extends Model
         'is_order_tax',
         'returnDescription',
         'routeAmount',
+        'price',
         'vendorPrice',
         'personalVendorPrice',
+        'personalVendorPriceSingle',
     ];
 
     public function customer()

@@ -161,7 +161,7 @@ class OrderService
 
         // If submitted route amount differs from computed route price, record it
         if ($computedRouteAmount !== null && $submittedRouteAmount !== null && $submittedRouteAmount !== $computedRouteAmount) {
-            $message = 'Route price diperbarui dari '.number_format($computedRouteAmount, 0, ',', '.').' menjadi '.number_format($submittedRouteAmount, 0, ',', '.');
+            $message = 'Route price diperbarui dari ' . number_format($computedRouteAmount, 0, ',', '.') . ' menjadi ' . number_format($submittedRouteAmount, 0, ',', '.');
             // Flash message (controller will show this on redirect)
             try {
                 session()->flash('info', $message);
@@ -251,8 +251,8 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         $this->service->where('id', $id)->update([
-            'code' => $data->code.'-del-'.Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber.'-del-'.Str::random(3),
+            'code' => $data->code . '-del-' . Str::random(3),
+            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
         ]);
 
         $this->service->where('id', $id)->delete();
@@ -413,7 +413,7 @@ class OrderService
 
         // Guard: jika route tidak ditemukan, jangan lanjut proses
         if (! $route) {
-            throw new \Exception('Route dengan code '.$request->routeData.' tidak ditemukan');
+            throw new \Exception('Route dengan code ' . $request->routeData . ' tidak ditemukan');
         }
 
         // Debug: log route data
@@ -436,14 +436,14 @@ class OrderService
             $routeAmount = (float) (($route->price ?? 0) * $request->qty);
         }
 
-        // vendorPrice dan personalVendorPrice hanya untuk fleet EXTERNAL
-        // Jika INTERNAL, set ke 0
+        // personalVendorPrice always calculated regardless of fleet type (Internal or External)
+        $personalVendorPrice = (float) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
+
+        // vendorPrice only for fleet EXTERNAL
         if ($isExternalFleet) {
             $vendorPrice = (float) (($request->qty ?? 0) * ($route->vendorPrice ?? 0));
-            $personalVendorPrice = (float) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
         } else {
             $vendorPrice = 0;
-            $personalVendorPrice = 0;
         }
 
         logger()->info('Calculated order prices', [
@@ -465,8 +465,10 @@ class OrderService
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,
             'routeAmount' => $routeAmount,
+            'price' => (float) ($route->price ?? 0),
             'vendorPrice' => $vendorPrice,
             'personalVendorPrice' => $personalVendorPrice,
+            'personalVendorPriceSingle' => (float) ($route->personalVendorPrice ?? 0),
             'customerCode' => $request->customerCode,
         ];
 
@@ -500,7 +502,7 @@ class OrderService
             $lastNumber++;
             $increment = str_pad($lastNumber, 5, '0', STR_PAD_LEFT);
 
-            $shipmentNumber = $customer->company->format.'/'.$customer->code.'/'.$increment.'/'.now()->year;
+            $shipmentNumber = $customer->company->format . '/' . $customer->code . '/' . $increment . '/' . now()->year;
 
             $checkShipment = $this->service->where('shipmentNumber', $shipmentNumber)->first();
         } while ($checkShipment); // jika sudah ada, ulangi lagi
