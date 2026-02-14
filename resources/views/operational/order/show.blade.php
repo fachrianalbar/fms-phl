@@ -232,9 +232,10 @@ use App\Models\Data\Route;
                     <div class="col-md-4">
                         <div class="p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
                             <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <p class="text-white-50 mb-1 small">Harga</p>
+                                <div class="w-100">
+                                    <p class="text-white-50 mb-1 small">Route Amount</p>
                                     <h4 class="text-white mb-0" id="priceDisplay">Rp {{ number_format($data->routeAmount ?? 0, 0, ',', '.') }}</h4>
+                                    <p class="text-white-50 mb-0 small" id="priceDetailDisplay">{{ $data->qty }} × Rp {{ number_format($data->price ?? 0, 0, ',', '.') }} = Rp {{ number_format($data->routeAmount ?? 0, 0, ',', '.') }}</p>
                                 </div>
                                 <div class="bg-white bg-opacity-25 p-3 rounded">
                                     <i class="mdi mdi-currency-usd fs-2 text-white"></i>
@@ -243,13 +244,14 @@ use App\Models\Data\Route;
                         </div>
                     </div>
 
-                    <!-- Vendor Price Info -->
+                    <!-- Personal Vendor Price Info -->
                     <div class="col-md-4" id="vendorPriceCard">
                         <div class="p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                             <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    <p class="text-white-50 mb-1 small">Harga Vendor</p>
+                                <div class="w-100">
+                                    <p class="text-white-50 mb-1 small">Personal Vendor Price</p>
                                     <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</h4>
+                                    <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">{{ $data->qty }} × Rp {{ number_format($data->personalVendorPriceSingle ?? 0, 0, ',', '.') }} = Rp {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</p>
                                 </div>
                                 <div class="bg-white bg-opacity-25 p-3 rounded">
                                     <i class="mdi mdi-account-cash fs-2 text-white"></i>
@@ -266,14 +268,7 @@ use App\Models\Data\Route;
                             <i class="mdi mdi-information"></i>
                             <strong>Catatan:</strong> 
                             <span id="priceNote">
-                                @php
-                                    $isExternal = $data->fleet && $data->fleet->company && strtolower($data->fleet->company->type) === 'external';
-                                @endphp
-                                @if($isExternal)
-                                    Fleet type <strong>External</strong> - Harga vendor ditampilkan berdasarkan route yang dipilih × qty
-                                @else
-                                    Fleet type <strong>Internal</strong> - Harga vendor tetap Rp 0
-                                @endif
+                                Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>{{ $data->fleet?->company?->type ?? '-' }}</strong>
                             </span>
                         </div>
                     </div>
@@ -662,20 +657,17 @@ use App\Models\Data\Route;
                         // Update fleet type
                         $('#fleetTypeDisplay').text(response.fleetType || '-');
 
-                        // Update price
-                        $('#priceDisplay').text('Rp ' + formatNumber(response.price));
+                        // Update price (routeAmount = qty × price satuan)
+                        $('#priceDisplay').text('Rp ' + formatNumber(response.routeAmount));
+                        $('#priceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.price) + ' = Rp ' + formatNumber(response.routeAmount));
 
-                        // Update vendor price
-                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.vendorPrice));
+                        // Update personal vendor price (always show)
+                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.personalVendorPrice));
+                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.personalVendorPriceSingle) + ' = Rp ' + formatNumber(response.personalVendorPrice));
 
-                        // Hide/Show vendor price card based on fleet type
-                        if (response.isExternal) {
-                            $('#vendorPriceCard').show();
-                            $('#priceNote').html('Fleet type <strong>External</strong> - Harga vendor ditampilkan berdasarkan route yang dipilih × qty');
-                        } else {
-                            $('#vendorPriceCard').hide();
-                            $('#priceNote').html('Fleet type <strong>Internal</strong> - Harga vendor tidak ditampilkan');
-                        }
+                        // Always show vendor price card
+                        $('#vendorPriceCard').show();
+                        $('#priceNote').html('Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' + response.fleetType + '</strong>');
                     }
                 },
                 error: function(xhr) {
@@ -687,14 +679,6 @@ use App\Models\Data\Route;
         // Initialize price info on page load
         $(document).ready(function() {
             updatePriceInfo();
-            
-            // Check initial fleet type and hide vendor price if internal
-            @php
-                $isInternalFleet = $data->fleet && $data->fleet->company && strtolower($data->fleet->company->type) === 'internal';
-            @endphp
-            @if($isInternalFleet)
-                $('#vendorPriceCard').hide();
-            @endif
         });
 
         function formatNumber(number) {
