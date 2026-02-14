@@ -69,7 +69,7 @@ use App\Models\Data\Route;
                                 @foreach ($fleets as $item)
                                 <option value="{{ $item->code }}"
                                     {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
-                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company->type }}
+                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company?->type ?? 'N/A' }}
                                 </option>
                                 @endforeach
                             </select>
@@ -226,7 +226,7 @@ use App\Models\Data\Route;
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-white-50 mb-1 small">Tipe Fleet</p>
-                                        <h4 class="text-white mb-0" id="fleetTypeDisplay">{{ $data->fleet->company->type ?? '-' }}</h4>
+                                        <h4 class="text-white mb-0" id="fleetTypeDisplay">{{ $data->fleet?->company?->type ?? '-' }}</h4>
                                     </div>
                                     <div class="bg-white bg-opacity-25 p-3 rounded">
                                         <i class="mdi mdi-truck fs-2 text-white"></i>

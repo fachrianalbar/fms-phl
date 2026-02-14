@@ -379,7 +379,12 @@ class NotReturnDoController extends Controller
      */
     public function editOrder(string $code)
     {
-        $data = Order::where('code', $code)->firstOrFail();
+        $data = Order::with([
+            'fleet.company',
+            'customer',
+            'driver',
+            'route',
+        ])->where('code', $code)->firstOrFail();
 
         $material = $this->materialSvc->findAll();
         $customer = $this->customerSvc->findAll();
