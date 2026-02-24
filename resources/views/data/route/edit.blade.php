@@ -79,7 +79,8 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}"
-                                        {{ $data->customerCode == $item->code ? 'selected' : '' }}>{{ $item->code . ' - ' . $item->name }}
+                                        {{ $data->customerCode == $item->code ? 'selected' : '' }}>
+                                        {{ $item->code . ' - ' . $item->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -266,7 +267,8 @@
             // Hapus titik pemisah ribuan dan ganti koma dengan titik untuk desimal
             const price = parseFloat(priceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
             const vendorPrice = parseFloat(vendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
-            const personalVendorPrice = parseFloat(personalVendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+            const personalVendorPrice = parseFloat(personalVendorPriceInput.value.replace(/\./g, '').replace(',', '.')) ||
+            0;
 
             // Validasi vendorPrice tidak boleh lebih besar dari price
             if (vendorPrice > price) {

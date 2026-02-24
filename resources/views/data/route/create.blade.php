@@ -398,7 +398,8 @@
         function removePriceFormatting() {
             routeData.forEach((route, index) => {
                 const priceInput = document.getElementById(`price-${index}`);
-                let rawPrice = priceInput.value.replace(/\./g, '').replace(',', '.'); // Remove dots and replace comma with dot for decimal
+                let rawPrice = priceInput.value.replace(/\./g, '').replace(',',
+                '.'); // Remove dots and replace comma with dot for decimal
                 priceInput.value = parseFloat(rawPrice) || 0; // Set as float
             });
             return true; // Allow form submission after formatting is removed
