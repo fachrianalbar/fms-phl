@@ -79,7 +79,7 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($customer as $item)
                                     <option value="{{ $item->code }}"
-                                        {{ $data->customerCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
+                                        {{ $data->customerCode == $item->code ? 'selected' : '' }}>{{ $item->code . ' - ' . $item->name }}
                                     </option>
                                 @endforeach
                             </select>

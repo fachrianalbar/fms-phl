@@ -1,156 +1,157 @@
 @extends('layouts.main', [
-'title' => $title,
-'pageTitle' => $title,
-'firstSegment' => $title,
-'secondSegment' => __('general.add'),
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => $title,
+    'secondSegment' => __('general.add'),
 ])
 
 @push('style')
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 
-<style>
-    #dt {
-        border-spacing: 0 15px !important;
-        border-collapse: separate !important;
-    }
-</style>
+    <style>
+        #dt {
+            border-spacing: 0 15px !important;
+            border-collapse: separate !important;
+        }
+    </style>
 @endpush
 
 @section('content')
-<form method="post" action="{{ route($view . 'store') }}" id="create-form">
-    @csrf
-    <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} {{ __('general.add_data') }}</h4>
+    <form method="post" action="{{ route($view . 'store') }}" id="create-form">
+        @csrf
+        <div class="col-sm-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>{{ $title }} {{ __('general.add_data') }}</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
 
-            </div>
-            <div class="card-body col-md-12">
-                <div class="row g-3">
+                </div>
+                <div class="card-body col-md-12">
+                    <div class="row g-3">
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label class="form-label" for="code">Code <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" type="text" placeholder="Code" id="code_display" readonly
-                                disabled>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label" for="code">Code <i
+                                        class="icofont icofont-warning-alt text-danger"></i></label>
+                                <input class="form-control" type="text" placeholder="Code" id="code_display" readonly
+                                    disabled>
 
-                            <input type="hidden" name="code" id="code_hidden">
+                                <input type="hidden" name="code" id="code_hidden">
+                            </div>
+
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}
+                                    <i class="mdi mdi-information text-danger"></i></label>
+
+                                <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                    @foreach ($fleet as $item)
+                                        <option value="{{ $item->code }}">
+                                            {{ strtoupper($item->plateNumber) }} -
+                                            {{ $item->company?->type ?? 'Internal' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
-                        <div class="col-md-6 position-relative">
-                            <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}
-                                <i class="mdi mdi-information text-danger"></i></label>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <label class="form-label" for="name">{{ __('menu_order.order_date') }} <i
+                                        class="mdi mdi-information text-danger"></i></label>
+                                <input class="form-control" name="orderDate" id="datetime-local" type="date" required
+                                    placeholder="{{ __('menu_order.order_date') }}" value="{{ now()->toDateString() }}">
+                            </div>
 
-                            <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                                </option>
-                                @foreach ($fleet as $item)
-                                <option value="{{ $item->code }}">
-                                    {{ strtoupper($item->plateNumber) }} - {{ $item->company?->type ?? 'Internal' }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="name">{{ __('menu_order.order_date') }} <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="orderDate" id="datetime-local" type="date" required
-                                placeholder="{{ __('menu_order.order_date') }}" value="{{ now()->toDateString() }}">
+                            <div class="col-md-6">
+                                <label class="form-label" for="shipmentNumber">{{ __('menu_order.shipment_no') }} <i
+                                        class="mdi mdi-information text-danger"></i></label>
+                                <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
+                                    required placeholder="{{ __('menu_order.shipment_no') }}" readonly>
+                            </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label" for="shipmentNumber">{{ __('menu_order.shipment_no') }} <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
-                                required placeholder="{{ __('menu_order.shipment_no') }}" readonly>
-                        </div>
-                    </div>
+
+
+                        <div class="row mt-4">
+                            <input type="hidden" name="driverCode" id="driverCodeHidden">
+
+                            <div class="col-md-6 position-relative">
+
+                                <div id="driverLabelWrapper">
+                                    <label class="form-label" for="driverCode" id="driverLabel">
+                                        {{ __('menu_order.driver') }} <i class="mdi mdi-information text-danger"></i>
+                                    </label>
+                                </div>
 
 
 
-                    <div class="row mt-4">
-                        <input type="hidden" name="driverCode" id="driverCodeHidden">
+                                <select class="js-example-basic-single" id="driverCode" required="">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
 
-                        <div class="col-md-6 position-relative">
-
-                            <div id="driverLabelWrapper">
-                                <label class="form-label" for="driverCode" id="driverLabel">
-                                    {{ __('menu_order.driver') }} <i class="mdi mdi-information text-danger"></i>
-                                </label>
+                                </select>
                             </div>
 
 
+                            <div class="col-md-6">
+                                <label class="form-label" for="notes">{{ __('menu_order.notes') }} </label>
+                                <input class="form-control" name="notes" id="notes" type="text"
+                                    placeholder="Notes">
+                            </div>
 
-                            <select class="js-example-basic-single" id="driverCode" required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                                </option>
 
-                            </select>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="customerCode">{{ __('menu_order.customer') }}<i
+                                        class="mdi mdi-information text-danger"></i></label>
+                                <select class="js-example-basic-single" name="customerCode" id="customerCode"
+                                    required="">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                    @foreach ($customer as $item)
+                                        <option value="{{ $item->code }}" data-id="{{ $item->id }}">
+                                            {{ $item->code . ' - ' . $item->name }}
+                                        </option>
+                                    @endforeach
+                                </select>`
+                            </div>
+
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="routeTypeCode">{{ __('menu_order.load_type') }} <i
+                                        class="mdi mdi-information text-danger"></i></label>
+                                <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
+                                    required="">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                    @foreach ($routeType as $item)
+                                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
 
 
-                        <div class="col-md-6">
-                            <label class="form-label" for="notes">{{ __('menu_order.notes') }} </label>
-                            <input class="form-control" name="notes" id="notes" type="text"
-                                placeholder="Notes">
-                        </div>
 
-
-                    </div>
-
-                    <div class="row mt-4">
-                        <div class="col-md-6 position-relative">
-                            <label class="form-label" for="customerCode">{{ __('menu_order.customer') }}<i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="customerCode" id="customerCode"
-                                required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                                </option>
-                                @foreach ($customer as $item)
-                                <option value="{{ $item->code }}" data-id="{{ $item->id }}">
-                                    {{ $item->code . ' - ' . $item->name }}
-                                </option>
-                                @endforeach
-                            </select>`
-                        </div>
-
-                        <div class="col-md-6 position-relative">
-                            <label class="form-label" for="routeTypeCode">{{ __('menu_order.load_type') }} <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="routeTypeCode" id="routeTypeCode"
-                                required="">
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                                </option>
-                                @foreach ($routeType as $item)
-                                <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-
-
-                    {{-- <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="originLocationCode">{{ __('menu_order.origin_location') }}
                     <i class="mdi mdi-information text-danger"></i></label>
@@ -173,26 +174,26 @@
                 </div>
             </div> --}}
 
-            <div class="row">
+                        <div class="row">
 
-                <div class="col-md-6 position-relative">
-                    <label class="form-label" for="routeData">{{ __('menu_order.route') }}
-                        <i class="mdi mdi-information text-danger"></i> </label>
-                    <select class="js-example-basic-single" name="routeData" id="routeData" required="">
-                        <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                        </option>
-                    </select>
-                </div>
+                            <div class="col-md-6 position-relative">
+                                <label class="form-label" for="routeData">{{ __('menu_order.route') }}
+                                    <i class="mdi mdi-information text-danger"></i> </label>
+                                <select class="js-example-basic-single" name="routeData" id="routeData" required="">
+                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                                    </option>
+                                </select>
+                            </div>
 
 
-                <div class="col-md-6 position-relative d-none" id="qtyField">
-                    <label class="form-label" id="qtyLabel" for="qty"></label>
-                    <input class="form-control" name="qty" id="qty" step="any" min="1"
-                        type="number" placeholder="" required>
-                </div>
-            </div>
+                            <div class="col-md-6 position-relative d-none" id="qtyField">
+                                <label class="form-label" id="qtyLabel" for="qty"></label>
+                                <input class="form-control" name="qty" id="qty" step="any" min="1"
+                                    type="number" placeholder="" required>
+                            </div>
+                        </div>
 
-            {{-- <div class="row mt-4">
+                        {{-- <div class="row mt-4">
                             <div class="col-md-6 position-relative">
                                 <label class="form-label" for="materialCode">Material</label>
                                 <select class="js-example-basic-single" name="materialCode" id="materialCode">
@@ -225,370 +226,377 @@
                 min="1" placeholder="Material Qty">
         </div>
     </div> --}}
-    </div>
-    </div>
-    </div>
+                    </div>
+                </div>
+            </div>
 
-    <!-- Hidden input fields for price calculations -->
-    <input type="hidden" name="price" id="priceHidden" value="0">
-    <input type="hidden" name="routeAmount" id="routeAmountHidden" value="0">
-    <input type="hidden" name="personalVendorPrice" id="personalVendorPriceHidden" value="0">
-    <input type="hidden" name="personalVendorPriceSingle" id="personalVendorPriceSingleHidden" value="0">
+            <!-- Hidden input fields for price calculations -->
+            <input type="hidden" name="price" id="priceHidden" value="0">
+            <input type="hidden" name="routeAmount" id="routeAmountHidden" value="0">
+            <input type="hidden" name="personalVendorPrice" id="personalVendorPriceHidden" value="0">
+            <input type="hidden" name="personalVendorPriceSingle" id="personalVendorPriceSingleHidden" value="0">
 
-    <!-- Card Informasi Harga -->
-    <div class="card shadow-sm border-0" id="priceInfoCard" style="display: none;">
-        <div class="card-header bg-gradient-primary text-white">
-            <h5 class="mb-0">
-                <i class="mdi mdi-cash-multiple"></i> Informasi Harga
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row g-4">
-                <!-- Fleet Type Info -->
-                <div class="col-md-4">
-                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-white-50 mb-1 small">Tipe Fleet</p>
-                                <h4 class="text-white mb-0" id="fleetTypeDisplay">-</h4>
+            <!-- Card Informasi Harga -->
+            <div class="card shadow-sm border-0" id="priceInfoCard" style="display: none;">
+                <div class="card-header bg-gradient-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="mdi mdi-cash-multiple"></i> Informasi Harga
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <!-- Fleet Type Info -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded"
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-white-50 mb-1 small">Tipe Fleet</p>
+                                        <h4 class="text-white mb-0" id="fleetTypeDisplay">-</h4>
+                                    </div>
+                                    <div class="bg-white bg-opacity-25 p-3 rounded">
+                                        <i class="mdi mdi-truck fs-2 text-white"></i>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="bg-white bg-opacity-25 p-3 rounded">
-                                <i class="mdi mdi-truck fs-2 text-white"></i>
+                        </div>
+
+                        <!-- Price Info -->
+                        <div class="col-md-4">
+                            <div class="p-3 rounded"
+                                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="w-100">
+                                        <p class="text-white-50 mb-1 small">Route Amount</p>
+                                        <h4 class="text-white mb-0" id="priceDisplay">Rp 0</h4>
+                                        <p class="text-white-50 mb-0 small" id="priceDetailDisplay">-</p>
+                                    </div>
+                                    <div class="bg-white bg-opacity-25 p-3 rounded">
+                                        <i class="mdi mdi-currency-usd fs-2 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Personal Vendor Price Info -->
+                        <div class="col-md-4" id="vendorPriceCard">
+                            <div class="p-3 rounded"
+                                style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div class="w-100">
+                                        <p class="text-white-50 mb-1 small">Personal Vendor Price</p>
+                                        <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp 0</h4>
+                                        <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">-</p>
+                                    </div>
+                                    <div class="bg-white bg-opacity-25 p-3 rounded">
+                                        <i class="mdi mdi-account-cash fs-2 text-white"></i>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Price Info -->
-                <div class="col-md-4">
-                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="w-100">
-                                <p class="text-white-50 mb-1 small">Route Amount</p>
-                                <h4 class="text-white mb-0" id="priceDisplay">Rp 0</h4>
-                                <p class="text-white-50 mb-0 small" id="priceDetailDisplay">-</p>
-                            </div>
-                            <div class="bg-white bg-opacity-25 p-3 rounded">
-                                <i class="mdi mdi-currency-usd fs-2 text-white"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Personal Vendor Price Info -->
-                <div class="col-md-4" id="vendorPriceCard">
-                    <div class="p-3 rounded" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div class="w-100">
-                                <p class="text-white-50 mb-1 small">Personal Vendor Price</p>
-                                <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp 0</h4>
-                                <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">-</p>
-                            </div>
-                            <div class="bg-white bg-opacity-25 p-3 rounded">
-                                <i class="mdi mdi-account-cash fs-2 text-white"></i>
+                    <!-- Additional Info -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0" role="alert">
+                                <i class="mdi mdi-information"></i>
+                                <strong>Catatan:</strong>
+                                <span id="priceNote">Harga akan otomatis dihitung setelah memilih Fleet, Route, dan
+                                    Qty</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Additional Info -->
-            <div class="row mt-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4>Material Data</h4>
+
+                    <button class="btn btn-primary" type="button"
+                        id="add-material">{{ __('general.add_data') }}</button>
+
+
+                </div>
+
+                <div class="card-body col-md-12">
+                    <table class="table table-sm" id="dt">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Material</th>
+                                <th>Unit</th>
+                                <th>Qty</th>
+                                <th>Unit2</th>
+                                <th>Qty2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="materialForm">
+                            <tr>
+                                <td class="remove-btn"></td>
+                                <td>
+                                    <select class="js-example-basic-single" name="materialCode[]" id="materialCode_1" d>
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($material as $item)
+                                            <option value="{{ $item->code }}">
+                                                {{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>`
+                                </td>
+                                <td>
+                                    <select class="js-example-basic-single" name="unitCode[]" id="unitCode_1">
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($unit as $item)
+                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="form-control" name="materialQty[]" id="materialQty_1" type="number"
+                                        min="1" placeholder="Qty">
+                                </td>
+
+                                </td>
+                                <td>
+                                    <select class="js-example-basic-single" name="unitCode2[]" id="unitCode2_1">
+                                        <option selected="" disabled="" value="">
+                                            {{ __('general.choose') }}...
+                                        </option>
+                                        @foreach ($unit as $item)
+                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input class="form-control" name="materialQty2[]" id="materialQty2_1" type="number"
+                                        min="1" placeholder="Qty">
+                                </td>
+
+
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+
+
+
+            <div class="card d-none" id="card-customer-detail">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4> {{ __('menu_order.customer_detail_data') }}</h4>
+
+                </div>
+                <div class="card-body col-md-6">
+
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-body col-md-12">
+                    <ul class="nav nav-tabs" id="icon-tab" role="tablist">
+                        <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
+                                data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
+                                aria-selected="true">{{ __('menu_order.name') }}</a></li>
+                        <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
+                                href="#profile-icon" role="tab" aria-controls="profile-icon"
+                                aria-selected="false">{{ __('menu_order.add_cost') }}</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="icon-tabContent">
+
+                        @include('operational.order.components.cost-add')
+                        @include('operational.order.components.cost-component-add')
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
                 <div class="col-12">
-                    <div class="alert alert-info mb-0" role="alert">
-                        <i class="mdi mdi-information"></i>
-                        <strong>Catatan:</strong> 
-                        <span id="priceNote">Harga akan otomatis dihitung setelah memilih Fleet, Route, dan Qty</span>
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="save"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </form>
 
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>Material Data</h4>
-
-            <button class="btn btn-primary" type="button"
-                id="add-material">{{ __('general.add_data') }}</button>
-
-
-        </div>
-
-        <div class="card-body col-md-12">
-            <table class="table table-sm" id="dt">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Material</th>
-                        <th>Unit</th>
-                        <th>Qty</th>
-                        <th>Unit2</th>
-                        <th>Qty2</th>
-                    </tr>
-                </thead>
-                <tbody id="materialForm">
-                    <tr>
-                        <td class="remove-btn"></td>
-                        <td>
-                            <select class="js-example-basic-single" name="materialCode[]" id="materialCode_1" d>
-                                <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...
-                                </option>
-                                @foreach ($material as $item)
-                                <option value="{{ $item->code }}">
-                                    {{ $item->name }}
-                                </option>
-                                @endforeach
-                            </select>`
-                        </td>
-                        <td>
-                            <select class="js-example-basic-single" name="unitCode[]" id="unitCode_1">
-                                <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...
-                                </option>
-                                @foreach ($unit as $item)
-                                <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td>
-                            <input class="form-control" name="materialQty[]" id="materialQty_1" type="number"
-                                min="1" placeholder="Qty">
-                        </td>
-
-                        </td>
-                        <td>
-                            <select class="js-example-basic-single" name="unitCode2[]" id="unitCode2_1">
-                                <option selected="" disabled="" value="">
-                                    {{ __('general.choose') }}...
-                                </option>
-                                @foreach ($unit as $item)
-                                <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                @endforeach
-                            </select>
-                        </td>
-                        <td>
-                            <input class="form-control" name="materialQty2[]" id="materialQty2_1" type="number"
-                                min="1" placeholder="Qty">
-                        </td>
-
-
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-    </div>
-
-
-
-    <div class="card d-none" id="card-customer-detail">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4> {{ __('menu_order.customer_detail_data') }}</h4>
-
-        </div>
-        <div class="card-body col-md-6">
-
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body col-md-12">
-            <ul class="nav nav-tabs" id="icon-tab" role="tablist">
-                <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
-                        data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                        aria-selected="true">{{ __('menu_order.name') }}</a></li>
-                <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
-                        href="#profile-icon" role="tab" aria-controls="profile-icon"
-                        aria-selected="false">{{ __('menu_order.add_cost') }}</a>
-                </li>
-            </ul>
-            <div class="tab-content" id="icon-tabContent">
-
-                @include('operational.order.components.cost-add')
-                @include('operational.order.components.cost-component-add')
-
+    <!-- Preloader -->
+    <div id="preloader"
+        style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="text-align: center; color: white;">
+            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
+                <span class="visually-hidden">Loading...</span>
             </div>
+            <p style="font-size: 1.2rem; margin: 0;">Sedang menyimpan data...</p>
         </div>
     </div>
-
-    <div class="card">
-        <div class="col-12">
-            <div class="card-body">
-                <button class="btn btn-primary" id="save"
-                    type="submit">{{ __('general.save_changes') }}</button>
-            </div>
-        </div>
-    </div>
-    </div>
-</form>
-
-<!-- Preloader -->
-<div id="preloader" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; align-items: center; justify-content: center;">
-    <div style="text-align: center; color: white;">
-        <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; margin-bottom: 1rem;">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-        <p style="font-size: 1.2rem; margin: 0;">Sedang menyimpan data...</p>
-    </div>
-</div>
-
 @endsection
 
 @push('script')
-<script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 
-<!-- dataTables.bootstrap5 -->
-<script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+    <!-- dataTables.bootstrap5 -->
+    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
 
-<!-- dataTables.keyTable -->
-<script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-keytable-bs5/js/keyTable.bootstrap5.min.js') }}"></script>
+    <!-- dataTables.keyTable -->
+    <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-keytable-bs5/js/keyTable.bootstrap5.min.js') }}"></script>
 
-<!-- dataTable.responsive -->
-<script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
+    <!-- dataTable.responsive -->
+    <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
 
-<!-- dataTables.select -->
-<script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
-<script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
-<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
-<script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-<script src=" {{ asset('assets/js/helper.js') }}"></script>
+    <!-- dataTables.select -->
+    <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+    <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+    <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
 
-<script>
-    const drivers = @json($driver);
+    <script>
+        const drivers = @json($driver);
 
-    $(document).ready(function() {
+        $(document).ready(function() {
 
-        $('#dt').DataTable({})
+            $('#dt').DataTable({})
 
-        generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
-            '/ajax/order-generate-code');
+            generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
+                '/ajax/order-generate-code');
 
-        // Handle form submit dengan AJAX
-        $('#create-form').on('submit', function(e) {
-            e.preventDefault();
+            // Handle form submit dengan AJAX
+            $('#create-form').on('submit', function(e) {
+                e.preventDefault();
 
-            const form = $(this);
-            const submitButton = $('#save');
+                const form = $(this);
+                const submitButton = $('#save');
 
-            // Show confirmation dialog
-            swal({
-                title: "Konfirmasi Simpan",
-                text: "Apakah Anda yakin ingin menyimpan data order ini?",
-                icon: "warning",
-                buttons: {
-                    cancel: "Batal",
-                    confirm: "Ya, Simpan"
-                },
-                dangerMode: false,
-            }).then((willSave) => {
-                if (willSave) {
-                    // Show preloader
-                    showPreloader();
+                // Show confirmation dialog
+                swal({
+                    title: "Konfirmasi Simpan",
+                    text: "Apakah Anda yakin ingin menyimpan data order ini?",
+                    icon: "warning",
+                    buttons: {
+                        cancel: "Batal",
+                        confirm: "Ya, Simpan"
+                    },
+                    dangerMode: false,
+                }).then((willSave) => {
+                    if (willSave) {
+                        // Show preloader
+                        showPreloader();
 
-                    const formData = new FormData(form[0]);
+                        const formData = new FormData(form[0]);
 
-                    $.ajax({
-                        url: form.attr('action'),
-                        method: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function(response) {
-                            hidePreloader();
-                            if (response.success) {
+                        $.ajax({
+                            url: form.attr('action'),
+                            method: 'POST',
+                            data: formData,
+                            processData: false,
+                            contentType: false,
+                            success: function(response) {
+                                hidePreloader();
+                                if (response.success) {
+                                    swal({
+                                        title: "Sukses",
+                                        text: response.message,
+                                        icon: "success",
+                                        buttons: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        window.location.href = response
+                                        .redirect;
+                                    });
+                                }
+                            },
+                            error: function(xhr) {
+                                hidePreloader();
+                                let errorMessage =
+                                    '{{ __('general.an_error_occurred') }}';
+
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    errorMessage = xhr.responseJSON.message;
+                                }
+
                                 swal({
-                                    title: "Sukses",
-                                    text: response.message,
-                                    icon: "success",
-                                    buttons: false,
-                                    timer: 1500
-                                }).then(() => {
-                                    window.location.href = response.redirect;
+                                    title: "Error",
+                                    text: errorMessage,
+                                    icon: "error",
+                                    button: "OK"
                                 });
+
+                                // Enable button kembali
+                                submitButton.prop('disabled', false).html(
+                                    '{{ __('general.save_changes') }}');
                             }
-                        },
-                        error: function(xhr) {
-                            hidePreloader();
-                            let errorMessage = '{{ __('general.an_error_occurred') }}';
-
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            }
-
-                            swal({
-                                title: "Error",
-                                text: errorMessage,
-                                icon: "error",
-                                button: "OK"
-                            });
-
-                            // Enable button kembali
-                            submitButton.prop('disabled', false).html('{{ __('general.save_changes') }}');
-                        }
-                    });
-                }
+                        });
+                    }
+                });
             });
+        })
+
+        $('input[name="orderDate"]').on('change', function() {
+            generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
+                '/ajax/order-generate-code');
         });
-    })
 
-    $('input[name="orderDate"]').on('change', function() {
-        generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
-            '/ajax/order-generate-code');
-    });
+        function checkAndLoadOriginLocation() {
+            const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
+            const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
 
-    function checkAndLoadOriginLocation() {
-        const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-        const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-
-        if (customerCode && routeTypeCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-            $('#originLocationCode').html(html);
-
-            $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
-                data.forEach(i => {
-                    html += '<option value="' + i.code + '">' + i.name + '</option>';
-                });
+            if (customerCode && routeTypeCode) {
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                 $('#originLocationCode').html(html);
-                // Reinitialize Select2 for origin location dropdown after updating options
-            });
-        }
-    }
 
-    function checkAndLoadRouteOrder() {
-        const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-        const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-        let customerId = $('#customerCode option:selected').data('id');
-
-
-        if (customerCode && routeTypeCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-            $('#originLocationCode').html(html);
-
-            $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
-                data.forEach(i => {
-                    html +=
-                        `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
-
+                $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
+                    data.forEach(i => {
+                        html += '<option value="' + i.code + '">' + i.name + '</option>';
+                    });
+                    $('#originLocationCode').html(html);
+                    // Reinitialize Select2 for origin location dropdown after updating options
                 });
-                $('#routeData').html(html);
-                // Reinitialize Select2 for origin location dropdown after updating options
-            });
+            }
         }
-    }
 
-    $('#add-material').on('click', function() {
-        let row = $('#materialForm tr').length + 1;
+        function checkAndLoadRouteOrder() {
+            const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
+            const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+            let customerId = $('#customerCode option:selected').data('id');
 
-        let newRow = `
+
+            if (customerCode && routeTypeCode) {
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
+                $('#originLocationCode').html(html);
+
+                $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
+                    data.forEach(i => {
+                        html +=
+                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
+
+                    });
+                    $('#routeData').html(html);
+                    // Reinitialize Select2 for origin location dropdown after updating options
+                });
+            }
+        }
+
+        $('#add-material').on('click', function() {
+            let row = $('#materialForm tr').length + 1;
+
+            let newRow = `
         <tr>
             <td class="remove-btn">
                 <a href="javascript:removeDetailRow(${row})"
@@ -639,31 +647,31 @@
         </tr>
     `;
 
-        $('#materialForm').append(newRow);
+            $('#materialForm').append(newRow);
 
-        // Reinitialize select2 (jika pakai select2)
-        $(`#materialCode_${row}`).select2();
-        $(`#unitCode_${row}`).select2();
-        $(`#materialCode2_${row}`).select2();
-        $(`#unitCode2_${row}`).select2();
-    });
+            // Reinitialize select2 (jika pakai select2)
+            $(`#materialCode_${row}`).select2();
+            $(`#unitCode_${row}`).select2();
+            $(`#materialCode2_${row}`).select2();
+            $(`#unitCode2_${row}`).select2();
+        });
 
 
-    function removeDetailRow(row) {
-        $(`#materialCode_${row}`).closest('tr').remove();
-    }
-
-    $(document).on('click', '.remove-btn', function() {
-        if ($('#materialForm tr').length > 1) {
-            $(this).show();
-        } else {
-            $(this).hide();
+        function removeDetailRow(row) {
+            $(`#materialCode_${row}`).closest('tr').remove();
         }
-    });
 
-    // When routeTypeCode is changed
-    $('#routeTypeCode').on('change', function() {
-        $('body').append(`
+        $(document).on('click', '.remove-btn', function() {
+            if ($('#materialForm tr').length > 1) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+
+        // When routeTypeCode is changed
+        $('#routeTypeCode').on('change', function() {
+            $('body').append(`
             <div class="loader-wrapper">
                 <div class="loader">
                     <div class="loader4"></div>
@@ -671,58 +679,58 @@
             </div>
         `);
 
-        const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
+            const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
 
-        setTimeout(function() {
-            // Show the correct field based on the selection after 1 second (simulating processing time)
-            if (selectedType === 'TONASE') {
-                $('#qtyLabel').html(
-                    'Tonase <i class="mdi mdi-information text-danger"></i>'
-                ); // Update the label with icon
-                $('#qty').attr('placeholder', 'Enter Tonase'); // Update placeholder
-                $('#qty').val(1); // Set default value to 1
-                $('#qty').removeAttr('readonly'); // Remove readonly if it was set
-                $('#qtyField').removeClass('d-none'); // Show the field
-            } else if (selectedType === 'TRIP') {
-                $('#qtyLabel').html(
-                    'Ritase <i class="mdi mdi-information text-danger"></i>'
-                ); // Update the label with icon
-                $('#qty').attr('placeholder', 'Enter Ritase'); // Update placeholder
-                $('#qty').val(1); // Set default value to 1
-                $('#qty').attr('readonly', true); // Make the field readonly
-                $('#qtyField').removeClass('d-none'); // Show the field
-            } else if (selectedType == 'KUBIKASE') {
-                $('#qtyLabel').html(
-                    'Kubikase <i class="mdi mdi-information text-danger"></i>'
-                ); // Update the label with icon
-                $('#qty').attr('placeholder', 'Enter Kubikase'); // Update placeholder
-                $('#qty').val(1); // Set default value to 1
-                $('#qty').removeAttr('readonly'); // Remove readonly if it was set
-                $('#qtyField').removeClass('d-none'); // Show the field
-            } else {
-                $('#qtyField').addClass('d-none'); // Hide the field if neither is selected
-            }
+            setTimeout(function() {
+                // Show the correct field based on the selection after 1 second (simulating processing time)
+                if (selectedType === 'TONASE') {
+                    $('#qtyLabel').html(
+                        'Tonase <i class="mdi mdi-information text-danger"></i>'
+                    ); // Update the label with icon
+                    $('#qty').attr('placeholder', 'Enter Tonase'); // Update placeholder
+                    $('#qty').val(1); // Set default value to 1
+                    $('#qty').removeAttr('readonly'); // Remove readonly if it was set
+                    $('#qtyField').removeClass('d-none'); // Show the field
+                } else if (selectedType === 'TRIP') {
+                    $('#qtyLabel').html(
+                        'Ritase <i class="mdi mdi-information text-danger"></i>'
+                    ); // Update the label with icon
+                    $('#qty').attr('placeholder', 'Enter Ritase'); // Update placeholder
+                    $('#qty').val(1); // Set default value to 1
+                    $('#qty').attr('readonly', true); // Make the field readonly
+                    $('#qtyField').removeClass('d-none'); // Show the field
+                } else if (selectedType == 'KUBIKASE') {
+                    $('#qtyLabel').html(
+                        'Kubikase <i class="mdi mdi-information text-danger"></i>'
+                    ); // Update the label with icon
+                    $('#qty').attr('placeholder', 'Enter Kubikase'); // Update placeholder
+                    $('#qty').val(1); // Set default value to 1
+                    $('#qty').removeAttr('readonly'); // Remove readonly if it was set
+                    $('#qtyField').removeClass('d-none'); // Show the field
+                } else {
+                    $('#qtyField').addClass('d-none'); // Hide the field if neither is selected
+                }
 
-            // Remove the loader once the logic is complete
-            $('.loader-wrapper').remove();
-        }, 1000); // Simulate 1-second delay for the loader
-    });
+                // Remove the loader once the logic is complete
+                $('.loader-wrapper').remove();
+            }, 1000); // Simulate 1-second delay for the loader
+        });
 
-    // function checkAndLoadRoute() {
-    //     const customerCode = $('#customerCode').select2('val');
-    //     const originLocationCode = $('#originLocationCode').select2('val');
-    //     const destinationLocationCode = $('#destinationLocationCode').select2('val');
+        // function checkAndLoadRoute() {
+        //     const customerCode = $('#customerCode').select2('val');
+        //     const originLocationCode = $('#originLocationCode').select2('val');
+        //     const destinationLocationCode = $('#destinationLocationCode').select2('val');
 
-    //     if (customerCode && originLocationCode && destinationLocationCode) {
-    //         $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
-    //             destinationLocationCode,
-    //             function(data) {
-    //                 const componentList = document.getElementById('component-list');
-    //                 componentList.innerHTML = '';
-    //                 index = 0;
+        //     if (customerCode && originLocationCode && destinationLocationCode) {
+        //         $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
+        //             destinationLocationCode,
+        //             function(data) {
+        //                 const componentList = document.getElementById('component-list');
+        //                 componentList.innerHTML = '';
+        //                 index = 0;
 
-    //                 data.forEach((item, i) => {
-    //                     let row = `
+        //                 data.forEach((item, i) => {
+        //                     let row = `
     //                 <tr>
     //                     <td>
     //                         <a href="javascript:removeRow(${i})"
@@ -737,26 +745,26 @@
     //      <input class="form-control"  name="nominal[]" oninput="formatAngka(this)" type="text" min=1 readonly  value="${formatNumber(item.amount)}">
     // </td>
     //                 </tr>`;
-    //                     componentList.insertAdjacentHTML('beforeend', row);
-    //                     index++;
-    //                 });
-    //             });
-    //     }
-    // }
+        //                     componentList.insertAdjacentHTML('beforeend', row);
+        //                     index++;
+        //                 });
+        //             });
+        //     }
+        // }
 
-    function checkAndLoadRoute() {
-        const routeData = $('#routeData').select2('val');
+        function checkAndLoadRoute() {
+            const routeData = $('#routeData').select2('val');
 
-        if (routeData) {
-            $.get("{{ url('ajax/route-order-detail') }}/" + routeData,
-                function(data) {
-                    const componentList = document.getElementById('component-list');
-                    if (componentList) {
-                        componentList.innerHTML = '';
-                        index = 0;
+            if (routeData) {
+                $.get("{{ url('ajax/route-order-detail') }}/" + routeData,
+                    function(data) {
+                        const componentList = document.getElementById('component-list');
+                        if (componentList) {
+                            componentList.innerHTML = '';
+                            index = 0;
 
-                        data.forEach((item, i) => {
-                            let row = `
+                            data.forEach((item, i) => {
+                                let row = `
                             <tr>
                                 <td>
                                     <a href="javascript:removeRow(${i})"
@@ -773,88 +781,91 @@
                                 <td><input class="form-control" name="type[]" value="Tidak Ditagihkan"></td>
 
                             </tr>`;
-                            componentList.insertAdjacentHTML('beforeend', row);
-                            index++;
-                        });
-                    }
-                });
-        }
-    }
-
-
-    function checkAndLoadDestinationLocation() {
-        const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-        const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-        const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
-
-        if (customerCode && routeTypeCode && originLocationCode) {
-            let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-            $('#destinationLocationCode').html(html);
-
-            $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +
-                originLocationCode,
-                function(data) {
-                    data.forEach(i => {
-                        html += '<option value="' + i.code + '">' + i.name + '</option>';
+                                componentList.insertAdjacentHTML('beforeend', row);
+                                index++;
+                            });
+                        }
                     });
-                    $('#destinationLocationCode').html(html);
-                    // Reinitialize Select2 for destination location dropdown after updating options
-                });
+            }
         }
-    }
 
-    function formatNumber(number) {
-        return new Intl.NumberFormat('id-ID').format(number);
-    }
 
-    // Trigger origin location when both customer and route type are selected
-    $('#customerCode, #routeTypeCode').on('change', function() {
-        // checkAndLoadOriginLocation();
-        checkAndLoadRouteOrder();
-    });
+        function checkAndLoadDestinationLocation() {
+            const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
+            const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
+            const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
 
-    // Trigger destination location when origin location is also selected
-    $('#originLocationCode').on('select2:select', function() {
-        checkAndLoadDestinationLocation();
-    });
+            if (customerCode && routeTypeCode && originLocationCode) {
+                let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
+                $('#destinationLocationCode').html(html);
 
-    $('#routeData').on('select2:select', function() {
-        checkAndLoadRoute();
-    });
+                $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +
+                    originLocationCode,
+                    function(data) {
+                        data.forEach(i => {
+                            html += '<option value="' + i.code + '">' + i.name + '</option>';
+                        });
+                        $('#destinationLocationCode').html(html);
+                        // Reinitialize Select2 for destination location dropdown after updating options
+                    });
+            }
+        }
 
-    $('#fleetCode').on('change', function() {
-        let fleetcode = $(this).val();
+        function formatNumber(number) {
+            return new Intl.NumberFormat('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(number);
+        }
 
-        if (fleetcode) {
-            $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
-                const defaultDriverLabel = `
+        // Trigger origin location when both customer and route type are selected
+        $('#customerCode, #routeTypeCode').on('change', function() {
+            // checkAndLoadOriginLocation();
+            checkAndLoadRouteOrder();
+        });
+
+        // Trigger destination location when origin location is also selected
+        $('#originLocationCode').on('select2:select', function() {
+            checkAndLoadDestinationLocation();
+        });
+
+        $('#routeData').on('select2:select', function() {
+            checkAndLoadRoute();
+        });
+
+        $('#fleetCode').on('change', function() {
+            let fleetcode = $(this).val();
+
+            if (fleetcode) {
+                $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
+                    const defaultDriverLabel = `
                         <label class="form-label" for="driverCode" id="driverLabel">
                             Driver <i class="mdi mdi-information text-danger"></i>
                         </label>
                     `;
 
-                $('#driverCode').prop('disabled', false); // Aktifkan select
-                $('#driverCode').val(''); // Kosongkan value
-                $('#driverCode').find('option:gt(0)').remove(); // Hapus semua option kecuali pertama
-                $('#driverCodeHidden').val(''); // Kosongkan hidden input
-                $('#driverLabelWrapper').html(defaultDriverLabel);
+                    $('#driverCode').prop('disabled', false); // Aktifkan select
+                    $('#driverCode').val(''); // Kosongkan value
+                    $('#driverCode').find('option:gt(0)').remove(); // Hapus semua option kecuali pertama
+                    $('#driverCodeHidden').val(''); // Kosongkan hidden input
+                    $('#driverLabelWrapper').html(defaultDriverLabel);
 
 
-                if (data) {
-                    $('#driverCode').find('option:gt(0)').remove();
+                    if (data) {
+                        $('#driverCode').find('option:gt(0)').remove();
 
-                    let matchedDriver = drivers.find(driver => driver.code === data);
+                        let matchedDriver = drivers.find(driver => driver.code === data);
 
-                    if (matchedDriver) {
-                        $('#driverCode').append(
-                            `<option value="${matchedDriver.code}" selected>${matchedDriver.name.toUpperCase()}</option>`
-                        );
+                        if (matchedDriver) {
+                            $('#driverCode').append(
+                                `<option value="${matchedDriver.code}" selected>${matchedDriver.name.toUpperCase()}</option>`
+                            );
 
-                        $('#driverCodeHidden').val(matchedDriver.code);
+                            $('#driverCodeHidden').val(matchedDriver.code);
 
-                        $('#driverCode').attr('disabled', true);
+                            $('#driverCode').attr('disabled', true);
 
-                        $('#driverLabelWrapper').html(`
+                            $('#driverLabelWrapper').html(`
                                 <div class="d-flex justify-content-between" id="driverLabelContainer">
                                     <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
                                     <div>
@@ -863,66 +874,66 @@
                                     </div>
                                 </div>
                             `);
-                    } else {
-                        // Kalau fleetCode kosong (select dikosongin)
-                        $('#driverCode').prop('disabled', false).val('');
-                        $('#driverCode').find('option:gt(0)').remove();
-                        $('#driverCodeHidden').val('');
-                        $('#driverLabelWrapper').html(defaultDriverLabel);
+                        } else {
+                            // Kalau fleetCode kosong (select dikosongin)
+                            $('#driverCode').prop('disabled', false).val('');
+                            $('#driverCode').find('option:gt(0)').remove();
+                            $('#driverCodeHidden').val('');
+                            $('#driverLabelWrapper').html(defaultDriverLabel);
+                        }
                     }
-                }
-            });
-        }
-    });
+                });
+            }
+        });
 
-    // Pasang event listener pakai event delegation
-    $(document).on('change', 'input[name="isLeave"]', function() {
-        if ($(this).is(':checked')) {
-            // Enable select
-            $('#driverCode').prop('disabled', false);
+        // Pasang event listener pakai event delegation
+        $(document).on('change', 'input[name="isLeave"]', function() {
+            if ($(this).is(':checked')) {
+                // Enable select
+                $('#driverCode').prop('disabled', false);
 
-            // Kosongkan dulu select dan isi ulang semua data driver
-            $('#driverCode').find('option:gt(0)').remove(); // Hapus semua kecuali placeholder
+                // Kosongkan dulu select dan isi ulang semua data driver
+                $('#driverCode').find('option:gt(0)').remove(); // Hapus semua kecuali placeholder
 
-            // Tambahkan semua driver dari variabel global
-            drivers.forEach(driver => {
-                $('#driverCode').append(
-                    `<option value="${driver.code}">${driver.name.toUpperCase()}</option>`
-                );
-            });
+                // Tambahkan semua driver dari variabel global
+                drivers.forEach(driver => {
+                    $('#driverCode').append(
+                        `<option value="${driver.code}">${driver.name.toUpperCase()}</option>`
+                    );
+                });
 
-            $('#driverCodeHidden').val('');
-        } else {
-            // Checkbox di-uncheck → kembali ke kondisi seperti saat memilih fleetCode
+                $('#driverCodeHidden').val('');
+            } else {
+                // Checkbox di-uncheck → kembali ke kondisi seperti saat memilih fleetCode
 
-            let fleetcode = $('#fleetCode').val();
+                let fleetcode = $('#fleetCode').val();
 
-            if (fleetcode) {
-                const defaultDriverLabel = `
+                if (fleetcode) {
+                    const defaultDriverLabel = `
                         <label class="form-label" for="driverCode" id="driverLabel">
                             Driver <i class="mdi mdi-information text-danger"></i>
                         </label>
                     `;
-                $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
-                    // Reset kondisi
-                    $('#driverCode').prop('disabled', false);
-                    $('#driverCode').val('');
-                    $('#driverCode').find('option:gt(0)').remove();
-                    $('#driverCodeHidden').val('');
-                    $('#driverLabelWrapper').html(defaultDriverLabel);
+                    $.get("/ajax/fleet-driver/" + fleetcode, function(data) {
+                        // Reset kondisi
+                        $('#driverCode').prop('disabled', false);
+                        $('#driverCode').val('');
+                        $('#driverCode').find('option:gt(0)').remove();
+                        $('#driverCodeHidden').val('');
+                        $('#driverLabelWrapper').html(defaultDriverLabel);
 
-                    if (data) {
-                        let matchedDriver = drivers.find(driver => driver.code === data);
+                        if (data) {
+                            let matchedDriver = drivers.find(driver => driver.code === data);
 
-                        if (matchedDriver) {
-                            $('#driverCode').append(
-                                `<option value="${matchedDriver.code}" selected>${matchedDriver.name}</option>`
-                            );
+                            if (matchedDriver) {
+                                $('#driverCode').append(
+                                    `<option value="${matchedDriver.code}" selected>${matchedDriver.name}</option>`
+                                );
 
-                            $('#driverCodeHidden').val(matchedDriver.code);
-                            $('#driverCode').attr('disabled', true);
+                                $('#driverCodeHidden').val(matchedDriver.code);
+                                $('#driverCode').attr('disabled', true);
 
-                            $('#driverLabelWrapper').html(`
+                                $('#driverLabelWrapper').html(`
                             <div class="d-flex justify-content-between" id="driverLabelContainer">
                                 <label class="form-label" for="driverCode">Driver <i class="mdi mdi-information text-danger"></i></label>
                                 <div>
@@ -931,149 +942,153 @@
                                 </div>
                             </div>
                         `);
+                            }
                         }
-                    }
-                });
-            } else {
-                // Jika fleetCode kosong
-                $('#driverCode').prop('disabled', false);
-                $('#driverCode').val('');
-                $('#driverCode').find('option:gt(0)').remove();
-                $('#driverCodeHidden').val('');
-                $('#driverLabelWrapper').html(defaultDriverLabel);
+                    });
+                } else {
+                    // Jika fleetCode kosong
+                    $('#driverCode').prop('disabled', false);
+                    $('#driverCode').val('');
+                    $('#driverCode').find('option:gt(0)').remove();
+                    $('#driverCodeHidden').val('');
+                    $('#driverLabelWrapper').html(defaultDriverLabel);
+                }
             }
-        }
-    });
-
-    $('#driverCode').on('change', function() {
-        $('#driverCodeHidden').val($(this).val());
-    });
-
-    $('#customerCode').on('change', function() {
-
-        let customerCode = $(this).val();
-        let customerId = $('#customerCode option:selected').data('id');
-
-        $.get("/ajax/order-shipment-format/" + customerId, function(data) {
-            $('#shipmentNumber').val(String(data).toUpperCase());
         });
 
+        $('#driverCode').on('change', function() {
+            $('#driverCodeHidden').val($(this).val());
+        });
 
-        if (customerCode) {
-            $.get("/ajax/customer-detail/" + customerId, function(data) {
-                const $detailCard = $('#card-customer-detail');
-                const $cardBody = $detailCard.find('.card-body');
-                $cardBody.empty(); // Bersihkan isinya
+        $('#customerCode').on('change', function() {
 
-                if (data.length > 0) {
-                    $detailCard.removeClass('d-none');
+            let customerCode = $(this).val();
+            let customerId = $('#customerCode option:selected').data('id');
 
-                    // Disable input #notes
-                    $('#notes').prop('disabled', true);
+            $.get("/ajax/order-shipment-format/" + customerId, function(data) {
+                $('#shipmentNumber').val(String(data).toUpperCase());
+            });
 
-                    data.forEach(item => {
-                        let html = `
+
+            if (customerCode) {
+                $.get("/ajax/customer-detail/" + customerId, function(data) {
+                    const $detailCard = $('#card-customer-detail');
+                    const $cardBody = $detailCard.find('.card-body');
+                    $cardBody.empty(); // Bersihkan isinya
+
+                    if (data.length > 0) {
+                        $detailCard.removeClass('d-none');
+
+                        // Disable input #notes
+                        $('#notes').prop('disabled', true);
+
+                        data.forEach(item => {
+                            let html = `
                         <input type="hidden" name="customerDetailCode[]" value="${item.code}">
                         <div class="mb-3">
                             <label class="form-label">${item.name} </label>
                             <input class="form-control" name="value[]" type="text" placeholder="${item.name}">
                         </div>`;
-                        $cardBody.append(html);
-                    });
-                } else {
-                    $detailCard.addClass('d-none');
-                    $cardBody.empty();
+                            $cardBody.append(html);
+                        });
+                    } else {
+                        $detailCard.addClass('d-none');
+                        $cardBody.empty();
 
-                    // Enable input #notes
-                    $('#notes').prop('disabled', false);
-                }
-            });
-        } else {
-            $('#card-customer-detail').addClass('d-none');
-            $('#card-customer-detail .card-body').empty();
+                        // Enable input #notes
+                        $('#notes').prop('disabled', false);
+                    }
+                });
+            } else {
+                $('#card-customer-detail').addClass('d-none');
+                $('#card-customer-detail .card-body').empty();
 
-            // Enable input #notes
-            $('#notes').prop('disabled', false);
-        }
-    });
-
-    // Preloader functions
-    function showPreloader() {
-        $('#preloader').css('display', 'flex');
-    }
-
-    function hidePreloader() {
-        $('#preloader').css('display', 'none');
-    }
-
-    // Function to update price information
-    function updatePriceInfo() {
-        const fleetCode = $('#fleetCode').val();
-        const routeCode = $('#routeData').val();
-        const qty = $('#qty').val() || 1;
-
-        // Check if we have the required data
-        if (!fleetCode || !routeCode) {
-            $('#priceInfoCard').hide();
-            return;
-        }
-
-        // Show the card and make AJAX request
-        $('#priceInfoCard').show();
-
-        $.ajax({
-            url: '{{ route('ajax.order-calculate-price') }}',
-            method: 'POST',
-            data: {
-                _token: '{{ csrf_token() }}',
-                fleetCode: fleetCode,
-                routeCode: routeCode,
-                qty: qty
-            },
-            success: function(response) {
-                if (response.success) {
-                    // Update fleet type
-                    $('#fleetTypeDisplay').text(response.fleetType || '-');
-
-                    // Update price (routeAmount = qty × price satuan)
-                    $('#priceDisplay').text('Rp ' + formatNumber(response.routeAmount));
-                    $('#priceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.price) + ' = Rp ' + formatNumber(response.routeAmount));
-
-                    // Update personal vendor price (always show)
-                    $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.personalVendorPrice));
-                    $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.personalVendorPriceSingle) + ' = Rp ' + formatNumber(response.personalVendorPrice));
-
-                    // Update hidden routeAmount input with calculated price
-                    $('input[name="price"]').val(response.price);
-                    $('input[name="routeAmount"]').val(response.routeAmount);
-                    $('input[name="personalVendorPrice"]').val(response.personalVendorPrice);
-                    $('input[name="personalVendorPriceSingle"]').val(response.personalVendorPriceSingle);
-
-                    // Always show vendor price card
-                    $('#vendorPriceCard').show();
-                    $('#priceNote').html('Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' + response.fleetType + '</strong>');
-                }
-            },
-            error: function(xhr) {
-                console.error('Error calculating price:', xhr);
+                // Enable input #notes
+                $('#notes').prop('disabled', false);
             }
         });
-    }
 
-    // Attach event listeners for real-time updates
-    $('#fleetCode, #routeData, #qty').on('change keyup', function() {
-        updatePriceInfo();
-    });
+        // Preloader functions
+        function showPreloader() {
+            $('#preloader').css('display', 'flex');
+        }
 
-    // Also update when route is selected
-    $('#routeData').on('select2:select', function() {
-        updatePriceInfo();
-    });
+        function hidePreloader() {
+            $('#preloader').css('display', 'none');
+        }
 
-    // Update when fleet is selected
-    $('#fleetCode').on('select2:select', function() {
-        updatePriceInfo();
-    });
+        // Function to update price information
+        function updatePriceInfo() {
+            const fleetCode = $('#fleetCode').val();
+            const routeCode = $('#routeData').val();
+            const qty = $('#qty').val() || 1;
 
-</script>
+            // Check if we have the required data
+            if (!fleetCode || !routeCode) {
+                $('#priceInfoCard').hide();
+                return;
+            }
+
+            // Show the card and make AJAX request
+            $('#priceInfoCard').show();
+
+            $.ajax({
+                url: '{{ route('ajax.order-calculate-price') }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    fleetCode: fleetCode,
+                    routeCode: routeCode,
+                    qty: qty
+                },
+                success: function(response) {
+                    if (response.success) {
+                        // Update fleet type
+                        $('#fleetTypeDisplay').text(response.fleetType || '-');
+
+                        // Update price (routeAmount = qty × price satuan)
+                        $('#priceDisplay').text('Rp ' + formatNumber(response.routeAmount));
+                        $('#priceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.price) + ' = Rp ' +
+                            formatNumber(response.routeAmount));
+
+                        // Update personal vendor price (always show)
+                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.personalVendorPrice));
+                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response
+                            .personalVendorPriceSingle) + ' = Rp ' + formatNumber(response
+                            .personalVendorPrice));
+
+                        // Update hidden routeAmount input with calculated price
+                        $('input[name="price"]').val(response.price);
+                        $('input[name="routeAmount"]').val(response.routeAmount);
+                        $('input[name="personalVendorPrice"]').val(response.personalVendorPrice);
+                        $('input[name="personalVendorPriceSingle"]').val(response.personalVendorPriceSingle);
+
+                        // Always show vendor price card
+                        $('#vendorPriceCard').show();
+                        $('#priceNote').html(
+                            'Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' +
+                            response.fleetType + '</strong>');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error calculating price:', xhr);
+                }
+            });
+        }
+
+        // Attach event listeners for real-time updates
+        $('#fleetCode, #routeData, #qty').on('change keyup', function() {
+            updatePriceInfo();
+        });
+
+        // Also update when route is selected
+        $('#routeData').on('select2:select', function() {
+            updatePriceInfo();
+        });
+
+        // Update when fleet is selected
+        $('#fleetCode').on('select2:select', function() {
+            updatePriceInfo();
+        });
+    </script>
 @endpush

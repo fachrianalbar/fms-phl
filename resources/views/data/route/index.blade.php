@@ -55,7 +55,7 @@
                                 <select class="js-example-basic-single form-control" name="customerName" id="customerName">
                                     <option selected="" value="">{{ __('general.choose') }}...</option>
                                     @foreach ($customer as $item)
-                                    <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                    <option value="{{ $item->name }}">{{ $item->code . ' - ' . $item->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
