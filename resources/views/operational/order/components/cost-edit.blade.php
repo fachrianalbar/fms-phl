@@ -8,7 +8,7 @@
                     <select class="js-example-basic-single" id="componentName">
                         <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                         @foreach ($component as $item)
-                        <option value="{{ $item->code }}">{{ $item->name }}</option>
+                            <option value="{{ $item->code }}">{{ $item->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -48,10 +48,10 @@
                     <th>Tipe</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="component-list">
 
                 @php
-                $i = 1;
+                    $i = 1;
                 @endphp
                 {{-- @if ($data->route->routeTypeCode == 'TONASE')
                     <tr>
@@ -78,37 +78,37 @@
                 </tr>
                 @endif --}}
                 @foreach ($cost as $item)
-                <tr>
-                    <td>
-                        <a href="javascript:deleteCost('{{ $item->id }}')"
-                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
-                            <i class="mdi mdi-delete fs-14 text-danger"></i>
-                        </a>
-                    </td>
-                    {{-- <td>{{ $i++ }}</td> --}}
-                    <td>
-                        @if ($item->costComponent)
-                        <input type="hidden" class="form-control" name="componentName[]"
-                            value="{{ $item->costComponent->code }}">
-                        <input type="hidden" name="is_route[]" value="{{ $item->is_route }}">
-                        {{ $item->costComponent->name }}
-                        @else
-                        <span class="text-danger">Component not found</span>
-                        @endif
-                    </td>
-                    <td>
-                        <input class="form-control" name="description[]" value="{{ $item->description }}">
-                    </td>
-                    <td>
-                        <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
-                            readonly min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
-                    </td>
-                    <td>
-                        <input class="form-control" name="type[]"
-                            value="{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}" readonly>
-                    </td>
+                    <tr>
+                        <td>
+                            <a href="javascript:void(0)" onclick="removeRow(this)"
+                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">
+                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                            </a>
+                        </td>
+                        {{-- <td>{{ $i++ }}</td> --}}
+                        <td>
+                            @if ($item->costComponent)
+                                <input type="hidden" class="form-control" name="componentName[]"
+                                    value="{{ $item->costComponent->code }}">
+                                <input type="hidden" name="is_route[]" value="{{ $item->is_route }}">
+                                {{ $item->costComponent->name }}
+                            @else
+                                <span class="text-danger">Component not found</span>
+                            @endif
+                        </td>
+                        <td>
+                            <input class="form-control" name="description[]" value="{{ $item->description }}">
+                        </td>
+                        <td>
+                            <input class="form-control" name="nominal[]" oninput="formatAngka(this)" type="text"
+                                min="1" value="{{ number_format($item->nominal, 0, ',', '.') }}">
+                        </td>
+                        <td>
+                            <input class="form-control" name="type[]"
+                                value="{{ $item->type == 'On Charge' ? 'Ditagihkan' : 'Tidak Ditagihkan' }}" readonly>
+                        </td>
 
-                </tr>
+                    </tr>
                 @endforeach
                 <!-- New rows will be added here -->
             </tbody>
@@ -160,7 +160,7 @@
 
             newRow.innerHTML = `
          <td>
-            <a href="javascript:removeRow(${index})"
+            <a href="javascript:void(0)" onclick="removeRow(this)"
             class="btn btn-icon btn-sm bg-danger-subtle me-1"
             data-bs-toggle="tooltip" title="Delete">
                 <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -200,9 +200,23 @@
 
 
         // Function to remove a row
-        function removeRow(rowIndex) {
+        function removeRow(target) {
             const table = document.getElementById('dt-cost-component').getElementsByTagName('tbody')[0];
+
+            if (target && typeof target === 'object') {
+                const row = target.closest('tr');
+                if (row) {
+                    row.remove();
+                }
+
+                return;
+            }
+
+            const rowIndex = Number(target);
+            if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= table.rows.length) {
+                return;
+            }
+
             table.deleteRow(rowIndex);
-            index--;
         }
     </script>

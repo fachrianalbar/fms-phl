@@ -156,7 +156,7 @@
 
             newRow.innerHTML = `
          <td>
-            <a href="javascript:removeRow(${index})"
+            <a href="javascript:void(0)" onclick="removeRow(this)"
             class="btn btn-icon btn-sm bg-danger-subtle me-1"
             data-bs-toggle="tooltip" title="Delete">
                 <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -193,9 +193,23 @@
 
 
         // Function to remove a row
-        function removeRow(rowIndex) {
+        function removeRow(target) {
             const table = document.getElementById('dt-cost-component').getElementsByTagName('tbody')[0];
+
+            if (target && typeof target === 'object') {
+                const row = target.closest('tr');
+                if (row) {
+                    row.remove();
+                }
+
+                return;
+            }
+
+            const rowIndex = Number(target);
+            if (!Number.isInteger(rowIndex) || rowIndex < 0 || rowIndex >= table.rows.length) {
+                return;
+            }
+
             table.deleteRow(rowIndex);
-            index--;
         }
     </script>

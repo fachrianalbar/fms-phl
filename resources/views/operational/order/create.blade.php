@@ -518,7 +518,7 @@
                                         timer: 1500
                                     }).then(() => {
                                         window.location.href = response
-                                        .redirect;
+                                            .redirect;
                                     });
                                 }
                             },
@@ -767,7 +767,7 @@
                                 let row = `
                             <tr>
                                 <td>
-                                    <a href="javascript:removeRow(${i})"
+                                    <a href="javascript:void(0)" onclick="removeRow(this)"
                                         class="btn btn-icon btn-sm bg-danger-subtle me-1"
                                         data-bs-toggle="tooltip" title="Delete">
                                         <i class="mdi mdi-delete fs-14 text-danger"></i>
