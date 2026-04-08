@@ -74,6 +74,11 @@ class PurchaseService
 
                 $price = (int) str_replace('.', '', $filtered['price'][$i]);
 
+                // Update Item master price
+                Item::where('code', $filtered['itemCode'][$i])->update([
+                    'price' => $price,
+                ]);
+
                 $code = $data->code;
 
                 $pd = PurchaseDetail::where('itemCode', $filtered['itemCode'][$i])

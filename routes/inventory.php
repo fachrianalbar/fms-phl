@@ -11,6 +11,8 @@ use App\Http\Controllers\Inventory\WarehouseController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('inventory')->name('inventory.')->group(function () {
+    Route::post('items/sync-latest-purchase-price', [ItemController::class, 'syncLatestPurchasePrice'])->name('items.sync-latest-purchase-price');
+    Route::get('items/{itemCode}/purchase-history', [ItemController::class, 'purchaseHistory'])->name('items.purchase-history');
     Route::resource('items', ItemController::class);
     Route::resource('item-category', ItemCategoryController::class);
     Route::resource('warehouse', WarehouseController::class);

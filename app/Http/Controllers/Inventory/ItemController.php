@@ -62,7 +62,7 @@ class ItemController extends Controller
     {
         $items = Item::orderBy('code', 'asc')->get();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('items', $items);
@@ -79,7 +79,7 @@ class ItemController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
 
-        return view($this->view.'create')
+        return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('unit', $unit)
             ->with('location', $location)
@@ -114,11 +114,11 @@ class ItemController extends Controller
             $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -138,7 +138,7 @@ class ItemController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $unit = $this->unitSvc->findAllInventory();
@@ -147,7 +147,7 @@ class ItemController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
 
-        return view($this->view.'edit')
+        return view($this->view . 'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('unit', $unit)
@@ -184,11 +184,11 @@ class ItemController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -199,7 +199,122 @@ class ItemController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+    }
+
+    public function syncLatestPurchasePrice()
+    {
+        try {
+            DB::beginTransaction();
+
+            $latestPriceByItem = [];
+
+            $rows = DB::table('purchase_detail')
+                ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
+                ->whereNull('purchase_detail.deleted_at')
+                ->whereNull('purchase.deleted_at')
+                ->whereNotNull('purchase_detail.itemCode')
+                ->orderBy('purchase.date', 'desc')
+                ->orderBy('purchase.time', 'desc')
+                ->orderBy('purchase_detail.created_at', 'desc')
+                ->select([
+                    'purchase_detail.itemCode',
+                    'purchase_detail.price',
+                ])
+                ->cursor();
+
+            foreach ($rows as $row) {
+                if (isset($latestPriceByItem[$row->itemCode])) {
+                    continue;
+                }
+
+                if ($row->price === null) {
+                    continue;
+                }
+
+                $latestPriceByItem[$row->itemCode] = (int) $row->price;
+            }
+
+            if (empty($latestPriceByItem)) {
+                DB::commit();
+
+                return redirect()->route($this->view . 'index')->with('fail', 'Tidak ada history pembelian untuk sinkronisasi harga.');
+            }
+
+            $updatedCount = 0;
+
+            foreach ($latestPriceByItem as $itemCode => $price) {
+                $updatedCount += Item::where('code', $itemCode)
+                    ->whereNull('deleted_at')
+                    ->update([
+                        'price' => $price,
+                    ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route($this->view . 'index')->with('success', 'Sinkronisasi harga berhasil. ' . $updatedCount . ' item diperbarui dari pembelian terbaru.');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
+    }
+
+    public function purchaseHistory(Request $request, string $itemCode)
+    {
+        $item = Item::where('code', $itemCode)->first();
+
+        if (! $item) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Item not found',
+                'data' => [],
+            ], 404);
+        }
+
+        $histories = DB::table('purchase_detail')
+            ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
+            ->whereNull('purchase_detail.deleted_at')
+            ->whereNull('purchase.deleted_at')
+            ->where('purchase_detail.itemCode', $itemCode)
+            ->orderBy('purchase.date', 'desc')
+            ->orderBy('purchase.time', 'desc')
+            ->select([
+                'purchase.date',
+                'purchase.time',
+                'purchase.code as purchaseCode',
+                'purchase_detail.qty',
+                'purchase_detail.price',
+                DB::raw('(purchase_detail.qty * purchase_detail.price) as total'),
+            ]);
+
+        return DataTables::of($histories)
+            ->addIndexColumn()
+            ->filter(function ($query) use ($request) {
+                if ($request->has('search') && ! empty($request->search['value'])) {
+                    $search = strtolower($request->search['value']);
+                    $query->where(function ($q) use ($search) {
+                        $q->whereRaw('LOWER(purchase.code) LIKE ?', ['%' . $search . '%'])
+                            ->orWhereRaw('CAST(purchase_detail.qty AS CHAR) LIKE ?', ['%' . $search . '%'])
+                            ->orWhereRaw('CAST(purchase_detail.price AS CHAR) LIKE ?', ['%' . $search . '%'])
+                            ->orWhereRaw('DATE_FORMAT(purchase.date, "%d/%m/%Y") LIKE ?', ['%' . $search . '%']);
+                    });
+                }
+            })
+            ->editColumn('date', function ($row) {
+                return $row->date ? date('d/m/Y', strtotime($row->date)) : '-';
+            })
+            ->editColumn('qty', function ($row) {
+                return number_format((float) $row->qty, 0, ',', '.');
+            })
+            ->editColumn('price', function ($row) {
+                return number_format((float) $row->price, 0, ',', '.');
+            })
+            ->editColumn('total', function ($row) {
+                return number_format((float) $row->total, 0, ',', '.');
+            })
+            ->make(true);
     }
 
     public function datatable(Request $request)
@@ -219,7 +334,7 @@ class ItemController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
@@ -228,8 +343,9 @@ class ItemController extends Controller
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
                         $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(code) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$search.'%']);
+                            $q->whereRaw('LOWER(code) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('CAST(price AS CHAR) LIKE ?', ['%' . $search . '%']);
                         });
                     }
                 })
@@ -244,13 +360,22 @@ class ItemController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
+        <a href="javascript:void(0)"
+           class="btn btn-icon btn-sm bg-info-subtle me-1 btn-purchase-history"
+           data-item-code="' . $row->code . '"
+           data-item-name="' . e($row->name) . '"
+           data-url="' . route($this->view . 'purchase-history', $row->code) . '"
+           data-bs-toggle="tooltip" title="History Pembelian">
+            <i class="mdi mdi-history fs-14 text-info"></i>
+        </a>
+
+        <a href="' . route($this->view . 'edit', $row->id) . '"
            class="btn btn-icon btn-sm bg-primary-subtle me-1"
            data-bs-toggle="tooltip" title="Edit">
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\''.$row->id.'\')"
+        <a href="javascript:deleteData(\'' . $row->id . '\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
