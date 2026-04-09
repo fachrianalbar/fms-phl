@@ -1047,12 +1047,43 @@ class OrderController extends Controller
         return redirect()->back()->with('success', __('general.delete_data_success'));
     }
 
+    private function normalizeFleetType($type): ?string
+    {
+        if (is_object($type) && isset($type->value)) {
+            $type = $type->value;
+        }
+
+        if (! is_string($type)) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($type));
+
+        if (! in_array($normalized, ['internal', 'external'], true)) {
+            return null;
+        }
+
+        return $normalized;
+    }
+
+    private function resolveFleetType(?Fleet $fleet): string
+    {
+        if (! $fleet) {
+            return '';
+        }
+
+        $fleetType = $this->normalizeFleetType($fleet->company?->type);
+
+        // Internal fleets may not be linked to fleet_company, treat missing type as internal.
+        return $fleetType ?? 'internal';
+    }
+
     public function calculateOrderPrice(Request $request)
     {
         try {
             $fleetCode = $request->fleetCode;
             $routeCode = $request->routeCode;
-            $qty = $request->qty ?? 1;
+            $qty = (float) ($request->qty ?? 1);
 
             // Initialize response data
             $response = [
@@ -1060,6 +1091,7 @@ class OrderController extends Controller
                 'price' => 0,
                 'routeAmount' => 0,
                 'vendorPrice' => 0,
+                'vendorPriceSingle' => 0,
                 'personalVendorPrice' => 0,
                 'personalVendorPriceSingle' => 0,
                 'isExternal' => false,
@@ -1070,9 +1102,10 @@ class OrderController extends Controller
             if ($fleetCode) {
                 $fleet = Fleet::with('company')->where('code', $fleetCode)->first();
 
-                if ($fleet && $fleet->company) {
-                    $response['isExternal'] = strtolower($fleet->company->type) === 'external';
-                    $response['fleetType'] = $fleet->company->type;
+                $fleetType = $this->resolveFleetType($fleet);
+                if ($fleetType !== '') {
+                    $response['fleetType'] = $fleetType;
+                    $response['isExternal'] = $fleetType === 'external';
                 }
             }
 
@@ -1085,12 +1118,19 @@ class OrderController extends Controller
                     $response['price'] = $route->price ?? 0; // harga satuan
                     $response['routeAmount'] = ($route->price ?? 0) * $qty; // total
 
-                    // Personal vendor price calculations (always show these)
-                    $response['personalVendorPriceSingle'] = $route->personalVendorPrice ?? 0; // harga satuan
-                    $response['personalVendorPrice'] = ($route->personalVendorPrice ?? 0) * $qty; // total
-
-                    // Vendor price (for compatibility)
-                    $response['vendorPrice'] = ($route->vendorPrice ?? 0) * $qty;
+                    if ($response['isExternal']) {
+                        // External: only vendor price is used
+                        $response['vendorPriceSingle'] = $route->vendorPrice ?? 0;
+                        $response['vendorPrice'] = ($route->vendorPrice ?? 0) * $qty;
+                        $response['personalVendorPriceSingle'] = 0;
+                        $response['personalVendorPrice'] = 0;
+                    } else {
+                        // Internal: only personal vendor price is used
+                        $response['personalVendorPriceSingle'] = $route->personalVendorPrice ?? 0;
+                        $response['personalVendorPrice'] = ($route->personalVendorPrice ?? 0) * $qty;
+                        $response['vendorPriceSingle'] = 0;
+                        $response['vendorPrice'] = 0;
+                    }
                 }
             }
 

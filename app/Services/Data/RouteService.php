@@ -41,9 +41,29 @@ class RouteService
 
     public function store($request, $title)
     {
-        $filtered = Arr::only($request->all(), ['price', 'customerCode', 'routeTypeCode', 'originLocationCode', 'destinationLocationCode', 'name']);
+        $filtered = Arr::only($request->all(), [
+            'price',
+            'vendorPrice',
+            'personalVendorPrice',
+            'customerCode',
+            'routeTypeCode',
+            'originLocationCode',
+            'destinationLocationCode',
+            'name',
+        ]);
 
         for ($i = 0; $i < count($request->price); $i++) {
+            $price = $this->normalizeDecimal($filtered['price'][$i] ?? 0);
+            $vendorPrice = $this->normalizeDecimal($filtered['vendorPrice'][$i] ?? 0);
+            $personalVendorPrice = $this->normalizeDecimal($filtered['personalVendorPrice'][$i] ?? 0);
+
+            if ($vendorPrice > $price) {
+                throw new \InvalidArgumentException('Vendor price cannot be greater than price');
+            }
+
+            if ($personalVendorPrice > $price) {
+                throw new \InvalidArgumentException('Personal vendor price cannot be greater than price');
+            }
 
             $data = $this->service->create(
                 [
@@ -51,9 +71,10 @@ class RouteService
                     'customerCode' => $filtered['customerCode'][$i],
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
-                    'price' => (float) $filtered['price'][$i],
-                    // 'vendorPrice' => (int)$filtered['vendorPrice'][$i],
+                    'price' => $price,
+                    'vendorPrice' => $vendorPrice,
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
+                    'personalVendorPrice' => $personalVendorPrice,
                     'code' => GenerateCode::generateCode('TR', true),
                 ]
             );
@@ -68,16 +89,28 @@ class RouteService
         // dd($request->all());
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
+        $price = $this->normalizeDecimal($request->price);
+        $vendorPrice = $this->normalizeDecimal($request->vendorPrice);
+        $personalVendorPrice = $this->normalizeDecimal($request->personalVendorPrice);
+
+        if ($vendorPrice > $price) {
+            throw new \InvalidArgumentException('Vendor price cannot be greater than price');
+        }
+
+        if ($personalVendorPrice > $price) {
+            throw new \InvalidArgumentException('Personal vendor price cannot be greater than price');
+        }
+
         $this->service->where('id', $id)->update([
             'name' => $request->name,
             'customerCode' => $request->customerCode,
             'originLocationCode' => $request->originLocationCode,
             'destinationLocationCode' => $request->destinationLocationCode,
             // 'fleetTypeCode' => $request->fleetTypeCode,
-            'price' => (float) $request->price,
-            'vendorPrice' => (float) $request->vendorPrice,
+            'price' => $price,
+            'vendorPrice' => $vendorPrice,
             'routeTypeCode' => $request->routeType,
-            'personalVendorPrice' => (float) $request->personalVendorPrice,
+            'personalVendorPrice' => $personalVendorPrice,
             'description' => $request->description,
         ]);
 
@@ -89,5 +122,22 @@ class RouteService
         $this->logActivity($title, $this->getById($id), 'Delete');
 
         $this->service->where('id', $id)->delete();
+    }
+
+    private function normalizeDecimal($value): float
+    {
+        if ($value === null || $value === '') {
+            return 0.00;
+        }
+
+        if (is_numeric($value)) {
+            return round((float) $value, 2);
+        }
+
+        $normalized = str_replace(' ', '', (string) $value);
+        $normalized = str_replace(',', '.', $normalized);
+        $normalized = preg_replace('/\.(?=.*\.)/', '', $normalized);
+
+        return round((float) $normalized, 2);
     }
 }

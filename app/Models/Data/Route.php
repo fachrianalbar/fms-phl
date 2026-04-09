@@ -33,6 +33,12 @@ class Route extends Model
         'description',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'vendorPrice' => 'decimal:2',
+        'personalVendorPrice' => 'decimal:2',
+    ];
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customerCode', 'code');

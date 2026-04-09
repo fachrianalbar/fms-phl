@@ -167,6 +167,8 @@
                                     <th>{{ __('menu_route.origin') }}</th>
                                     <th>{{ __('menu_route.destination') }}</th>
                                     <th>{{ __('menu_route.price') }}</th>
+                                    <th>{{ __('menu_route.vendor_price') }}</th>
+                                    <th>{{ __('menu_route.personal_vendor_price') }}</th>
                                 </tr>
                             </thead>
                             <tbody id="routeList">
@@ -239,6 +241,22 @@
     <script>
         let routeData = [];
 
+        function parseLocaleNumber(value) {
+            if (value === null || value === undefined) {
+                return 0;
+            }
+
+            const normalized = String(value)
+                .trim()
+                .replace(/\s/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
+
+            const parsed = parseFloat(normalized);
+
+            return Number.isFinite(parsed) ? parsed : 0;
+        }
+
         function addRoute() {
             // Get values from form inputs
             let name = document.getElementById('name');
@@ -259,7 +277,7 @@
             let destinationValue = destinationLocationCode.options[destinationLocationCode.selectedIndex].value;
 
             // Check if any input is empty
-            if (!validateFormInputs(customerCode, routeTypeCode, originLocationCode, destinationLocationCode)) {
+            if (!validateFormInputs(name, customerCode, routeTypeCode, originLocationCode, destinationLocationCode)) {
                 swal({
                     title: "{{ __('general.warning') }}",
                     text: "{{ __('menu_route.please_fill_out_all_fields') }}",
@@ -279,11 +297,6 @@
 
             // Check if price is missing in any existing rows
             if (!validatePrices()) {
-                swal({
-                    title: "{{ __('general.warning') }}",
-                    text: "{{ __('menu_route.please_enter_price_for_all_added_routes') }}",
-                    icon: "warning",
-                })
                 return;
             }
 
@@ -307,7 +320,9 @@
                 routeTypeValue: routeTypeValue,
                 originValue: originValue,
                 destinationValue: destinationValue,
-                price: '' // Price will be inputted later
+                price: '',
+                vendorPrice: '',
+                personalVendorPrice: ''
             });
 
             // Render the updated list of routes in table format
@@ -352,7 +367,13 @@
                         ${route.destination}
                     </td>
                     <td>
-                        <input type="text" class="form-control" name="price[]" id="price-${index}" value="${route.price}" oninput="updatePrice(${index}, this.value); formatAngka(this)" required>
+                        <input type="text" class="form-control" name="price[]" id="price-${index}" value="${route.price}" oninput="updatePrice(${index}, 'price', this.value); formatAngka(this)" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="vendorPrice[]" id="vendorPrice-${index}" value="${route.vendorPrice}" oninput="updatePrice(${index}, 'vendorPrice', this.value); formatAngka(this)" required>
+                    </td>
+                    <td>
+                        <input type="text" class="form-control" name="personalVendorPrice[]" id="personalVendorPrice-${index}" value="${route.personalVendorPrice}" oninput="updatePrice(${index}, 'personalVendorPrice', this.value); formatAngka(this)" required>
                     </td>
                   
                 </tr>
@@ -361,23 +382,57 @@
             });
         }
 
-        function validateFormInputs(customerCode, routeTypeCode, originLocationCode, destinationLocationCode) {
-            return customerCode.value && routeTypeCode.value && originLocationCode.value && destinationLocationCode.value;
+        function validateFormInputs(name, customerCode, routeTypeCode, originLocationCode, destinationLocationCode) {
+            return name.value && customerCode.value && routeTypeCode.value && originLocationCode.value &&
+                destinationLocationCode.value;
         }
 
         function validatePrices() {
-            let valid = true;
-            routeData.forEach((route, index) => {
+            for (let index = 0; index < routeData.length; index++) {
                 const priceInput = document.getElementById(`price-${index}`);
-                if (!priceInput.value) {
-                    valid = false;
+                const vendorPriceInput = document.getElementById(`vendorPrice-${index}`);
+                const personalVendorPriceInput = document.getElementById(`personalVendorPrice-${index}`);
+
+                if (!priceInput.value || !vendorPriceInput.value || !personalVendorPriceInput.value) {
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: "{{ __('menu_route.please_enter_price_for_all_added_routes') }}",
+                        icon: "warning",
+                    })
+
+                    return false;
                 }
-            });
-            return valid;
+
+                const price = parseLocaleNumber(priceInput.value);
+                const vendorPrice = parseLocaleNumber(vendorPriceInput.value);
+                const personalVendorPrice = parseLocaleNumber(personalVendorPriceInput.value);
+
+                if (vendorPrice > price) {
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: "{{ __('menu_route.vendor_price_validation') }}",
+                        icon: "warning",
+                    })
+
+                    return false;
+                }
+
+                if (personalVendorPrice > price) {
+                    swal({
+                        title: "{{ __('general.warning') }}",
+                        text: "{{ __('menu_route.personal_vendor_price_validation') }}",
+                        icon: "warning",
+                    })
+
+                    return false;
+                }
+            }
+
+            return true;
         }
 
-        function updatePrice(index, value) {
-            routeData[index].price = value;
+        function updatePrice(index, field, value) {
+            routeData[index][field] = value;
         }
 
         function removeRoute(index) {
@@ -396,11 +451,32 @@
 
         // Function to remove format (dots) from price before form submission
         function removePriceFormatting() {
+            if (routeData.length === 0) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "{{ __('menu_route.please_fill_out_all_fields') }}",
+                    icon: "warning",
+                })
+
+                return false;
+            }
+
+            if (!validatePrices()) {
+                return false;
+            }
+
             routeData.forEach((route, index) => {
                 const priceInput = document.getElementById(`price-${index}`);
-                let rawPrice = priceInput.value.replace(/\./g, '').replace(',',
-                '.'); // Remove dots and replace comma with dot for decimal
-                priceInput.value = parseFloat(rawPrice) || 0; // Set as float
+                const vendorPriceInput = document.getElementById(`vendorPrice-${index}`);
+                const personalVendorPriceInput = document.getElementById(`personalVendorPrice-${index}`);
+
+                const price = parseLocaleNumber(priceInput.value);
+                const vendorPrice = parseLocaleNumber(vendorPriceInput.value);
+                const personalVendorPrice = parseLocaleNumber(personalVendorPriceInput.value);
+
+                priceInput.value = price.toFixed(2);
+                vendorPriceInput.value = vendorPrice.toFixed(2);
+                personalVendorPriceInput.value = personalVendorPrice.toFixed(2);
             });
             return true; // Allow form submission after formatting is removed
         }

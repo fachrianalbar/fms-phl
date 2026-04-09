@@ -23,64 +23,65 @@
                 <button class="btn btn-primary" type="button"
                     id="submit-cost-component">{{ __('general.add') }}</button>
             </div>
-            </form>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const submitBtn = document.getElementById('submit-cost-component');
+</div>
 
-            if (submitBtn) {
-                submitBtn.addEventListener('click', function(e) {
-                    e.preventDefault(); // Hindari submit form
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const submitBtn = document.getElementById('submit-cost-component');
 
-                    const container = document.getElementById('ajax-cost-component-form');
-                    const actionUrl = container.getAttribute('data-action');
-                    const nameInput = document.getElementById('name');
-                    const name = nameInput.value.trim();
+        if (submitBtn) {
+            submitBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Hindari submit form
 
-                    fetch(actionUrl, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                'X-Requested-With': 'XMLHttpRequest'
-                            },
-                            body: JSON.stringify({
-                                name: name
-                            })
+                const container = document.getElementById('ajax-cost-component-form');
+                const actionUrl = container.getAttribute('data-action');
+                const nameInput = document.getElementById('name');
+                const name = nameInput.value.trim();
+
+                fetch(actionUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            name: name
                         })
-                        .then(response => {
-                            if (!response.ok) throw response;
-                            return response.json();
-                        })
-                        .then(data => {
-                            swal({
-                                title: "Success",
-                                text: "Component added successfully!",
-                                icon: "success",
-                                timer: 1000,
-                                buttons: false
-                            });
-                            nameInput.value = ''; // Kosongkan input
-
-                            setTimeout(function() {
-                                window.location.reload();
-                            }, 1000);
-                        })
-                        .catch(async (error) => {
-                            let errMsg = 'Failed to add component.';
-                            try {
-                                const errData = await error.json();
-                                errMsg = errData.message || errMsg;
-                            } catch (e) {
-                                // fallback kalau error response bukan JSON
-                                errMsg = 'Unexpected error occurred.';
-                            }
-                            alert(errMsg);
+                    })
+                    .then(response => {
+                        if (!response.ok) throw response;
+                        return response.json();
+                    })
+                    .then(data => {
+                        swal({
+                            title: "Success",
+                            text: "Component added successfully!",
+                            icon: "success",
+                            timer: 1000,
+                            buttons: false
                         });
-                });
-            }
-        });
-    </script>
+                        nameInput.value = ''; // Kosongkan input
+
+                        setTimeout(function() {
+                            window.location.reload();
+                        }, 1000);
+                    })
+                    .catch(async (error) => {
+                        let errMsg = 'Failed to add component.';
+                        try {
+                            const errData = await error.json();
+                            errMsg = errData.message || errMsg;
+                        } catch (e) {
+                            // fallback kalau error response bukan JSON
+                            errMsg = 'Unexpected error occurred.';
+                        }
+                        alert(errMsg);
+                    });
+            });
+        }
+    });
+</script>

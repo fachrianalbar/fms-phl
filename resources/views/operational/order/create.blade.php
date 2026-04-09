@@ -62,9 +62,10 @@
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                     </option>
                                     @foreach ($fleet as $item)
-                                        <option value="{{ $item->code }}">
+                                        <option value="{{ $item->code }}"
+                                            data-fleet-type="{{ isset($item->company->type) && strtolower((string) $item->company->type) === 'external' ? 'external' : 'internal' }}">
                                             {{ strtoupper($item->plateNumber) }} -
-                                            {{ $item->company?->type ?? 'Internal' }}
+                                            {{ isset($item->company->type) ? ucfirst(strtolower((string) $item->company->type)) : 'Internal' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -233,6 +234,8 @@
             <!-- Hidden input fields for price calculations -->
             <input type="hidden" name="price" id="priceHidden" value="0">
             <input type="hidden" name="routeAmount" id="routeAmountHidden" value="0">
+            <input type="hidden" name="vendorPrice" id="vendorPriceHidden" value="0">
+            <input type="hidden" name="vendorPriceSingle" id="vendorPriceSingleHidden" value="0">
             <input type="hidden" name="personalVendorPrice" id="personalVendorPriceHidden" value="0">
             <input type="hidden" name="personalVendorPriceSingle" id="personalVendorPriceSingleHidden" value="0">
 
@@ -284,7 +287,8 @@
                                 style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="w-100">
-                                        <p class="text-white-50 mb-1 small">Personal Vendor Price</p>
+                                        <p class="text-white-50 mb-1 small" id="vendorPriceLabel">Personal Vendor Price
+                                        </p>
                                         <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp 0</h4>
                                         <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">-</p>
                                     </div>
@@ -398,7 +402,7 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card" id="costComponentCard">
                 <div class="card-body col-md-12">
                     <ul class="nav nav-tabs" id="icon-tab" role="tablist">
                         <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
@@ -416,6 +420,11 @@
 
                     </div>
                 </div>
+            </div>
+
+            <div class="alert alert-info d-none" id="externalCostNote" role="alert">
+                <strong>Catatan:</strong> Biaya tidak dapat ditambahkan untuk kendaraan eksternal. Biaya dikelola secara
+                terpisah.
             </div>
 
             <div class="card">
@@ -476,6 +485,8 @@
 
             generateCode('input[name="orderDate"]', '#code_display', '#code_hidden',
                 '/ajax/order-generate-code');
+
+            syncCostComponentVisibility();
 
             // Handle form submit dengan AJAX
             $('#create-form').on('submit', function(e) {
@@ -834,6 +845,8 @@
         });
 
         $('#fleetCode').on('change', function() {
+            syncCostComponentVisibility();
+
             let fleetcode = $(this).val();
 
             if (fleetcode) {
@@ -1017,11 +1030,37 @@
             $('#preloader').css('display', 'none');
         }
 
+        function resolveSelectedFleetType() {
+            const selectedType = ($('#fleetCode option:selected').data('fleet-type') || '').toString().toLowerCase();
+
+            if (selectedType === 'external' || selectedType === 'internal') {
+                return selectedType;
+            }
+
+            const displayType = ($('#fleetTypeDisplay').text() || '').toString().trim().toLowerCase();
+            if (displayType === 'external' || displayType === 'internal') {
+                return displayType;
+            }
+
+            return '';
+        }
+
+        function syncCostComponentVisibility(fleetType = null) {
+            const normalizedType = (fleetType || resolveSelectedFleetType()).toString().toLowerCase();
+            const isExternalFleet = normalizedType === 'external';
+
+            $('#costComponentCard').toggleClass('d-none', isExternalFleet);
+            $('#externalCostNote').toggleClass('d-none', !isExternalFleet);
+            $('#costComponentCard').find('input, select, textarea').prop('disabled', isExternalFleet);
+        }
+
         // Function to update price information
         function updatePriceInfo() {
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
             const qty = $('#qty').val() || 1;
+
+            syncCostComponentVisibility();
 
             // Check if we have the required data
             if (!fleetCode || !routeCode) {
@@ -1043,23 +1082,37 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        const fleetTypeRaw = (response.fleetType || (response.isExternal ? 'external' :
+                                'internal'))
+                            .toString().toLowerCase();
+                        const fleetTypeLabel = fleetTypeRaw === 'external' ? 'External' : 'Internal';
+
+                        syncCostComponentVisibility(fleetTypeRaw);
+
                         // Update fleet type
-                        $('#fleetTypeDisplay').text(response.fleetType || '-');
+                        $('#fleetTypeDisplay').text(fleetTypeLabel);
 
                         // Update price (routeAmount = qty × price satuan)
                         $('#priceDisplay').text('Rp ' + formatNumber(response.routeAmount));
                         $('#priceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.price) + ' = Rp ' +
                             formatNumber(response.routeAmount));
 
-                        // Update personal vendor price (always show)
-                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.personalVendorPrice));
-                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response
-                            .personalVendorPriceSingle) + ' = Rp ' + formatNumber(response
-                            .personalVendorPrice));
+                        const isExternal = response.isExternal === true;
+                        const vendorSingle = isExternal ? response.vendorPriceSingle : response
+                            .personalVendorPriceSingle;
+                        const vendorTotal = isExternal ? response.vendorPrice : response.personalVendorPrice;
+                        const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+
+                        $('#vendorPriceLabel').text(vendorLabel);
+                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(vendorTotal));
+                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(vendorSingle) +
+                            ' = Rp ' + formatNumber(vendorTotal));
 
                         // Update hidden routeAmount input with calculated price
                         $('input[name="price"]').val(response.price);
                         $('input[name="routeAmount"]').val(response.routeAmount);
+                        $('input[name="vendorPrice"]').val(response.vendorPrice);
+                        $('input[name="vendorPriceSingle"]').val(response.vendorPriceSingle);
                         $('input[name="personalVendorPrice"]').val(response.personalVendorPrice);
                         $('input[name="personalVendorPriceSingle"]').val(response.personalVendorPriceSingle);
 
@@ -1067,7 +1120,7 @@
                         $('#vendorPriceCard').show();
                         $('#priceNote').html(
                             'Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' +
-                            response.fleetType + '</strong>');
+                            fleetTypeLabel + '</strong>');
                     }
                 },
                 error: function(xhr) {

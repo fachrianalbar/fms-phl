@@ -268,7 +268,7 @@
             const price = parseFloat(priceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
             const vendorPrice = parseFloat(vendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
             const personalVendorPrice = parseFloat(personalVendorPriceInput.value.replace(/\./g, '').replace(',', '.')) ||
-            0;
+                0;
 
             // Validasi vendorPrice tidak boleh lebih besar dari price
             if (vendorPrice > price) {
@@ -291,9 +291,9 @@
 
 
             // Set nilai input ke angka asli tanpa titik, dengan desimal
-            priceInput.value = price;
-            vendorPriceInput.value = vendorPrice;
-            personalVendorPriceInput.value = personalVendorPrice;
+            priceInput.value = price.toFixed(2);
+            vendorPriceInput.value = vendorPrice.toFixed(2);
+            personalVendorPriceInput.value = personalVendorPrice.toFixed(2);
 
             return true; // Lanjutkan submit
         }

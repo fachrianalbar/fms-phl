@@ -602,29 +602,32 @@ class OrderService
 
         // Check fleet company type
         $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
-        $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
+        $isExternalFleet = ($fleet && $fleet->company && strcasecmp((string) $fleet->company->type, 'external') === 0);
 
-        // Jika update dan routeAmount disediakan, gunakan input; jika tidak, recalculate
-        if ($isUpdate && isset($request->routeAmount) && $request->routeAmount !== null) {
-            $routeAmount = (float) $request->routeAmount;
-        } else {
-            $routeAmount = (float) (($route->price ?? 0) * $request->qty);
-        }
+        // Route amount selalu dihitung dari route terbaru agar konsisten antara create dan edit.
+        $routeAmount = (float) (($route->price ?? 0) * $request->qty);
 
-        // personalVendorPrice always calculated regardless of fleet type (Internal or External)
-        $personalVendorPrice = (float) (($route->personalVendorPrice ?? 0) * ($request->qty ?? 0));
+        $qty = (float) ($request->qty ?? 0);
 
-        // vendorPrice only for fleet EXTERNAL
         if ($isExternalFleet) {
-            $vendorPrice = (float) (($request->qty ?? 0) * ($route->vendorPrice ?? 0));
+            $vendorPriceSingle = (float) ($route->vendorPrice ?? 0);
+            $vendorPrice = $vendorPriceSingle * $qty;
+            $personalVendorPriceSingle = 0.0;
+            $personalVendorPrice = 0.0;
         } else {
-            $vendorPrice = 0;
+            $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
+            $personalVendorPrice = $personalVendorPriceSingle * $qty;
+            $vendorPriceSingle = 0.0;
+            $vendorPrice = 0.0;
         }
 
         logger()->info('Calculated order prices', [
             'routeAmount' => $routeAmount,
+            'price' => (float) ($route->price ?? 0),
             'vendorPrice' => $vendorPrice,
+            'vendorPriceSingle' => $vendorPriceSingle,
             'personalVendorPrice' => $personalVendorPrice,
+            'personalVendorPriceSingle' => $personalVendorPriceSingle,
             'isExternalFleet' => $isExternalFleet,
             'fleetCode' => $request->fleetCode,
         ]);
@@ -642,8 +645,9 @@ class OrderService
             'routeAmount' => $routeAmount,
             'price' => (float) ($route->price ?? 0),
             'vendorPrice' => $vendorPrice,
+            'vendorPriceSingle' => $vendorPriceSingle,
             'personalVendorPrice' => $personalVendorPrice,
-            'personalVendorPriceSingle' => (float) ($route->personalVendorPrice ?? 0),
+            'personalVendorPriceSingle' => $personalVendorPriceSingle,
             'customerCode' => $request->customerCode,
         ];
 

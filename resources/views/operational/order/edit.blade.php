@@ -68,8 +68,10 @@
                                     </option>
                                     @foreach ($fleet as $item)
                                         <option value="{{ $item->code }}"
+                                            data-fleet-type="{{ isset($item->company->type) && strtolower((string) $item->company->type) === 'external' ? 'external' : 'internal' }}"
                                             {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
-                                            {{ strtoupper($item->plateNumber) }} - {{ $item->company?->type ?? '-' }}
+                                            {{ strtoupper($item->plateNumber) }} -
+                                            {{ isset($item->company->type) ? ucfirst(strtolower((string) $item->company->type)) : 'Internal' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -240,6 +242,10 @@
                         <!-- Hidden input untuk semua role -->
                         <input type="hidden" name="routeAmount" value="{{ $data->routeAmount }}">
                         <input type="hidden" name="price" id="priceHidden" value="{{ $data->price }}">
+                        <input type="hidden" name="vendorPrice" id="vendorPriceHidden"
+                            value="{{ $data->vendorPrice ?? 0 }}">
+                        <input type="hidden" name="vendorPriceSingle" id="vendorPriceSingleHidden"
+                            value="{{ $data->vendorPriceSingle ?? 0 }}">
                         <input type="hidden" name="personalVendorPrice" id="personalVendorPriceHidden"
                             value="{{ $data->personalVendorPrice }}">
                         <input type="hidden" name="personalVendorPriceSingle" id="personalVendorPriceSingleHidden"
@@ -303,8 +309,17 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-white-50 mb-1 small">Tipe Fleet</p>
+                                        @php
+                                            $fleetTypeLabel = '-';
+                                            if ($data->fleet) {
+                                                $isExternalFleetType =
+                                                    isset($data->fleet->company->type) &&
+                                                    strtolower((string) $data->fleet->company->type) === 'external';
+                                                $fleetTypeLabel = $isExternalFleetType ? 'External' : 'Internal';
+                                            }
+                                        @endphp
                                         <h4 class="text-white mb-0" id="fleetTypeDisplay">
-                                            {{ $data->fleet?->company?->type ?? '-' }}</h4>
+                                            {{ $fleetTypeLabel }}</h4>
                                     </div>
                                     <div class="bg-white bg-opacity-25 p-3 rounded">
                                         <i class="mdi mdi-truck fs-2 text-white"></i>
@@ -339,13 +354,26 @@
                                 style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="w-100">
-                                        <p class="text-white-50 mb-1 small">Personal Vendor Price</p>
+                                        @php
+                                            $isExternalFleet =
+                                                $data->fleet &&
+                                                $data->fleet->company &&
+                                                strtolower($data->fleet->company->type) === 'external';
+                                            $vendorLabel = $isExternalFleet ? 'Vendor Price' : 'Personal Vendor Price';
+                                            $vendorSingle = $isExternalFleet
+                                                ? $data->vendorPriceSingle ?? 0
+                                                : $data->personalVendorPriceSingle ?? 0;
+                                            $vendorTotal = $isExternalFleet
+                                                ? $data->vendorPrice ?? 0
+                                                : $data->personalVendorPrice ?? 0;
+                                        @endphp
+                                        <p class="text-white-50 mb-1 small" id="vendorPriceLabel">{{ $vendorLabel }}</p>
                                         <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp
-                                            {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</h4>
+                                            {{ number_format($vendorTotal, 0, ',', '.') }}</h4>
                                         <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">
                                             {{ $data->qty }} × Rp
-                                            {{ number_format($data->personalVendorPriceSingle ?? 0, 0, ',', '.') }} = Rp
-                                            {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</p>
+                                            {{ number_format($vendorSingle, 0, ',', '.') }} = Rp
+                                            {{ number_format($vendorTotal, 0, ',', '.') }}</p>
                                     </div>
                                     <div class="bg-white bg-opacity-25 p-3 rounded">
                                         <i class="mdi mdi-account-cash fs-2 text-white"></i>
@@ -362,14 +390,8 @@
                                 <i class="mdi mdi-information"></i>
                                 <strong>Catatan:</strong>
                                 <span id="priceNote">
-                                    @php
-                                        $isExternal =
-                                            $data->fleet &&
-                                            $data->fleet->company &&
-                                            strtolower($data->fleet->company->type) === 'external';
-                                    @endphp
                                     Harga dihitung berdasarkan route yang dipilih × qty. Fleet type:
-                                    <strong>{{ $data->fleet?->company?->type ?? '-' }}</strong>
+                                    <strong>{{ $fleetTypeLabel }}</strong>
                                 </span>
                             </div>
                         </div>
@@ -549,32 +571,29 @@
                     $fleetData && $fleetData->company && strtolower($fleetData->company->type) === 'external';
             @endphp
 
-            @if (!$isExternalFleet)
-                <div class="card">
-                    <div class="card-body col-md-12">
-                        <ul class="nav nav-tabs" id="icon-tab" role="tablist">
-                            <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
-                                    data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                                    aria-selected="true">{{ __('menu_order.additional_cost') }}</a>
-                            </li>
-                            <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs"
-                                    data-bs-toggle="tab" href="#profile-icon" role="tab"
-                                    aria-controls="profile-icon"
-                                    aria-selected="false">{{ __('menu_order.add_cost') }}</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="icon-tabContent">
-                            @include('operational.order.components.cost-edit')
-                            @include('operational.order.components.cost-component-add')
-                        </div>
+            <div class="card {{ $isExternalFleet ? 'd-none' : '' }}" id="costComponentCard">
+                <div class="card-body col-md-12">
+                    <ul class="nav nav-tabs" id="icon-tab" role="tablist">
+                        <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
+                                data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
+                                aria-selected="true">{{ __('menu_order.additional_cost') }}</a>
+                        </li>
+                        <li class="nav-item"><a class="nav-link txt-success" id="profile-icon-tabs" data-bs-toggle="tab"
+                                href="#profile-icon" role="tab" aria-controls="profile-icon"
+                                aria-selected="false">{{ __('menu_order.add_cost') }}</a>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="icon-tabContent">
+                        @include('operational.order.components.cost-edit')
+                        @include('operational.order.components.cost-component-add')
                     </div>
                 </div>
-            @else
-                <div class="alert alert-info" role="alert">
-                    <strong>Catatan:</strong> Biaya tidak dapat ditambahkan untuk kendaraan eksternal. Biaya dikelola secara
-                    terpisah.
-                </div>
-            @endif
+            </div>
+
+            <div class="alert alert-info {{ $isExternalFleet ? '' : 'd-none' }}" id="externalCostNote" role="alert">
+                <strong>Catatan:</strong> Biaya tidak dapat ditambahkan untuk kendaraan eksternal. Biaya dikelola secara
+                terpisah.
+            </div>
 
             @if ($data->status == 0 || in_array(auth()->user()->roleCode, ['SPRADMIN', 'SPRUSER']))
                 <div class="card">
@@ -638,6 +657,8 @@
         $(document).ready(function() {
             const selectedType = $('#routeTypeCode').select2('val');
             // loadQty(selectedType)
+
+            syncCostComponentVisibility();
 
             let submitFromSaveButton = false;
 
@@ -1090,6 +1111,30 @@
             $('#preloader').css('display', 'none');
         }
 
+        function resolveSelectedFleetType() {
+            const selectedType = ($('#fleetCode option:selected').data('fleet-type') || '').toString().toLowerCase();
+
+            if (selectedType === 'external' || selectedType === 'internal') {
+                return selectedType;
+            }
+
+            const displayType = ($('#fleetTypeDisplay').text() || '').toString().trim().toLowerCase();
+            if (displayType === 'external' || displayType === 'internal') {
+                return displayType;
+            }
+
+            return '';
+        }
+
+        function syncCostComponentVisibility(fleetType = null) {
+            const normalizedType = (fleetType || resolveSelectedFleetType()).toString().toLowerCase();
+            const isExternalFleet = normalizedType === 'external';
+
+            $('#costComponentCard').toggleClass('d-none', isExternalFleet);
+            $('#externalCostNote').toggleClass('d-none', !isExternalFleet);
+            $('#costComponentCard').find('input, select, textarea').prop('disabled', isExternalFleet);
+        }
+
         // Function to format number with thousand separator
         function formatNumber(num) {
             if (!num) return '0';
@@ -1104,6 +1149,8 @@
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
             const qty = $('#qty').val() || 1;
+
+            syncCostComponentVisibility();
 
             // Check if we have the required data
             if (!fleetCode || !routeCode) {
@@ -1122,23 +1169,37 @@
                 },
                 success: function(response) {
                     if (response.success) {
+                        const fleetTypeRaw = (response.fleetType || (response.isExternal ? 'external' :
+                                'internal'))
+                            .toString().toLowerCase();
+                        const fleetTypeLabel = fleetTypeRaw === 'external' ? 'External' : 'Internal';
+
+                        syncCostComponentVisibility(fleetTypeRaw);
+
                         // Update fleet type
-                        $('#fleetTypeDisplay').text(response.fleetType || '-');
+                        $('#fleetTypeDisplay').text(fleetTypeLabel);
 
                         // Update price (routeAmount = qty × price satuan)
                         $('#priceDisplay').text('Rp ' + formatNumber(response.routeAmount));
                         $('#priceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response.price) + ' = Rp ' +
                             formatNumber(response.routeAmount));
 
-                        // Update personal vendor price (always show)
-                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(response.personalVendorPrice));
-                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(response
-                            .personalVendorPriceSingle) + ' = Rp ' + formatNumber(response
-                            .personalVendorPrice));
+                        const isExternal = response.isExternal === true;
+                        const vendorSingle = isExternal ? response.vendorPriceSingle : response
+                            .personalVendorPriceSingle;
+                        const vendorTotal = isExternal ? response.vendorPrice : response.personalVendorPrice;
+                        const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+
+                        $('#vendorPriceLabel').text(vendorLabel);
+                        $('#vendorPriceDisplay').text('Rp ' + formatNumber(vendorTotal));
+                        $('#vendorPriceDetailDisplay').text(qty + ' × Rp ' + formatNumber(vendorSingle) +
+                            ' = Rp ' + formatNumber(vendorTotal));
 
                         // Update hidden routeAmount input with calculated price
                         $('input[name="price"]').val(response.price);
                         $('input[name="routeAmount"]').val(response.routeAmount);
+                        $('input[name="vendorPrice"]').val(response.vendorPrice);
+                        $('input[name="vendorPriceSingle"]').val(response.vendorPriceSingle);
                         $('input[name="personalVendorPrice"]').val(response.personalVendorPrice);
                         $('input[name="personalVendorPriceSingle"]').val(response.personalVendorPriceSingle);
 
@@ -1146,7 +1207,7 @@
                         $('#vendorPriceCard').show();
                         $('#priceNote').html(
                             'Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' +
-                            response.fleetType + '</strong>');
+                            fleetTypeLabel + '</strong>');
                     }
                 },
                 error: function(xhr) {
@@ -1189,6 +1250,8 @@
                 $('#routeData').val('{{ $data->routeCode }}');
                 $('#routeData').trigger('change');
             }, 100);
+
+            syncCostComponentVisibility();
         });
     </script>
 @endpush
