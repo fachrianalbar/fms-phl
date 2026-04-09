@@ -19,15 +19,7 @@ class ReturnDoService
     public function findAll()
     {
         return $this->service
-            ->whereHas('customer', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('isDo', 1)
-                        ->whereIn('status', [4, 5]);
-                })->orWhere(function ($q) {
-                    $q->where('isDo', 0)
-                        ->whereIn('status', [3, 4, 5]);
-                });
-            })
+            ->whereIn('status', [4, 5])
             ->with([
                 'fleetDriver.fleet',
                 'driver',
@@ -45,15 +37,7 @@ class ReturnDoService
     public function datatable()
     {
         return $this->service
-            ->whereHas('customer', function ($query) {
-                $query->where(function ($q) {
-                    $q->where('isDo', 1)
-                        ->whereIn('status', [4, 5]);
-                })->orWhere(function ($q) {
-                    $q->where('isDo', 0)
-                        ->whereIn('status', [3, 4, 5]);
-                });
-            })
+            ->whereIn('status', [4, 5])
             ->with([
                 'fleetDriver.fleet',
                 'driver',

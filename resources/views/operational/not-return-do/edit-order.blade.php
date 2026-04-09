@@ -529,12 +529,14 @@
                     </div>
 
                     <!-- Hidden field untuk menandai konfirmasi return -->
-                    <input type="hidden" name="confirm_return" id="confirmReturn" value="0">
+                    <input type="hidden" name="confirm_return" id="confirmReturn"
+                        value="{{ old('confirm_return', '1') }}">
 
                     <div class="row mt-3">
                         <div class="col-md-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="confirmReturnCheckbox"
+                                    {{ (string) old('confirm_return', '1') === '1' ? 'checked' : '' }}
                                     onchange="document.getElementById('confirmReturn').value = this.checked ? '1' : '0'">
                                 <label class="form-check-label" for="confirmReturnCheckbox">
                                     <strong>Konfirmasi Return Order</strong> - Centang untuk mengkonfirmasi return order ini
@@ -668,17 +670,25 @@
                             data: formData,
                             processData: false,
                             contentType: false,
+                            dataType: 'json',
                             success: function(response) {
+                                const successMessage = response && response.message ?
+                                    response
+                                    .message : 'Data order berhasil disimpan';
+                                const redirectUrl = response && response.redirect_url ?
+                                    response
+                                    .redirect_url :
+                                    "{{ route('operational.not-return-do.index') }}";
+
                                 hidePreloader();
                                 swal({
                                     title: "Sukses",
-                                    text: "Data order berhasil disimpan",
+                                    text: successMessage,
                                     icon: "success",
                                     buttons: false,
                                     timer: 1500
                                 }).then(() => {
-                                    window.location.href =
-                                        "{{ route('operational.not-return-do.index') }}";
+                                    window.location.href = redirectUrl;
                                 });
                             },
                             error: function(xhr) {

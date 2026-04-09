@@ -268,7 +268,7 @@ class NotReturnDoController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
@@ -423,6 +423,7 @@ class NotReturnDoController extends Controller
     public function updateOrder(Request $request, string $code)
     {
         $data = Order::where('code', $code)->firstOrFail();
+        $isAjaxRequest = $request->ajax() || $request->wantsJson();
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'fleetCode' => 'required',
@@ -432,6 +433,14 @@ class NotReturnDoController extends Controller
         ]);
 
         if ($validator->fails()) {
+            if ($isAjaxRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
             return redirect()->back()->withErrors($validator)->withInput();
         }
 
@@ -441,8 +450,10 @@ class NotReturnDoController extends Controller
             // Update order data
             $this->service->updateOrder($request, $data->id, $this->title);
 
+            $isConfirmReturn = (string) $request->confirm_return === '1';
+
             // Handle return confirmation
-            if ($request->confirm_return == '1') {
+            if ($isConfirmReturn) {
                 $returnDate = $request->returnDate ? $request->returnDate : now();
                 $returnDescription = $request->returnDescription ?? 'Order returned via edit form';
 
@@ -458,16 +469,35 @@ class NotReturnDoController extends Controller
                     $uploadRequest->files->set('files', $request->file('suratJalanFiles'));
                     $this->service->uploadSuratJalan($uploadRequest, $code);
                 }
-
-                DB::commit();
-                return redirect()->route('operational.not-return-do.index')->with('success', 'Order updated and return confirmed successfully');
             }
 
             DB::commit();
 
-            return redirect()->route('operational.not-return-do.index')->with('success', 'Order updated successfully');
+            $redirectUrl = $isConfirmReturn
+                ? route('operational.return-do.index')
+                : route('operational.not-return-do.index');
+            $successMessage = $isConfirmReturn
+                ? 'Order updated and return confirmed successfully'
+                : 'Order updated successfully';
+
+            if ($isAjaxRequest) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage,
+                    'redirect_url' => $redirectUrl,
+                ]);
+            }
+
+            return redirect()->to($redirectUrl)->with('success', $successMessage);
         } catch (\Throwable $th) {
             DB::rollback();
+
+            if ($isAjaxRequest) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error: ' . $th->getMessage(),
+                ], 500);
+            }
 
             return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
         }
