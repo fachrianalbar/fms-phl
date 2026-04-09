@@ -28,8 +28,8 @@ class Route extends Model
         'fleetTypeCode',
         'price',
         'vendorPrice',
-        'routeTypeCode',
         'personalVendorPrice',
+        'routeTypeCode',
         'description',
     ];
 

@@ -29,6 +29,7 @@ class Order extends Model
     protected $casts = [
         'routeAmount' => 'decimal:2',
         'vendorPrice' => 'decimal:2',
+        'vendorPriceSingle' => 'decimal:2',
         'personalVendorPrice' => 'decimal:2',
         'price' => 'decimal:2',
         'personalVendorPriceSingle' => 'decimal:2',
@@ -66,6 +67,7 @@ class Order extends Model
         'routeAmount',
         'price',
         'vendorPrice',
+        'vendorPriceSingle',
         'personalVendorPrice',
         'personalVendorPriceSingle',
     ];
