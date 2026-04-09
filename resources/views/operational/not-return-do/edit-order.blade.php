@@ -277,10 +277,12 @@
                                                 $data->fleet->company &&
                                                 strtolower($data->fleet->company->type) === 'external';
                                             $vendorLabel = $isExternalFleet ? 'Vendor Price' : 'Personal Vendor Price';
-                                            $vendorSingle =
-                                                $isExternalFleet ? ($data->vendorPriceSingle ?? 0) : ($data->personalVendorPriceSingle ?? 0);
-                                            $vendorTotal =
-                                                $isExternalFleet ? ($data->vendorPrice ?? 0) : ($data->personalVendorPrice ?? 0);
+                                            $vendorSingle = $isExternalFleet
+                                                ? $data->vendorPriceSingle ?? 0
+                                                : $data->personalVendorPriceSingle ?? 0;
+                                            $vendorTotal = $isExternalFleet
+                                                ? $data->vendorPrice ?? 0
+                                                : $data->personalVendorPrice ?? 0;
                                         @endphp
                                         <p class="text-white-50 mb-1 small" id="vendorPriceLabel">{{ $vendorLabel }}
                                         </p>
