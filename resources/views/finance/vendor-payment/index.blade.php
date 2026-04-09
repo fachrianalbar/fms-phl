@@ -595,7 +595,7 @@
                         } else {
                             historyBody.html(
                                 '<tr><td colspan="4" class="text-center">Belum ada riwayat pembayaran</td></tr>'
-                                );
+                            );
                         }
 
                         $('#detail-modal').modal('show');
