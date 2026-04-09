@@ -39,7 +39,7 @@ class VendorPaymentController extends Controller
      */
     public function index()
     {
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title);
     }
@@ -47,24 +47,33 @@ class VendorPaymentController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'amount' => 'required',
-            'date' => 'required',
+            'orderCodes' => 'required|array|min:1',
+            'orderCodes.*' => 'required|string',
+            'date' => 'required|date',
             'userBankCode' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
 
-            $this->service->store($request, $this->title);
+            $result = $this->service->store($request, $this->title);
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            $message = $result['processed_count'] . ' order vendor berhasil dibayar lunas.';
+            if (($result['skipped_count'] ?? 0) > 0) {
+                $message .= ' ' . $result['skipped_count'] . ' order dilewati karena sudah lunas.';
+            }
+            if (! empty($result['batch_code'])) {
+                $message .= ' Kode pembayaran: ' . $result['batch_code'] . '.';
+            }
+
+            return redirect()->route($this->view . 'index')->with('success', $message);
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -73,8 +82,23 @@ class VendorPaymentController extends Controller
         if ($request->ajax()) {
             $data = $this->service->findAll();
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('select', function ($row) {
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
+                    $billingAmount = $vendorPayment ? (float) ($vendorPayment->amount ?? 0) : (float) ($row->personalVendorPrice ?? 0);
+                    $paidAmount = $vendorPayment ? (float) ($vendorPayment->paid_amount ?? 0) : 0;
+                    $remainingAmount = $vendorPayment ? (float) ($vendorPayment->remaining_amount ?? 0) : $billingAmount;
+                    $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
+
+                    $canBePaid = isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid' && $remainingAmount > 0;
+
+                    if (! $canBePaid) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '"></div>';
+                })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
 
@@ -131,19 +155,19 @@ class VendorPaymentController extends Controller
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('billingAmount', function ($row) {
-                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
                     $amount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('paidAmount', function ($row) {
-                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
                     $amount = $vendorPayment ? ($vendorPayment->paid_amount ?? 0) : 0;
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('remainingAmount', function ($row) {
-                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
                     if ($vendorPayment) {
                         $amount = $vendorPayment->remaining_amount ?? 0;
                     } else {
@@ -154,7 +178,7 @@ class VendorPaymentController extends Controller
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('paymentStatus', function ($row) {
-                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
                     $status = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
 
                     $statusText = '';
@@ -171,7 +195,7 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'success';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
@@ -189,36 +213,28 @@ class VendorPaymentController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $row->code)->first();
-                    $remainingAmount = $vendorPayment ? ($vendorPayment->remaining_amount ?? 0) : ($row->personalVendorPrice ?? 0);
-                    $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
 
                     // Build button group for cleaner UI
                     $buttons = [];
 
                     // PDF (always show)
-                    $buttons[] = '<a href="'.route('finance.vendor-payment.pdf', $row->code).'" target="_blank" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Print PDF"><i class="mdi mdi-file fs-14"></i></a>';
-
-                    // Payment (only for external fleets and not fully paid)
-                    if (isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid') {
-                        $billingAmount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
-                        $buttons[] = '<button type="button" onclick="showModal(\''.$row->code.'\','.$billingAmount.','.$remainingAmount.')" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Payment"><i class="mdi mdi-cash fs-14"></i></button>';
-                    }
+                    $buttons[] = '<a href="' . route('finance.vendor-payment.pdf', $row->code) . '" target="_blank" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Print PDF"><i class="mdi mdi-file fs-14"></i></a>';
 
                     // Detail (if payment history exists)
                     if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
-                        $buttons[] = '<button type="button" onclick="showDetailModal(\''.$row->code.'\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                        $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
                     }
 
                     // Wrap buttons in a group
-                    $html = '<div class="btn-group" role="group" aria-label="Actions">'.implode('', $buttons).'</div>';
+                    $html = '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
 
                     return $html;
                 })
-                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus'])
+                ->rawColumns(['select', 'action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus'])
                 ->toJson();
         }
     }
@@ -231,10 +247,13 @@ class VendorPaymentController extends Controller
 
         if ($vendorPayment) {
             // Get mutation record for bank information
-            $mutation = \App\Models\Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
+            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
+                ->orderByDesc('created_at')
                 ->first();
+
+            $vendorPayment->batch_code = $mutation->transactionCode ?? null;
 
             $vendorPayment->bankInfo = $mutation && $mutation->userBank ? [
                 'bank_name' => $mutation->userBank->bank->name ?? 'N/A',
@@ -276,7 +295,7 @@ class VendorPaymentController extends Controller
         ])->where('code', $orderCode)->first();
 
         if (! $order) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
 
         $company = CompanySetting::first();
@@ -317,6 +336,6 @@ class VendorPaymentController extends Controller
                 ->with('company', $company)
         );
 
-        return $mpdf->Output('Nota-Pembayaran-'.$order->code.'.pdf', 'I');
+        return $mpdf->Output('Nota-Pembayaran-' . $order->code . '.pdf', 'I');
     }
 }
