@@ -54,7 +54,12 @@ class InvoiceService
 
     public function getOrder()
     {
+        $usedOrderCodes = $this->invoiceDetail->newQuery()
+            ->whereNull('deleted_at')
+            ->select('orderCode');
+
         return $this->order
+            ->whereNotIn('code', $usedOrderCodes)
             ->where(function ($q) {
                 $q->where('status', 4)
                     ->orWhereHas('customer', function ($q2) {
@@ -75,8 +80,30 @@ class InvoiceService
             ->orderBy('created_at', 'desc');
     }
 
+    protected function ensureOrdersAreNotInInvoice(array $selectedOrders): void
+    {
+        $orderCodes = array_values(array_unique(array_filter($selectedOrders)));
+
+        if (empty($orderCodes)) {
+            throw new \RuntimeException('Pilih minimal 1 order untuk invoice.');
+        }
+
+        $usedOrders = $this->invoiceDetail->newQuery()
+            ->whereNull('deleted_at')
+            ->whereIn('orderCode', $orderCodes)
+            ->pluck('orderCode')
+            ->toArray();
+
+        if (! empty($usedOrders)) {
+            throw new \RuntimeException('Order berikut sudah digunakan di invoice lain: ' . implode(', ', $usedOrders));
+        }
+    }
+
     public function store($request, $title, $selectedOrders)
     {
+        $orderCodes = array_values(array_unique(array_filter((array) $selectedOrders)));
+        $this->ensureOrdersAreNotInInvoice($orderCodes);
+
         $usePpn = (bool) ($request->input('usePpn') ?? false);
 
         $data = $this->service->create([
@@ -92,8 +119,8 @@ class InvoiceService
             'status' => Invoice::STATUS_CREATE,
         ]);
 
-        if (isset($request->order)) {
-            foreach ($selectedOrders as $item) {
+        if (! empty($orderCodes)) {
+            foreach ($orderCodes as $item) {
                 $detail = $this->invoiceDetail->create([
                     'code' => GenerateCode::generateCode('INVD', true),
                     'invoiceCode' => $data->code,
@@ -211,9 +238,13 @@ class InvoiceService
     public function storeInvoiceDetail($request, $id, $selectedOrders)
     {
         $invoice = $this->getById($id);
-        if (isset($request->order)) {
+        $orderCodes = array_values(array_unique(array_filter((array) $selectedOrders)));
 
-            foreach ($selectedOrders as $item) {
+        $this->ensureOrdersAreNotInInvoice($orderCodes);
+
+        if (! empty($orderCodes)) {
+
+            foreach ($orderCodes as $item) {
                 $detail = $this->invoiceDetail->create([
                     'code' => GenerateCode::generateCode('INVD', true),
                     'invoiceCode' => $invoice->code,

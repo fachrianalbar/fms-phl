@@ -71,17 +71,23 @@ class InvoiceController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $selectedOrders = json_decode($request->input('selectedOrders'), true);
+        $selectedOrders = is_array($selectedOrders) ? $selectedOrders : [];
+
+        $validator = Validator::make([
+            'customerCode' => $request->customerCode,
+            'invoiceNumber' => $request->invoiceNumber,
+            'selectedOrders' => $selectedOrders,
+        ], [
             'customerCode' => 'required',
             'invoiceNumber' => 'required',
+            'selectedOrders' => 'required|array|min:1',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
-
-            $selectedOrders = json_decode($request->input('selectedOrders'), true);
 
             $this->service->store($request, $this->title, $selectedOrders);
 
@@ -220,7 +226,7 @@ class InvoiceController extends Controller
         if ($request->ajax()) {
             $data = $this->service->findAll();
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('orderCount', function ($row) {
                     return $row->details->count();
@@ -345,7 +351,7 @@ class InvoiceController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations);
 
-            return Datatables::of($data->get())
+            return DataTables::of($data->get())
                 ->addIndexColumn()
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -414,9 +420,12 @@ class InvoiceController extends Controller
     public function storeInvoiceDetail(Request $request, $id)
     {
         $selectedOrders = json_decode($request->input('selectedOrders'), true);
+        $selectedOrders = is_array($selectedOrders) ? $selectedOrders : [];
 
-        $validator = Validator::make($request->all(), [
-            'order' => 'required',
+        $validator = Validator::make([
+            'selectedOrders' => $selectedOrders,
+        ], [
+            'selectedOrders' => 'required|array|min:1',
         ]);
         if ($validator->fails()) {
             return redirect()->back()->with('fail', $validator->errors()->all()[0]);
