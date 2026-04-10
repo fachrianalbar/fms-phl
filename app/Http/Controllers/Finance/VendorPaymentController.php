@@ -86,12 +86,13 @@ class VendorPaymentController extends Controller
                 ->addIndexColumn()
                 ->addColumn('select', function ($row) {
                     $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
-                    $billingAmount = $vendorPayment ? (float) ($vendorPayment->amount ?? 0) : (float) ($row->personalVendorPrice ?? 0);
+                    $billingAmount = (float) ($row->vendorPrice ?? 0);
                     $paidAmount = $vendorPayment ? (float) ($vendorPayment->paid_amount ?? 0) : 0;
                     $remainingAmount = $vendorPayment ? (float) ($vendorPayment->remaining_amount ?? 0) : $billingAmount;
                     $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
 
-                    $canBePaid = isset($row->fleet->company) && $row->fleet->company->type == 'External' && $paymentStatus !== 'paid' && $remainingAmount > 0;
+                    $isExternalFleet = isset($row->fleet->company->type) && strcasecmp((string) $row->fleet->company->type, 'external') === 0;
+                    $canBePaid = $isExternalFleet && $paymentStatus !== 'paid' && $remainingAmount > 0;
 
                     if (! $canBePaid) {
                         return '<span class="text-muted">-</span>';
@@ -155,8 +156,7 @@ class VendorPaymentController extends Controller
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
                 ->addColumn('billingAmount', function ($row) {
-                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
-                    $amount = $vendorPayment ? ($vendorPayment->amount ?? 0) : ($row->personalVendorPrice ?? 0);
+                    $amount = $row->vendorPrice ?? 0;
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
@@ -172,7 +172,7 @@ class VendorPaymentController extends Controller
                         $amount = $vendorPayment->remaining_amount ?? 0;
                     } else {
                         // Jika belum ada vendor payment, sisa = tagihan penuh
-                        $amount = $row->personalVendorPrice ?? 0;
+                        $amount = $row->vendorPrice ?? 0;
                     }
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';

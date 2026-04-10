@@ -37,9 +37,9 @@ class VendorPaymentService
     public function findAll()
     {
         return $this->order->whereHas('fleet.company', function ($q) {
-            $q->where('type', 'External');
+            $q->whereRaw('LOWER(type) = ?', ['external']);
         })
-            ->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'vendorPayments'])
+            ->with(['fleet', 'fleet.company', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'vendorPayments'])
             ->orderBy('orderDate', 'asc')
             ->get();
     }
@@ -74,7 +74,7 @@ class VendorPaymentService
             $vendorPayment = $this->service->where('orderCode', $orderCode)->first();
 
             // Tagihan awal dari order
-            $billingAmount = $vendorPayment ? (float) ($vendorPayment->amount ?? 0) : (float) ($order->personalVendorPrice ?? 0);
+            $billingAmount = $vendorPayment ? (float) ($vendorPayment->amount ?? 0) : (float) ($order->vendorPrice ?? 0);
 
             $created = false;
             if (! $vendorPayment) {

@@ -38,6 +38,7 @@
                             <tr>
                                 <th class="text-center"><input class="form-check-input" type="checkbox"
                                         id="selectAllPayments"></th>
+                                <th>Aksi</th>
                                 <th>No</th>
                                 <th>{{ __('menu_vendor_payment.order_date') }}</th>
                                 <th>{{ __('menu_vendor_payment.plate_number') }}</th>
@@ -51,7 +52,6 @@
                                 <th>Sisa</th>
                                 <th>Status Bayar</th>
                                 <th>Status</th>
-                                <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -366,6 +366,8 @@
                 "columns": [{
                         "data": 'select'
                     }, {
+                        "data": 'action'
+                    }, {
                         "data": 'DT_RowIndex'
                     },
                     {
@@ -403,22 +405,19 @@
                     },
                     {
                         "data": 'status'
-                    },
-                    {
-                        "data": 'action'
                     }
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 1, 14]
+                        "targets": [0, 1, 2]
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 1, 14]
+                        "targets": [0, 1, 2]
                     }
                 ],
                 "order": [
-                    [2, 'asc']
+                    [3, 'asc']
                 ],
                 "drawCallback": function() {
                     restoreSelectedCheckboxes();
