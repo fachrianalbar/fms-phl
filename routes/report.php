@@ -4,6 +4,8 @@ use App\Http\Controllers\Report\AllOrderListController;
 use App\Http\Controllers\Report\DriverSalaryController;
 use App\Http\Controllers\Report\DriverTonaseController;
 use App\Http\Controllers\Report\FleetTonaseController;
+use App\Http\Controllers\Report\MaintenancePerCompanyController;
+use App\Http\Controllers\Report\MaintenancePerFleetController;
 use App\Http\Controllers\Report\OrderDetailController;
 use App\Http\Controllers\Report\ProfitLossController;
 use Illuminate\Support\Facades\Route;
@@ -22,6 +24,10 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::resource('order-detail', OrderDetailController::class);
     Route::get('excel-order-detail', [OrderDetailController::class, 'excelOrderDetail'])->name('order-detail.excel-order-detail');
     Route::get('pdf-order-detail', [OrderDetailController::class, 'pdfOrderDetail'])->name('order-detail.pdf-order-detail');
+    Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'index'])->name('maintenance-fleet.index');
+    Route::get('maintenance-fleet/detail/{fleetCode}', [MaintenancePerFleetController::class, 'detail'])->name('maintenance-fleet.detail');
+    Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'index'])->name('maintenance-company-internal.index');
+    Route::get('maintenance-company-internal/detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'detail'])->name('maintenance-company-internal.detail');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -33,8 +39,14 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('driver-tonase', [DriverTonaseController::class, 'datatable'])->name('driver-tonase');
     Route::get('all-order-list', [AllOrderListController::class, 'datatable'])->name('all-order-list');
     Route::get('order-detail', [OrderDetailController::class, 'datatable'])->name('order-detail');
+    Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'datatable'])->name('maintenance-fleet');
+    Route::get('maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'datatableDetail'])->name('maintenance-fleet-detail');
+    Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'datatable'])->name('maintenance-company-internal');
+    Route::get('maintenance-company-internal-detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'datatableDetail'])->name('maintenance-company-internal-detail');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('profit-loss-summary/{id}', [ProfitLossController::class, 'getProfitLossSummary'])->name('profit-loss-summary');
+    Route::get('maintenance-fleet-detail-items/{maintenanceCode}', [MaintenancePerFleetController::class, 'detailItems'])->name('maintenance-fleet-detail-items');
+    Route::get('maintenance-company-internal-detail-items/{maintenanceCode}', [MaintenancePerCompanyController::class, 'detailItems'])->name('maintenance-company-internal-detail-items');
 });
