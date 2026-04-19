@@ -27,10 +27,22 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
 
-                <div class="accordion-item">
-                    <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
-                        data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        <i class="mdi mdi-magnify fs-14 text-dark"></i>
+                <div class="d-flex align-items-center gap-3">
+                    <div class="accordion-item">
+                        <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
+                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                            <i class="mdi mdi-magnify fs-14 text-dark"></i>
+                        </a>
+                    </div>
+
+                    <a href="{{ route($view . 'pdf-maintenance-fleet') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+
+                    <a href="{{ route($view . 'excel-maintenance-fleet') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
                     </a>
                 </div>
             </div>
@@ -178,6 +190,15 @@
 
             $('#filterForm').on('submit', function(e) {
                 e.preventDefault();
+
+                const queryParams = $(this).serialize();
+                const exportPdfUrl = "{{ route($view . 'pdf-maintenance-fleet') }}" + (queryParams ? '?' +
+                    queryParams : '');
+                const exportExcelUrl = "{{ route($view . 'excel-maintenance-fleet') }}" + (queryParams ? '?' +
+                    queryParams : '');
+                $('#export-pdf').attr('href', exportPdfUrl);
+                $('#export-excel').attr('href', exportExcelUrl);
+
                 table.ajax.reload();
             });
         });

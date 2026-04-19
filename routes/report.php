@@ -26,6 +26,10 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('pdf-order-detail', [OrderDetailController::class, 'pdfOrderDetail'])->name('order-detail.pdf-order-detail');
     Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'index'])->name('maintenance-fleet.index');
     Route::get('maintenance-fleet/detail/{fleetCode}', [MaintenancePerFleetController::class, 'detail'])->name('maintenance-fleet.detail');
+    Route::get('excel-maintenance-fleet', [MaintenancePerFleetController::class, 'excelMaintenanceFleet'])->name('maintenance-fleet.excel-maintenance-fleet');
+    Route::get('pdf-maintenance-fleet', [MaintenancePerFleetController::class, 'pdfMaintenanceFleet'])->name('maintenance-fleet.pdf-maintenance-fleet');
+    Route::get('excel-maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'excelMaintenanceFleetDetail'])->name('maintenance-fleet.excel-maintenance-fleet-detail');
+    Route::get('pdf-maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'pdfMaintenanceFleetDetail'])->name('maintenance-fleet.pdf-maintenance-fleet-detail');
     Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'index'])->name('maintenance-company-internal.index');
     Route::get('maintenance-company-internal/detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'detail'])->name('maintenance-company-internal.detail');
 });

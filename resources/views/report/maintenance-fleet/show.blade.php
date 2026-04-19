@@ -19,12 +19,48 @@
 @endpush
 
 @section('content')
+    @php
+        $excelDetailUrl = route(
+            $view . 'excel-maintenance-fleet-detail',
+            array_filter(
+                [
+                    'fleetCode' => $fleet->code,
+                    'startDate' => $startDate,
+                    'endDate' => $endDate,
+                ],
+                fn($value) => $value !== null && $value !== '',
+            ),
+        );
+
+        $pdfDetailUrl = route(
+            $view . 'pdf-maintenance-fleet-detail',
+            array_filter(
+                [
+                    'fleetCode' => $fleet->code,
+                    'startDate' => $startDate,
+                    'endDate' => $endDate,
+                ],
+                fn($value) => $value !== null && $value !== '',
+            ),
+        );
+    @endphp
+
     <div class="col-sm-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }}</h4>
 
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="{{ $excelDetailUrl }}" target="_blank" class="btn btn-icon btn-sm bg-success-subtle">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+
+                    <a href="{{ $pdfDetailUrl }}" target="_blank" class="btn btn-icon btn-sm bg-danger-subtle">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+
+                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                </div>
             </div>
 
             <div class="card-body">

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\MaintenanceFleetDetailReport;
+use App\Exports\MaintenanceFleetReport;
 use App\Http\Controllers\Controller;
 use App\Models\Master\Fleet;
 use App\Models\Master\FleetCompany;
@@ -11,6 +13,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class MaintenancePerFleetController extends Controller
@@ -162,6 +166,163 @@ class MaintenancePerFleetController extends Controller
             ->with('totalCost', $totalCost)
             ->with('startDate', $request->startDate)
             ->with('endDate', $request->endDate);
+    }
+
+    public function pdfMaintenanceFleet(Request $request)
+    {
+        $data = Maintenance::query()
+            ->select([
+                'fleet.code as fleetCode',
+                'fleet.plateNumber',
+                'fleet_company.name as fleetCompanyName',
+                'fleet_company.type as fleetCompanyType',
+                DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
+                DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
+                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+            ])
+            ->join('fleet', function ($join) {
+                $join->on('fleet.code', '=', 'maintenance.fleetCode')
+                    ->whereNull('fleet.deleted_at');
+            })
+            ->leftJoin('fleet_company', function ($join) {
+                $join->on('fleet_company.code', '=', 'fleet.fleetCompanyCode')
+                    ->whereNull('fleet_company.deleted_at');
+            })
+            ->leftJoin('maintenance_detail', function ($join) {
+                $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
+                    ->whereNull('maintenance_detail.deleted_at');
+            })
+            ->leftJoin('item', function ($join) {
+                $join->on('item.code', '=', 'maintenance_detail.itemCode')
+                    ->whereNull('item.deleted_at');
+            })
+            ->where('maintenance.status', 0)
+            ->whereNull('maintenance.deleted_at')
+            ->groupBy('fleet.code', 'fleet.plateNumber', 'fleet_company.name', 'fleet_company.type')
+            ->orderBy('fleet.plateNumber');
+
+        if ($request->filled('fleetCode')) {
+            $data->where('fleet.code', $request->fleetCode);
+        }
+
+        if ($request->filled('fleetCompanyCode')) {
+            $data->where('fleet_company.code', $request->fleetCompanyCode);
+        }
+
+        $this->applyDateFilter($data, $request->startDate, $request->endDate);
+
+        $rows = $data->get();
+
+        $fleetName = null;
+        if ($request->filled('fleetCode')) {
+            $fleetName = Fleet::query()->where('code', $request->fleetCode)->value('plateNumber');
+        }
+
+        $fleetCompanyName = null;
+        if ($request->filled('fleetCompanyCode')) {
+            $fleetCompanyName = FleetCompany::query()->where('code', $request->fleetCompanyCode)->value('name');
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => [215, 330],
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view . 'report.maintenance-fleet-pdf')
+                ->with('rows', $rows)
+                ->with('fleetName', $fleetName)
+                ->with('fleetCompanyName', $fleetCompanyName)
+                ->with('startDate', $request->startDate)
+                ->with('endDate', $request->endDate)
+        );
+
+        return $mpdf->Output('Maintenance-Fleet-Report.pdf', 'I');
+    }
+
+    public function excelMaintenanceFleet(Request $request)
+    {
+        return Excel::download(new MaintenanceFleetReport($request), 'Maintenance-Fleet-Report.xlsx');
+    }
+
+    public function pdfMaintenanceFleetDetail(string $fleetCode, Request $request)
+    {
+        $fleet = Fleet::query()
+            ->with(['company'])
+            ->where('code', $fleetCode)
+            ->whereNull('deleted_at')
+            ->firstOrFail();
+
+        $summaryQuery = Maintenance::query()
+            ->select([
+                DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
+                DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
+                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+            ])
+            ->leftJoin('maintenance_detail', function ($join) {
+                $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
+                    ->whereNull('maintenance_detail.deleted_at');
+            })
+            ->leftJoin('item', function ($join) {
+                $join->on('item.code', '=', 'maintenance_detail.itemCode')
+                    ->whereNull('item.deleted_at');
+            })
+            ->where('maintenance.fleetCode', $fleetCode)
+            ->where('maintenance.status', 0)
+            ->whereNull('maintenance.deleted_at');
+
+        $this->applyDateFilter($summaryQuery, $request->startDate, $request->endDate);
+
+        $summary = $summaryQuery->first();
+
+        $maintenances = Maintenance::query()
+            ->with([
+                'warehouse',
+                'details',
+                'details.item',
+                'details.item.supplier',
+            ])
+            ->where('fleetCode', $fleetCode)
+            ->where('status', 0)
+            ->whereNull('deleted_at')
+            ->orderByDesc('date')
+            ->orderByDesc('time');
+
+        $this->applyDateFilter($maintenances, $request->startDate, $request->endDate);
+
+        $rows = $maintenances->get();
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => [215, 330],
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view . 'report.maintenance-fleet-detail-pdf')
+                ->with('fleet', $fleet)
+                ->with('rows', $rows)
+                ->with('totalMaintenance', (int) ($summary->totalMaintenance ?? 0))
+                ->with('totalQty', (float) ($summary->totalQty ?? 0))
+                ->with('totalCost', (float) ($summary->totalCost ?? 0))
+                ->with('startDate', $request->startDate)
+                ->with('endDate', $request->endDate)
+        );
+
+        $filename = 'Maintenance-Fleet-Detail-' . $fleet->plateNumber . '.pdf';
+
+        return $mpdf->Output($filename, 'I');
+    }
+
+    public function excelMaintenanceFleetDetail(string $fleetCode, Request $request)
+    {
+        $request->merge(['fleetCode' => $fleetCode]);
+
+        $plateNumber = Fleet::query()->where('code', $fleetCode)->value('plateNumber') ?? $fleetCode;
+        $filename = 'Maintenance-Fleet-Detail-'.$plateNumber.'.xlsx';
+
+        return Excel::download(new MaintenanceFleetDetailReport($request), $filename);
     }
 
     public function datatableDetail(string $fleetCode, Request $request)
