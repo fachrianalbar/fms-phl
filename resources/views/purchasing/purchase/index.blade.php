@@ -39,6 +39,11 @@
 
                     </div>
 
+                    <a href="{{ route('report.supplier.index') }}" class="btn btn-icon btn-sm bg-info-subtle"
+                        data-bs-toggle="tooltip" title="Supplier Purchase Report">
+                        <i class="mdi mdi-file-chart-outline fs-14 text-info"></i>
+                    </a>
+
 
                     <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
                 </div>
