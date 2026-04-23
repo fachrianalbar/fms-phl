@@ -267,6 +267,9 @@ class RouteController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox" class="form-check-input route-checkbox" value="' . $row->id . '">';
+                })
                 ->editColumn('price', function ($row) {
                     return 'Rp ' . number_format($row->price, 2, ',', '.');
                 })
@@ -296,8 +299,48 @@ class RouteController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'price', 'vendorPrice', 'personalVendorPrice', 'customer.name'])
+                ->rawColumns(['checkbox', 'action', 'price', 'vendorPrice', 'personalVendorPrice', 'customer.name'])
                 ->toJson();
+        }
+    }
+
+    public function bulkUpdatePrice(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'type' => 'required|in:increase,decrease',
+            'percentage' => 'required|numeric|min:0.01' . ($request->type === 'decrease' ? '|max:100' : ''),
+            'targets' => 'required|array|min:1',
+            'targets.*' => 'in:price,vendorPrice,personalVendorPrice',
+        ], [
+            'percentage.max' => 'Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->service->bulkUpdatePrice($request, $this->title);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Harga berhasil diperbarui.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ]);
         }
     }
 

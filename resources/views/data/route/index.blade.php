@@ -45,6 +45,12 @@
                         <span class="d-none d-md-inline">{{ __('general.filter') }}</span>
                     </a>
 
+                    <button type="button" class="btn btn-warning btn-md d-inline-flex align-items-center gap-2"
+                        id="btnBulkUpdatePrice" title="Penyesuaian Harga">
+                        <i class="mdi mdi-cash-multiple fs-16"></i>
+                        <span class="d-none d-md-inline">Penyesuaian Harga</span>
+                    </button>
+
                 </div>
             </div>
 
@@ -135,6 +141,7 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
+                                <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
                                 <th>#</th>
                                 <th>No</th>
                                 <th>{{ __('menu_route.name') }}</th>
@@ -162,6 +169,52 @@
         @csrf
         @method('DELETE')
     </form>
+
+    <!-- Modal Bulk Update Price -->
+    <div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalBulkUpdatePriceLabel">Penyesuaian Harga Masal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formBulkUpdatePrice">
+                        <div class="mb-3">
+                            <label class="form-label">Tipe Penyesuaian</label>
+                            <select class="form-select" id="bulkUpdateType" name="type" required>
+                                <option value="increase">Kenaikan</option>
+                                <option value="decrease">Penurunan</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Persentase (%)</label>
+                            <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage" min="0.01" step="0.01" required placeholder="Contoh: 10">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label d-block">Target Harga (Pilih minimal 1)</label>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetPrice" value="price" checked>
+                                <label class="form-check-label" for="targetPrice">Harga Tagihan</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetVendorPrice" value="vendorPrice" checked>
+                                <label class="form-check-label" for="targetVendorPrice">Harga Vendor</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetPersonalVendorPrice" value="personalVendorPrice" checked>
+                                <label class="form-check-label" for="targetPersonalVendorPrice">Harga Vendor Pribadi</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="btnSubmitBulkUpdate">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('script')
@@ -204,6 +257,11 @@
                     }
                 },
                 "columns": [{
+                        "data": 'checkbox',
+                        "orderable": false,
+                        "searchable": false
+                    },
+                    {
                         "data": 'action'
                     },
                     {
@@ -243,15 +301,15 @@
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 1]
+                        "targets": [0, 1, 2]
                     },
                     {
                         "orderable": false,
-                        "targets": [0]
+                        "targets": [0, 1]
                     }
                 ],
                 "order": [
-                    [2, 'asc']
+                    [3, 'asc']
                 ]
             })
 
@@ -274,6 +332,107 @@
             $('#filterForm')[0].reset();
             $('#customerName, #origin, #destination, #fleetTypeName, #routeTypeName').val('').trigger('change');
             $('#dt').DataTable().ajax.reload();
+        });
+
+        // Handle Check All
+        $('#checkAll').on('click', function() {
+            $('.route-checkbox').prop('checked', this.checked);
+        });
+
+        // Handle individual checkbox change to uncheck 'Check All' if one is unchecked
+        $('#dt tbody').on('change', '.route-checkbox', function() {
+            if (!this.checked) {
+                $('#checkAll').prop('checked', false);
+            } else {
+                if ($('.route-checkbox:checked').length === $('.route-checkbox').length) {
+                    $('#checkAll').prop('checked', true);
+                }
+            }
+        });
+
+        // Handle Bulk Update Button Click
+        $('#btnBulkUpdatePrice').click(function() {
+            var selectedIds = [];
+            $('.route-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+
+            if (selectedIds.length === 0) {
+                swal("Peringatan", "Pilih minimal satu rute untuk menyesuaikan harga.", "warning");
+                return;
+            }
+
+            $('#formBulkUpdatePrice')[0].reset();
+            $('.bulk-target-checkbox').prop('checked', true); // default check all
+            
+            // Re-initialize select2 with dropdownParent to fix unclickable issue in modal
+            $('#bulkUpdateType').select2({
+                dropdownParent: $('#modalBulkUpdatePrice'),
+                width: '100%',
+                minimumResultsForSearch: Infinity // hide search box for this simple select
+            });
+
+            $('#modalBulkUpdatePrice').modal('show');
+        });
+
+        // Handle Submit Bulk Update
+        $('#btnSubmitBulkUpdate').click(function() {
+            var selectedIds = [];
+            $('.route-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+
+            var type = $('#bulkUpdateType').val();
+            var percentage = $('#bulkUpdatePercentage').val();
+            
+            var targets = [];
+            $('.bulk-target-checkbox:checked').each(function() {
+                targets.push($(this).val());
+            });
+
+            if (!percentage || percentage <= 0) {
+                swal("Peringatan", "Masukkan persentase yang valid.", "warning");
+                return;
+            }
+
+            if (type === 'decrease' && percentage > 100) {
+                swal("Peringatan", "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.", "warning");
+                return;
+            }
+
+            if (targets.length === 0) {
+                swal("Peringatan", "Pilih minimal satu target harga yang akan diubah.", "warning");
+                return;
+            }
+
+            $(this).prop('disabled', true).text('Menyimpan...');
+
+            $.ajax({
+                url: "{{ route('ajax.route.bulk-update-price') }}",
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    ids: selectedIds,
+                    type: type,
+                    percentage: percentage,
+                    targets: targets
+                },
+                success: function(response) {
+                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                    if (response.success) {
+                        $('#modalBulkUpdatePrice').modal('hide');
+                        swal("Berhasil", response.message, "success");
+                        $('#dt').DataTable().ajax.reload(null, false); // Reload without resetting pagination
+                        $('#checkAll').prop('checked', false);
+                    } else {
+                        swal("Gagal", response.message, "error");
+                    }
+                },
+                error: function(xhr) {
+                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                    swal("Error", "Terjadi kesalahan sistem.", "error");
+                }
+            });
         });
 
         function deleteData(uuid) {

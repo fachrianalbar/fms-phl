@@ -28,4 +28,5 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('location-by-customer/{code}', [RouteController::class, 'locationByCustomer'])->name('location-by-customer');
     Route::get('cost-component-price/{code}', [RouteController::class, 'getCostComponentPrice'])->name('cost-component-price');
+    Route::post('route/bulk-update-price', [RouteController::class, 'bulkUpdatePrice'])->name('route.bulk-update-price');
 });

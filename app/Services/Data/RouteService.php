@@ -140,4 +140,56 @@ class RouteService
 
         return round((float) $normalized, 2);
     }
+
+    public function bulkUpdatePrice($request, $title)
+    {
+        $ids = $request->ids;
+        $type = $request->type; // 'increase' or 'decrease'
+        $percentage = (float) $request->percentage;
+        $targets = $request->targets ?? []; // array of target columns: 'price', 'vendorPrice', 'personalVendorPrice'
+
+        if (empty($ids) || empty($targets) || $percentage <= 0) {
+            throw new \InvalidArgumentException('Invalid parameters for bulk update.');
+        }
+
+        $multiplier = $type === 'increase' ? (1 + ($percentage / 100)) : (1 - ($percentage / 100));
+
+        $routes = $this->service->whereIn('id', $ids)->get();
+
+        foreach ($routes as $route) {
+            $this->logActivity($title, $route, 'Before Bulk Update Price');
+
+            $updateData = [];
+
+            if (in_array('price', $targets)) {
+                $updateData['price'] = round($route->price * $multiplier, 2);
+            }
+            if (in_array('vendorPrice', $targets)) {
+                $updateData['vendorPrice'] = round($route->vendorPrice * $multiplier, 2);
+            }
+            if (in_array('personalVendorPrice', $targets)) {
+                $updateData['personalVendorPrice'] = round($route->personalVendorPrice * $multiplier, 2);
+            }
+
+            // Ensure vendor prices don't exceed the new or existing price
+            $newPrice = isset($updateData['price']) ? $updateData['price'] : $route->price;
+            $newVendorPrice = isset($updateData['vendorPrice']) ? $updateData['vendorPrice'] : $route->vendorPrice;
+            $newPersonalVendorPrice = isset($updateData['personalVendorPrice']) ? $updateData['personalVendorPrice'] : $route->personalVendorPrice;
+
+            if ($newVendorPrice > $newPrice || $newPersonalVendorPrice > $newPrice) {
+                // Adjust if necessary, or let it throw an exception if strict rules apply. We'll adjust it to the max price for now or skip updating if it violates.
+                // It's safer to adjust the vendor prices to the new price limit.
+                if ($newVendorPrice > $newPrice) {
+                    $updateData['vendorPrice'] = $newPrice;
+                }
+                if ($newPersonalVendorPrice > $newPrice) {
+                    $updateData['personalVendorPrice'] = $newPrice;
+                }
+            }
+
+            $route->update($updateData);
+
+            $this->logActivity($title, $route->fresh(), 'After Bulk Update Price');
+        }
+    }
 }
