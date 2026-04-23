@@ -17,6 +17,10 @@
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
+
+<!-- Select2 CSS -->
+<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 <style>
     .export-loader {
         position: fixed;
@@ -104,6 +108,9 @@
                 <a href="javascript:void(0)" onclick="exportExcel()" class="btn btn-success" id="btn-export">
                     <i class="mdi mdi-file-excel"></i> Export Excel
                 </a>
+                <button type="button" class="btn btn-warning" id="btnBulkUpdatePrice" title="Penyesuaian Harga">
+                    <i class="mdi mdi-cash-multiple"></i> Penyesuaian Harga
+                </button>
                 <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
             </div>
 
@@ -117,6 +124,7 @@
                 <table class="table table-striped w-100 nowrap" id="dt">
                     <thead>
                         <tr>
+                            <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
                             <th>#</th>
                             <th>No</th>
                             <th>Name</th>
@@ -137,6 +145,37 @@
     @csrf
     @method('DELETE')
 </form>
+
+<!-- Modal Bulk Update Price -->
+<div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBulkUpdatePriceLabel">Penyesuaian Harga Masal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formBulkUpdatePrice">
+                    <div class="mb-3">
+                        <label class="form-label">Tipe Penyesuaian</label>
+                        <select class="form-select" id="bulkUpdateType" name="type" required>
+                            <option value="increase">Kenaikan</option>
+                            <option value="decrease">Penurunan</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Persentase (%)</label>
+                        <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage" min="0.01" step="0.01" required placeholder="Contoh: 10">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnSubmitBulkUpdate">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('script')
@@ -159,11 +198,16 @@
 <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
 
+<!-- Select2 JS -->
+<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+<script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
+
 <script>
     const ROUTES = {
         costComponentIndex: @json(route('master.cost-component.index')),
         dtCostComponent: @json(route('dt.cost-component')),
-        exportExcel: @json(route('master.cost-component.export-excel'))
+        exportExcel: @json(route('master.cost-component.export-excel')),
+        bulkUpdatePrice: @json(route('ajax.cost-component.bulk-update-price'))
     };
 
     $(document).ready(function() {
@@ -175,6 +219,11 @@
                 "url": ROUTES.dtCostComponent,
             },
             "columns": [{
+                    "data": 'checkbox',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
                     "data": 'action'
                 },
                 {
@@ -189,7 +238,7 @@
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 2]
                 },
                 {
                     "orderable": false,
@@ -197,9 +246,98 @@
                 }
             ],
             "order": [
-                [2, 'asc']
+                [3, 'asc']
             ]
         })
+
+        // Handle Check All
+        $('#checkAll').on('click', function() {
+            $('.component-checkbox').prop('checked', this.checked);
+        });
+
+        // Handle individual checkbox change
+        $('#dt tbody').on('change', '.component-checkbox', function() {
+            if (!this.checked) {
+                $('#checkAll').prop('checked', false);
+            } else {
+                if ($('.component-checkbox:checked').length === $('.component-checkbox').length) {
+                    $('#checkAll').prop('checked', true);
+                }
+            }
+        });
+
+        // Handle Bulk Update Button Click
+        $('#btnBulkUpdatePrice').click(function() {
+            var selectedIds = [];
+            $('.component-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+
+            if (selectedIds.length === 0) {
+                swal("Peringatan", "Pilih minimal satu komponen biaya untuk menyesuaikan harga.", "warning");
+                return;
+            }
+
+            $('#formBulkUpdatePrice')[0].reset();
+            
+            // Fix Select2 in modal
+            $('#bulkUpdateType').select2({
+                dropdownParent: $('#modalBulkUpdatePrice'),
+                width: '100%',
+                minimumResultsForSearch: Infinity
+            });
+
+            $('#modalBulkUpdatePrice').modal('show');
+        });
+
+        // Handle Submit Bulk Update
+        $('#btnSubmitBulkUpdate').click(function() {
+            var selectedIds = [];
+            $('.component-checkbox:checked').each(function() {
+                selectedIds.push($(this).val());
+            });
+
+            var type = $('#bulkUpdateType').val();
+            var percentage = $('#bulkUpdatePercentage').val();
+
+            if (!percentage || percentage <= 0) {
+                swal("Peringatan", "Masukkan persentase yang valid.", "warning");
+                return;
+            }
+
+            if (type === 'decrease' && percentage > 100) {
+                swal("Peringatan", "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.", "warning");
+                return;
+            }
+
+            $(this).prop('disabled', true).text('Menyimpan...');
+
+            $.ajax({
+                url: ROUTES.bulkUpdatePrice,
+                type: "POST",
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    ids: selectedIds,
+                    type: type,
+                    percentage: percentage
+                },
+                success: function(response) {
+                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                    if (response.success) {
+                        $('#modalBulkUpdatePrice').modal('hide');
+                        swal("Berhasil", response.message, "success");
+                        $('#dt').DataTable().ajax.reload(null, false);
+                        $('#checkAll').prop('checked', false);
+                    } else {
+                        swal("Gagal", response.message, "error");
+                    }
+                },
+                error: function(xhr) {
+                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                    swal("Error", "Terjadi kesalahan sistem.", "error");
+                }
+            });
+        });
     });
 
     function exportExcel() {

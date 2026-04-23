@@ -150,6 +150,9 @@ class CostComponentController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox" class="form-check-input component-checkbox" value="' . $row->id . '">';
+                })
                 ->addColumn('formatted_price', function ($row) {
                     return $row->price ? number_format($row->price, 0, ',', '.') : '-';
                 })
@@ -170,7 +173,7 @@ class CostComponentController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['checkbox', 'action'])
                 ->toJson();
         }
     }
@@ -185,5 +188,43 @@ class CostComponentController extends Controller
     public function exportExcel(Request $request)
     {
         return Excel::download(new CostComponentExport($request), 'Cost-Component-Report.xlsx');
+    }
+
+    public function bulkUpdatePrice(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'type' => 'required|in:increase,decrease',
+            'percentage' => 'required|numeric|min:0.01' . ($request->type === 'decrease' ? '|max:100' : ''),
+        ], [
+            'percentage.max' => 'Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->service->bulkUpdatePrice($request, $this->title);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Harga berhasil diperbarui.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ]);
+        }
     }
 }

@@ -83,4 +83,5 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('fleet-driver/{code}', [FleetController::class, 'fleetDriver'])->name('fleet-driver');
     Route::get('customer-company-format/{code}', [CustomerController::class, 'customerCompanyFormat'])->name('customer-company-format');
     Route::get('cost-components/all', [CostComponentController::class, 'getAllCostComponents'])->name('cost-components-all');
+    Route::post('cost-component/bulk-update-price', [CostComponentController::class, 'bulkUpdatePrice'])->name('cost-component.bulk-update-price');
 });

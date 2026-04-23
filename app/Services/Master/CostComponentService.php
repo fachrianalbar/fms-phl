@@ -88,4 +88,52 @@ class CostComponentService
 
         $this->service->where('id', $id)->delete();
     }
+
+    public function bulkUpdatePrice($request, $title)
+    {
+        $ids = $request->ids;
+        $type = $request->type; // 'increase' or 'decrease'
+        $percentage = (float) $request->percentage;
+
+        if (empty($ids) || $percentage <= 0) {
+            throw new \InvalidArgumentException('Invalid parameters for bulk update.');
+        }
+
+        $multiplier = $type === 'increase' ? (1 + ($percentage / 100)) : (1 - ($percentage / 100));
+
+        $components = $this->service->whereIn('id', $ids)->get();
+
+        foreach ($components as $component) {
+            // Validasi: harga harus ada (lebih dari 0)
+            if (empty($component->price) || $component->price <= 0) {
+                throw new \InvalidArgumentException("Komponen Biaya '{$component->name}' belum memiliki harga dasar. Silakan tentukan harga dasar terlebih dahulu sebelum melakukan penyesuaian persentase.");
+            }
+
+            $oldPrice = $component->price;
+            $newPrice = round($oldPrice * $multiplier, 2);
+
+            $this->logActivity($title, $component, 'Before Bulk Update Price');
+
+            // Update cost component
+            $component->update([
+                'price' => $newPrice,
+            ]);
+
+            // Sync to route_detail
+            RouteDetail::where('componentCode', $component->code)
+                ->update(['amount' => $newPrice]);
+
+            // Insert log perubahan harga
+            CostComponentPriceLog::create([
+                'costComponentCode' => $component->code,
+                'costComponentName' => $component->name,
+                'oldPrice' => $oldPrice,
+                'newPrice' => $newPrice,
+                'changedBy' => Auth::check() ? Auth::user()->name : 'System',
+                'notes' => 'Bulk Price updated from '.($oldPrice ?: 0).' to '.($newPrice ?: 0).' ('.$type.' '.$percentage.'%)',
+            ]);
+
+            $this->logActivity($title, $component->fresh(), 'After Bulk Update Price');
+        }
+    }
 }
