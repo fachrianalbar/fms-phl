@@ -104,10 +104,10 @@
                                     </div>
 
                                     <div class="col-md-12">
-                                        <label class="form-label">Total Pembayaran (Otomatis Lunas)</label>
-                                        <input class="form-control" id="totalPaymentAmount" type="text" readonly>
-                                        <small class="form-text text-muted">Nominal ini otomatis mengikuti total sisa
-                                            tagihan order yang dipilih.</small>
+                                        <label class="form-label" id="paymentAmountLabel">Total Pembayaran</label>
+                                        <input class="form-control" id="totalPaymentAmount" type="text" required>
+                                        <input type="hidden" name="paymentAmount" id="hiddenPaymentAmount">
+                                        <small class="form-text text-muted" id="paymentAmountHelp">Nominal pembayaran.</small>
                                     </div>
 
                                     <div class="col-md-12">
@@ -482,12 +482,47 @@
                 $('#billingAmount').val(formatCurrency(totals.billing));
                 $('#paidAmount').val(formatCurrency(totals.paid));
                 $('#remainingAmount').val(formatCurrency(totals.remaining));
+                
                 $('#totalPaymentAmount').val(formatCurrency(totals.remaining));
+                $('#hiddenPaymentAmount').val(totals.remaining);
+                if (selectedCodes.length === 1) {
+                    $('#totalPaymentAmount').prop('readonly', false);
+                    $('#totalPaymentAmount').attr('data-max', totals.remaining);
+                    $('#paymentAmountLabel').text('Total Pembayaran (Bisa bayar sebagian/DP)');
+                    $('#paymentAmountHelp').text('Anda dapat mengubah nominal ini untuk membayar sebagian (DP). Maksimal: Rp ' + formatCurrency(totals.remaining));
+                } else {
+                    $('#totalPaymentAmount').prop('readonly', true);
+                    $('#totalPaymentAmount').removeAttr('data-max');
+                    $('#paymentAmountLabel').text('Total Pembayaran (Otomatis Lunas)');
+                    $('#paymentAmountHelp').text('Nominal ini otomatis mengikuti total sisa tagihan order yang dipilih.');
+                }
+                
                 $('#date').val(new Date().toISOString().split('T')[0]);
                 $('#description').val('');
                 $('#userBankCode').val('');
 
                 $('#payment-modal').modal('show');
+            });
+
+            // Format input total pembayaran
+            $('#totalPaymentAmount').on('input', function() {
+                let val = $(this).val().replace(/\./g, '').replace(/\D/g, '');
+                if (val === '') val = 0;
+                
+                if (!$(this).prop('readonly')) {
+                    let max = parseInt($(this).attr('data-max')) || 0;
+                    if (parseInt(val) > max) {
+                        val = max.toString();
+                    }
+                }
+                
+                if (val > 0) {
+                    $(this).val(formatCurrency(val));
+                    $('#hiddenPaymentAmount').val(val);
+                } else {
+                    $(this).val('');
+                    $('#hiddenPaymentAmount').val('');
+                }
             });
 
             $('#batch-payment-form').on('submit', function() {

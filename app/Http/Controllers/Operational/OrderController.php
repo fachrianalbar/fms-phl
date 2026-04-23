@@ -596,6 +596,9 @@ class OrderController extends Controller
                     return 'Rp ' . number_format($row->routeAmount ?? 0, 2, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
+                    return 'Rp ' . number_format($row->vendorPrice ?? 0, 2, ',', '.');
+                })
+                ->addColumn('harga_vendor_pribadi', function ($row) {
                     return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
@@ -683,7 +686,7 @@ class OrderController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice', 'price', 'harga_vendor'])
+                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice', 'price', 'harga_vendor', 'harga_vendor_pribadi'])
                 ->toJson();
         }
     }

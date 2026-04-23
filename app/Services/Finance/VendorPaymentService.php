@@ -93,14 +93,22 @@ class VendorPaymentService
                 $created = true;
             }
 
-            // Pembayaran vendor wajib full: jumlah bayar = seluruh sisa tagihan
+            // Pembayaran vendor
             $remainingAmount = (float) ($vendorPayment->remaining_amount ?? 0);
             if ($remainingAmount <= 0) {
                 $skippedOrderCodes[] = $orderCode;
                 continue;
             }
 
-            $paymentAmount = $remainingAmount;
+            if (count($orderCodes) === 1 && $request->filled('paymentAmount')) {
+                $paymentAmount = (float) $request->paymentAmount;
+                if ($paymentAmount > $remainingAmount) {
+                    throw new \Exception('Nominal pembayaran tidak boleh melebihi sisa tagihan (Rp ' . number_format($remainingAmount, 0, ',', '.') . ').');
+                }
+            } else {
+                // Jika batch (lebih dari 1), wajib bayar lunas dari sisa tagihannya
+                $paymentAmount = $remainingAmount;
+            }
 
             // Update paid amount dan remaining amount
             $newPaidAmount = ((float) ($vendorPayment->paid_amount ?? 0)) + $paymentAmount;

@@ -51,6 +51,7 @@ class VendorPaymentController extends Controller
             'orderCodes.*' => 'required|string',
             'date' => 'required|date',
             'userBankCode' => 'required',
+            'paymentAmount' => 'nullable|numeric|min:1',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);

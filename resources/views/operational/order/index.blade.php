@@ -217,6 +217,7 @@
                             <th>{{ __('menu_order.destination') }}</th>
                             <th>Price</th>
                             <th>Harga Vendor</th>
+                            <th>Harga Vendor Pribadi</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -296,6 +297,7 @@
                                             <th>{{ __('menu_order.destination') }}</th>
                                             <th>Price</th>
                                             <th>Harga Vendor</th>
+                                            <th>Harga Vendor Pribadi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -573,6 +575,9 @@
                     "data": 'harga_vendor'
                 },
                 {
+                    "data": 'harga_vendor_pribadi'
+                },
+                {
                     "data": 'status'
                 }
 
@@ -584,7 +589,7 @@
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+                    "targets": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
                 }
             ],
 
@@ -632,6 +637,9 @@
                 },
                 {
                     "data": 'harga_vendor'
+                },
+                {
+                    "data": 'harga_vendor_pribadi'
                 },
 
 
