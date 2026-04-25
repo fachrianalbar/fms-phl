@@ -29,4 +29,6 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('location-by-customer/{code}', [RouteController::class, 'locationByCustomer'])->name('location-by-customer');
     Route::get('cost-component-price/{code}', [RouteController::class, 'getCostComponentPrice'])->name('cost-component-price');
     Route::post('route/bulk-update-price', [RouteController::class, 'bulkUpdatePrice'])->name('route.bulk-update-price');
+    Route::get('route/{id}/vendor-prices', [RouteController::class, 'showVendorPrices'])->name('route.vendor-prices.show');
+    Route::post('route/{id}/vendor-prices', [RouteController::class, 'saveVendorPrices'])->name('route.vendor-prices.save');
 });

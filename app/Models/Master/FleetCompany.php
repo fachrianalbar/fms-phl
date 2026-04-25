@@ -2,6 +2,7 @@
 
 namespace App\Models\Master;
 
+use App\Models\Data\RoutePriceExternal;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -24,4 +25,9 @@ class FleetCompany extends Model
         'bankName',
         'pph',
     ];
+
+    public function routePriceExternal()
+    {
+        return $this->hasMany(RoutePriceExternal::class, 'fleet_company_id', 'id');
+    }
 }

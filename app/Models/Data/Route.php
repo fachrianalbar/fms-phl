@@ -68,4 +68,9 @@ class Route extends Model
     {
         return $this->belongsTo(RouteType::class, 'routeTypeCode', 'code');
     }
+
+    public function routePriceExternal()
+    {
+        return $this->hasMany(\App\Models\Data\RoutePriceExternal::class, 'route_id', 'id');
+    }
 }

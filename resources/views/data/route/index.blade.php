@@ -141,7 +141,8 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
+                                <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll">
+                                </th>
                                 <th>#</th>
                                 <th>No</th>
                                 <th>{{ __('menu_route.name') }}</th>
@@ -152,7 +153,6 @@
                                 {{-- <th>Fleet Type</th> --}}
                                 <th>{{ __('menu_route.load_type') }}</th>
                                 <th>{{ __('menu_route.price') }}</th>
-                                <th>{{ __('menu_route.vendor_price') }}</th>
                                 <th>{{ __('menu_route.personal_vendor_price') }}</th>
                             </tr>
                         </thead>
@@ -171,7 +171,8 @@
     </form>
 
     <!-- Modal Bulk Update Price -->
-    <div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel" aria-hidden="true">
+    <div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -189,21 +190,26 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Persentase (%)</label>
-                            <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage" min="0.01" step="0.01" required placeholder="Contoh: 10">
+                            <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage"
+                                min="0.01" step="0.01" required placeholder="Contoh: 10">
                         </div>
                         <div class="mb-3">
                             <label class="form-label d-block">Target Harga (Pilih minimal 1)</label>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetPrice" value="price" checked>
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetPrice"
+                                    value="price" checked>
                                 <label class="form-check-label" for="targetPrice">Harga Tagihan</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetVendorPrice" value="vendorPrice" checked>
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox"
+                                    id="targetVendorPrice" value="vendorPrice" checked>
                                 <label class="form-check-label" for="targetVendorPrice">Harga Vendor</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input bulk-target-checkbox" type="checkbox" id="targetPersonalVendorPrice" value="personalVendorPrice" checked>
-                                <label class="form-check-label" for="targetPersonalVendorPrice">Harga Vendor Pribadi</label>
+                                <input class="form-check-input bulk-target-checkbox" type="checkbox"
+                                    id="targetPersonalVendorPrice" value="personalVendorPrice" checked>
+                                <label class="form-check-label" for="targetPersonalVendorPrice">Harga Vendor
+                                    Pribadi</label>
                             </div>
                         </div>
                     </form>
@@ -211,6 +217,51 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                     <button type="button" class="btn btn-primary" id="btnSubmitBulkUpdate">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalVendorPrice" tabindex="-1" aria-labelledby="modalVendorPriceLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalVendorPriceLabel">Detail Harga Vendor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div><strong>Customer:</strong> <span id="vendorPriceCustomerName">-</span></div>
+                        <div><strong>Asal - Tujuan:</strong> <span id="vendorPriceOriginDestination">-</span></div>
+                        <div><strong>Nama Rute:</strong> <span id="vendorPriceRouteName">-</span></div>
+                        <div><strong>Harga:</strong> <span id="vendorPriceAmount">-</span></div>
+                        <div><strong>Harga Vendor Pribadi:</strong> <span id="vendorPricePersonalAmount">-</span></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddVendorRow">
+                            Tambah Vendor
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-bordered align-middle" id="vendorPriceTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">No</th>
+                                    <th>Nama Vendor</th>
+                                    <th style="width: 260px;">Harga Vendor</th>
+                                    <th style="width: 80px;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendorPriceTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" id="btnSaveVendorPrice">Simpan Harga Vendor</button>
                 </div>
             </div>
         </div>
@@ -241,6 +292,123 @@
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
     <script>
+        let activeRouteId = null;
+        let vendorOptions = [];
+
+        function initVendorSelect2() {
+            $('.vendor-company-select').each(function() {
+                if ($(this).data('select2')) {
+                    $(this).select2('destroy');
+                }
+
+                $(this).select2({
+                    placeholder: 'Pilih vendor...',
+                    allowClear: true,
+                    width: '100%',
+                    dropdownParent: $('#modalVendorPrice')
+                });
+            });
+        }
+
+        function formatThousands(value) {
+            const digitsOnly = String(value ?? '').replace(/\D/g, '');
+
+            if (!digitsOnly) {
+                return '';
+            }
+
+            return Number(digitsOnly).toLocaleString('id-ID');
+        }
+
+        function parseThousands(value) {
+            const normalized = String(value ?? '').replace(/\./g, '').trim();
+
+            if (!normalized) {
+                return NaN;
+            }
+
+            return Number(normalized);
+        }
+
+        function formatCurrency(value) {
+            if (value === null || value === undefined || value === '') {
+                return '-';
+            }
+
+            const parsed = Number(value);
+            if (Number.isNaN(parsed)) {
+                return '-';
+            }
+
+            return 'Rp ' + parsed.toLocaleString('id-ID', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderVendorRows(rows = []) {
+            if (!rows.length) {
+                $('#vendorPriceTableBody').html(
+                    '<tr class="vendor-empty-row"><td colspan="4" class="text-center text-muted">Belum ada vendor yang ditambahkan.</td></tr>'
+                );
+                return;
+            }
+
+            let html = '';
+            rows.forEach((row, index) => {
+                const optionsHtml = vendorOptions.map((vendor) => {
+                    const selected = String(vendor.id) === String(row.fleet_company_id) ? 'selected' : '';
+                    return `<option value="${escapeHtml(vendor.id)}" ${selected}>${escapeHtml(vendor.name)}</option>`;
+                }).join('');
+
+                const amountValue = row.amount !== null && row.amount !== undefined ? formatThousands(Math.round(
+                    Number(
+                        row.amount))) : '';
+
+                html += `
+                    <tr class="vendor-row">
+                        <td class="vendor-row-number">${index + 1}</td>
+                        <td>
+                            <select class="form-select vendor-company-select">
+                                <option value="">Pilih vendor...</option>
+                                ${optionsHtml}
+                            </select>
+                        </td>
+                        <td>
+                            <input
+                                type="text"
+                                inputmode="numeric"
+                                class="form-control vendor-price-input"
+                                value="${amountValue}"
+                                placeholder="Masukkan harga vendor"
+                            >
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-danger btn-remove-vendor-row">Hapus</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            $('#vendorPriceTableBody').html(html);
+            initVendorSelect2();
+        }
+
+        function renumberVendorRows() {
+            $('#vendorPriceTableBody .vendor-row-number').each(function(index) {
+                $(this).text(index + 1);
+            });
+        }
+
         $(document).ready(function() {
             $('#dt').DataTable({
                 "processing": true,
@@ -292,9 +460,6 @@
                         "data": 'price'
                     },
                     {
-                        "data": 'vendorPrice'
-                    },
-                    {
                         "data": 'personalVendorPrice'
                     },
 
@@ -324,6 +489,183 @@
             // Event untuk filter button
             $('#filterBtn').click(function() {
                 $('#dt').DataTable().ajax.reload();
+            });
+
+            $('#dt').on('click', '.btn-show-vendor-price', function() {
+                activeRouteId = $(this).data('route-id');
+                const showUrlTemplate = "{{ route('ajax.route.vendor-prices.show', ['id' => '__ID__']) }}";
+                const showUrl = showUrlTemplate.replace('__ID__', activeRouteId);
+
+                $('#vendorPriceCustomerName').text('-');
+                $('#vendorPriceOriginDestination').text('-');
+                $('#vendorPriceRouteName').text('-');
+                $('#vendorPriceAmount').text('-');
+                $('#vendorPricePersonalAmount').text('-');
+                $('#vendorPriceTableBody').html(
+                    '<tr><td colspan="4" class="text-center text-muted">Memuat data...</td></tr>'
+                );
+
+                $('#modalVendorPrice').modal('show');
+
+                $.get(showUrl, function(response) {
+                    if (!response.success) {
+                        $('#vendorPriceTableBody').html(
+                            '<tr><td colspan="4" class="text-center text-danger">Gagal memuat data.</td></tr>'
+                        );
+                        return;
+                    }
+
+                    const routeInfo = response.data.route || {};
+                    const originName = routeInfo.origin_name || '-';
+                    const destinationName = routeInfo.destination_name || '-';
+
+                    $('#vendorPriceCustomerName').text(routeInfo.customer_name || '-');
+                    $('#vendorPriceOriginDestination').text(`${originName} - ${destinationName}`);
+                    $('#vendorPriceRouteName').text(routeInfo.name || '-');
+                    $('#vendorPriceAmount').text(formatCurrency(routeInfo.price));
+                    $('#vendorPricePersonalAmount').text(formatCurrency(routeInfo
+                        .personal_vendor_price));
+
+                    vendorOptions = response.data.vendors || [];
+
+                    const rows = response.data.rows || [];
+
+                    renderVendorRows(rows);
+                }).fail(function() {
+                    $('#vendorPriceTableBody').html(
+                        '<tr><td colspan="4" class="text-center text-danger">Terjadi kesalahan saat mengambil data.</td></tr>'
+                    );
+                });
+            });
+
+            $('#btnSaveVendorPrice').on('click', function() {
+                if (!activeRouteId) {
+                    swal('Peringatan', 'Rute belum dipilih.', 'warning');
+                    return;
+                }
+
+                let hasInvalid = false;
+                const rows = [];
+                const selectedVendorIds = [];
+
+                $('.vendor-row').each(function() {
+                    const vendorId = ($(this).find('.vendor-company-select').val() ?? '').toString()
+                        .trim();
+                    const rawAmount = ($(this).find('.vendor-price-input').val() ?? '').toString()
+                        .trim();
+
+                    if (!vendorId && !rawAmount) {
+                        return;
+                    }
+
+                    if (!vendorId || !rawAmount) {
+                        hasInvalid = true;
+                        return false;
+                    }
+
+                    if (selectedVendorIds.includes(vendorId)) {
+                        hasInvalid = true;
+                        return false;
+                    }
+
+                    const parsed = parseThousands(rawAmount);
+
+                    if (Number.isNaN(parsed) || parsed < 0) {
+                        hasInvalid = true;
+                        return false;
+                    }
+
+                    selectedVendorIds.push(vendorId);
+                    rows.push({
+                        fleet_company_id: vendorId,
+                        amount: parsed,
+                    });
+                });
+
+                if (hasInvalid) {
+                    swal('Peringatan',
+                        'Setiap baris harus isi vendor + harga valid, dan vendor tidak boleh duplikat.',
+                        'warning');
+                    return;
+                }
+
+                const saveUrlTemplate = "{{ route('ajax.route.vendor-prices.save', ['id' => '__ID__']) }}";
+                const saveUrl = saveUrlTemplate.replace('__ID__', activeRouteId);
+
+                $('#btnSaveVendorPrice').prop('disabled', true).text('Menyimpan...');
+
+                $.ajax({
+                    url: saveUrl,
+                    type: 'POST',
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        rows: rows,
+                    },
+                    success: function(response) {
+                        $('#btnSaveVendorPrice').prop('disabled', false).text(
+                            'Simpan Harga Vendor');
+
+                        if (response.success) {
+                            swal('Berhasil', response.message, 'success');
+                            $('#modalVendorPrice').modal('hide');
+                        } else {
+                            swal('Gagal', response.message, 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        $('#btnSaveVendorPrice').prop('disabled', false).text(
+                            'Simpan Harga Vendor');
+
+                        const message = xhr.responseJSON?.message ||
+                            'Terjadi kesalahan sistem.';
+                        swal('Gagal', message, 'error');
+                    }
+                });
+            });
+
+            $('#modalVendorPrice').on('hidden.bs.modal', function() {
+                activeRouteId = null;
+                vendorOptions = [];
+                $('#vendorPriceTableBody').empty();
+            });
+
+            $('#btnAddVendorRow').on('click', function() {
+                if (!vendorOptions.length) {
+                    swal('Peringatan', 'Data vendor external belum tersedia.', 'warning');
+                    return;
+                }
+
+                const currentRows = [];
+                $('.vendor-row').each(function() {
+                    currentRows.push({
+                        fleet_company_id: $(this).find('.vendor-company-select').val() ||
+                            '',
+                        amount: $(this).find('.vendor-price-input').val() || '',
+                    });
+                });
+
+                currentRows.push({
+                    fleet_company_id: '',
+                    amount: '',
+                });
+
+                renderVendorRows(currentRows);
+                renumberVendorRows();
+            });
+
+            $('#vendorPriceTableBody').on('click', '.btn-remove-vendor-row', function() {
+                $(this).closest('tr').remove();
+
+                if (!$('#vendorPriceTableBody .vendor-row').length) {
+                    renderVendorRows([]);
+                    return;
+                }
+
+                renumberVendorRows();
+            });
+
+            $('#vendorPriceTableBody').on('input', '.vendor-price-input', function() {
+                this.value = formatThousands(this.value);
             });
         });
 
@@ -364,7 +706,7 @@
 
             $('#formBulkUpdatePrice')[0].reset();
             $('.bulk-target-checkbox').prop('checked', true); // default check all
-            
+
             // Re-initialize select2 with dropdownParent to fix unclickable issue in modal
             $('#bulkUpdateType').select2({
                 dropdownParent: $('#modalBulkUpdatePrice'),
@@ -384,7 +726,7 @@
 
             var type = $('#bulkUpdateType').val();
             var percentage = $('#bulkUpdatePercentage').val();
-            
+
             var targets = [];
             $('.bulk-target-checkbox:checked').each(function() {
                 targets.push($(this).val());
@@ -396,7 +738,9 @@
             }
 
             if (type === 'decrease' && percentage > 100) {
-                swal("Peringatan", "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.", "warning");
+                swal("Peringatan",
+                    "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.",
+                    "warning");
                 return;
             }
 
@@ -422,7 +766,8 @@
                     if (response.success) {
                         $('#modalBulkUpdatePrice').modal('hide');
                         swal("Berhasil", response.message, "success");
-                        $('#dt').DataTable().ajax.reload(null, false); // Reload without resetting pagination
+                        $('#dt').DataTable().ajax.reload(null,
+                            false); // Reload without resetting pagination
                         $('#checkAll').prop('checked', false);
                     } else {
                         swal("Gagal", response.message, "error");

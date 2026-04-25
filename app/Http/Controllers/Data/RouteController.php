@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Data;
 use App\Enums\CostComponentType;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Data\RoutePriceExternal;
+use App\Models\Master\FleetCompany;
+use App\Models\Data\Route;
 use App\Services\Data\RouteService;
 use App\Services\Master\CostComponentService;
 use App\Services\Master\CustomerService;
@@ -203,7 +206,6 @@ class RouteController extends Controller
             'destinationLocationCode' => 'required',
             // 'fleetTypeCode' => 'required',
             'price' => 'required|numeric|min:0',
-            'vendorPrice' => 'required|numeric|min:0|lte:price',
             'personalVendorPrice' => 'required|numeric|min:0|lte:price',
         ]);
 
@@ -265,16 +267,13 @@ class RouteController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('checkbox', function ($row) {
                     return '<input type="checkbox" class="form-check-input route-checkbox" value="' . $row->id . '">';
                 })
                 ->editColumn('price', function ($row) {
                     return 'Rp ' . number_format($row->price, 2, ',', '.');
-                })
-                ->editColumn('vendorPrice', function ($row) {
-                    return 'Rp ' . number_format($row->vendorPrice, 2, ',', '.');
                 })
                 ->editColumn('personalVendorPrice', function ($row) {
                     return 'Rp ' . number_format($row->personalVendorPrice, 2, ',', '.');
@@ -283,24 +282,145 @@ class RouteController extends Controller
                     return $row->customer ? $row->customer->name : '';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="' . route($this->view . 'edit', $row->id) . '"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
+                    $btn = '<a href="' . route($this->view . 'edit', $row->id) . '"
+           class="btn btn-sm btn-warning me-1"
            data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+            Edit
         </a>
-
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
+        <button type="button"
+           class="btn btn-sm btn-primary btn-show-vendor-price"
+           data-route-id="' . $row->id . '"
+           data-route-name="' . e($row->name) . '">
+            Detail Harga Vendor
+        </button>';
 
                     return $btn;
                 })
-                ->rawColumns(['checkbox', 'action', 'price', 'vendorPrice', 'personalVendorPrice', 'customer.name'])
+                ->rawColumns(['checkbox', 'action', 'price', 'personalVendorPrice', 'customer.name'])
                 ->toJson();
+        }
+    }
+
+    public function showVendorPrices(string $id)
+    {
+        $route = Route::query()
+            ->with([
+                'customer:code,name',
+                'originLocation:code,name',
+                'destinationLocation:code,name',
+            ])
+            ->select('id', 'name', 'customerCode', 'originLocationCode', 'destinationLocationCode', 'price', 'personalVendorPrice')
+            ->find($id);
+
+        if (! $route) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Route tidak ditemukan.',
+            ], 404);
+        }
+
+        $fleetCompanies = FleetCompany::query()
+            ->whereRaw("LOWER(TRIM(COALESCE(type, ''))) = ?", ['external'])
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        $rows = RoutePriceExternal::query()
+            ->where('route_id', $id)
+            ->whereIn('fleet_company_id', $fleetCompanies->pluck('id')->toArray())
+            ->with(['fleetCompany:id,name'])
+            ->get(['fleet_company_id', 'amount'])
+            ->map(function ($price) {
+                return [
+                    'fleet_company_id' => $price->fleet_company_id,
+                    'fleet_company_name' => optional($price->fleetCompany)->name,
+                    'amount' => (float) $price->amount,
+                ];
+            })
+            ->values();
+
+        $vendors = $fleetCompanies->map(function ($company) {
+            return [
+                'id' => $company->id,
+                'name' => $company->name,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'route' => [
+                    'id' => $route->id,
+                    'name' => $route->name,
+                    'customer_name' => optional($route->customer)->name,
+                    'origin_name' => optional($route->originLocation)->name,
+                    'destination_name' => optional($route->destinationLocation)->name,
+                    'price' => $route->price,
+                    'personal_vendor_price' => $route->personalVendorPrice,
+                ],
+                'vendors' => $vendors,
+                'rows' => $rows,
+            ],
+        ]);
+    }
+
+    public function saveVendorPrices(Request $request, string $id)
+    {
+        $route = Route::query()->select('id')->find($id);
+
+        if (! $route) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Route tidak ditemukan.',
+            ], 404);
+        }
+
+        $fleetCompanyIds = FleetCompany::query()
+            ->whereRaw("LOWER(TRIM(COALESCE(type, ''))) = ?", ['external'])
+            ->pluck('id')
+            ->toArray();
+
+        $validator = Validator::make($request->all(), [
+            'rows' => 'nullable|array',
+            'rows.*.fleet_company_id' => 'required|string|distinct|in:' . implode(',', $fleetCompanyIds),
+            'rows.*.amount' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            RoutePriceExternal::query()
+                ->where('route_id', $id)
+                ->whereIn('fleet_company_id', $fleetCompanyIds)
+                ->delete();
+
+            foreach ((array) $request->input('rows', []) as $row) {
+                RoutePriceExternal::query()->create([
+                    'route_id' => $id,
+                    'fleet_company_id' => $row['fleet_company_id'],
+                    'amount' => round((float) $row['amount'], 2),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Harga vendor berhasil disimpan.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage(),
+            ], 500);
         }
     }
 

@@ -87,14 +87,16 @@ class RouteService
     public function update($request, $id, $title)
     {
         // dd($request->all());
-        $this->logActivity($title, $this->getById($id), 'Before Update');
+        $before = $this->getById($id);
+        $this->logActivity($title, $before, 'Before Update');
 
         $price = $this->normalizeDecimal($request->price);
-        $vendorPrice = $this->normalizeDecimal($request->vendorPrice);
         $personalVendorPrice = $this->normalizeDecimal($request->personalVendorPrice);
 
-        if ($vendorPrice > $price) {
-            throw new \InvalidArgumentException('Vendor price cannot be greater than price');
+        $existingVendorPrice = $before ? (float) $before->vendorPrice : 0;
+
+        if ($existingVendorPrice > $price) {
+            throw new \InvalidArgumentException('Existing vendor price cannot be greater than price. Please update external vendor prices first.');
         }
 
         if ($personalVendorPrice > $price) {
@@ -108,7 +110,6 @@ class RouteService
             'destinationLocationCode' => $request->destinationLocationCode,
             // 'fleetTypeCode' => $request->fleetTypeCode,
             'price' => $price,
-            'vendorPrice' => $vendorPrice,
             'routeTypeCode' => $request->routeType,
             'personalVendorPrice' => $personalVendorPrice,
             'description' => $request->description,

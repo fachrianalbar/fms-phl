@@ -34,7 +34,7 @@
             </div>
             <div class="card-body col-md-12">
                 <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}"
-                    onsubmit="return submitFormRoute('price', 'vendorPrice', 'personalVendorPrice')">
+                    onsubmit="return submitFormRoute('price', 'personalVendorPrice')">
                     @csrf
                     @method('PUT')
                     <div class="row">
@@ -150,13 +150,6 @@
 
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="vendorPrice">{{ __('menu_route.vendor_price') }}</label>
-                            <input class="form-control" name="vendorPrice" id="vendorPrice" oninput="formatAngka(this)"
-                                type="text" required placeholder="{{ __('menu_route.vendor_price') }}"
-                                value="{{ number_format($data->vendorPrice, 2, ',', '.') }}">
-                        </div>
-
-                        <div class="col-md-6">
                             <label class="form-label"
                                 for="personalVendorPrice">{{ __('menu_route.personal_vendor_price') }}</label>
                             <input class="form-control" name="personalVendorPrice" id="personalVendorPrice"
@@ -259,26 +252,14 @@
             });
         }
 
-        function submitFormRoute(priceId, vendorPriceId, personalVendorPriceId) {
+        function submitFormRoute(priceId, personalVendorPriceId) {
             const priceInput = document.getElementById(priceId);
-            const vendorPriceInput = document.getElementById(vendorPriceId);
             const personalVendorPriceInput = document.getElementById(personalVendorPriceId);
 
             // Hapus titik pemisah ribuan dan ganti koma dengan titik untuk desimal
             const price = parseFloat(priceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
-            const vendorPrice = parseFloat(vendorPriceInput.value.replace(/\./g, '').replace(',', '.')) || 0;
             const personalVendorPrice = parseFloat(personalVendorPriceInput.value.replace(/\./g, '').replace(',', '.')) ||
                 0;
-
-            // Validasi vendorPrice tidak boleh lebih besar dari price
-            if (vendorPrice > price) {
-                swal({
-                    title: "{{ __('general.warning') }}",
-                    text: "{{ __('menu_route.vendor_price_validation') }}",
-                    icon: "warning",
-                })
-                return false;
-            }
 
             if (personalVendorPrice > price) {
                 swal({
@@ -292,7 +273,6 @@
 
             // Set nilai input ke angka asli tanpa titik, dengan desimal
             priceInput.value = price.toFixed(2);
-            vendorPriceInput.value = vendorPrice.toFixed(2);
             personalVendorPriceInput.value = personalVendorPrice.toFixed(2);
 
             return true; // Lanjutkan submit
