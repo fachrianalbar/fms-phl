@@ -4,6 +4,7 @@ namespace App\Services\Operational;
 
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
+use App\Models\Data\RoutePriceExternal;
 use App\Models\Master\Customer;
 use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
@@ -610,12 +611,26 @@ class OrderService
         $qty = (float) ($request->qty ?? 0);
 
         if ($isExternalFleet) {
-            $vendorPriceSingle = (float) ($route->vendorPrice ?? 0);
+            $routePriceExt = RoutePriceExternal::where('route_id', $route->id)
+                ->where('fleet_company_id', $fleet->company->id)
+                ->first();
+
+            $vendorPriceSingle = (float) ($routePriceExt ? $routePriceExt->amount : 0);
+
+            if ($vendorPriceSingle == 0) {
+                session()->flash('warning', 'Route ini dengan vendor ini belum di setting harga nya, silahkan setting harga.');
+            }
+
             $vendorPrice = $vendorPriceSingle * $qty;
             $personalVendorPriceSingle = 0.0;
             $personalVendorPrice = 0.0;
         } else {
             $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
+            
+            if ($personalVendorPriceSingle == 0) {
+                session()->flash('warning', 'Route ini belum di setting harga vendor internal nya, silahkan setting harga.');
+            }
+
             $personalVendorPrice = $personalVendorPriceSingle * $qty;
             $vendorPriceSingle = 0.0;
             $vendorPrice = 0.0;

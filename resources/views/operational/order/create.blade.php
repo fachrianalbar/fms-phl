@@ -1121,6 +1121,20 @@
                         $('#priceNote').html(
                             'Harga dihitung berdasarkan route yang dipilih × qty. Fleet type: <strong>' +
                             fleetTypeLabel + '</strong>');
+
+                        if (response.priceNotSet) {
+                            swal({
+                                title: "Warning",
+                                text: "Route ini dengan vendor ini belum di setting harga nya, silahkan setting harga.",
+                                icon: "warning",
+                            });
+                        } else if (response.priceNotSetInternal) {
+                            swal({
+                                title: "Warning",
+                                text: "Route ini belum di setting harga vendor internal nya, silahkan setting harga.",
+                                icon: "warning",
+                            });
+                        }
                     }
                 },
                 error: function(xhr) {

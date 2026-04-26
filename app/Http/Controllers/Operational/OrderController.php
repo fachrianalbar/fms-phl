@@ -1123,16 +1123,35 @@ class OrderController extends Controller
 
                     if ($response['isExternal']) {
                         // External: only vendor price is used
-                        $response['vendorPriceSingle'] = $route->vendorPrice ?? 0;
-                        $response['vendorPrice'] = ($route->vendorPrice ?? 0) * $qty;
+                        $routePriceExt = null;
+                        if (isset($fleet) && $fleet->company) {
+                            $routePriceExt = \App\Models\Data\RoutePriceExternal::where('route_id', $route->id)
+                                ->where('fleet_company_id', $fleet->company->id)
+                                ->first();
+                        }
+
+                        $vendorPriceSingle = (float) ($routePriceExt ? $routePriceExt->amount : 0);
+
+                        $response['vendorPriceSingle'] = $vendorPriceSingle;
+                        $response['vendorPrice'] = $vendorPriceSingle * $qty;
                         $response['personalVendorPriceSingle'] = 0;
                         $response['personalVendorPrice'] = 0;
+                        
+                        if ($vendorPriceSingle == 0) {
+                            $response['priceNotSet'] = true;
+                        }
                     } else {
                         // Internal: only personal vendor price is used
-                        $response['personalVendorPriceSingle'] = $route->personalVendorPrice ?? 0;
-                        $response['personalVendorPrice'] = ($route->personalVendorPrice ?? 0) * $qty;
+                        $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
+                        
+                        $response['personalVendorPriceSingle'] = $personalVendorPriceSingle;
+                        $response['personalVendorPrice'] = $personalVendorPriceSingle * $qty;
                         $response['vendorPriceSingle'] = 0;
                         $response['vendorPrice'] = 0;
+                        
+                        if ($personalVendorPriceSingle == 0) {
+                            $response['priceNotSetInternal'] = true;
+                        }
                     }
                 }
             }
