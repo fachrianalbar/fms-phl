@@ -123,7 +123,27 @@ class PurchaseController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $data = $this->service->getById($id);
+
+        if (! $data) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+        }
+
+        $totalPrice = 0;
+        $totalQty = 0;
+        foreach ($data->details as $item) {
+            $itemStock = Item::where('code', $item->itemCode)->first();
+
+            $totalPrice += intval($itemStock->price) * $item->qty;
+            $totalQty += $item->qty;
+        }
+
+        return view($this->view.'show')
+            ->with('view', $this->view)
+            ->with('title', $this->title)
+            ->with('totalPrice', $totalPrice)
+            ->with('totalQty', $totalQty)
+            ->with('data', $data);
     }
 
     /**
@@ -344,11 +364,18 @@ class PurchaseController extends Controller
                     return $status;
                 })
                 ->addColumn('action', function ($row) {
+                    $icon = 'mdi-pencil-outline';
+                    $title = 'Edit';
+                    if ($row->paidAmount > 0 || $row->status == 3) {
+                        $icon = 'mdi-eye';
+                        $title = 'Detail';
+                    }
+
                     $btn = '<td>
-                                <a href="'.route($this->view.'edit', $row->id).'"
+                                <a href="'.route($this->view.($icon == 'mdi-eye' ? 'show' : 'edit'), $row->id).'"
                                 class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                data-bs-toggle="tooltip" title="Edit">
-                                    <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                                data-bs-toggle="tooltip" title="'.$title.'">
+                                    <i class="mdi '.$icon.' fs-14 text-primary"></i>
                                 </a>
 
                                 <a href="javascript:deleteData(\''.$row->id.'\')"
@@ -358,12 +385,12 @@ class PurchaseController extends Controller
                                 </a>
                             </td>';
 
-                    if (in_array($row->status, [1, 2, 3])) {
+                    if (in_array($row->status, [1, 2, 3]) || $row->paidAmount > 0) {
                         $btn = '<td>
-                                    <a href="'.route($this->view.'edit', $row->id).'"
+                                    <a href="'.route($this->view.($icon == 'mdi-eye' ? 'show' : 'edit'), $row->id).'"
                                     class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                    data-bs-toggle="tooltip" title="Edit">
-                                        <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                                    data-bs-toggle="tooltip" title="'.$title.'">
+                                        <i class="mdi '.$icon.' fs-14 text-primary"></i>
                                     </a>
                                 </td>';
                     }

@@ -94,7 +94,7 @@ class PurchasePaymentController extends Controller
         $data = $this->service->getById($id);
 
         $validator = Validator::make($request->all(), [
-            'paymentDate' => ['required', 'date', 'after_or_equal:'.$data->receivedDate],
+            'paymentDate' => ['required', 'date'],
         ]);
 
         if ($validator->fails()) {
@@ -160,14 +160,6 @@ class PurchasePaymentController extends Controller
 
                     return $date;
                 })
-                ->editColumn('receivedDate', function ($row) {
-                    $receivedDate = '';
-                    if ($row->receivedDate) {
-                        $receivedDate = Carbon::parse($row->receivedDate)->format('d-M-Y');
-                    }
-
-                    return $receivedDate;
-                })
                 ->editColumn('paymentDate', function ($row) {
                     $paymentDate = '';
                     if ($row->paymentDate) {
@@ -175,6 +167,14 @@ class PurchasePaymentController extends Controller
                     }
 
                     return $paymentDate;
+                })
+                ->addColumn('dueDate', function ($row) {
+                    $dueDate = '';
+                    if ($row->dueDate) {
+                        $dueDate = Carbon::parse($row->dueDate)->format('d-M-Y');
+                    }
+
+                    return $dueDate;
                 })
                 ->addColumn('totalPrice', function ($row) {
                     $totalPrice = 0;
@@ -232,20 +232,57 @@ class PurchasePaymentController extends Controller
                         }
                     }
 
-                    return $status;
+                    if ($status) {
+                        $status = '<span class="badge bg-info">'.$status.'</span>';
+                    }
+
+                    $paymentBadge = '';
+                    if ($row->paymentStatus == 'Paid') {
+                        $paymentBadge = '<span class="badge bg-success">Paid</span>';
+                    } elseif ($row->paymentStatus == 'Partial') {
+                        $paymentBadge = '<span class="badge bg-warning text-dark">Partial</span>';
+                    } else {
+                        $paymentBadge = '<span class="badge bg-secondary">Unpaid</span>';
+                    }
+
+                    return $status . ' ' . $paymentBadge;
                 })
                 ->addColumn('action', function ($row) {
+                    $icon = 'mdi-credit-card';
+                    $title = 'Payment';
+                    
+                    if ($row->paymentStatus == 'Paid') {
+                        $icon = 'mdi-eye';
+                        $title = 'Detail';
+                    }
+
                     $btn = '<td>
                                 <a href="'.route($this->view.'edit', $row->id).'"
                                 class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                data-bs-toggle="tooltip" title="Payment">
-                                    <i class="mdi mdi-credit-card fs-14 text-primary"></i>
+                                data-bs-toggle="tooltip" title="'.$title.'">
+                                    <i class="mdi '.$icon.' fs-14 text-primary"></i>
                                 </a>
                             </td>';
 
                     return $btn;
                 })
                 ->rawColumns(['purchaseDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'purchaseStatus', 'action'])
+                ->setRowClass(function ($row) {
+                    if ($row->dueDate && $row->paymentStatus != 'Paid') {
+                        $due = Carbon::parse($row->dueDate)->startOfDay();
+                        $today = now()->startOfDay();
+                        
+                        // diffInDays returns negative if $due is in the past, or positive if in the future
+                        $diff = $today->diffInDays($due, false);
+                        
+                        if ($diff < 0) {
+                            return 'table-danger text-danger'; // Past due date
+                        } elseif ($diff >= 0 && $diff <= 7) {
+                            return 'table-warning'; // Within 1 week
+                        }
+                    }
+                    return '';
+                })
                 ->toJson();
         }
     }

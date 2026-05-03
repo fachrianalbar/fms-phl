@@ -97,8 +97,8 @@
                                 <th>No</th>
                                 <th>Code</th>
                                 <th>{{ __('menu_purchase.purchase_date') }}</th>
-                                <th>{{ __('menu_purchase.received_date') }}</th>
                                 <th>{{ __('menu_purchase.payment_date') }}</th>
+                                <th>Due Date</th>
                                 <th>{{ __('menu_purchase.supplier_name') }}</th>
                                 <th>{{ __('menu_purchase.warehouse') }}</th>
                                 <th>{{ __('menu_purchase.total_prices') }}</th>
@@ -171,10 +171,10 @@
                         "data": 'purchaseDate'
                     },
                     {
-                        "data": 'receivedDate'
+                        "data": 'paymentDate'
                     },
                     {
-                        "data": 'paymentDate'
+                        "data": 'dueDate'
                     },
                     {
                         "data": "supplier.name"

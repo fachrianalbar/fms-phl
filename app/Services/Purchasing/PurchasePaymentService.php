@@ -35,7 +35,7 @@ class PurchasePaymentService
             'supplier',
             'warehouse',
             'purchaseStatus',
-        ])->orderBy('date', 'desc')->whereIn('status', [2, 3])->orderBy('time', 'desc')->get();
+        ])->orderBy('date', 'desc')->orderBy('time', 'desc')->get();
     }
 
     public function datatable()
@@ -44,7 +44,7 @@ class PurchasePaymentService
             'supplier',
             'warehouse',
             'purchaseStatus',
-        ])->orderBy('date', 'desc')->whereIn('status', [2, 3])->orderBy('time', 'desc');
+        ])->orderBy('date', 'desc')->orderBy('time', 'desc');
     }
 
     public function getById($id)
@@ -60,23 +60,47 @@ class PurchasePaymentService
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $this->service->where('id', $id)->update([
-            'status' => 3,
+        $purchase = $this->getById($id);
+
+        $paymentAmount = (float) str_replace(['Rp', '.', ','], '', $request->nominal);
+        $newPaidAmount = $purchase->paidAmount + $paymentAmount;
+        $remainingAmount = $totalPrice - $newPaidAmount;
+
+        $status = $purchase->status;
+        $paymentStatus = 'Partial';
+
+        if ($remainingAmount <= 0) {
+            $status = 3;
+            $paymentStatus = 'Paid';
+        }
+
+        // Create Payment History
+        \App\Models\Purchasing\PurchasePaymentHistory::create([
+            'purchaseCode' => $purchase->code,
+            'amount' => $paymentAmount,
             'paymentDate' => $request->paymentDate,
-            'paymentCode' => GenerateCode::generateCode('FPY'),
-            'nominal' => $totalPrice,
+            'userBankCode' => $request->userBankCode,
+            'description' => $request->description,
+        ]);
+
+        $this->service->where('id', $id)->update([
+            'status' => $status,
+            'paymentDate' => $request->paymentDate, // Update the last payment date
+            'paymentCode' => $purchase->paymentCode ?? GenerateCode::generateCode('FPY'),
+            'paidAmount' => $newPaidAmount,
+            'paymentStatus' => $paymentStatus,
             'userBankCode' => $request->userBankCode,
         ]);
 
-        // LiveMutationHelper::updateLiveMutation($request->userBankCode, $totalPrice, 'credit');
+        // LiveMutationHelper::updateLiveMutation($request->userBankCode, $paymentAmount, 'credit');
 
         // $this->mutation->create([
         //     'code' => GenerateCode::generateCode('FMT'),
         //     'userBankCode' => $request->userBankCode,
-        //     'nominal' => $totalPrice,
+        //     'nominal' => $paymentAmount,
         //     'type' => 'Out',
         //     'date' => Carbon::now(),
-        //     'description' => 'Purchase Payment with amount ' . number_format($totalPrice, 0, '.', ','),
+        //     'description' => 'Purchase Payment with amount ' . number_format($paymentAmount, 0, '.', ','),
         //     'transactionTypeCode' => 'FTT250306114138'
         // ]);
 

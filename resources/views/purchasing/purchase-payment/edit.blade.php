@@ -87,20 +87,31 @@
                 </div>
             </div> --}}
 
+
+
             <div class="row mt-4">
-                <div class="col-md-12">
-                    <label class="form-label" for="name">{{ __('menu_purchase.received_date') }}</label>
-                    <input class="form-control" name="receivedDate" type="text"
-                        value="{{ $data->receivedDate }}" required
-                        placeholder="{{ __('menu_purchase.received_date') }}">
+                <div class="col-md-4">
+                    <label class="form-label">{{ __('menu_purchase.total_prices') }}</label>
+                    <input class="form-control" type="text"
+                        value="{{ number_format($totalPrice, 0, ',', '.') }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sudah Dibayar (Paid)</label>
+                    <input class="form-control" type="text"
+                        value="{{ number_format($data->paidAmount, 0, ',', '.') }}" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Sisa (Remaining)</label>
+                    <input class="form-control" type="text"
+                        value="{{ number_format($totalPrice - $data->paidAmount, 0, ',', '.') }}" readonly>
                 </div>
             </div>
 
             <div class="row mt-4">
                 <div class="col-md-12">
-                    <label class="form-label">{{ __('menu_purchase.total_prices') }}</label>
-                    <input class="form-control" name="nominal" type="text"
-                        value="{{ number_format($totalPrice, 0, ',', '.') }}" readonly>
+                    <label class="form-label">Nominal Pembayaran <i class="icofont icofont-warning-alt text-danger"></i></label>
+                    <input class="form-control" name="nominal" type="text" oninput="formatAngka(this)" required
+                        value="{{ number_format($totalPrice - $data->paidAmount, 0, ',', '.') }}">
                 </div>
             </div>
 
@@ -205,7 +216,7 @@
         </div>
     </div>
 
-    @if ($data->status == 2)
+    @if ($data->paymentStatus != 'Paid')
     <div class="card">
         <div class="col-12">
             <div class="card-body">

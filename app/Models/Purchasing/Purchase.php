@@ -57,4 +57,9 @@ class Purchase extends Model
     {
         return $this->belongsTo(PurchaseStatus::class, 'status', 'code');
     }
+
+    public function paymentHistories()
+    {
+        return $this->hasMany(PurchasePaymentHistory::class, 'purchaseCode', 'code');
+    }
 }
