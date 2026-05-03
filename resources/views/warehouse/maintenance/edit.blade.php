@@ -112,14 +112,22 @@
             </div>
             <div class="card-body col-md-12">
                 @include('partials.alert')
-                <table class="table table-sm" id="dt">
+                            {{-- <td>
+                                        <div class="mx-5">
+                                            <input class="form-control" type="text" value="{{ $it->item->name }}"
+                            id="itemName_{{ $loop->iteration }}" required readonly>
+            </div>
+            </td> --}}
+                    <table class="table table-sm" id="dt">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Item/Part</th>
                             {{-- <th>Item/Part</th> --}}
-                            <th>Qty Existing</th>
+                            <th>Stock</th>
                             <th>Qty</th>
+                            <th style="text-align: right">Price</th>
+                            <th style="text-align: right">Total</th>
                         </tr>
                     </thead>
                     <tbody id="purchaseDetails">
@@ -142,34 +150,43 @@
                                     </option>
 
                                     <option value="{{ $it->item->code }}"
-                                        data-name="{{ $it->item->name }}" data-qty="0"
+                                        data-name="{{ $it->item->name }}" data-qty="0" data-price="{{ $it->item->price }}"
                                         selected>
                                         {{ $it->item->code . ' - ' . $it->item->name }}
                                     </option>
                                 </select>
                             </td>
-                            {{-- <td>
-                                        <div class="mx-5">
-                                            <input class="form-control" type="text" value="{{ $it->item->name }}"
-                            id="itemName_{{ $loop->iteration }}" required readonly>
-            </div>
-            </td> --}}
+
             <td>
                 <input class="form-control  " type="number" name="qty_exist[]"
                     id="qty_exist_{{ $loop->iteration }}" readonly
                     value="0">
             </td>
             <td>
-                <input class="form-control " type="number" name="qty[]"
+                <input class="form-control qty-input" type="number" name="qty[]"
                     id="qty_{{ $loop->iteration }}" required min="0.01" step="0.01"
                     value="{{ $it->qty }}">
                 <input type="hidden" name="original_qty[]" value="{{ $it->qty }}">
+            </td>
+            <td>
+                <input class="form-control text-end" type="text" name="price[]" id="price_{{ $loop->iteration }}" readonly value="{{ number_format($it->price ?? ($it->item->price ?? 0), 0, ',', '.') }}">
+            </td>
+            <td>
+                <input class="form-control text-end" type="text" name="total[]" id="total_{{ $loop->iteration }}" readonly value="{{ number_format($it->total ?? ($it->qty * ($it->price ?? $it->item->price ?? 0)), 0, ',', '.') }}">
             </td>
             </tr>
             @endforeach
 
             </tbody>
             </table>
+
+            <div class="d-flex justify-content-end mt-2">
+                <div>
+                    <div class="fw-bold">Grand Total: <span id="grand_total_display">{{ number_format($data->grand_total ?? 0, 0, ',', '.') }}</span></div>
+                    <input type="hidden" name="grand_total" id="grand_total" value="{{ $data->grand_total ?? 0 }}">
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -277,13 +294,19 @@
         });
     }
 
-    // Load item details (name, qty)
+    // Load item details (name, price)
     function loadItemDetails(row) {
         let itemCode = $(`#itemCode_${row}`).val();
-        let foundItem = dataItem.find(i => i.code === itemCode);
-        let itemQty = foundItem ? foundItem.stock : 0;
+        let foundItem = dataItem.find(i => i.code === itemCode || (i.item && i.item.code === itemCode));
+        let itemQty = foundItem ? (foundItem.stock ?? (foundItem.stockIn - foundItem.stockOut || 0)) : 0;
+        let itemPrice = foundItem ? (foundItem.price ?? (foundItem.item ? foundItem.item.price : 0)) : 0;
 
         $(`#qty_exist_${row}`).val(itemQty);
+        $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
+        let qty = parseFloat($(`#qty_${row}`).val()) || 0;
+        let total = qty * parseFloat(itemPrice || 0);
+        $(`#total_${row}`).val(new Intl.NumberFormat('id-ID').format(total));
+        updateGrandTotal();
     }
 
     function deleteMaintenanceDetail(id) {
@@ -307,15 +330,28 @@
         });
     }
 
-    // Update total price based on quantity
-    function updateTotalPrice(row) {
-        let qty = $(`#qty_${row}`).val();
-        let price = $(`#price_${row}`).val();
-        let totalPrice = qty * parseFloat(price.replace(/\./g, ''));
+    // Update total price based on quantity (live)
+    $(document).on('input', '.qty-input', function() {
+        let id = $(this).attr('id');
+        let row = id.split('_')[1];
+        let qty = parseFloat($(this).val()) || 0;
+        let priceText = $(`#price_${row}`).val() || '0';
+        let price = parseFloat(priceText.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+        let total = qty * price;
+        $(`#total_${row}`).val(new Intl.NumberFormat('id-ID').format(total));
+        updateGrandTotal();
+    });
 
-        totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
-
-        $(`#totalPrice_${row}`).val(totalPrice);
+    function updateGrandTotal() {
+        let grand = 0;
+        $('#purchaseDetails tr').each(function(index) {
+            let row = index + 1;
+            let totalText = $(`#total_${row}`).val() || '0';
+            let total = parseFloat(totalText.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+            grand += total;
+        });
+        $('#grand_total_display').text(new Intl.NumberFormat('id-ID').format(grand));
+        $('#grand_total').val(grand);
     }
 
     // Attach validation to the save button
@@ -323,7 +359,6 @@
         let isValid = true;
         let errorMessage = '';
         let codes = [];
-        let isDuplicate = false;
 
         // Loop through each row to validate quantities
         $('#purchaseDetails tr').each(function() {
@@ -345,9 +380,7 @@
 
             // Check for duplicate codes
             if (codes.includes(code)) {
-                isDuplicate = true;
-                errorMessage =
-                    `Duplicate entry detected for the item "${itemName}". Please remove the duplicate.`;
+                errorMessage = `Duplicate entry detected for the item "${itemName}". Please remove the duplicate.`;
                 isValid = false;
                 return false; // Exit loop early
             }
@@ -388,9 +421,15 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
                                 <input type="hidden" name="original_qty[]" value="0">
 
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="price[]" id="price_${row}" readonly value="0">
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="total[]" id="total_${row}" readonly value="0">
                             </td>
                           </tr>`;
         $('#purchaseDetails').append(newRow);
@@ -398,8 +437,12 @@
         let html = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
 
         dataItem.forEach(i => {
-            html +=
-                `<option value="${i.item.code}" data-name="${i.item.name}" data-qty="${i.stockIn - i.stockOut}">${i.item.code} - ${i.item.name}</option>`;
+            // support both shapes: {code, name, stock, price} and {item:{code,name}, stockIn, stockOut}
+            let code = i.code || (i.item && i.item.code);
+            let name = i.name || (i.item && i.item.name);
+            let stock = i.stock ?? (i.stockIn - i.stockOut || 0);
+            let price = i.price ?? (i.item ? i.item.price : 0);
+            html += `<option value="${code}" data-name="${name}" data-qty="${stock}" data-price="${price}">${code} - ${name}</option>`;
         });
 
         $(`#itemCode_${row}`).html(html);
@@ -410,6 +453,7 @@
     // Remove row from purchase detail
     function removeDetailRow(row) {
         $(`#itemCode_${row}`).closest('tr').remove();
+        updateGrandTotal();
     }
 
     // Hide remove button on the first row

@@ -97,7 +97,7 @@ class AllOrderListController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -290,7 +290,7 @@ class AllOrderListController extends Controller
                         $this->totalCost += $allowance;
                     }
 
-                    return ''.number_format($allowance, 0, ',', '.');
+                    return '' . number_format($allowance, 0, ',', '.');
                 })
                 ->addColumn('addCost', function ($row) {
                     $cost = 0;
@@ -301,7 +301,7 @@ class AllOrderListController extends Controller
                     }
                     $this->totalCost += $cost;
 
-                    return ''.number_format($cost, 0, ',', '.');
+                    return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('bonus', function ($row) {
                     $bonus = TonaseBonus::where('min', '<=', $row->qty)->where('max', '>=', $row->qty)->first();
@@ -309,10 +309,10 @@ class AllOrderListController extends Controller
                     if ($bonus) {
                         $this->totalCost += $bonus->value;
 
-                        return ''.number_format($bonus->value, 0, ',', '.');
+                        return '' . number_format($bonus->value, 0, ',', '.');
                     }
 
-                    return ''. 0;
+                    return '' . 0;
                 })
                 ->addColumn('tonase', function ($row) {
                     if (isset($row->route->routeTypeCode)) {
@@ -320,11 +320,11 @@ class AllOrderListController extends Controller
                             // Tonase is a price field; include it in totalCost as well
                             $this->totalCost += $row->route->price;
 
-                            return ''.number_format($row->route->price, 0, ',', '.');
+                            return '' . number_format($row->route->price, 0, ',', '.');
                         }
                     }
 
-                    return ''. 0;
+                    return '' . 0;
                 })
                 ->addColumn('gaji', function ($row) {
                     $this->totalCost += 140000;

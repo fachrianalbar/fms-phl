@@ -111,14 +111,15 @@
                 <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
             </div>
             <div class="card-body col-md-12">
-                <table class="table table-sm" id="dt">
+                    <table class="table table-sm" id="dt">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Item/Part</th>
-                            {{-- <th>Item/Part</th> --}}
-                            <th>Qty Existing</th>
+                            <th>Stock</th>
                             <th>Qty</th>
+                            <th style="text-align: right">Price</th>
+                            <th style="text-align: right">Total</th>
                         </tr>
                     </thead>
                     <tbody id="purchaseDetails">
@@ -136,12 +137,25 @@
                                     value="0">
                             </td>
                             <td>
-                                <input class="form-control" type="number" name="qty[]" id="qty_1" required
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_1" required
                                     min="0.01" step="0.01" value="1">
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="price[]" id="price_1" readonly value="0">
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="total[]" id="total_1" readonly value="0">
                             </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="d-flex justify-content-end mt-2">
+                    <div>
+                        <div class="fw-bold">Grand Total: <span id="grand_total_display">0</span></div>
+                        <input type="hidden" name="grand_total" id="grand_total" value="0">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -216,7 +230,7 @@
                 warehouseCode: selectedWarehouse
             },
             success: function(response) {
-                if (response.success) {
+                    if (response.success) {
                     dataItem = response.data;
 
                     // Enable item selects and add button
@@ -226,7 +240,7 @@
                     // Populate first row
                     let html = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
                     dataItem.forEach(i => {
-                        html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}">${i.code} - ${i.name}</option>`;
+                        html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
                     });
                     $('#itemCode_1').html(html);
                     $('#itemCode_1').select2();
@@ -253,21 +267,39 @@
         let itemCode = $(`#itemCode_${row}`).val();
         let itemName = $(`#itemCode_${row} option:selected`).data('name');
         let itemQty = $(`#itemCode_${row} option:selected`).data('qty');
+        let itemPrice = $(`#itemCode_${row} option:selected`).data('price') || 0;
 
-        $(`#itemName_${row}`).val(itemName);
         $(`#qty_exist_${row}`).val(itemQty);
-        // updateTotalPrice(row);
+        $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
+        // calculate total for this row
+        let qty = parseFloat($(`#qty_${row}`).val()) || 0;
+        let total = qty * parseFloat(itemPrice);
+        $(`#total_${row}`).val(new Intl.NumberFormat('id-ID').format(total));
+        updateGrandTotal();
     }
 
     // Update total price based on quantity
-    function updateTotalPrice(row) {
-        let qty = $(`#qty_${row}`).val();
-        let price = $(`#price_${row}`).val();
-        let totalPrice = qty * parseFloat(price.replace(/\./g, ''));
+    $(document).on('input', '.qty-input', function() {
+        let id = $(this).attr('id');
+        let row = id.split('_')[1];
+        let qty = parseFloat($(this).val()) || 0;
+        let priceText = $(`#price_${row}`).val() || '0';
+        let price = parseFloat(priceText.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+        let total = qty * price;
+        $(`#total_${row}`).val(new Intl.NumberFormat('id-ID').format(total));
+        updateGrandTotal();
+    });
 
-        totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
-
-        $(`#totalPrice_${row}`).val(totalPrice);
+    function updateGrandTotal() {
+        let grand = 0;
+        $('#purchaseDetails tr').each(function(index) {
+            let row = index + 1;
+            let totalText = $(`#total_${row}`).val() || '0';
+            let total = parseFloat(totalText.toString().replace(/\./g, '').replace(/,/g, '.')) || 0;
+            grand += total;
+        });
+        $('#grand_total_display').text(new Intl.NumberFormat('id-ID').format(grand));
+        $('#grand_total').val(grand);
     }
 
     // Attach validation to the save button
@@ -346,7 +378,13 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="price[]" id="price_${row}" readonly value="0">
+                            </td>
+                            <td>
+                                <input class="form-control text-end" type="text" name="total[]" id="total_${row}" readonly value="0">
                             </td>
                           </tr>`;
         $('#purchaseDetails').append(newRow);

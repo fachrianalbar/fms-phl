@@ -120,6 +120,7 @@
                             <th>{{ __('menu_maintenance.date') }}</th>
                             <th>{{ __('menu_maintenance.plate_no') }}</th>
                             <th>Warehouse</th>
+                            <th style="text-align: right">Grand Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -170,14 +171,16 @@
                         <strong>Items:</strong>
                         <div class="table-responsive mt-2">
                             <table class="table table-sm table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>Item Code</th>
-                                        <th>Item Name</th>
-                                        <th>Qty</th>
-                                    </tr>
-                                </thead>
+                                                <thead>
+                                                    <tr>
+                                                        <th>No</th>
+                                                        <th>Item Code</th>
+                                                        <th>Item Name</th>
+                                                        <th>Stock</th>
+                                                        <th style="text-align: right">Price</th>
+                                                        <th style="text-align: right">Total</th>
+                                                    </tr>
+                                                </thead>
                                 <tbody id="detail-items">
                                 </tbody>
                             </table>
@@ -251,6 +254,13 @@
                 },
                 {
                     "data": "warehouse"
+                },
+                {
+                    "data": 'grand_total',
+                    "render": function(data, type, row) {
+                        return new Intl.NumberFormat('id-ID').format(data || 0);
+                    },
+                    "className": 'text-end'
                 },
 
             ],
@@ -331,6 +341,8 @@
                         itemsHtml += '<td>' + item.itemCode + '</td>';
                         itemsHtml += '<td>' + (item.item ? item.item.name : '-') + '</td>';
                         itemsHtml += '<td>' + item.qty + '</td>';
+                        itemsHtml += '<td style="text-align: right">' + new Intl.NumberFormat('id-ID').format(item.price || 0) + '</td>';
+                        itemsHtml += '<td style="text-align: right">' + new Intl.NumberFormat('id-ID').format(item.total || 0) + '</td>';
                         itemsHtml += '</tr>';
                     });
                 } else {

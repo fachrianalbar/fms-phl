@@ -23,7 +23,19 @@ class Maintenance extends Model
         'fleetCode',
         'warehouseCode',
         'status',
+        'grand_total',
     ];
+
+    protected $casts = [
+        'grand_total' => 'decimal:2',
+    ];
+
+    public function updateGrandTotal()
+    {
+        $sum = $this->details()->sum('total') ?: 0;
+        $this->grand_total = $sum;
+        $this->saveQuietly();
+    }
 
     public function fleet()
     {

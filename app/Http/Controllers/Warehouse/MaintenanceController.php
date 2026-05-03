@@ -13,7 +13,9 @@ use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\Inventory\StockService;
 use App\Services\Inventory\WarehouseService;
+
 use App\Services\Master\FleetService;
+
 use App\Services\MenuService;
 use App\Services\Warehouse\MaintenanceService;
 use Carbon\Carbon;
@@ -387,6 +389,7 @@ class MaintenanceController extends Controller
                     'code' => $item->item->code,
                     'name' => $item->item->name,
                     'stock' => $item->stock,
+                    'price' => $item->item->price ?? 0,
                 ];
             });
 
