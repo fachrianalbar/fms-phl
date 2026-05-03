@@ -32,7 +32,7 @@ class InvoiceService
 
     public function findAll()
     {
-        return $this->service->with(['details'])->orderBy('invoiceDate', 'desc')->get();
+        return $this->service->with(['details'])->orderBy('created_at', 'desc')->get();
     }
 
     public function getById($id)

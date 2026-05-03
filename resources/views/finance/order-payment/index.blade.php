@@ -250,6 +250,9 @@
                         "data": 'DT_RowIndex'
                     },
                     {
+                        "data": 'code'
+                    },
+                    {
                         "data": 'orderDate'
                     },
                     {
