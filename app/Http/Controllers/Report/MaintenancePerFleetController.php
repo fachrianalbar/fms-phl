@@ -52,7 +52,7 @@ class MaintenancePerFleetController extends Controller
                     'fleet_company.type as fleetCompanyType',
                     DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
                     DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                    DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+                    DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
                 ])
                 ->join('fleet', function ($join) {
                     $join->on('fleet.code', '=', 'maintenance.fleetCode')
@@ -135,7 +135,7 @@ class MaintenancePerFleetController extends Controller
             ->select([
                 DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
                 DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+                DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
             ])
             ->leftJoin('maintenance_detail', function ($join) {
                 $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
@@ -178,7 +178,7 @@ class MaintenancePerFleetController extends Controller
                 'fleet_company.type as fleetCompanyType',
                 DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
                 DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+                DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
             ])
             ->join('fleet', function ($join) {
                 $join->on('fleet.code', '=', 'maintenance.fleetCode')
@@ -258,7 +258,7 @@ class MaintenancePerFleetController extends Controller
             ->select([
                 DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
                 DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+                DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
             ])
             ->leftJoin('maintenance_detail', function ($join) {
                 $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
@@ -320,7 +320,7 @@ class MaintenancePerFleetController extends Controller
         $request->merge(['fleetCode' => $fleetCode]);
 
         $plateNumber = Fleet::query()->where('code', $fleetCode)->value('plateNumber') ?? $fleetCode;
-        $filename = 'Maintenance-Fleet-Detail-'.$plateNumber.'.xlsx';
+        $filename = 'Maintenance-Fleet-Detail-' . $plateNumber . '.xlsx';
 
         return Excel::download(new MaintenanceFleetDetailReport($request), $filename);
     }
@@ -333,10 +333,10 @@ class MaintenancePerFleetController extends Controller
                     'maintenance.code',
                     'maintenance.date',
                     'maintenance.time',
+                    'maintenance.grand_total',
                     'warehouse.name as warehouseName',
                     DB::raw('COUNT(DISTINCT maintenance_detail.code) as totalItem'),
                     DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                    DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
                 ])
                 ->leftJoin('warehouse', function ($join) {
                     $join->on('warehouse.code', '=', 'maintenance.warehouseCode')
@@ -353,7 +353,7 @@ class MaintenancePerFleetController extends Controller
                 ->where('maintenance.fleetCode', $fleetCode)
                 ->where('maintenance.status', 0)
                 ->whereNull('maintenance.deleted_at')
-                ->groupBy('maintenance.code', 'maintenance.date', 'maintenance.time', 'warehouse.name')
+                ->groupBy('maintenance.code', 'maintenance.date', 'maintenance.time', 'maintenance.grand_total', 'warehouse.name')
                 ->orderByDesc('maintenance.date')
                 ->orderByDesc('maintenance.time');
 
@@ -381,7 +381,7 @@ class MaintenancePerFleetController extends Controller
                     return number_format((float) $row->totalQty, 1, ',', '.');
                 })
                 ->editColumn('totalCost', function ($row) {
-                    return number_format((float) $row->totalCost, 0, ',', '.');
+                    return number_format((float) $row->grand_total, 0, ',', '.');
                 })
                 ->rawColumns(['action', 'maintenanceDate', 'warehouseName', 'totalItem', 'totalQty', 'totalCost'])
                 ->toJson();
@@ -402,7 +402,7 @@ class MaintenancePerFleetController extends Controller
             ->firstOrFail();
 
         $details = $maintenance->details->map(function ($detail) {
-            $price = (float) ($detail->item->price ?? 0);
+            $price = (float) ($detail->price ?? 0);
             $qty = (float) $detail->qty;
 
             return [
@@ -416,7 +416,7 @@ class MaintenancePerFleetController extends Controller
         })->values();
 
         $totalQty = (float) $details->sum('qty');
-        $totalCost = (float) $details->sum('subtotal');
+        $totalCost = (float) ($maintenance->grand_total ?? 0);
 
         return response()->json([
             'code' => $maintenance->code,
