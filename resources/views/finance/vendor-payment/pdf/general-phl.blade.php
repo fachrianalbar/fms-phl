@@ -107,14 +107,18 @@
                 <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
                 <td>
                     @foreach ($order->orderMaterial as $i => $mtr)
-                        {{ $mtr->material->name }}@if (!$loop->last),@endif
+                        {{ $mtr->material->name }}@if (!$loop->last)
+                            ,
+                        @endif
                     @endforeach
                 </td>
                 <td>{{ $order->route->originLocation->name ?? '-' }}</td>
                 <td>{{ $order->route->destinationLocation->name ?? '-' }}</td>
                 <td>{{ number_format($order->qty ?? 0, 0, ',', '.') }}</td>
                 <td>{{ number_format($order->route->personalVendorPrice ?? 0, 0, ',', '.') }}</td>
-                <td style="text-align: right;">{{ number_format(($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0), 0, ',', '.') }}</td>
+                <td style="text-align: right;">
+                    {{ number_format(($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0), 0, ',', '.') }}
+                </td>
             </tr>
             @php
                 $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
@@ -123,35 +127,64 @@
                 $pph = $order->fleet->company->pph ?? 0;
                 $pphAmount = ($totalBefore * $pph) / 100;
                 $grandTotal = $totalBefore - $pphAmount;
+                $remainingTotal = $grandTotal - ($paymentHistoryTotal ?? 0);
             @endphp
+
+            @if (!empty($vendorPayment) && $paymentHistories->isNotEmpty())
+                @foreach ($paymentHistories as $history)
+                    <tr>
+                        <td colspan="7"
+                            style="border-left: none; border-right: none; border-bottom: none; border-top: none; font-style: italic; color: #1f4e79; text-align: center;">
+                            {{ $history->description ?? '-' }}
+                            @if (!empty($history->payment_date))
+                                tgl {{ Carbon::parse($history->payment_date)->format('d/m/y') }}
+                            @endif
+                        </td>
+                        <td
+                            style="text-align: right; border-bottom: none; border-top: none; font-style: italic; color: #1f4e79;">
+                            {{ number_format($history->amount ?? 0, 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            @endif
+
             <tr>
                 <td colspan="6" style="border-left: none; border-right: none; border-bottom: none;"></td>
                 <td style="text-align: right; font-weight: bold; border-bottom: none;">Jumlah</td>
-                <td style="text-align: right; font-weight: bold; border-bottom: none;">{{ number_format($subtotal, 0, ',', '.') }}</td>
+                <td style="text-align: right; font-weight: bold; border-bottom: none;">
+                    {{ number_format($remainingTotal, 0, ',', '.') }}</td>
             </tr>
             @if ($order->cost && $order->cost->count() > 0)
                 @foreach ($order->cost as $cost)
                     <tr>
-                        <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
-                        <td style="text-align: right; border-bottom: none; border-top: none;">{{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
-                        <td style="text-align: right; border-bottom: none; border-top: none;">{{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
+                        <td colspan="6"
+                            style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                        <td style="text-align: right; border-bottom: none; border-top: none;">
+                            {{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
+                        <td style="text-align: right; border-bottom: none; border-top: none;">
+                            {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             @endif
             @if ($pph > 0)
                 <tr>
-                    <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
-                    <td style="text-align: right; border-bottom: none; border-top: none;">PPH {{ number_format($pph, 2, ',', '.') }}%</td>
-                    <td style="text-align: right; border-bottom: none; border-top: none;">{{ number_format($pphAmount, 0, ',', '.') }}</td>
+                    <td colspan="6"
+                        style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                    <td style="text-align: right; border-bottom: none; border-top: none;">PPH
+                        {{ number_format($pph, 2, ',', '.') }}%</td>
+                    <td style="text-align: right; border-bottom: none; border-top: none;">
+                        {{ number_format($pphAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
             <tr>
-                <td colspan="8" style="border-left: none; border-right: none; border-top: 2px solid black; border-bottom: none;"></td>
+                <td colspan="8"
+                    style="border-left: none; border-right: none; border-top: 2px solid black; border-bottom: none;">
+                </td>
             </tr>
             <tr>
                 <td colspan="6" style="border: none;"></td>
                 <td style="text-align: right; font-weight: bold; border: none;">Total</td>
-                <td style="text-align: right; font-weight: bold; border: none;">{{ number_format($grandTotal, 0, ',', '.') }}</td>
+                <td style="text-align: right; font-weight: bold; border: none;">
+                    {{ number_format($remainingTotal, 0, ',', '.') }}</td>
             </tr>
         </tbody>
     </table>
@@ -167,7 +200,8 @@
                     </tr>
                     <tr>
                         <td style="border: none;">No Rekening :</td>
-                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->accountNumber ?? '-' }}</td>
+                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->accountNumber ?? '-' }}
+                        </td>
                     </tr>
                 </table>
             </td>

@@ -58,6 +58,7 @@ class NotReturnDoService
             'driver',
             // 'fleetDriver.employee',
             'customer',
+            'customerDetailOrders.customerDetail',
             'route.originLocation',
             'route.destinationLocation',
             'material',
@@ -159,7 +160,7 @@ class NotReturnDoService
                 $externalCostDeletesRaw = [$externalCostDeletesRaw];
             }
 
-            $externalCostComponents = array_filter($externalCostComponentsRaw, fn ($c) => ! empty($c));
+            $externalCostComponents = array_filter($externalCostComponentsRaw, fn($c) => ! empty($c));
 
             if (count($externalCostComponents) > 0) {
                 // First, delete costs that are marked for deletion
@@ -170,7 +171,7 @@ class NotReturnDoService
                 }
 
                 // Delete existing external/on-charge costs that are not in the current list
-                $existingIds = array_filter($externalCostIdsRaw, fn ($id) => ! empty($id));
+                $existingIds = array_filter($externalCostIdsRaw, fn($id) => ! empty($id));
                 if (! empty($existingIds)) {
                     $this->orderCost->where('orderCode', $order->code)
                         ->where('type', 'On Charge')
@@ -267,7 +268,7 @@ class NotReturnDoService
                 foreach ($request->file('files') as $file) {
                     // Generate encrypted filename menggunakan SHA256
                     $originalName = $file->getClientOriginalName();
-                    $encryptedName = hash('sha256', $originalName.time().uniqid()).'.'.$file->getClientOriginalExtension();
+                    $encryptedName = hash('sha256', $originalName . time() . uniqid()) . '.' . $file->getClientOriginalExtension();
 
                     // Store file di storage public
                     $path = $file->storeAs('order-detail', $encryptedName, 'public');

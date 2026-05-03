@@ -254,31 +254,36 @@ class AllOrderListController extends Controller
                 ->addColumn('basic_allowance', function ($row) {
                     $allowance = 0;
 
-                    if (isset($row->route->routeDetail)) {
+                    if (isset($row->route->routeDetail) && is_iterable($row->route->routeDetail)) {
                         $data = $row->route->routeDetail;
 
                         foreach ($data as $item) {
-                            if ($item->costComponent->type == 'Allowance') {
-                                if ($item->amount != 0) {
+                            $comp = $item->costComponent ?? null;
+                            if ($comp && isset($comp->type) && $comp->type == 'Allowance') {
+                                if (!empty($item->amount) && $item->amount != 0) {
                                     $allowance = $item->amount;
                                 }
 
-                                if ($item->percentage) {
+                                if (!empty($item->percentage)) {
                                     $route = Route::where('code', $item->routeCode)->first();
 
-                                    $allowance = $route->price * ($item->percentage / 100);
+                                    if ($route && isset($route->price)) {
+                                        $allowance = $route->price * ($item->percentage / 100);
+                                    }
                                 }
                             }
 
-                            if ($item->costComponent->type == 'Allowance Office') {
-                                if ($item->amount != 0) {
+                            if ($comp && isset($comp->type) && $comp->type == 'Allowance Office') {
+                                if (!empty($item->amount) && $item->amount != 0) {
                                     $allowance += $item->amount;
                                 }
 
-                                if ($item->percentage) {
+                                if (!empty($item->percentage)) {
                                     $route = Route::where('code', $item->routeCode)->first();
 
-                                    $allowance += $route->price * ($item->percentage / 100);
+                                    if ($route && isset($route->price)) {
+                                        $allowance += $route->price * ($item->percentage / 100);
+                                    }
                                 }
                             }
                         }

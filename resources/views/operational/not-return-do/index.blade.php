@@ -388,6 +388,28 @@
                         #dt td:nth-child(7) {
                             text-transform: uppercase;
                         }
+
+                        #dt .shipment-main {
+                            font-weight: 600;
+                        }
+
+                        #dt .shipment-detail-list {
+                            margin-top: 4px;
+                            border-top: 1px dashed #d9dde3;
+                            padding-top: 4px;
+                        }
+
+                        #dt .shipment-detail-item {
+                            font-size: 12px;
+                            line-height: 1.35;
+                            color: #5b6470;
+                            white-space: normal;
+                        }
+
+                        #dt .shipment-detail-name {
+                            font-weight: 600;
+                            color: #39424e;
+                        }
                     </style>
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
@@ -415,8 +437,8 @@
             </div>
         </div>
 
-        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog"
-            aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-md modal-dialog-centered">
                 <div class="modal-content">
                     <!-- Header -->
@@ -541,7 +563,8 @@
                             <i class="mdi mdi-upload me-2"></i>
                             Upload Surat Jalan
                         </button>
-                        <button class="btn btn-confirm" type="submit" id="submitReturnBtn" disabled title="Upload minimal 1 file Surat Jalan terlebih dahulu">
+                        <button class="btn btn-confirm" type="submit" id="submitReturnBtn" disabled
+                            title="Upload minimal 1 file Surat Jalan terlebih dahulu">
                             <i class="mdi mdi-check-circle-outline me-2"></i>
                             Konfirmasi Return
                         </button>
@@ -559,7 +582,8 @@
                     <h5 class="modal-title" id="returnModalLabel">
                         <i class="mdi mdi-calendar-clock"></i> {{ __('menu_not_return_do.process_return') }}
                     </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <form id="returnForm">
                     @csrf
@@ -567,9 +591,10 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label" for="returnDatetime">
-                                <i class="mdi mdi-calendar-clock"></i> {{ __('menu_not_return_do.return_datetime') }} <span class="text-danger">*</span>
+                                <i class="mdi mdi-calendar-clock"></i> {{ __('menu_not_return_do.return_datetime') }}
+                                <span class="text-danger">*</span>
                             </label>
-                            <input type="text" class="form-control flatpickr-datetime" id="returnDatetime" 
+                            <input type="text" class="form-control flatpickr-datetime" id="returnDatetime"
                                 name="returnDate" placeholder="{{ __('general.choose') }}" required>
                             <small class="text-muted">Format: {{ __('menu_not_return_do.date') }} & Time</small>
                         </div>
@@ -578,8 +603,8 @@
                             <label class="form-label" for="returnDesc">
                                 <i class="mdi mdi-text-box"></i> {{ __('menu_not_return_do.return_description') }}
                             </label>
-                            <textarea class="form-control" id="returnDesc" name="returnDescription" 
-                                rows="4" placeholder="{{ __('menu_not_return_do.return_description') }}"></textarea>
+                            <textarea class="form-control" id="returnDesc" name="returnDescription" rows="4"
+                                placeholder="{{ __('menu_not_return_do.return_description') }}"></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -596,7 +621,8 @@
     </div>
 
     <!-- Modal Upload Surat Jalan -->
-    <div class="modal fade" id="uploadSuratJalanModal" tabindex="-1" aria-labelledby="uploadSuratJalanLabel" aria-hidden="true">
+    <div class="modal fade" id="uploadSuratJalanModal" tabindex="-1" aria-labelledby="uploadSuratJalanLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
@@ -608,21 +634,25 @@
                     <input type="hidden" id="uploadOrderCode" name="orderCode">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="suratJalanFiles" class="form-label">Pilih File(s) <span class="text-danger">*</span></label>
-                            
+                            <label for="suratJalanFiles" class="form-label">Pilih File(s) <span
+                                    class="text-danger">*</span></label>
+
                             <!-- Drag & Drop Zone -->
-                            <div id="dropZone" class="border-2 border-dashed border-primary rounded p-4 text-center bg-light cursor-pointer mb-3" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                            <div id="dropZone"
+                                class="border-2 border-dashed border-primary rounded p-4 text-center bg-light cursor-pointer mb-3"
+                                style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
                                 <div>
                                     <i class="mdi mdi-cloud-upload" style="font-size: 32px; color: #0d6efd;"></i>
                                     <p class="mb-0 mt-2 text-muted">Drag & drop file(s) atau klik untuk browse</p>
                                     <small class="text-muted">PDF, JPG, JPEG, PNG | Max 5MB per file</small>
                                 </div>
                             </div>
-                            
+
                             <!-- Hidden File Input -->
-                            <input class="form-control" type="file" id="suratJalanFiles" name="files[]" multiple accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
+                            <input class="form-control" type="file" id="suratJalanFiles" name="files[]" multiple
+                                accept=".pdf,.jpg,.jpeg,.png" required style="display: none;">
                         </div>
-                        
+
                         <!-- File Preview -->
                         <div id="filePreview" class="mb-3">
                             <div id="fileList"></div>
@@ -663,7 +693,7 @@
 
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
-    
+
     <!-- Flatpickr for date-time picker -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -698,30 +728,60 @@
                         d.orderTypeCode = $('select[name="orderTypeCode"]').val();
                     }
                 },
-                columns: [
-                    { data: 'action', orderable: false, searchable: false },
-                    { data: 'DT_RowIndex', orderable: false, searchable: false },
-                    { data: 'orderDate' },
-                    { data: 'fleet.plateNumber' },
-                    { data: 'route.name' },
-                    { data: 'driver.name' },
-                    { data: 'orderType' },
-                    { data: "shipmentNumber" },
-                    { data: 'customer.name' },
-                    { data: 'route.originLocation.name' },
-                    { data: 'route.destinationLocation.name' },
-                    { data: 'price' },
-                    { data: 'harga_vendor' },
-                    { data: 'status' }
-                ],
-                columnDefs: [
+                columns: [{
+                        data: 'action',
+                        orderable: false,
+                        searchable: false
+                    },
                     {
+                        data: 'DT_RowIndex',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'orderDate'
+                    },
+                    {
+                        data: 'fleet.plateNumber'
+                    },
+                    {
+                        data: 'route.name'
+                    },
+                    {
+                        data: 'driver.name'
+                    },
+                    {
+                        data: 'orderType'
+                    },
+                    {
+                        data: "shipmentNumber"
+                    },
+                    {
+                        data: 'customer.name'
+                    },
+                    {
+                        data: 'route.originLocation.name'
+                    },
+                    {
+                        data: 'route.destinationLocation.name'
+                    },
+                    {
+                        data: 'price'
+                    },
+                    {
+                        data: 'harga_vendor'
+                    },
+                    {
+                        data: 'status'
+                    }
+                ],
+                columnDefs: [{
                         searchable: false,
-                        targets: [0,1]
+                        targets: [0, 1]
                     },
                     {
                         orderable: false,
-                        targets: [0,1,3,4,5,6,7,8,9,10,11,12,13]
+                        targets: [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
                     },
                 ],
                 order: [
@@ -777,7 +837,7 @@
         $(document).on('click', '.rollback-btn', function() {
             const id = $(this).data('id');
             const shipment = $(this).data('shipment');
-            
+
             swal({
                 title: "Apakah Anda yakin?",
                 text: `Ingin mengembalikan status pesanan ${shipment}?`,
@@ -787,7 +847,9 @@
             }).then((willRollback) => {
                 if (willRollback) {
                     // Redirect ke route rollback
-                    window.location.href = "{{ route('operational.not-return-do.rollback-status', ':id') }}".replace(':id', id);
+                    window.location.href =
+                        "{{ route('operational.not-return-do.rollback-status', ':id') }}".replace(':id',
+                            id);
                 }
             });
         });

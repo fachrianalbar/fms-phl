@@ -51,6 +51,12 @@
                         <span class="d-none d-md-inline">Penyesuaian Harga</span>
                     </button>
 
+                    <button type="button" class="btn btn-danger btn-md d-inline-flex align-items-center gap-2"
+                        id="btnBulkDelete" title="Hapus Terpilih">
+                        <i class="mdi mdi-delete fs-16"></i>
+                        <span class="d-none d-md-inline">Hapus Terpilih</span>
+                    </button>
+
                 </div>
             </div>
 
@@ -105,7 +111,8 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label" for="routeTypeName">{{ __('menu_route.load_type') }}</label>
+                                    <label class="form-label"
+                                        for="routeTypeName">{{ __('menu_route.load_type') }}</label>
                                     <select class="js-example-basic-single form-control" name="routeTypeName"
                                         id="routeTypeName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
@@ -692,12 +699,18 @@
             }
         });
 
-        // Handle Bulk Update Button Click
-        $('#btnBulkUpdatePrice').click(function() {
+        function getSelectedRouteIds() {
             var selectedIds = [];
             $('.route-checkbox:checked').each(function() {
                 selectedIds.push($(this).val());
             });
+
+            return selectedIds;
+        }
+
+        // Handle Bulk Update Button Click
+        $('#btnBulkUpdatePrice').click(function() {
+            var selectedIds = getSelectedRouteIds();
 
             if (selectedIds.length === 0) {
                 swal("Peringatan", "Pilih minimal satu rute untuk menyesuaikan harga.", "warning");
@@ -719,10 +732,7 @@
 
         // Handle Submit Bulk Update
         $('#btnSubmitBulkUpdate').click(function() {
-            var selectedIds = [];
-            $('.route-checkbox:checked').each(function() {
-                selectedIds.push($(this).val());
-            });
+            var selectedIds = getSelectedRouteIds();
 
             var type = $('#bulkUpdateType').val();
             var percentage = $('#bulkUpdatePercentage').val();
@@ -777,6 +787,52 @@
                     $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
                     swal("Error", "Terjadi kesalahan sistem.", "error");
                 }
+            });
+        });
+
+        $('#btnBulkDelete').click(function() {
+            var selectedIds = getSelectedRouteIds();
+
+            if (selectedIds.length === 0) {
+                swal("Peringatan", "Pilih minimal satu rute untuk dihapus.", "warning");
+                return;
+            }
+
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "{{ __('general.want_to_delete_this_data') }}",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (!willDelete) {
+                    swal("{{ __('general.your_data_is_save') }}");
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ route('ajax.route.bulk-delete') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}",
+                        ids: selectedIds
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            swal("Berhasil", response.message, "success");
+                            $('#dt').DataTable().ajax.reload(null, false);
+                            $('#checkAll').prop('checked', false);
+                        } else {
+                            swal("Gagal", response.message, "error");
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = xhr.responseJSON && xhr.responseJSON.message ? xhr
+                            .responseJSON.message :
+                            "Terjadi kesalahan sistem.";
+                        swal("Error", message, "error");
+                    }
+                });
             });
         });
 

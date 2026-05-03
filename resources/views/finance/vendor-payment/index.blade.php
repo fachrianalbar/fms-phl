@@ -25,9 +25,14 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
-                <button class="btn btn-success" type="button" id="openPaymentModalBtn" disabled>
-                    Bayar Order Terpilih
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-warning" type="button" id="printMultiPdfBtn" disabled>
+                        <i class="mdi mdi-printer"></i> Cetak Terpilih
+                    </button>
+                    <button class="btn btn-success" type="button" id="openPaymentModalBtn" disabled>
+                        Bayar Order Terpilih
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 @include('partials.alert')
@@ -107,7 +112,8 @@
                                         <label class="form-label" id="paymentAmountLabel">Total Pembayaran</label>
                                         <input class="form-control" id="totalPaymentAmount" type="text" required>
                                         <input type="hidden" name="paymentAmount" id="hiddenPaymentAmount">
-                                        <small class="form-text text-muted" id="paymentAmountHelp">Nominal pembayaran.</small>
+                                        <small class="form-text text-muted" id="paymentAmountHelp">Nominal
+                                            pembayaran.</small>
                                     </div>
 
                                     <div class="col-md-12">
@@ -175,6 +181,11 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label class="form-label">Shipment Number / No Pengiriman</label>
+                                    <input class="form-control" id="detail-shipment-number" type="text" readonly>
+                                </div>
+
+                                <div class="col-md-6">
                                     <label class="form-label">{{ __('menu_vendor_payment.plate_number') }}</label>
                                     <input class="form-control" id="detail-plate-number" type="text" readonly>
                                 </div>
@@ -239,6 +250,13 @@
         </div>
 
     </div>
+
+    <!-- Form untuk Cetak Multi PDF -->
+    <form id="multi-pdf-form" method="post" action="{{ route($view . 'pdf-multi') }}" target="_blank"
+        style="display: none;">
+        @csrf
+        <div id="multiPdfOrderCodesContainer"></div>
+    </form>
 
     <form id="delete-form" method="post">
         @csrf
@@ -340,10 +358,12 @@
             const selectedCount = Object.keys(selectedOrders).length;
             const summaryEl = $('#selectionSummary');
             const openModalButton = $('#openPaymentModalBtn');
+            const printMultiPdfBtn = $('#printMultiPdfBtn');
 
             if (selectedCount === 0) {
                 summaryEl.text('Belum ada order dipilih.');
                 openModalButton.prop('disabled', true);
+                printMultiPdfBtn.prop('disabled', true);
                 syncSelectAllCheckbox();
 
                 return;
@@ -352,6 +372,7 @@
             const totals = calculateSelectedTotals();
             summaryEl.text(selectedCount + ' order dipilih. Total sisa tagihan: Rp ' + formatCurrency(totals.remaining));
             openModalButton.prop('disabled', false);
+            printMultiPdfBtn.prop('disabled', false);
             syncSelectAllCheckbox();
         }
 
@@ -432,10 +453,12 @@
             $(document).on('change', '.row-payment-checkbox', function() {
                 const checkbox = $(this);
                 const orderCode = checkbox.data('order-code');
+                const orderFormat = String(checkbox.data('order-format') || '').toUpperCase().trim();
 
                 if (checkbox.is(':checked')) {
                     selectedOrders[orderCode] = {
                         orderCode: orderCode,
+                        orderFormat: orderFormat,
                         billingAmount: Number(checkbox.data('billing-amount') || 0),
                         paidAmount: Number(checkbox.data('paid-amount') || 0),
                         remainingAmount: Number(checkbox.data('remaining-amount') || 0),
@@ -482,21 +505,24 @@
                 $('#billingAmount').val(formatCurrency(totals.billing));
                 $('#paidAmount').val(formatCurrency(totals.paid));
                 $('#remainingAmount').val(formatCurrency(totals.remaining));
-                
+
                 $('#totalPaymentAmount').val(formatCurrency(totals.remaining));
                 $('#hiddenPaymentAmount').val(totals.remaining);
                 if (selectedCodes.length === 1) {
                     $('#totalPaymentAmount').prop('readonly', false);
                     $('#totalPaymentAmount').attr('data-max', totals.remaining);
                     $('#paymentAmountLabel').text('Total Pembayaran (Bisa bayar sebagian/DP)');
-                    $('#paymentAmountHelp').text('Anda dapat mengubah nominal ini untuk membayar sebagian (DP). Maksimal: Rp ' + formatCurrency(totals.remaining));
+                    $('#paymentAmountHelp').text(
+                        'Anda dapat mengubah nominal ini untuk membayar sebagian (DP). Maksimal: Rp ' +
+                        formatCurrency(totals.remaining));
                 } else {
                     $('#totalPaymentAmount').prop('readonly', true);
                     $('#totalPaymentAmount').removeAttr('data-max');
                     $('#paymentAmountLabel').text('Total Pembayaran (Otomatis Lunas)');
-                    $('#paymentAmountHelp').text('Nominal ini otomatis mengikuti total sisa tagihan order yang dipilih.');
+                    $('#paymentAmountHelp').text(
+                        'Nominal ini otomatis mengikuti total sisa tagihan order yang dipilih.');
                 }
-                
+
                 $('#date').val(new Date().toISOString().split('T')[0]);
                 $('#description').val('');
                 $('#userBankCode').val('');
@@ -508,14 +534,14 @@
             $('#totalPaymentAmount').on('input', function() {
                 let val = $(this).val().replace(/\./g, '').replace(/\D/g, '');
                 if (val === '') val = 0;
-                
+
                 if (!$(this).prop('readonly')) {
                     let max = parseInt($(this).attr('data-max')) || 0;
                     if (parseInt(val) > max) {
                         val = max.toString();
                     }
                 }
-                
+
                 if (val > 0) {
                     $(this).val(formatCurrency(val));
                     $('#hiddenPaymentAmount').val(val);
@@ -571,6 +597,8 @@
                     if (data) {
                         $('#detail-code').val(data.batch_code || data.code || '');
                         $('#detail-order-code').val(data.order ? data.order.code : '');
+                        $('#detail-shipment-number').val(data.shipmentNumber || data.shipment_number || (data
+                            .order ? data.order.shipmentNumber : '') || '');
                         $('#detail-plate-number').val(data.order && data.order.fleet ? data.order.fleet
                             .plateNumber : '');
                         $('#detail-driver').val(data.order && data.order.driver ? data.order.driver.name : '');
@@ -621,7 +649,7 @@
                                 const row = `<tr>
                                 <td>${paymentDate}</td>
                                 <td>Rp ${new Intl.NumberFormat('id-ID').format(history.amount)}</td>
-                                <td>${history.user_bank_code || '-'}</td>
+                                <td>${history.bank_info || history.user_bank_code || '-'}</td>
                                 <td>${history.description || '-'}</td>
                             </tr>`;
                                 historyBody.append(row);
@@ -642,5 +670,38 @@
                 }
             });
         }
+
+        // Handler untuk tombol Cetak Terpilih (Multi PDF)
+        $('#printMultiPdfBtn').on('click', function() {
+            const selectedCodes = Object.keys(selectedOrders);
+
+            if (selectedCodes.length === 0) {
+                swal('Peringatan', 'Pilih minimal satu order untuk dicetak.', 'warning');
+                return;
+            }
+
+            const selectedFormats = [...new Set(Object.values(selectedOrders)
+                .map(function(item) {
+                    return String(item.orderFormat || '').toUpperCase().trim();
+                })
+                .filter(function(format) {
+                    return format !== '';
+                }))];
+
+            if (selectedFormats.length > 1) {
+                swal('Peringatan', 'Jenis order berbeda, harus yang sama untuk dicetak bersama.', 'warning');
+                return;
+            }
+
+            // Populate form dengan selected order codes
+            const container = $('#multiPdfOrderCodesContainer');
+            container.html('');
+            selectedCodes.forEach(function(orderCode) {
+                container.append(`<input type="hidden" name="orderCodes[]" value="${orderCode}">`);
+            });
+
+            // Submit form untuk membuka PDF di tab baru
+            $('#multi-pdf-form').submit();
+        });
     </script>
 @endpush

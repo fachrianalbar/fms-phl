@@ -318,6 +318,47 @@ class NotReturnDoController extends Controller
 
                     return $driver;
                 })
+                ->editColumn('shipmentNumber', function ($row) {
+                    $shipmentNumber = e($row->shipmentNumber ?? '-');
+
+                    if (($row->customerCode ?? null) !== 'GULAKU') {
+                        return $shipmentNumber;
+                    }
+
+                    $detailRows = collect($row->customerDetailOrders ?? [])
+                        ->filter(function ($detailOrder) {
+                            return ! empty($detailOrder->value)
+                                && isset($detailOrder->customerDetail)
+                                && ! empty($detailOrder->customerDetail->name);
+                        })
+                        ->map(function ($detailOrder) {
+                            $name = e($detailOrder->customerDetail->name);
+                            $value = e($detailOrder->value);
+
+                            return '<div class="shipment-detail-item"><span class="shipment-detail-name">' . $name . '</span>: <span class="shipment-detail-value">' . $value . '</span></div>';
+                        })
+                        ->implode('');
+
+                    if (empty($detailRows)) {
+                        return '<div class="shipment-main">' . $shipmentNumber . '</div>';
+                    }
+
+                    return '<div class="shipment-main">' . $shipmentNumber . '</div><div class="shipment-detail-list">' . $detailRows . '</div>';
+                })
+                ->filterColumn('shipmentNumber', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('shipmentNumber', 'like', "%{$keyword}%")
+                            ->orWhere(function ($subQuery) use ($keyword) {
+                                $subQuery->where('customerCode', 'GULAKU')
+                                    ->whereHas('customerDetailOrders', function ($detailOrderQuery) use ($keyword) {
+                                        $detailOrderQuery->where('value', 'like', "%{$keyword}%")
+                                            ->orWhereHas('customerDetail', function ($customerDetailQuery) use ($keyword) {
+                                                $customerDetailQuery->where('name', 'like', "%{$keyword}%");
+                                            });
+                                    });
+                            });
+                    });
+                })
                 ->editColumn('route.originLocation.name', function ($row) {
                     $origin = '';
 
@@ -369,7 +410,7 @@ class NotReturnDoController extends Controller
 
                     return $returnBtn . $rollbackBtn;
                 })
-                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'status', 'price', 'harga_vendor'])
+                ->rawColumns(['action', 'route.originLocation.name', 'customer.name', 'route.destinationLocation.name', 'orderDate', 'fleet.plateNumber', 'driver.name', 'orderType', 'shipmentNumber', 'status', 'price', 'harga_vendor'])
                 ->toJson();
         }
     }

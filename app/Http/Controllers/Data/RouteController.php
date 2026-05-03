@@ -242,6 +242,53 @@ class RouteController extends Controller
         return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        $ids = array_values(array_unique($request->input('ids', [])));
+        $routes = Route::query()->whereIn('id', $ids)->get();
+
+        if ($routes->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data route tidak ditemukan.',
+            ], 404);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($routes as $route) {
+                $this->service->destroy($route->id, $this->title);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $routes->count() . ' data route berhasil dihapus.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage(),
+            ], 500);
+        }
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
@@ -282,17 +329,19 @@ class RouteController extends Controller
                     return $row->customer ? $row->customer->name : '';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<a href="' . route($this->view . 'edit', $row->id) . '"
-           class="btn btn-sm btn-warning me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            Edit
-        </a>
-        <button type="button"
-           class="btn btn-sm btn-primary btn-show-vendor-price"
-           data-route-id="' . $row->id . '"
-           data-route-name="' . e($row->name) . '">
-            Detail Harga Vendor
-        </button>';
+                    $btn = '<div class="d-inline-flex gap-1 flex-wrap">
+                        <a href="' . route($this->view . 'edit', $row->id) . '"
+                           class="btn btn-sm btn-warning"
+                           data-bs-toggle="tooltip" title="Edit">
+                            Edit
+                        </a>
+                        <button type="button"
+                           class="btn btn-sm btn-primary btn-show-vendor-price"
+                           data-route-id="' . $row->id . '"
+                           data-route-name="' . e($row->name) . '">
+                            Detail Harga Vendor
+                        </button>
+                    </div>';
 
                     return $btn;
                 })

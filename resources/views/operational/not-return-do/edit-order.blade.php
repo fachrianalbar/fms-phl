@@ -547,16 +547,14 @@
                 </div>
             </div>
 
-            @if ($data->status == 0 || in_array(auth()->user()->roleCode, ['SPRADMIN', 'SPRUSER']))
-                <div class="card">
-                    <div class="col-12">
-                        <div class="card-body ">
-                            <button class="btn btn-primary" id="save"
-                                type="submit">{{ __('general.save_changes') }}</button>
-                        </div>
+            <div class="card">
+                <div class="col-12">
+                    <div class="card-body">
+                        <button class="btn btn-primary" id="save"
+                            type="submit">{{ __('general.save_changes') }}</button>
                     </div>
                 </div>
-            @endif
+            </div>
 
         </div>
     </form>

@@ -91,6 +91,7 @@ class VendorPaymentController extends Controller
                     $paidAmount = $vendorPayment ? (float) ($vendorPayment->paid_amount ?? 0) : 0;
                     $remainingAmount = $vendorPayment ? (float) ($vendorPayment->remaining_amount ?? 0) : $billingAmount;
                     $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
+                    $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
 
                     $isExternalFleet = isset($row->fleet->company->type) && strcasecmp((string) $row->fleet->company->type, 'external') === 0;
                     $canBePaid = $isExternalFleet && $paymentStatus !== 'paid' && $remainingAmount > 0;
@@ -99,7 +100,7 @@ class VendorPaymentController extends Controller
                         return '<span class="text-muted">-</span>';
                     }
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '"></div>';
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -242,7 +243,7 @@ class VendorPaymentController extends Controller
 
     public function getDetail($orderCode)
     {
-        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer', 'paymentHistory'])
+        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer', 'paymentHistory.userBank.bank'])
             ->where('orderCode', $orderCode)
             ->first();
 
@@ -255,6 +256,8 @@ class VendorPaymentController extends Controller
                 ->first();
 
             $vendorPayment->batch_code = $mutation->transactionCode ?? null;
+            $vendorPayment->shipmentNumber = $vendorPayment->order->shipmentNumber ?? null;
+            $vendorPayment->shipment_number = $vendorPayment->order->shipmentNumber ?? null;
 
             $vendorPayment->bankInfo = $mutation && $mutation->userBank ? [
                 'bank_name' => $mutation->userBank->bank->name ?? 'N/A',
@@ -268,10 +271,17 @@ class VendorPaymentController extends Controller
             // Format payment history
             if ($vendorPayment->paymentHistory) {
                 $vendorPayment->payment_histories = $vendorPayment->paymentHistory->map(function ($history) {
+                    $bankName = $history->userBank->bank->name ?? null;
+                    $accountNumber = $history->userBank->accountNumber ?? null;
+                    $accountName = $history->userBank->accountName ?? null;
+
                     return [
                         'amount' => $history->amount,
                         'payment_date' => $history->payment_date,
                         'user_bank_code' => $history->user_bank_code,
+                        'bank_info' => $bankName && $accountNumber && $accountName
+                            ? $bankName . ' - ' . $accountNumber . ' (' . $accountName . ')'
+                            : $history->user_bank_code,
                         'description' => $history->description,
                         'created_at' => $history->created_at,
                     ];
@@ -303,7 +313,12 @@ class VendorPaymentController extends Controller
         $customer = $order->customer;
 
         // Cari vendor payment jika ada
-        $vendorPayment = \App\Models\Finance\VendorPayment::where('orderCode', $orderCode)->first();
+        $vendorPayment = \App\Models\Finance\VendorPayment::with(['paymentHistory.userBank.bank'])
+            ->where('orderCode', $orderCode)
+            ->first();
+
+        $paymentHistories = collect($vendorPayment?->paymentHistory ?? []);
+        $paymentHistoryTotal = $paymentHistories->sum('amount');
 
         // Tentukan template PDF berdasarkan customer company format
         $pdfTemplate = 'finance.vendor-payment.pdf.general-phl'; // Default template
@@ -332,11 +347,110 @@ class VendorPaymentController extends Controller
         $mpdf->WriteHTML(
             view($pdfTemplate)
                 ->with('vendorPayment', $vendorPayment)
+                ->with('paymentHistories', $paymentHistories)
+                ->with('paymentHistoryTotal', $paymentHistoryTotal)
                 ->with('order', $order)
                 ->with('customer', $customer)
                 ->with('company', $company)
         );
 
         return $mpdf->Output('Nota-Pembayaran-' . $order->code . '.pdf', 'I');
+    }
+
+    public function pdfVendorPaymentMulti(Request $request)
+    {
+        $orderCodes = $request->input('orderCodes', []);
+
+        // Jika parameter adalah string berisi koma, pisahkan
+        if (is_string($orderCodes)) {
+            $orderCodes = array_filter(array_map('trim', explode(',', $orderCodes)));
+        }
+
+        if (empty($orderCodes)) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Tidak ada order yang dipilih');
+        }
+
+        // Fetch semua orders dengan relasi
+        $orders = \App\Models\Operational\Order::with([
+            'fleet.company',
+            'driver',
+            'customer.company',
+            'route.originLocation',
+            'route.destinationLocation',
+            'orderMaterial.material',
+            'cost',
+        ])->whereIn('code', $orderCodes)->get();
+
+        if ($orders->isEmpty()) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Data order tidak ditemukan');
+        }
+
+        // Group orders by customer company format (untuk menentukan template)
+        $groupedByFormat = $orders->groupBy(function ($order) {
+            return $order->customer->company->format ?? 'P';
+        });
+
+        // Jika hanya 1 format, gunakan template sesuai format
+        // Jika multiple format, gunakan template umum (general-phl)
+        $firstFormat = $groupedByFormat->keys()->first();
+        $useGeneralTemplate = count($groupedByFormat) > 1;
+
+        // Tentukan template PDF berdasarkan format
+        $pdfTemplate = 'finance.vendor-payment.pdf.general-phl'; // Default
+
+        if (!$useGeneralTemplate) {
+            if ($firstFormat === 'P') {
+                $pdfTemplate = 'finance.vendor-payment.pdf.pribadi';
+            } elseif (in_array($firstFormat, ['WTMS', 'WT'])) {
+                $pdfTemplate = 'finance.vendor-payment.pdf.general-wt';
+            }
+        }
+
+        // Hitung totals
+        $totalSubtotal = 0;
+        $totalAdditionalCost = 0;
+        $totalPphAmount = 0;
+        $totalGrandTotal = 0;
+
+        foreach ($orders as $order) {
+            $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
+            $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+            $totalBefore = $subtotal + $additionalCost;
+            $pph = $order->fleet->company->pph ?? 0;
+            $pphAmount = ($totalBefore * $pph) / 100;
+            $grandTotal = $totalBefore - $pphAmount;
+
+            $totalSubtotal += $subtotal;
+            $totalAdditionalCost += $additionalCost;
+            $totalPphAmount += $pphAmount;
+            $totalGrandTotal += $grandTotal;
+        }
+
+        $company = CompanySetting::first();
+        $customerFirst = $orders->first()->customer;
+
+        $mpdf = new Mpdf(
+            [
+                'orientation' => 'P',
+                'format' => [215, 330],
+                'tempDir' => storage_path('app/mpdf-temp'),
+            ]
+        );
+
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $mpdf->WriteHTML(
+            view($pdfTemplate . '-multi')
+                ->with('orders', $orders)
+                ->with('customer', $customerFirst)
+                ->with('company', $company)
+                ->with('totalSubtotal', $totalSubtotal)
+                ->with('totalAdditionalCost', $totalAdditionalCost)
+                ->with('totalPphAmount', $totalPphAmount)
+                ->with('totalGrandTotal', $totalGrandTotal)
+        );
+
+        return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');
     }
 }

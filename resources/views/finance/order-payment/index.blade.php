@@ -29,6 +29,9 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
+                <div>
+                    <button id="printMultiPdfBtn" class="btn btn-sm btn-danger">Cetak Terpilih</button>
+                </div>
             </div>
             <div class="card-body">
                 @include('partials.alert')
@@ -36,6 +39,7 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
+                                <th>Select</th>
                                 <th>#</th>
                                 <th>No</th>
                                 <th>{{ __('menu_vendor_payment.order_date') }}</th>
@@ -191,6 +195,12 @@
 
     </div>
 
+    <form id="order-payment-multi-form" method="post" action="{{ route('finance.order-payment.pdf-multi') }}"
+        target="_blank" style="display:none">
+        @csrf
+        <input type="hidden" name="orderCodes" id="orderCodesInput">
+    </form>
+
     <form id="delete-form" method="post">
         @csrf
         @method('DELETE')
@@ -235,7 +245,7 @@
                     "url": "{{ route('dt.order-payment') }}",
                 },
                 "columns": [{
-                        "data": 'action'
+                        "data": 'select'
                     }, {
                         "data": 'DT_RowIndex'
                     },
@@ -412,6 +422,40 @@
                 $('#paymentAmount').val(''); // kosongkan input
                 $('#paymentAmount').closest('.col-md-12').addClass('d-none'); // sembunyikan div-nya
             }
+        });
+
+        // Handle dynamic checkbox changes (DataTable generated)
+        const selectedOrders = {};
+
+        $(document).on('change', '.row-order-checkbox', function() {
+            const code = $(this).data('order-code');
+            const format = $(this).data('order-format');
+
+            if ($(this).is(':checked')) {
+                selectedOrders[code] = format;
+            } else {
+                delete selectedOrders[code];
+            }
+        });
+
+        $('#printMultiPdfBtn').on('click', function(e) {
+            e.preventDefault();
+
+            const codes = Object.keys(selectedOrders);
+            if (codes.length === 0) {
+                swal('Pilih minimal 1 order');
+                return;
+            }
+
+            const formats = Object.values(selectedOrders).filter(Boolean);
+            const uniqueFormats = [...new Set(formats)];
+            if (uniqueFormats.length > 1) {
+                swal('Format customer berbeda. Pilih order dengan format yang sama.');
+                return;
+            }
+
+            $('#orderCodesInput').val(codes.join(','));
+            $('#order-payment-multi-form').submit();
         });
     </script>
 @endpush

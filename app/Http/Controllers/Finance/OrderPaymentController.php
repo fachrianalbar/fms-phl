@@ -39,7 +39,7 @@ class OrderPaymentController extends Controller
     {
         $userBank = $this->userBankSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('title', $this->title);
@@ -56,11 +56,11 @@ class OrderPaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -70,7 +70,7 @@ class OrderPaymentController extends Controller
         $orderPayment = $this->service->orderPaymentDetail($data->code);
         $route = Route::where('code', $data->routeCode)->first();
 
-        return view($this->view.'show')
+        return view($this->view . 'show')
             ->with('view', $this->view)
             ->with('data', $data)
             ->with('orderPayment', $orderPayment)
@@ -81,10 +81,15 @@ class OrderPaymentController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->service->findAllIsDoZero();
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->addColumn('select', function ($row) {
+                    $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
+
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-order-checkbox" data-order-code="' . $row->code . '" data-order-format="' . e($orderFormat) . '"></div>';
+                })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
 
@@ -141,7 +146,7 @@ class OrderPaymentController extends Controller
                         $cost += $item->nominal;
                     }
 
-                    return ''.number_format($cost, 0, ',', '.');
+                    return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('pph', function ($row) {
                     $cost = 0;
@@ -151,7 +156,7 @@ class OrderPaymentController extends Controller
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
 
-                    return ''.number_format($pph, 0, ',', '.');
+                    return '' . number_format($pph, 0, ',', '.');
                 })
                 ->addColumn('pph', function ($row) {
                     $cost = 0;
@@ -161,10 +166,10 @@ class OrderPaymentController extends Controller
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
 
-                    return ''.number_format($pph, 0, ',', '.');
+                    return '' . number_format($pph, 0, ',', '.');
                 })
                 ->addColumn('paymentAmount', function ($row) {
-                    return ''.number_format($row->orderPayment->total ?? 0, 0, ',', '.');
+                    return '' . number_format($row->orderPayment->total ?? 0, 0, ',', '.');
                 })
                 ->addColumn('total', function ($row) {
                     $cost = 0;
@@ -176,7 +181,7 @@ class OrderPaymentController extends Controller
                     $payment = $row->orderPayment->total ?? 0;
                     $total = $cost + $pph - $payment;
 
-                    return ''.number_format($total, 0, ',', '.');
+                    return '' . number_format($total, 0, ',', '.');
                 })
                 ->addColumn('paymentStatus', function ($row) {
                     $status = 'No Payment';
@@ -191,7 +196,7 @@ class OrderPaymentController extends Controller
                         }
                     }
 
-                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$status.'</span>';
+                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $status . '</span>';
                 })
                 // ->editColumn('status', function ($row) {
                 //     $statusText = '';
@@ -210,7 +215,7 @@ class OrderPaymentController extends Controller
                 //     return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 // })
                 ->addColumn('action', function ($row) {
-                    $payment = '<a href="javascript:showModal(\''.$row->code.'\')"
+                    $payment = '<a href="javascript:showModal(\'' . $row->code . '\')"
                                 class="btn btn-icon btn-sm bg-success-subtle me-1"
                                 data-bs-toggle="tooltip" title="Action">
                                     <i class="mdi mdi-credit-card fs-14 text-success"></i>
@@ -221,7 +226,7 @@ class OrderPaymentController extends Controller
                         if ($row->orderPayment->status == 1) {
                             $payment = '';
                         }
-                        $history = '<a href="'.route($this->view.'show', $row->id).'"
+                        $history = '<a href="' . route($this->view . 'show', $row->id) . '"
                         class="btn btn-icon btn-sm bg-primary-subtle me-1"
                         data-bs-toggle="tooltip" title="show">
                             <i class="mdi mdi-eye fs-14 text-primary"></i>
@@ -229,15 +234,99 @@ class OrderPaymentController extends Controller
                     }
 
                     $btn = '<td>
-                                '.$payment.'    
-                                '.$history.'    
+                                ' . $payment . '    
+                                ' . $history . '    
                             </td>';
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'pph', 'paymentAmount', 'total', 'paymentStatus'])
+                ->rawColumns(['select', 'action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'pph', 'paymentAmount', 'total', 'paymentStatus'])
                 ->toJson();
         }
+    }
+
+    public function pdfOrderPaymentMulti(Request $request)
+    {
+        $orderCodes = $request->input('orderCodes', []);
+
+        if (is_string($orderCodes)) {
+            $orderCodes = array_filter(array_map('trim', explode(',', $orderCodes)));
+        }
+
+        if (empty($orderCodes)) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Tidak ada order yang dipilih');
+        }
+
+        $orders = \App\Models\Operational\Order::with([
+            'fleet.company',
+            'driver',
+            'customer.company',
+            'route.originLocation',
+            'route.destinationLocation',
+            'orderMaterial.material',
+            'cost',
+        ])->whereIn('code', $orderCodes)->get();
+
+        if ($orders->isEmpty()) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Data order tidak ditemukan');
+        }
+
+        $groupedByFormat = $orders->groupBy(function ($order) {
+            return $order->customer->company->format ?? 'P';
+        });
+
+        $firstFormat = $groupedByFormat->keys()->first();
+        $useGeneralTemplate = count($groupedByFormat) > 1;
+
+        $pdfTemplate = 'finance.vendor-payment.pdf.general-phl';
+
+        if (! $useGeneralTemplate) {
+            if ($firstFormat === 'P') {
+                $pdfTemplate = 'finance.vendor-payment.pdf.pribadi';
+            } elseif (in_array($firstFormat, ['WTMS', 'WT'])) {
+                $pdfTemplate = 'finance.vendor-payment.pdf.general-wt';
+            }
+        }
+
+        $totalCost = 0;
+        $totalPphAmount = 0;
+        $totalGrandTotal = 0;
+
+        foreach ($orders as $order) {
+            $costSum = $order->cost ? $order->cost->sum('nominal') : 0;
+            $pph = $order->customer->pph ?? 0;
+            $pphAmount = ($costSum * $pph) / 100;
+            $grandTotal = $costSum + $pphAmount;
+
+            $totalCost += $costSum;
+            $totalPphAmount += $pphAmount;
+            $totalGrandTotal += $grandTotal;
+        }
+
+        $company = \App\Models\CompanySetting::first();
+        $customerFirst = $orders->first()->customer;
+
+        $mpdf = new \Mpdf\Mpdf([
+            'orientation' => 'P',
+            'format' => [215, 330],
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $mpdf->WriteHTML(
+            view($pdfTemplate . '-multi')
+                ->with('orders', $orders)
+                ->with('customer', $customerFirst)
+                ->with('company', $company)
+                ->with('totalSubtotal', $totalCost)
+                ->with('totalAdditionalCost', 0)
+                ->with('totalPphAmount', $totalPphAmount)
+                ->with('totalGrandTotal', $totalGrandTotal)
+        );
+
+        return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');
     }
 
     public function orderDetailPayment($orderCode)

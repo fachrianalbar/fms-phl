@@ -37,6 +37,13 @@ class OrderPaymentService
         })->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderPayment'])->get();
     }
 
+    public function findAllIsDoZero()
+    {
+        return $this->order->whereHas('customer', function ($q) {
+            $q->where('isDo', 0);
+        })->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderPayment', 'cost'])->get();
+    }
+
     public function getById(string $id)
     {
         return $this->order->where('id', $id)->with(['customer', 'orderPayment', 'orderPaymentHistory'])->first();
@@ -102,7 +109,7 @@ class OrderPaymentService
             'code' => GenerateCode::generateCode('FMT'),
             'userBankCode' => $request->userBankCode,
             'date' => now(),
-            'description' => 'Order payment with amount '.number_format($payment, 0, ',', '.'),
+            'description' => 'Order payment with amount ' . number_format($payment, 0, ',', '.'),
             'nominal' => $payment,
             'type' => 'In',
             'transactionCode' => $orderPaymentHistory->code,

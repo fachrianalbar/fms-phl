@@ -15,6 +15,8 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::delete('invoice-detail/{id}', [InvoiceController::class, 'destroyInvoiceDetail'])->name('invoice-detail.destroy');
     Route::get('pdf-invoice/{id}', [InvoiceController::class, 'pdfInvoice'])->name('invoice.pdf-invoice');
     Route::get('pdf-vendor-payment/{orderCode}', [VendorPaymentController::class, 'pdfVendorPayment'])->name('vendor-payment.pdf');
+    Route::post('pdf-vendor-payment-multi', [VendorPaymentController::class, 'pdfVendorPaymentMulti'])->name('vendor-payment.pdf-multi');
+    Route::post('pdf-order-payment-multi', [OrderPaymentController::class, 'pdfOrderPaymentMulti'])->name('order-payment.pdf-multi');
     Route::post('invoice/{id}/payment', [InvoiceController::class, 'processPayment'])->name('invoice.process-payment');
     Route::post('invoice/{id}/recalculate', [InvoiceController::class, 'recalculate'])->name('invoice.recalculate');
     Route::get('invoice-payment/export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('invoice-payment.export-pdf');
