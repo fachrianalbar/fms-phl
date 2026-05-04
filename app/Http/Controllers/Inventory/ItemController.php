@@ -78,6 +78,7 @@ class ItemController extends Controller
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
+        $types = Item::types();
 
         return view($this->view . 'create')
             ->with('view', $this->view)
@@ -86,6 +87,7 @@ class ItemController extends Controller
             ->with('category', $category)
             ->with('warehouse', $warehouse)
             ->with('supplier', $supplier)
+            ->with('types', $types)
             ->with('title', $this->title);
     }
 
@@ -102,6 +104,7 @@ class ItemController extends Controller
             // 'itemLocationCode' => 'required',
             // 'warehouseCode' => 'required',
             'unitCode' => 'required',
+            'type' => ['required', Rule::in(array_keys(Item::types()))],
             // 'supplierCode' => 'required',
             // 'price' => 'required',
         ]);
@@ -146,6 +149,7 @@ class ItemController extends Controller
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
         $location = $this->locationSvc->findAll();
+        $types = Item::types();
 
         return view($this->view . 'edit')
             ->with('view', $this->view)
@@ -155,6 +159,7 @@ class ItemController extends Controller
             ->with('category', $category)
             ->with('warehouse', $warehouse)
             ->with('supplier', $supplier)
+            ->with('types', $types)
             ->with('data', $data);
     }
 
@@ -171,6 +176,7 @@ class ItemController extends Controller
             // 'itemLocationCode' => 'required',
             // 'warehouseCode' => 'required',
             'unitCode' => 'required',
+            'type' => ['required', Rule::in(array_keys(Item::types()))],
             // 'supplierCode' => 'required',
             // 'price' => 'required',
         ]);
@@ -345,9 +351,13 @@ class ItemController extends Controller
                         $query->where(function ($q) use ($search) {
                             $q->whereRaw('LOWER(code) LIKE ?', ['%' . $search . '%'])
                                 ->orWhereRaw('LOWER(name) LIKE ?', ['%' . $search . '%'])
+                                ->orWhereRaw('LOWER(type) LIKE ?', ['%' . $search . '%'])
                                 ->orWhereRaw('CAST(price AS CHAR) LIKE ?', ['%' . $search . '%']);
                         });
                     }
+                })
+                ->editColumn('type', function ($row) {
+                    return Item::types()[$row->type] ?? ucfirst($row->type ?? '-');
                 })
                 ->editColumn('unit.name', function ($row) {
                     $unit = '';
@@ -384,7 +394,7 @@ class ItemController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'unit.name'])
+                ->rawColumns(['action', 'unit.name', 'type'])
                 ->make();
         }
     }

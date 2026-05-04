@@ -27,14 +27,14 @@
                     @csrf
                     @method('PUT')
                     <div class="row mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="name">Item Name <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control" name="name" id="name" type="text" required
                                 placeholder="Item Name" value="{{ old('name', $data->name) }}">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="unitCode">Item Unit <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <select class="js-example-basic-single" name="unitCode" id="unitCode" required>
@@ -48,7 +48,21 @@
                             </select>
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label" for="type">Type <i
+                                    class="mdi mdi-information text-danger"></i></label>
+                            <select class="js-example-basic-single" name="type" id="type" required>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($types as $value => $label)
+                                    <option value="{{ $value }}"
+                                        {{ old('type', $data->type ?? 'part') == $value ? 'selected' : '' }}>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4 mt-4">
                             <label class="form-label" for="price">Price <i
                                     class="mdi mdi-information text-danger"></i></label>
                             <input class="form-control text-end" name="price" id="price" type="text"

@@ -79,6 +79,7 @@
                                 <th>No</th>
                                 <th>Code</th>
                                 <th>Name</th>
+                                <th>Type</th>
                                 <th>Unit</th>
                                 <th>Harga</th>
                             </tr>
@@ -210,6 +211,9 @@
                     },
                     {
                         "data": 'name'
+                    },
+                    {
+                        "data": 'type'
                     },
                     {
                         "data": 'unit.name'

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Warehouse;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
@@ -376,22 +377,47 @@ class MaintenanceController extends Controller
             return response()->json(['success' => false, 'message' => 'Warehouse code is required'], 400);
         }
 
-        // Get stock per item from stock_transaction grouped by warehouse and item
-        $stocks = StockTransaction::select('itemCode')
+        $stockByItem = StockTransaction::select('itemCode')
             ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as stock')
             ->where('warehouseCode', $warehouseCode)
             ->groupBy('itemCode')
-            ->havingRaw('SUM(qtyIn) - SUM(qtyOut) > 0')
-            ->with('item')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'code' => $item->item->code,
-                    'name' => $item->item->name,
-                    'stock' => $item->stock,
-                    'price' => $item->item->price ?? 0,
-                ];
-            });
+            ->pluck('stock', 'itemCode');
+
+        // Part items: only those with positive stock in this warehouse
+        $partCodes = $stockByItem->filter(function ($s) {
+            return (float) $s > 0;
+        })->keys()->toArray();
+
+        $parts = collect();
+        if (! empty($partCodes)) {
+            $parts = Item::whereIn('code', $partCodes)
+                ->where('type', Item::TYPE_PART)
+                ->get();
+        }
+
+        // Jasa items: include all jasa regardless of warehouse
+        $jasas = Item::where('type', Item::TYPE_JASA)
+            ->orderBy('code')
+            ->get();
+
+        // Merge and dedupe by code, keep order by code
+        $items = $parts->concat($jasas)->unique('code')->sortBy('code')->values();
+
+        $stocks = $items->map(function ($item) use ($stockByItem) {
+            $stock = (float) ($stockByItem[$item->code] ?? 0);
+
+            if ($item->type === Item::TYPE_JASA) {
+                $stock = 1;
+            }
+
+            return [
+                'code' => $item->code,
+                'name' => $item->name,
+                'stock' => $stock,
+                'price' => $item->price ?? 0,
+                'type' => $item->type ?? Item::TYPE_PART,
+            ];
+        })->values();
 
         return response()->json(['success' => true, 'data' => $stocks]);
     }

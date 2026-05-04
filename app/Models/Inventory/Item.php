@@ -27,8 +27,20 @@ class Item extends Model
         'warehouseCode',
         'unitCode',
         'supplierCode',
+        'type',
         'price',
     ];
+
+    public const TYPE_PART = 'part';
+    public const TYPE_JASA = 'jasa';
+
+    public static function types(): array
+    {
+        return [
+            self::TYPE_PART => 'Part',
+            self::TYPE_JASA => 'Jasa',
+        ];
+    }
 
     public function unit()
     {
