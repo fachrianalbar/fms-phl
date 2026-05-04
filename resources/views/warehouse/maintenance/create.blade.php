@@ -270,9 +270,12 @@
         // Load item details (name, price)
         function loadItemDetails(row) {
             let itemCode = $(`#itemCode_${row}`).val();
-            let itemName = $(`#itemCode_${row} option:selected`).data('name');
-            let itemQty = $(`#itemCode_${row} option:selected`).data('qty');
-            let itemPrice = $(`#itemCode_${row} option:selected`).data('price') || 0;
+            let selectedOption = $(`#itemCode_${row} option:selected`);
+            let itemName = selectedOption.data('name');
+            let itemQty = selectedOption.data('qty');
+            let foundItem = dataItem.find(i => i.code === itemCode || (i.item && i.item.code === itemCode));
+            let itemPrice = selectedOption.data('price') ?? (foundItem ? (foundItem.price ?? (foundItem.item ? foundItem
+                .item.price : 0)) : 0);
 
             $(`#qty_exist_${row}`).val(itemQty);
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
@@ -398,7 +401,7 @@
 
             dataItem.forEach(i => {
                 html +=
-                    `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}">${i.code} - ${i.name}</option>`;
+                    `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
             });
 
             $(`#itemCode_${row}`).html(html);
