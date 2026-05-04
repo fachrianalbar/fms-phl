@@ -40,7 +40,9 @@ class MaintenanceDetail extends Model
                 $price = Item::where('code', $model->itemCode)->value('price');
                 $model->price = $price ?? 0;
             }
-            $model->total = bcmul((string)$model->qty, (string)$model->price, 2);
+            $model->total = function_exists('bcmul')
+                ? \bcmul((string) $model->qty, (string) $model->price, 2)
+                : number_format((float) $model->qty * (float) $model->price, 2, '.', '');
         });
 
         static::saved(function ($model) {
