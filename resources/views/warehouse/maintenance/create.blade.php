@@ -245,7 +245,7 @@
                             '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
                         dataItem.forEach(i => {
                             html +=
-                                `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
+                                `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name}</option>`;
                         });
                         $('#itemCode_1').html(html);
                         $('#itemCode_1').select2();
@@ -273,11 +273,14 @@
             let selectedOption = $(`#itemCode_${row} option:selected`);
             let itemName = selectedOption.data('name');
             let itemQty = selectedOption.data('qty');
+            let itemType = selectedOption.data('type');
             let foundItem = dataItem.find(i => i.code === itemCode || (i.item && i.item.code === itemCode));
             let itemPrice = selectedOption.data('price') ?? (foundItem ? (foundItem.price ?? (foundItem.item ? foundItem
                 .item.price : 0)) : 0);
+            let isJasa = itemType === 'jasa' || (foundItem && foundItem.type === 'jasa');
 
-            $(`#qty_exist_${row}`).val(itemQty);
+            $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
+            $(`#qty_exist_${row}`).val(isJasa ? 1 : itemQty);
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             // calculate total for this row
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
@@ -312,6 +315,9 @@
 
         // Attach validation to the save button
         $('#submit').on('click', function(e) {
+            e.preventDefault();
+
+            const formElement = e.currentTarget.form;
             let isValid = true;
             let errorMessage = '';
             let codes = [];
@@ -323,9 +329,11 @@
                 let qtyExisting = parseFloat($(this).find('input[name="qty_exist[]"]').val());
                 let code = $(this).find('select[name="itemCode[]"]').val();
                 let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
+                let itemType = $(this).find('input[name="item_type[]"]').val() || $(this).find(
+                    'select[name="itemCode[]"] option:selected').data('type');
                 // Get the item name
 
-                if (qtyInput > qtyExisting) {
+                if (itemType !== 'jasa' && qtyInput > qtyExisting) {
                     isValid = false;
                     errorMessage =
                         `The quantity for the item "${itemName}" cannot exceed the existing quantity.`;
@@ -345,8 +353,6 @@
 
             // If not valid, show alert and prevent form submission
             if (!isValid) {
-                e.preventDefault();
-
                 swal({
                     title: "{{ __('general.warning') }}",
                     text: errorMessage,
@@ -354,6 +360,18 @@
                 })
                 return
             }
+
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "Save this maintenance data?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willSave) => {
+                if (willSave && formElement) {
+                    HTMLFormElement.prototype.submit.call(formElement);
+                }
+            });
         });
 
 
@@ -381,6 +399,7 @@
                                 <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 </select>
+                                <input type="hidden" name="item_type[]" id="item_type_${row}" value="">
                             </td>
                             <td>
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
@@ -401,7 +420,7 @@
 
             dataItem.forEach(i => {
                 html +=
-                    `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
+                    `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name}</option>`;
             });
 
             $(`#itemCode_${row}`).html(html);

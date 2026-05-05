@@ -199,6 +199,15 @@ class MaintenanceController extends Controller
     public function deleteMaintenanceDetail($id)
     {
         $md = MaintenanceDetail::where('id', $id)->firstOrFail();
+        $isJasa = optional($md->item)->type === \App\Models\Inventory\Item::TYPE_JASA;
+
+        if ($isJasa) {
+            $maintenanceId = $md->maintenance->id;
+            $md->delete();
+
+            return redirect()->route($this->view . 'edit', $maintenanceId)
+                ->with('success', 'Delete Data Success');
+        }
 
         // Rollback qtyUsed pada PurchaseDetail berdasarkan FIFO
         $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
@@ -252,7 +261,7 @@ class MaintenanceController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('maintenanceDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');

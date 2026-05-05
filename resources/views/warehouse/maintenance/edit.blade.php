@@ -2,7 +2,11 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-    'secondSegment' => __('general.edit'),
+        $('#submit').on('click', function(e) {
+            e.preventDefault();
+
+            const form = $(this).closest('form')[0];
+
 ])
 
 @push('style')
@@ -144,17 +148,21 @@
                                         <input type="hidden" name="maintenanceDetailCode[]"
                                             value="{{ $it->code }}">
 
-                                        <select class="js-example-basic-single" name="itemCode[]" id="itemCode_1"
+                                        <select class="js-example-basic-single" name="itemCode[]"
+                                            id="itemCode_{{ $loop->iteration }}"
                                             required onchange="loadItemDetails({{ $loop->iteration }})">
                                             <option selected="" disabled="" value="">
                                                 {{ __('general.choose') }}...
                                             </option>
 
                                             <option value="{{ $it->item->code }}" data-name="{{ $it->item->name }}"
-                                                data-qty="0" data-price="{{ $it->item->price }}" selected>
+                                                data-qty="0" data-price="{{ $it->item->price }}"
+                                                data-type="{{ $it->item->type ?? '' }}" selected>
                                                 {{ $it->item->code . ' - ' . $it->item->name }}
                                             </option>
                                         </select>
+                                        <input type="hidden" name="item_type[]" id="item_type_{{ $loop->iteration }}"
+                                            value="{{ $it->item->type ?? '' }}">
                                     </td>
 
                                     <td>
@@ -279,7 +287,9 @@
                             if (itemCode) {
                                 let foundItem = dataItem.find(i => i.code === itemCode);
                                 let itemQty = foundItem ? foundItem.stock : 0;
-                                $(`#qty_exist_${row}`).val(itemQty);
+                                let isJasa = foundItem && foundItem.type === 'jasa';
+                                $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
+                                $(`#qty_exist_${row}`).val(isJasa ? 1 : itemQty);
                             }
                         });
                     } else {
@@ -306,8 +316,10 @@
             let foundItem = dataItem.find(i => i.code === itemCode || (i.item && i.item.code === itemCode));
             let itemQty = foundItem ? (foundItem.stock ?? (foundItem.stockIn - foundItem.stockOut || 0)) : 0;
             let itemPrice = foundItem ? (foundItem.price ?? (foundItem.item ? foundItem.item.price : 0)) : 0;
+            let itemType = foundItem ? foundItem.type : $(`#itemCode_${row} option:selected`).data('type');
 
-            $(`#qty_exist_${row}`).val(itemQty);
+            $(`#item_type_${row}`).val(itemType === 'jasa' ? 'jasa' : 'part');
+            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 1 : itemQty);
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
             let total = qty * parseFloat(itemPrice || 0);
@@ -362,6 +374,10 @@
 
         // Attach validation to the save button
         $('#submit').on('click', function(e) {
+            e.preventDefault();
+
+            const formElement = e.currentTarget.form;
+
             let isValid = true;
             let errorMessage = '';
             let codes = [];
@@ -374,10 +390,11 @@
 
                 let code = $(this).find('select[name="itemCode[]"]').val();
                 let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
+                let itemType = $(this).find('input[name="item_type[]"]').val() || $(this).find('select[name="itemCode[]"] option:selected').data('type');
 
                 let totalAvailable = qtyExisting + originalQty;
 
-                if (qtyInput > totalAvailable) {
+                if (itemType !== 'jasa' && qtyInput > totalAvailable) {
                     isValid = false;
                     errorMessage =
                         `"${itemName}" quantity cannot exceed available stock (${totalAvailable}).`;
@@ -396,8 +413,6 @@
 
             // If not valid, show alert and prevent form submission
             if (!isValid) {
-                e.preventDefault();
-
                 swal({
                     title: "{{ __('general.warning') }}",
                     text: errorMessage,
@@ -405,6 +420,18 @@
                 })
                 return
             }
+
+            swal({
+                title: "{{ __('general.are_you_sure') }}",
+                text: "Save this maintenance data?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willSave) => {
+                if (willSave && formElement) {
+                    HTMLFormElement.prototype.submit.call(formElement);
+                }
+            });
         });
 
 
@@ -423,6 +450,7 @@
                                 <select class="form-control js-example-basic-single" name="itemCode[]" id="itemCode_${row}" required onchange="loadItemDetails(${row})">
                                     <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 </select>
+                                <input type="hidden" name="item_type[]" id="item_type_${row}" value="">
                             </td>
                             <td>
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
@@ -450,7 +478,7 @@
                 let stock = i.stock ?? (i.stockIn - i.stockOut || 0);
                 let price = i.price ?? (i.item ? i.item.price : 0);
                 html +=
-                    `<option value="${code}" data-name="${name}" data-qty="${stock}" data-price="${price}">${code} - ${name}</option>`;
+                    `<option value="${code}" data-name="${name}" data-qty="${stock}" data-price="${price}" data-type="${i.type ?? (i.item ? i.item.type : '')}">${code} - ${name}</option>`;
             });
 
             $(`#itemCode_${row}`).html(html);

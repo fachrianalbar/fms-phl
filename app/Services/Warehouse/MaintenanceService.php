@@ -3,6 +3,7 @@
 namespace App\Services\Warehouse;
 
 use App\Helpers\GenerateCode;
+use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\PurchaseDetail;
@@ -22,6 +23,11 @@ class MaintenanceService
     public function __construct(Maintenance $maintenance)
     {
         $this->service = $maintenance;
+    }
+
+    protected function isJasaItem(string $itemCode): bool
+    {
+        return Item::where('code', $itemCode)->value('type') === Item::TYPE_JASA;
     }
 
     public function findAll()
@@ -68,20 +74,23 @@ class MaintenanceService
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $itemCode = $filtered['itemCode'][$i];
                 $requestedQty = (float) $filtered['qty'][$i];
+                $isJasa = $this->isJasaItem($itemCode);
 
                 // Validasi jumlah tidak boleh nol atau negatif
                 if ($requestedQty <= 0) {
                     throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
                 }
 
-                // 3. Validasi stok tersedia dari stock_transaction berdasarkan warehouse
-                $availableStock = StockTransaction::where('itemCode', $itemCode)
-                    ->where('warehouseCode', $warehouseCode)
-                    ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as totalStock')
-                    ->value('totalStock') ?? 0;
+                if (! $isJasa) {
+                    // 3. Validasi stok tersedia dari stock_transaction berdasarkan warehouse
+                    $availableStock = StockTransaction::where('itemCode', $itemCode)
+                        ->where('warehouseCode', $warehouseCode)
+                        ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as totalStock')
+                        ->value('totalStock') ?? 0;
 
-                if ($availableStock < $requestedQty) {
-                    throw new \Exception("Stok tidak cukup untuk item {$itemCode} di gudang {$warehouseCode}. Tersedia: {$availableStock}, Diminta: {$requestedQty}");
+                    if ($availableStock < $requestedQty) {
+                        throw new \Exception("Stok tidak cukup untuk item {$itemCode} di gudang {$warehouseCode}. Tersedia: {$availableStock}, Diminta: {$requestedQty}");
+                    }
                 }
 
                 // 4. Buat MaintenanceDetail terlebih dahulu
@@ -91,6 +100,10 @@ class MaintenanceService
                     'itemCode' => $itemCode,
                     'qty' => $requestedQty,
                 ]);
+
+                if ($isJasa) {
+                    continue;
+                }
 
                 // 5. Alokasikan FIFO dan simpan ke MaintenanceFifo
                 $remainingQty = $requestedQty;
@@ -171,22 +184,25 @@ class MaintenanceService
 
                 if ($md) {
                     $detailMap[$itemCode] = $md;
+                    $shouldRollbackInventory = optional($md->item)->type !== Item::TYPE_JASA;
 
-                    // Ambil semua fifo terkait detail ini
-                    $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
+                    if ($shouldRollbackInventory) {
+                        // Ambil semua fifo terkait detail ini
+                        $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
 
-                    foreach ($fifos as $fifo) {
-                        PurchaseDetail::where('code', $fifo->purchaseDetailCode)
-                            ->decrement('qtyUsed', $fifo->qty);
+                        foreach ($fifos as $fifo) {
+                            PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                                ->decrement('qtyUsed', $fifo->qty);
+                        }
+
+                        // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
+                        MaintenanceFifo::where('maintenanceDetailCode', $md->code)
+                            ->update(['qty' => 0]);
+
+                        // Reset stockOut
+                        Stock::where('itemCode', $itemCode)
+                            ->decrement('stockOut', $md->qty);
                     }
-
-                    // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
-                    MaintenanceFifo::where('maintenanceDetailCode', $md->code)
-                        ->update(['qty' => 0]);
-
-                    // Reset stockOut
-                    Stock::where('itemCode', $itemCode)
-                        ->decrement('stockOut', $md->qty);
                 }
             }
 
@@ -198,6 +214,7 @@ class MaintenanceService
                 $itemCode = $itemCodes[$i];
                 $qty = (float) $qtys[$i];
                 $originalQty = (float) $originalQtys[$i];
+                $isJasa = $this->isJasaItem($itemCode);
                 // $isLifo = $qty < $originalQty;
 
                 if ($qty <= 0) {
@@ -216,6 +233,10 @@ class MaintenanceService
                         'itemCode' => $itemCode,
                         'qty' => $qty,
                     ]);
+                }
+
+                if ($isJasa) {
+                    continue;
                 }
 
                 // Ambil batch dari purchase_detail
@@ -278,6 +299,12 @@ class MaintenanceService
         $data = $this->getById($id);
 
         foreach ($data->details as $item) {
+            $isJasa = optional($item->item)->type === Item::TYPE_JASA;
+
+            if ($isJasa) {
+                continue;
+            }
+
             // 1. Rollback FIFO
             $fifos = MaintenanceFifo::where('maintenanceDetailCode', $item->code)->get();
             foreach ($fifos as $fifo) {
