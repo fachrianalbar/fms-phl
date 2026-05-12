@@ -594,8 +594,10 @@
 
                 $.get("{{ url('ajax/route-order') }}/" + customerId + "/" + routeTypeCode, function(data) {
                     data.forEach(i => {
+                        let originName = i.origin_location ? i.origin_location.name : '-';
+                        let destName = i.destination_location ? i.destination_location.name : '-';
                         html +=
-                            `<option value="${i.code}">${i.name} (${i.origin_location.name} - ${i.destination_location.name}) - ${i.description || ''}</option>`;
+                            `<option value="${i.code}">${i.name} (${originName} - ${destName}) - ${i.description || ''}</option>`;
 
                     });
                     $('#routeData').html(html);
