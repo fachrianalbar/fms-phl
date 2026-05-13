@@ -30,6 +30,14 @@ class Maintenance extends Model
         'grand_total' => 'decimal:2',
     ];
 
+    protected static function booted()
+    {
+        static::deleting(function ($maintenance) {
+            $maintenance->code = $maintenance->code . '-DELETED-' . mt_rand(1000, 9999);
+            $maintenance->saveQuietly();
+        });
+    }
+
     public function updateGrandTotal()
     {
         $sum = $this->details()->sum('total') ?: 0;

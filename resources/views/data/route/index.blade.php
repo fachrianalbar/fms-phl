@@ -449,16 +449,20 @@
                         "data": 'description'
                     },
                     {
-                        "data": 'customer.name'
+                        "data": 'customer.name',
+                        "defaultContent": "-"
                     },
                     {
-                        "data": 'origin_location.name'
+                        "data": 'origin_location.name',
+                        "defaultContent": "-"
                     },
                     {
-                        "data": 'destination_location.name'
+                        "data": 'destination_location.name',
+                        "defaultContent": "-"
                     },
                     {
-                        "data": 'route_type.name'
+                        "data": 'route_type.name',
+                        "defaultContent": "-"
                     },
                     // {
                     // "data": 'fleet_type.name'
