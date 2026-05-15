@@ -166,9 +166,9 @@
                                     </td>
                                     <td>
                                         <input class="form-control qty-input" type="number" name="qty[]"
-                                            id="qty_{{ $loop->iteration }}" required min="0.01" step="0.01"
-                                            value="{{ $it->qty }}">
-                                        <input type="hidden" name="original_qty[]" value="{{ $it->qty }}">
+                                            id="qty_{{ $loop->iteration }}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57"
+                                            value="{{ (int) $it->qty }}">
+                                        <input type="hidden" name="original_qty[]" value="{{ (int) $it->qty }}">
                                     </td>
                                     <td>
                                         <input class="form-control text-end" type="text" name="price[]"
@@ -451,7 +451,7 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
                                 <input type="hidden" name="original_qty[]" value="0">
 
                             </td>

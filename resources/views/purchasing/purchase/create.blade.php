@@ -130,8 +130,8 @@
                                 </select>
                             </td>
                             <td>
-                                <input class="form-control" type="number" min="0.1" step="0.1" name="qty[]"
-                                    id="qty_1" value="1" required onchange="updateTotalPrice(1)">
+                                <input class="form-control" type="number" min="1" step="1" name="qty[]"
+                                    id="qty_1" value="1" required onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateTotalPrice(1)">
                             </td>
                             <td>
                                 <input class="form-control" type="text" id="price_1"
@@ -325,7 +325,7 @@
                              </select>
                          </td>
                          <td>
-                             <input class="form-control" type="number" min="0.1" step="0.1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
+                             <input class="form-control" type="number" min="1" step="1" name="qty[]" id="qty_${row}" value="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateTotalPrice(${row})">
                          </td>
                          <td>
                              <input class="form-control" type="text" id="price_${row}" name="price[]" min="1" onchange="updateTotalPrice(${row})" oninput="formatAngka(this)" required value="0">

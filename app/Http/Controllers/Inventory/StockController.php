@@ -94,6 +94,9 @@ class StockController extends Controller
                         });
                     }
                 })
+                ->editColumn('stock', function ($row) {
+                    return (int) $row->stock;
+                })
                 ->addColumn('action', function ($row) {
                     return '<div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-primary btn-detail" 

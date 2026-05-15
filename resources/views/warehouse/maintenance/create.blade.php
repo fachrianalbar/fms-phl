@@ -139,7 +139,7 @@
                                 </td>
                                 <td>
                                     <input class="form-control qty-input" type="number" name="qty[]" id="qty_1"
-                                        required min="0.01" step="0.01" value="1">
+                                        required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
                                 </td>
                                 <td>
                                     <input class="form-control text-end" type="text" name="price[]" id="price_1"
@@ -405,7 +405,7 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.01" step="0.01" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
                             </td>
                             <td>
                                 <input class="form-control text-end" type="text" name="price[]" id="price_${row}" readonly value="0">
