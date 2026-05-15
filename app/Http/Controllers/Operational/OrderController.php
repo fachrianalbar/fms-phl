@@ -413,10 +413,10 @@ class OrderController extends Controller
         if ($request->ajax()) {
             $data = $this->service->datatable();
 
-            // Filter untuk role non-SPRADMIN/SPRUSER hanya tampilkan status 0
+            // Filter untuk role non-SPRADMIN/SPRUSER hanya tampilkan status 0, 1, 2
             $isAuthorized = in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']);
             if (! $isAuthorized) {
-                $data->where('status', 0);
+                $data->whereIn('status', [0, 1, 2]);
             }
 
             if ($request->has('is_order_tax')) {
