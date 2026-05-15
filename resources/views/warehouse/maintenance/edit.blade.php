@@ -2,11 +2,6 @@
     'title' => $title,
     'pageTitle' => $title,
     'firstSegment' => $title,
-        $('#submit').on('click', function(e) {
-            e.preventDefault();
-
-            const form = $(this).closest('form')[0];
-
 ])
 
 @push('style')

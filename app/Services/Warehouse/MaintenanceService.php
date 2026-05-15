@@ -58,14 +58,40 @@ class MaintenanceService
     {
         $warehouseCode = $request->warehouseCode ?? Warehouse::first()->code;
 
-        // 1. Simpan data maintenance utama
-        $data = $this->service->create([
-            'code' => $request->code,
-            'date' => $request->date,
-            'time' => $request->time,
-            'fleetCode' => $request->fleetCode,
-            'warehouseCode' => $warehouseCode,
-        ]);
+        $code = $request->code;
+        $data = null;
+        $retryCount = 0;
+        $maxRetries = 10;
+
+        while ($retryCount < $maxRetries) {
+            try {
+                // 1. Simpan data maintenance utama
+                $data = $this->service->create([
+                    'code' => $code,
+                    'date' => $request->date,
+                    'time' => $request->time,
+                    'fleetCode' => $request->fleetCode,
+                    'warehouseCode' => $warehouseCode,
+                ]);
+                break;
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
+                    $retryCount++;
+                    $code = \App\Helpers\GenerateCode::generateCodeAscDate(
+                        'MNT',
+                        \App\Models\Warehouse\Maintenance::class,
+                        'date',
+                        $request->date
+                    );
+                } else {
+                    throw $e;
+                }
+            }
+        }
+
+        if (! $data) {
+            throw new \Exception("Gagal menyimpan data karena duplikasi kode setelah mencoba {$maxRetries} kali.");
+        }
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
