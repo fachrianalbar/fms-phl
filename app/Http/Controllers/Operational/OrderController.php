@@ -415,6 +415,15 @@ class OrderController extends Controller
 
             // Filter untuk role non-SPRADMIN/SPRUSER hanya tampilkan status 0, 1, 2
             $isAuthorized = in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']);
+
+            // Pengecualian: User dengan nama/username mengandung "putri" atau "devi" hanya bisa melihat status 0, 1, 2
+            $userName = strtolower(Auth::user()->name ?? '');
+            $userUsername = strtolower(Auth::user()->username ?? '');
+            if (str_contains($userName, 'putri') || str_contains($userName, 'devi') || 
+                str_contains($userUsername, 'putri') || str_contains($userUsername, 'devi')) {
+                $isAuthorized = false;
+            }
+
             if (! $isAuthorized) {
                 $data->whereIn('status', [0, 1, 2]);
             }

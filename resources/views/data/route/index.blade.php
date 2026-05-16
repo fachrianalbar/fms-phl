@@ -246,10 +246,11 @@
                         <div><strong>Harga Vendor Pribadi:</strong> <span id="vendorPricePersonalAmount">-</span></div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 d-flex justify-content-between align-items-center">
                         <button type="button" class="btn btn-outline-primary btn-sm" id="btnAddVendorRow">
                             Tambah Vendor
                         </button>
+                        <small class="text-danger">* Gunakan koma (,) untuk desimal. Format: xxx.xxx.xxx,xx</small>
                     </div>
 
                     <div class="table-responsive">
@@ -318,17 +319,13 @@
         }
 
         function formatThousands(value) {
-            const digitsOnly = String(value ?? '').replace(/\D/g, '');
-
-            if (!digitsOnly) {
-                return '';
-            }
-
-            return Number(digitsOnly).toLocaleString('id-ID');
+            const parsed = Number(value);
+            if (Number.isNaN(parsed)) return '';
+            return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(parsed);
         }
 
         function parseThousands(value) {
-            const normalized = String(value ?? '').replace(/\./g, '').trim();
+            const normalized = String(value ?? '').replace(/\./g, '').replace(',', '.').trim();
 
             if (!normalized) {
                 return NaN;
@@ -377,9 +374,7 @@
                     return `<option value="${escapeHtml(vendor.id)}" ${selected}>${escapeHtml(vendor.name)}</option>`;
                 }).join('');
 
-                const amountValue = row.amount !== null && row.amount !== undefined ? formatThousands(Math.round(
-                    Number(
-                        row.amount))) : '';
+                const amountValue = row.amount !== null && row.amount !== undefined ? formatThousands(row.amount) : '';
 
                 html += `
                     <tr class="vendor-row">
@@ -676,7 +671,7 @@
             });
 
             $('#vendorPriceTableBody').on('input', '.vendor-price-input', function() {
-                this.value = formatThousands(this.value);
+                formatAngka(this);
             });
         });
 

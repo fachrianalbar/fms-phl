@@ -280,7 +280,7 @@
             let isJasa = itemType === 'jasa' || (foundItem && foundItem.type === 'jasa');
 
             $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(isJasa ? 1 : itemQty);
+            $(`#qty_exist_${row}`).val(isJasa ? 1 : parseInt(itemQty));
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             // calculate total for this row
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;

@@ -284,7 +284,7 @@
                                 let itemQty = foundItem ? foundItem.stock : 0;
                                 let isJasa = foundItem && foundItem.type === 'jasa';
                                 $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-                                $(`#qty_exist_${row}`).val(isJasa ? 1 : itemQty);
+                                $(`#qty_exist_${row}`).val(isJasa ? 1 : parseInt(itemQty));
                             }
                         });
                     } else {
@@ -314,7 +314,7 @@
             let itemType = foundItem ? foundItem.type : $(`#itemCode_${row} option:selected`).data('type');
 
             $(`#item_type_${row}`).val(itemType === 'jasa' ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 1 : itemQty);
+            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 1 : parseInt(itemQty));
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
             let total = qty * parseFloat(itemPrice || 0);
@@ -470,7 +470,7 @@
                 // support both shapes: {code, name, stock, price} and {item:{code,name}, stockIn, stockOut}
                 let code = i.code || (i.item && i.item.code);
                 let name = i.name || (i.item && i.item.name);
-                let stock = i.stock ?? (i.stockIn - i.stockOut || 0);
+                let stock = parseInt(i.stock ?? (i.stockIn - i.stockOut || 0));
                 let price = i.price ?? (i.item ? i.item.price : 0);
                 html +=
                     `<option value="${code}" data-name="${name}" data-qty="${stock}" data-price="${price}" data-type="${i.type ?? (i.item ? i.item.type : '')}">${code} - ${name}</option>`;

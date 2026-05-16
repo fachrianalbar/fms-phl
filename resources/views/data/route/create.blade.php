@@ -150,9 +150,9 @@
             <div class="col-sm-12 mt-4">
                 <div class="card">
 
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h4>{{ __('menu_route.list_route') }}</h4>
-
+                        <small class="text-danger">* Gunakan koma (,) untuk desimal. Format: xxx.xxx.xxx,xx</small>
                     </div>
 
                     <div class="card-body">
