@@ -12,13 +12,14 @@ use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Traits\LogActivity;
+use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
 class MaintenanceService
 {
     use LogActivity;
 
-    protected $service;
+    protected Maintenance $service;
 
     public function __construct(Maintenance $maintenance)
     {
@@ -27,7 +28,7 @@ class MaintenanceService
 
     protected function isJasaItem(string $itemCode): bool
     {
-        return Item::where('code', $itemCode)->value('type') === Item::TYPE_JASA;
+        return Item::query()->where('code', $itemCode)->value('type') === Item::TYPE_JASA;
     }
 
     public function findAll()
@@ -49,14 +50,14 @@ class MaintenanceService
         ])->where('status', 0)->orderBy('created_at', 'desc');
     }
 
-    public function getById($id)
+    public function getById(string $id)
     {
-        return $this->service->where('id', $id)->first();
+        return $this->service->query()->where('id', $id)->first();
     }
 
-    public function store($request, $title)
+    public function store(Request $request, string $title)
     {
-        $warehouseCode = $request->warehouseCode ?? Warehouse::first()->code;
+        $warehouseCode = $request->warehouseCode ?? Warehouse::query()->first()->code;
 
         $code = $request->code;
         $data = null;
@@ -77,9 +78,9 @@ class MaintenanceService
             } catch (\Illuminate\Database\QueryException $e) {
                 if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
                     $retryCount++;
-                    $code = \App\Helpers\GenerateCode::generateCodeAscDate(
+                    $code = GenerateCode::generateCodeAscDate(
                         'MNT',
-                        \App\Models\Warehouse\Maintenance::class,
+                        Maintenance::class,
                         'date',
                         $request->date
                     );
@@ -109,7 +110,7 @@ class MaintenanceService
 
                 if (! $isJasa) {
                     // 3. Validasi stok tersedia dari stock_transaction berdasarkan warehouse
-                    $availableStock = StockTransaction::where('itemCode', $itemCode)
+                    $availableStock = StockTransaction::query()->where('itemCode', $itemCode)
                         ->where('warehouseCode', $warehouseCode)
                         ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as totalStock')
                         ->value('totalStock') ?? 0;
@@ -133,11 +134,12 @@ class MaintenanceService
 
                 // 5. Alokasikan FIFO dan simpan ke MaintenanceFifo
                 $remainingQty = $requestedQty;
-                $fifoPurchases = PurchaseDetail::where('itemCode', $itemCode)
+                $fifoPurchases = PurchaseDetail::query()->where('itemCode', $itemCode)
                     ->whereColumn('qtyUsed', '<', 'receivedQty')
                     ->orderBy('created_at')
                     ->get();
 
+                /** @var \App\Models\Purchasing\PurchaseDetail $purchase */
                 foreach ($fifoPurchases as $purchase) {
                     if ($remainingQty <= 0) {
                         break;
@@ -160,7 +162,7 @@ class MaintenanceService
                 }
 
                 // 6. Update stok keluar
-                Stock::where('itemCode', $itemCode)->increment('stockOut', $requestedQty);
+                Stock::query()->where('itemCode', $itemCode)->increment('stockOut', $requestedQty);
 
                 // 7. Buat StockTransaction
                 StockTransaction::create([
@@ -170,7 +172,7 @@ class MaintenanceService
                     'qtyOut' => $requestedQty,
                     'transactionCode' => $data->code,
                     'transactionDetailCode' => $detail->code,
-                    'date' => $request->date,
+                    'date' => $request->date . ' ' . $request->time,
                     'transactionType' => 'OUT',
                     'warehouseCode' => $warehouseCode,
                 ]);
@@ -181,11 +183,11 @@ class MaintenanceService
         $this->logActivity($title, $data, 'Create');
     }
 
-    public function update($request, $id, $title)
+    public function update(Request $request, string $id, string $title)
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $this->service->where('id', $id)->update([
+        $this->service->query()->where('id', $id)->update([
             // 'code' => $request->code,
             'date' => $request->date,
             'time' => $request->time,
@@ -205,7 +207,7 @@ class MaintenanceService
             foreach ($itemCodes as $i => $itemCode) {
                 $detailCode = $filtered['maintenanceDetailCode'][$i] ?? null;
 
-                $md = MaintenanceDetail::where('code', $detailCode)
+                $md = MaintenanceDetail::query()->where('code', $detailCode)
                     ->first();
 
                 if ($md) {
@@ -214,26 +216,26 @@ class MaintenanceService
 
                     if ($shouldRollbackInventory) {
                         // Ambil semua fifo terkait detail ini
-                        $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
+                        $fifos = MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)->get();
 
                         foreach ($fifos as $fifo) {
-                            PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                            PurchaseDetail::query()->where('code', $fifo->purchaseDetailCode)
                                 ->decrement('qtyUsed', $fifo->qty);
                         }
 
                         // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
-                        MaintenanceFifo::where('maintenanceDetailCode', $md->code)
+                        MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)
                             ->update(['qty' => 0]);
 
                         // Reset stockOut
-                        Stock::where('itemCode', $itemCode)
+                        Stock::query()->where('itemCode', $itemCode)
                             ->decrement('stockOut', $md->qty);
                     }
                 }
             }
 
             // Hapus semua FIFO yang qty-nya sudah 0
-            MaintenanceFifo::where('qty', 0)->delete();
+            MaintenanceFifo::query()->where('qty', 0)->delete();
 
             // STEP 2: Alokasi ulang
             for ($i = 0; $i < count($itemCodes); $i++) {
@@ -266,7 +268,7 @@ class MaintenanceService
                 }
 
                 // Ambil batch dari purchase_detail
-                $purchaseDetails = PurchaseDetail::where('itemCode', $itemCode)
+                $purchaseDetails = PurchaseDetail::query()->where('itemCode', $itemCode)
                     ->where('status', 1)
                     ->orderBy('created_at', 'asc')
                     ->get();
@@ -285,7 +287,7 @@ class MaintenanceService
 
                     $useQty = min($remainingQty, $availableQty);
 
-                    PurchaseDetail::where('code', $purchase->code)
+                    PurchaseDetail::query()->where('code', $purchase->code)
                         ->increment('qtyUsed', $useQty);
 
                     MaintenanceFifo::create([
@@ -298,7 +300,7 @@ class MaintenanceService
                     $remainingQty -= $useQty;
                 }
 
-                Stock::where('itemCode', $itemCode)
+                Stock::query()->where('itemCode', $itemCode)
                     ->increment('stockOut', $qty);
 
                 StockTransaction::updateOrCreate(
@@ -307,7 +309,7 @@ class MaintenanceService
                         'itemCode' => $itemCode,
                         'qtyIn' => 0,
                         'qtyOut' => $qty,
-                        'date' => $request->date,
+                        'date' => $request->date . ' ' . $request->time,
                         'transactionType' => 'OUT',
                     ]
                 );
@@ -317,7 +319,7 @@ class MaintenanceService
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
 
-    public function destroy($id, $title)
+    public function destroy(string $id, string $title)
     {
         // Log data sebelum dihapus
         $this->logActivity($title, $this->getById($id), 'Delete');
@@ -332,26 +334,26 @@ class MaintenanceService
             }
 
             // 1. Rollback FIFO
-            $fifos = MaintenanceFifo::where('maintenanceDetailCode', $item->code)->get();
+            $fifos = MaintenanceFifo::query()->where('maintenanceDetailCode', $item->code)->get();
             foreach ($fifos as $fifo) {
-                PurchaseDetail::where('code', $fifo->purchaseDetailCode)
+                PurchaseDetail::query()->where('code', $fifo->purchaseDetailCode)
                     ->decrement('qtyUsed', $fifo->qty);
             }
 
             // 2. Hapus data FIFO terkait
-            MaintenanceFifo::where('maintenanceDetailCode', $item->code)->delete();
+            MaintenanceFifo::query()->where('maintenanceDetailCode', $item->code)->delete();
 
             // 3. Update stok keluar
-            Stock::where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
+            Stock::query()->where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
 
             // 4. Hapus transaksi stok
-            StockTransaction::where('transactionDetailCode', $item->code)->delete();
+            StockTransaction::query()->where('transactionDetailCode', $item->code)->delete();
         }
 
         // 5. Hapus detail maintenance
         $data->details()->delete();
 
         // 6. Hapus data maintenance utama
-        $this->service->where('id', $id)->delete();
+        $this->service->query()->where('id', $id)->delete();
     }
 }
