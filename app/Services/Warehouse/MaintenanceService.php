@@ -353,7 +353,10 @@ class MaintenanceService
         // 5. Hapus detail maintenance
         $data->details()->delete();
 
-        // 6. Hapus data maintenance utama
+        // 6. Update code agar tidak bentrok dengan unique constraint, lalu hapus data maintenance utama
+        $data->update([
+            'code' => $data->code . '-DEL-' . str_pad((string)mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)
+        ]);
         $this->service->query()->where('id', $id)->delete();
     }
 }
