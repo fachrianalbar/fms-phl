@@ -240,6 +240,13 @@ class PurchaseController extends Controller
     {
         $pd = PurchaseDetail::where('id', $id)->first();
 
+        // Rollback stock transaction
+        $stockTransaction = \App\Models\StockTransaction::where('transactionDetailCode', $pd->code)->first();
+        if ($stockTransaction) {
+            \App\Models\Inventory\Stock::where('itemCode', $stockTransaction->itemCode)->decrement('stockIn', $stockTransaction->qtyIn);
+            $stockTransaction->delete();
+        }
+
         $pd->delete();
 
         return redirect()->route($this->view.'edit', $pd->purchase->id)->with('success', 'Delete Data Success');

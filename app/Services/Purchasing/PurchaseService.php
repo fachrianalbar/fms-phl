@@ -137,6 +137,16 @@ class PurchaseService
         $purchaseData = $this->getById($id);
         $purchaseCode = $purchaseData->code;
 
+        // Rollback all stock and stock transactions for this purchase first
+        $stockTransactions = StockTransaction::withTrashed()->where('transactionCode', $purchaseCode)->get();
+
+        foreach ($stockTransactions as $transaction) {
+            Stock::withTrashed()->where('itemCode', $transaction->itemCode)->decrement('stockIn', $transaction->qtyIn);
+        }
+
+        // Delete semua StockTransaction untuk purchase ini
+        StockTransaction::withTrashed()->where('transactionCode', $purchaseCode)->forceDelete();
+
         $this->service->query()->where('id', $id)->update([
             // 'code' => $request->code,
             'supplierCode' => $request->supplierCode,
@@ -149,154 +159,101 @@ class PurchaseService
             $filtered = Arr::only($request->all(), ['qty', 'itemCode', 'purchaseDetailCode', 'price', 'description']);
 
             for ($i = 0; $i < count($request->itemCode); $i++) {
+                $price = (int) str_replace('.', '', $filtered['price'][$i]);
+
+                Item::query()->where('code', $filtered['itemCode'][$i])->update([
+                    'price' => $price,
+                ]);
+
+                $detailCode = null;
 
                 // Check if purchaseDetailCode exists AND is not empty (existing item)
                 if (isset($filtered['purchaseDetailCode'][$i]) && ! empty($filtered['purchaseDetailCode'][$i])) {
                     $pd = PurchaseDetail::query()->where('code', $filtered['purchaseDetailCode'][$i])->first();
-
-                    $stock = Stock::query()->where('itemCode', $pd->item->code)->first();
-
-                    $price = (int) str_replace('.', '', $filtered['price'][$i]);
-
-                    Item::query()->where('code', $filtered['itemCode'][$i])->update([
-                        'price' => $price,
-                    ]);
-
-                    if ($pd->item->code != $filtered['itemCode'][$i]) {
-
-                        if (isset($stock)) {
-                            // decrement
-                            Stock::query()->where('itemCode', $pd->item->code)->update([
-                                'stockIn' => $stock->stockIn - $pd->qty,
-                            ]);
-                        }
-
-                        PurchaseDetail::query()->where('code', $filtered['purchaseDetailCode'][$i])->update([
+                    if ($pd) {
+                        $pd->update([
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
-                            'purchaseCode' => $purchaseCode,
+                            'receivedQty' => $filtered['qty'][$i],
                             'price' => $price,
                             'description' => $filtered['description'][$i] ?? null,
                         ]);
+                        $detailCode = $pd->code;
+                    }
+                }
 
-                        $pd = PurchaseDetail::query()->where('code', $filtered['purchaseDetailCode'][$i])->first();
-
-                        $stock = Stock::query()->where('itemCode', $pd->item->code)->first();
-
-                        if (! $stock) {
-                            Stock::create([
-                                'code' => GenerateCode::generateCode('TSTC', true),
-                                'itemCode' => $filtered['itemCode'][$i],
-                                'stockIn' => $filtered['qty'][$i],
-                                'stockOut' => 0,
-                            ]);
-                        }
-
-                        StockTransaction::query()->where('transactionDetailCode', $filtered['purchaseDetailCode'][$i])->update([
-                            'qtyIn' => $filtered['qty'][$i],
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'date' => $request->date . ' ' . $request->time,
-                        ]);
-                    } else {
-                        // Same item, only qty changed
-                        $oldQty = $pd->qty;
-                        $newQty = $filtered['qty'][$i];
-                        $qtyDifference = $newQty - $oldQty;
-
-                        $stock = Stock::query()->where('itemCode', $pd->item->code)->first();
-
-                        if ($stock) {
-                            // Update stock with the difference
-                            Stock::query()->where('itemCode', $pd->item->code)->update([
-                                'stockIn' => $stock->stockIn + $qtyDifference,
-                            ]);
-                        } else {
-                            Stock::create([
-                                'code' => GenerateCode::generateCode('TSTC', true),
-                                'itemCode' => $filtered['itemCode'][$i],
-                                'stockIn' => $newQty,
-                                'stockOut' => 0,
-                            ]);
-                        }
-
+                if (! $detailCode) {
+                    // Check if duplicate item code exists in the current purchase
+                    $pd = PurchaseDetail::query()->where('itemCode', $filtered['itemCode'][$i])
+                        ->where('purchaseCode', $purchaseCode)
+                        ->first();
+                    
+                    if ($pd) {
                         $pd->update([
-                            'qty' => $newQty,
-                            'price' => $price,
+                            'qty' => $pd->qty + $filtered['qty'][$i],
+                            'receivedQty' => $pd->receivedQty + $filtered['qty'][$i],
                             'description' => $filtered['description'][$i] ?? $pd->description,
                         ]);
-
-                        StockTransaction::query()->where('transactionDetailCode', $filtered['purchaseDetailCode'][$i])->update([
-                            'qtyIn' => $newQty,
-                            'date' => $request->date . ' ' . $request->time,
-                        ]);
-                    }
-                } else {
-                    $checkItem = Stock::query()->where('itemCode', $filtered['itemCode'][$i])->first();
-
-                    $price = (int) str_replace('.', '', $filtered['price'][$i]);
-
-                    Item::query()->where('code', $filtered['itemCode'][$i])->update([
-                        'price' => $price,
-                    ]);
-
-                    if ($checkItem) {
-                        Stock::query()->where('itemCode', $filtered['itemCode'][$i])->update([
-                            'stockIn' => $filtered['qty'][$i] + $checkItem->stockIn,
-                        ]);
+                        $detailCode = $pd->code;
                     } else {
-                        Stock::create([
-                            'code' => GenerateCode::generateCode('TSTC', true),
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'stockIn' => $filtered['qty'][$i],
-                            'stockOut' => 0,
-                        ]);
-                    }
-
-                    // Check if this item already exists in this purchase (duplicate item)
-                    $pd = PurchaseDetail::query()->where('itemCode', $filtered['itemCode'][$i])
-                        ->whereHas('purchase', function ($query) use ($purchaseCode) {
-                            $query->where('code', $purchaseCode);
-                        })
-                        ->first();
-
-                    if (! $pd) {
                         $detail = PurchaseDetail::create([
                             'code' => GenerateCode::generateCode('FPD', true),
                             'itemCode' => $filtered['itemCode'][$i],
                             'qty' => $filtered['qty'][$i],
+                            'receivedQty' => $filtered['qty'][$i],
+                            'status' => 1,
                             'purchaseCode' => $purchaseCode,
                             'price' => $price,
                             'description' => $filtered['description'][$i] ?? null,
                         ]);
-
-                        StockTransaction::create([
-                            'code' => GenerateCode::generateCode('FST', true),
-                            'itemCode' => $filtered['itemCode'][$i],
-                            'qtyIn' => $filtered['qty'][$i],
-                            'qtyOut' => 0,
-                            'transactionCode' => $purchaseCode,
-                            'transactionDetailCode' => $detail->code,
-                            'date' => $request->date . ' ' . $request->time,
-                            'transactionType' => 'IN',
-                        ]);
-                    } else {
-                        $pd->update([
-                            'qty' => $filtered['qty'][$i] + $pd->qty,
-                            'description' => $filtered['description'][$i] ?? $pd->description,
-                        ]);
-
-                        $stockTransaction = StockTransaction::query()->where('itemCode', $filtered['itemCode'][$i])->where('transactionDetailCode', $pd->code)->first();
-
-                        if ($stockTransaction) {
-                            $stockTransaction->update([
-                                'qtyIn' => $filtered['qty'][$i] + $stockTransaction->qtyIn,
-                                'date' => $request->date . ' ' . $request->time,
-                            ]);
-                        }
+                        $detailCode = $detail->code;
                     }
                 }
 
-                // $this->logActivity('Purchase Detail', $purchaseDetail, 'Create');
+                // Add stock and create StockTransaction
+                $stock = Stock::query()->where('itemCode', $filtered['itemCode'][$i])->first();
+
+                if ($stock) {
+                    $stock->increment('stockIn', $filtered['qty'][$i]);
+                } else {
+                    Stock::create([
+                        'code' => GenerateCode::generateCode('TSTC', true),
+                        'itemCode' => $filtered['itemCode'][$i],
+                        'stockIn' => $filtered['qty'][$i],
+                        'stockOut' => 0,
+                    ]);
+                }
+
+                // Find existing stock transaction (shouldn't be any, but just in case)
+                $stockTransaction = StockTransaction::query()
+                    ->where('transactionCode', $purchaseCode)
+                    ->where('transactionDetailCode', $detailCode)
+                    ->first();
+
+                if ($stockTransaction) {
+                    $stockTransaction->increment('qtyIn', $filtered['qty'][$i]);
+                } else {
+                    StockTransaction::create([
+                        'code' => GenerateCode::generateCode('FST', true),
+                        'itemCode' => $filtered['itemCode'][$i],
+                        'qtyIn' => $filtered['qty'][$i],
+                        'qtyOut' => 0,
+                        'transactionCode' => $purchaseCode,
+                        'transactionDetailCode' => $detailCode,
+                        'date' => $request->date . ' ' . $request->time,
+                        'transactionType' => 'IN',
+                    ]);
+                }
+            }
+
+            // Delete PurchaseDetail yang tidak ada di request
+            $sentDetailCodes = array_filter($filtered['purchaseDetailCode'] ?? []);
+            $deletedDetails = PurchaseDetail::where('purchaseCode', $purchaseCode)
+                ->whereNotIn('code', $sentDetailCodes)
+                ->get();
+
+            foreach ($deletedDetails as $deleted) {
+                $deleted->delete();
             }
         }
 
