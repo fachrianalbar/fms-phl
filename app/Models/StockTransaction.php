@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Inventory\Item;
+use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Traits\Uuid;
@@ -33,6 +34,11 @@ class StockTransaction extends Model
     public function item()
     {
         return $this->belongsTo(Item::class, 'itemCode', 'code');
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouseCode', 'code');
     }
 
     public function purchase()

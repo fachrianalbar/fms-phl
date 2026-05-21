@@ -2,24 +2,19 @@
 
 namespace App\Http\Controllers\Inventory;
 
-use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Stock;
+use App\Models\Inventory\Item;
 use App\Models\Inventory\Warehouse;
 use App\Models\StockTransaction;
-use App\Services\Inventory\StockService;
 use App\Services\Inventory\WarehouseService;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class StockController extends Controller
 {
-    protected $service;
-
     protected $title;
 
     protected $view;
@@ -28,9 +23,8 @@ class StockController extends Controller
 
     protected $warehouseSvc;
 
-    public function __construct(StockService $stockSvc, MenuService $menuSvc, WarehouseService $warehouseSvc)
+    public function __construct(MenuService $menuSvc, WarehouseService $warehouseSvc)
     {
-        $this->service = $stockSvc;
         $this->title = 'Stock';
         $this->view = 'inventory.stock.';
         $this->menuSvc = $menuSvc;
@@ -53,51 +47,57 @@ class StockController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $prefix = DB::getTablePrefix();
+            $query = $this->stockSummaryQuery();
 
-            // Use Query Builder with joins to get real-time stock per item per warehouse (avoid Eloquent aliasing/soft delete mismatches)
-            $query = DB::table('item')
-                ->select([
-                    'item.code as itemCode',
-                    'item.name as itemName',
-                    'warehouse.code as warehouseCode',
-                    'warehouse.name as warehouseName',
-                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) as totalIn'),
-                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as totalOut'),
-                    DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) - COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as stock'),
-                ])
-                ->crossJoin(DB::raw($prefix.'warehouse'))
-                ->whereNull('warehouse.deleted_at')
-                ->whereNull('item.deleted_at')
-                ->leftJoin(DB::raw($prefix.'stock_transaction'), function ($join) use ($prefix) {
-                    $join->on(DB::raw('CAST('.$prefix.'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'item.code AS CHAR)'))
-                        ->on(DB::raw('CAST('.$prefix.'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'warehouse.code AS CHAR)'));
-                })
-                ->whereNull('stock_transaction.deleted_at')
-                ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name')
-                ->orderBy('item.name', 'asc');
-
-            // No FilterHelper (Query Builder), apply search filter manually via DataTables filter closure
-
-            return Datatables::of($query)
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
                 })
-                ->filter(function ($query) use ($request, $prefix) {
+                ->filter(function ($query) use ($request) {
                     if ($request->has('search') && ! empty($request->search['value'])) {
                         $search = strtolower($request->search['value']);
-                        $query->where(function ($q) use ($search, $prefix) {
-                            $q->whereRaw('LOWER('.$prefix.'item.code) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER('.$prefix.'item.name) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER('.$prefix.'warehouse.name) LIKE ?', ['%'.$search.'%']);
+                        $itemCodes = Item::query()
+                            ->whereRaw('LOWER(code) LIKE ?', ['%'.$search.'%'])
+                            ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
+                            ->pluck('code')
+                            ->all();
+                        $warehouseCodes = Warehouse::query()
+                            ->whereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
+                            ->pluck('code')
+                            ->all();
+
+                        $query->where(function ($q) use ($itemCodes, $search, $warehouseCodes) {
+                            $q->whereRaw('LOWER(stock_transaction.itemCode) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(stock_transaction.warehouseCode) LIKE ?', ['%'.$search.'%']);
+
+                            if (! empty($itemCodes)) {
+                                $q->orWhereIn('stock_transaction.itemCode', $itemCodes);
+                            }
+
+                            if (! empty($warehouseCodes)) {
+                                $q->orWhereIn('stock_transaction.warehouseCode', $warehouseCodes);
+                            }
                         });
                     }
+                })
+                ->orderColumn('itemCode', function ($query, $order) {
+                    $query->orderBy('stock_transaction.itemCode', $order)
+                        ->orderBy('stock_transaction.warehouseCode', 'asc');
+                })
+                ->addColumn('itemName', function ($row) {
+                    return $row->item->name ?? '-';
+                })
+                ->addColumn('warehouseName', function ($row) {
+                    return $row->warehouse->name ?? $row->warehouseCode;
                 })
                 ->editColumn('stock', function ($row) {
                     return (int) $row->stock;
                 })
                 ->addColumn('action', function ($row) {
+                    $itemName = $row->item->name ?? '-';
+                    $warehouseName = $row->warehouse->name ?? $row->warehouseCode;
+
                     return '<div class="btn-group" role="group">
                                 <button type="button" class="btn btn-sm btn-primary btn-detail" 
                                     data-item-code="'.$row->itemCode.'" 
@@ -107,9 +107,9 @@ class StockController extends Controller
                                 </button>
                                 <button type="button" class="btn btn-sm btn-warning btn-edit-stock-awal" 
                                     data-item-code="'.$row->itemCode.'" 
-                                    data-item-name="'.$row->itemName.'"
+                                    data-item-name="'.e($itemName).'"
                                     data-warehouse-code="'.$row->warehouseCode.'"
-                                    data-warehouse-name="'.$row->warehouseName.'"
+                                    data-warehouse-name="'.e($warehouseName).'"
                                     title="Edit Stock Awal">
                                     <i class="mdi mdi-database-edit"></i>
                                 </button>
@@ -171,37 +171,16 @@ class StockController extends Controller
             ]
         );
 
-        $prefix = DB::getTablePrefix();
         $warehouseCode = $request->warehouseCode;
 
-        // Use same query as datatable for consistency
-        $query = DB::table('item')
-            ->select([
-                'item.code as itemCode',
-                'item.name as itemName',
-                'warehouse.code as warehouseCode',
-                'warehouse.name as warehouseName',
-                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) as totalIn'),
-                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as totalOut'),
-                DB::raw('COALESCE(SUM('.$prefix.'stock_transaction.qtyIn), 0) - COALESCE(SUM('.$prefix.'stock_transaction.qtyOut), 0) as stock'),
-            ])
-            ->crossJoin(DB::raw($prefix.'warehouse'))
-            ->whereNull('warehouse.deleted_at')
-            ->whereNull('item.deleted_at')
-            ->leftJoin(DB::raw($prefix.'stock_transaction'), function ($join) use ($prefix) {
-                $join->on(DB::raw('CAST('.$prefix.'stock_transaction.itemCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'item.code AS CHAR)'))
-                    ->on(DB::raw('CAST('.$prefix.'stock_transaction.warehouseCode AS CHAR)'), '=', DB::raw('CAST('.$prefix.'warehouse.code AS CHAR)'));
-            })
-            ->whereNull('stock_transaction.deleted_at')
-            ->groupBy('item.code', 'item.name', 'warehouse.code', 'warehouse.name')
-            ->orderBy('item.name', 'asc');
+        $stocks = $this->stockSummaryQuery($warehouseCode)
+            ->get()
+            ->map(function ($row) {
+                $row->itemName = $row->item->name ?? '-';
+                $row->warehouseName = $row->warehouse->name ?? $row->warehouseCode;
 
-        // Filter by warehouse if specified
-        if ($warehouseCode) {
-            $query->where('warehouse.code', $warehouseCode);
-        }
-
-        $stocks = $query->get();
+                return $row;
+            });
 
         $reportData = [
             'stocks' => $stocks,
@@ -213,6 +192,25 @@ class StockController extends Controller
         );
 
         return $mpdf->Output('Laporan Stock.pdf', 'I');
+    }
+
+    private function stockSummaryQuery(?string $warehouseCode = null)
+    {
+        $query = StockTransaction::query()
+            ->select('itemCode', 'warehouseCode')
+            ->selectRaw('COALESCE(SUM(qtyIn), 0) as totalIn')
+            ->selectRaw('COALESCE(SUM(qtyOut), 0) as totalOut')
+            ->selectRaw('COALESCE(SUM(qtyIn), 0) - COALESCE(SUM(qtyOut), 0) as stock')
+            ->with(['item', 'warehouse'])
+            ->groupBy('itemCode', 'warehouseCode')
+            ->orderBy('itemCode', 'asc')
+            ->orderBy('warehouseCode', 'asc');
+
+        if ($warehouseCode) {
+            $query->where('warehouseCode', $warehouseCode);
+        }
+
+        return $query;
     }
 
     public function updateInitialStock(Request $request)
@@ -289,7 +287,7 @@ class StockController extends Controller
                 ->orderBy('created_at', 'asc')
                 ->get();
 
-            return Datatables::of($query)
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->filter(function ($query) use ($request) {
                     if ($request->has('search') && ! empty($request->search['value'])) {
@@ -398,7 +396,7 @@ class StockController extends Controller
         $warehouseCode = $request->warehouseCode;
 
         // Get item info
-        $item = \App\Models\Inventory\Item::where('code', $itemCode)->first();
+        $item = Item::where('code', $itemCode)->first();
         $warehouse = Warehouse::where('code', $warehouseCode)->first();
 
         // Get all transactions for this item and warehouse

@@ -239,10 +239,12 @@
                     "data": 'itemCode'
                 },
                 {
-                    "data": 'itemName'
+                    "data": 'itemName',
+                    "orderable": false
                 },
                 {
-                    "data": 'warehouseName'
+                    "data": 'warehouseName',
+                    "orderable": false
                 },
                 {
                     "data": 'stock'
@@ -254,7 +256,7 @@
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 3, 4]
                 }
             ],
             "order": [
