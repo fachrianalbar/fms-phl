@@ -119,7 +119,7 @@
                         <td>{{ $item->warehouseName }}</td>
                         <td class="text-right">{{ number_format($item->totalIn, 0, ',', '.') }}</td>
                         <td class="text-right">{{ number_format($item->totalOut, 0, ',', '.') }}</td>
-                        <td class="text-right"><strong>{{ number_format($item->stock, 0, ',', '.') }}</strong></td>
+                        <td class="text-right"><strong>{{ number_format($item->stock, abs($item->stock - round($item->stock)) > 0.0001 ? 1 : 0, ',', '.') }}</strong></td>
                     </tr>
                     @endforeach
                 </tbody>

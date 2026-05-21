@@ -196,7 +196,7 @@
                             </select>
                         </td>
                         <td>
-                            <input class="form-control" type="number" min="0" step="0.1" name="qty[]"
+                            <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]"
                                 id="qty_{{ $loop->iteration }}" value="{{ $item->receivedQty }}">
                         </td>
                         <td>

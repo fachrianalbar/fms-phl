@@ -146,9 +146,9 @@
                             </td>
 
                             <td>
-                                <input class="form-control" type="number" min="1" step="1" name="qty[]"
-                                    id="qty_{{ $loop->iteration }}" value="{{ (int) $item->qty }}"
-                                    onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateTotalPrice({{ $loop->iteration }})">
+                                <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]"
+                                    id="qty_{{ $loop->iteration }}" value="{{ $item->qty + 0 }}"
+                                    onchange="updateTotalPrice({{ $loop->iteration }})">
                             </td>
                             <td>
                                 <input class="form-control" type="text" name="price[]"
@@ -381,7 +381,7 @@
                                 </select>
                             </td>
                             <td>
-                                <input class="form-control" type="number" min="1" step="1" name="qty[]" id="qty_${row}" value="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" onchange="updateTotalPrice(${row})">
+                                <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
                             </td>
                             <td>
                                 <input class="form-control" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this)" value="0">

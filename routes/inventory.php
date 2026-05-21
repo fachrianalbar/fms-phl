@@ -5,6 +5,7 @@ use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\ItemLocationController;
 use App\Http\Controllers\Inventory\ItemUnitController;
 use App\Http\Controllers\Inventory\StockController;
+use App\Http\Controllers\Inventory\StockSyncController;
 use App\Http\Controllers\Inventory\StockTransactionController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Inventory\WarehouseController;
@@ -20,6 +21,10 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::resource('item-unit', ItemUnitController::class);
     Route::resource('item-location', ItemLocationController::class);
     Route::resource('transaction-stock', StockTransactionController::class);
+    Route::get('stock-sync', [StockSyncController::class, 'index'])->name('stock-sync.index');
+    Route::post('stock-sync', [StockSyncController::class, 'sync'])->name('stock-sync.sync');
+    Route::post('stock-sync/prepare', [StockSyncController::class, 'prepare'])->name('stock-sync.prepare');
+    Route::post('stock-sync/process-chunk', [StockSyncController::class, 'processChunk'])->name('stock-sync.process-chunk');
     Route::resource('stock', StockController::class);
     Route::get('pdf-stock', [StockController::class, 'pdfStock'])->name('stock.pdf-stock');
     Route::post('stock/update-initial', [StockController::class, 'updateInitialStock'])->name('stock.update-initial');

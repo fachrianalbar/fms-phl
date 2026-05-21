@@ -90,16 +90,19 @@ class PurchaseConfirmationController extends Controller
 
         $data = $this->service->getById($id);
 
+        $rules = [
+            'receivedDate' => ['required', 'date', 'after_or_equal:'.$data->date],
+        ];
+
         if (count($selectedPurchase) == 1) {
-            $validator = Validator::make($request->all(), [
-                'receivedDate' => ['required', 'date', 'after_or_equal:'.$data->date],
-                'receivedQty' => ['required'],
-            ]);
+            $rules['receivedQty'] = ['required', 'numeric', 'gt:0', function ($attribute, $value, $fail) {
+                if (abs(((float) $value * 2) - round((float) $value * 2)) > 0.0001) {
+                    $fail('The received qty must be an integer or .5 increment.');
+                }
+            }];
         }
 
-        $validator = Validator::make($request->all(), [
-            'receivedDate' => ['required', 'date', 'after_or_equal:'.$data->date],
-        ]);
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -143,7 +146,7 @@ class PurchaseConfirmationController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');

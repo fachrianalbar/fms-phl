@@ -139,7 +139,7 @@
                                 </td>
                                 <td>
                                     <input class="form-control qty-input" type="number" name="qty[]" id="qty_1"
-                                        required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
+                                        required min="0.5" step="0.5" value="1">
                                 </td>
                                 <td>
                                     <input class="form-control text-end" type="text" name="price[]" id="price_1"
@@ -280,7 +280,7 @@
             let isJasa = itemType === 'jasa' || (foundItem && foundItem.type === 'jasa');
 
             $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(isJasa ? 1 : parseInt(itemQty));
+            $(`#qty_exist_${row}`).val(isJasa ? 1 : parseFloat(itemQty));
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             // calculate total for this row
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
@@ -405,7 +405,7 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.5" step="0.5" value="1">
                             </td>
                             <td>
                                 <input class="form-control text-end" type="text" name="price[]" id="price_${row}" readonly value="0">

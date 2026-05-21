@@ -165,7 +165,7 @@
                         </td>
 
                         <td>
-                            <input class="form-control w-50 " type="number" min="0" step="0.1" name="qty[]"
+                            <input class="form-control w-50 " type="number" min="0.5" step="0.5" name="qty[]"
                                 id="qty_{{ $loop->iteration }}" value="{{ $item->qty }}" readonly>
                         </td>
                         <td>
@@ -232,7 +232,7 @@
                                     for="receivedQty">{{ __('menu_purchase.received_qty') }}<i
                                         class="icofont icofont-warning-alt text-danger"></i></label>
                                 <input class="form-control" name="receivedQty" id="receivedQty" type="number"
-                                    placeholder="Received Qty">
+                                    min="0.5" step="0.5" placeholder="Received Qty">
                             </div>
 
                             <div class="col-md-12">
@@ -347,7 +347,8 @@
                     $('input[name="itemNameModal"]').val(response.item.name);
                     $('input[name="qtyModal"]').val(response.qty);
                     $('input[name="receivedQty"]').attr({
-                        "min": 1,
+                        "min": 0.5,
+                        "step": 0.5,
                         "max": response.qty
                     });
 

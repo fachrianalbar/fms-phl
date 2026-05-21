@@ -61,7 +61,7 @@ class StockTransactionController extends Controller
                 ->whereNull('warehouse.deleted_at')
                 ->groupBy('warehouse.id', 'warehouse.code', 'warehouse.name', 'warehouse.address', 'warehouse.created_at', 'warehouse.updated_at', 'warehouse.deleted_at');
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
@@ -110,9 +110,9 @@ class StockTransactionController extends Controller
                 return [
                     'itemCode' => $item->itemCode,
                     'itemName' => $item->item->name ?? '-',
-                    'totalIn' => (int) $item->totalIn,
-                    'totalOut' => (int) $item->totalOut,
-                    'stock' => (int) $item->totalIn - (int) $item->totalOut,
+                    'totalIn' => (float) $item->totalIn,
+                    'totalOut' => (float) $item->totalOut,
+                    'stock' => (float) $item->totalIn - (float) $item->totalOut,
                 ];
             });
 
@@ -140,8 +140,8 @@ class StockTransactionController extends Controller
                     'itemName' => $item->item->name ?? '-',
                     'transactionCode' => $item->transactionCode ?? '-',
                     'transactionType' => $transactionType,
-                    'qtyIn' => (int) $item->qtyIn,
-                    'qtyOut' => (int) $item->qtyOut,
+                    'qtyIn' => (float) $item->qtyIn,
+                    'qtyOut' => (float) $item->qtyOut,
                 ];
             });
 
@@ -181,9 +181,9 @@ class StockTransactionController extends Controller
                     return [
                         'itemCode' => $item->itemCode,
                         'itemName' => $item->item->name ?? '-',
-                        'totalIn' => (int) $item->totalIn,
-                        'totalOut' => (int) $item->totalOut,
-                        'stock' => (int) $item->totalIn - (int) $item->totalOut,
+                        'totalIn' => (float) $item->totalIn,
+                        'totalOut' => (float) $item->totalOut,
+                        'stock' => (float) $item->totalIn - (float) $item->totalOut,
                     ];
                 });
 
@@ -210,8 +210,8 @@ class StockTransactionController extends Controller
                         'itemName' => $item->item->name ?? '-',
                         'transactionCode' => $item->transactionCode ?? '-',
                         'transactionType' => $transactionType,
-                        'qtyIn' => (int) $item->qtyIn,
-                        'qtyOut' => (int) $item->qtyOut,
+                        'qtyIn' => (float) $item->qtyIn,
+                        'qtyOut' => (float) $item->qtyOut,
                     ];
                 });
 

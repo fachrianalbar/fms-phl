@@ -92,7 +92,7 @@ class StockController extends Controller
                     return $row->warehouse->name ?? $row->warehouseCode;
                 })
                 ->editColumn('stock', function ($row) {
-                    return (int) $row->stock;
+                    return $this->formatQuantity($row->stock);
                 })
                 ->addColumn('action', function ($row) {
                     $itemName = $row->item->name ?? '-';
@@ -149,8 +149,8 @@ class StockController extends Controller
                     'transactionType' => $typeLabel,
                     'itemCode' => $item->itemCode,
                     'itemName' => $item->item->name ?? '-',
-                    'qtyIn' => (int) $item->qtyIn,
-                    'qtyOut' => (int) $item->qtyOut,
+                    'qtyIn' => (float) $item->qtyIn,
+                    'qtyOut' => (float) $item->qtyOut,
                     'createdAt' => date('d/m/Y H:i', strtotime($item->created_at)),
                 ];
             });
@@ -202,6 +202,8 @@ class StockController extends Controller
             ->selectRaw('COALESCE(SUM(qtyOut), 0) as totalOut')
             ->selectRaw('COALESCE(SUM(qtyIn), 0) - COALESCE(SUM(qtyOut), 0) as stock')
             ->with(['item', 'warehouse'])
+            ->whereNotNull('warehouseCode')
+            ->where('warehouseCode', '!=', '')
             ->groupBy('itemCode', 'warehouseCode')
             ->orderBy('itemCode', 'asc')
             ->orderBy('warehouseCode', 'asc');
@@ -211,6 +213,14 @@ class StockController extends Controller
         }
 
         return $query;
+    }
+
+    private function formatQuantity($value): string
+    {
+        $quantity = (float) $value;
+        $decimals = abs($quantity - round($quantity)) > 0.0001 ? 1 : 0;
+
+        return number_format($quantity, $decimals, ',', '.');
     }
 
     public function updateInitialStock(Request $request)
@@ -336,10 +346,10 @@ class StockController extends Controller
                     return $row->item->name ?? '-';
                 })
                 ->addColumn('qtyIn', function ($row) {
-                    return number_format((int) $row->qtyIn, 0, ',', '.');
+                    return $this->formatQuantity($row->qtyIn);
                 })
                 ->addColumn('qtyOut', function ($row) {
-                    return number_format((int) $row->qtyOut, 0, ',', '.');
+                    return $this->formatQuantity($row->qtyOut);
                 })
                 ->addColumn('currentStock', function ($row) use ($allTransactions) {
                     // Calculate running balance up to this transaction
@@ -421,8 +431,8 @@ class StockController extends Controller
                     'date' => $trans->date ? date('d/m/Y', strtotime($trans->date)) : '-',
                     'transactionCode' => $trans->transactionCode ?? '-',
                     'transactionType' => $typeLabel,
-                    'qtyIn' => (int) $trans->qtyIn,
-                    'qtyOut' => (int) $trans->qtyOut,
+                    'qtyIn' => (float) $trans->qtyIn,
+                    'qtyOut' => (float) $trans->qtyOut,
                     'createdAt' => date('d/m/Y H:i', strtotime($trans->created_at)),
                 ];
             });

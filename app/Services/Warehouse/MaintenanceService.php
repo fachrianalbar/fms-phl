@@ -12,6 +12,7 @@ use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Traits\LogActivity;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
@@ -75,7 +76,7 @@ class MaintenanceService
                     'warehouseCode' => $warehouseCode,
                 ]);
                 break;
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
                     $retryCount++;
                     $code = GenerateCode::generateCodeAscDate(
@@ -106,6 +107,10 @@ class MaintenanceService
                 // Validasi jumlah tidak boleh nol atau negatif
                 if ($requestedQty <= 0) {
                     throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
+                }
+
+                if (abs(($requestedQty * 2) - round($requestedQty * 2)) > 0.0001) {
+                    throw new \Exception("Qty untuk item {$itemCode} harus bilangan bulat atau kelipatan 0.5.");
                 }
 
                 if (! $isJasa) {
@@ -139,7 +144,7 @@ class MaintenanceService
                     ->orderBy('created_at')
                     ->get();
 
-                /** @var \App\Models\Purchasing\PurchaseDetail $purchase */
+                /** @var PurchaseDetail $purchase */
                 foreach ($fifoPurchases as $purchase) {
                     if ($remainingQty <= 0) {
                         break;
@@ -172,7 +177,7 @@ class MaintenanceService
                     'qtyOut' => $requestedQty,
                     'transactionCode' => $data->code,
                     'transactionDetailCode' => $detail->code,
-                    'date' => $request->date . ' ' . $request->time,
+                    'date' => $request->date.' '.$request->time,
                     'transactionType' => 'OUT',
                     'warehouseCode' => $warehouseCode,
                 ]);
@@ -249,6 +254,10 @@ class MaintenanceService
                     throw new \Exception("Qty untuk item {$itemCode} tidak boleh 0.");
                 }
 
+                if (abs(($qty * 2) - round($qty * 2)) > 0.0001) {
+                    throw new \Exception("Qty untuk item {$itemCode} harus bilangan bulat atau kelipatan 0.5.");
+                }
+
                 $detail = $detailMap[$itemCode] ?? null;
 
                 if ($detail) {
@@ -309,7 +318,7 @@ class MaintenanceService
                         'itemCode' => $itemCode,
                         'qtyIn' => 0,
                         'qtyOut' => $qty,
-                        'date' => $request->date . ' ' . $request->time,
+                        'date' => $request->date.' '.$request->time,
                         'transactionType' => 'OUT',
                     ]
                 );
@@ -355,7 +364,7 @@ class MaintenanceService
 
         // 6. Update code agar tidak bentrok dengan unique constraint, lalu hapus data maintenance utama
         $data->update([
-            'code' => $data->code . '-DEL-' . str_pad((string)mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)
+            'code' => $data->code.'-DEL-'.str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT),
         ]);
         $this->service->query()->where('id', $id)->delete();
     }

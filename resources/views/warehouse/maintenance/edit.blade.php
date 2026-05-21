@@ -166,9 +166,9 @@
                                     </td>
                                     <td>
                                         <input class="form-control qty-input" type="number" name="qty[]"
-                                            id="qty_{{ $loop->iteration }}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57"
-                                            value="{{ (int) $it->qty }}">
-                                        <input type="hidden" name="original_qty[]" value="{{ (int) $it->qty }}">
+                                            id="qty_{{ $loop->iteration }}" required min="0.5" step="0.5"
+                                            value="{{ $it->qty + 0 }}">
+                                        <input type="hidden" name="original_qty[]" value="{{ $it->qty + 0 }}">
                                     </td>
                                     <td>
                                         <input class="form-control text-end" type="text" name="price[]"
@@ -284,7 +284,7 @@
                                 let itemQty = foundItem ? foundItem.stock : 0;
                                 let isJasa = foundItem && foundItem.type === 'jasa';
                                 $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-                                $(`#qty_exist_${row}`).val(isJasa ? 1 : parseInt(itemQty));
+                                $(`#qty_exist_${row}`).val(isJasa ? 1 : parseFloat(itemQty));
                             }
                         });
                     } else {
@@ -314,7 +314,7 @@
             let itemType = foundItem ? foundItem.type : $(`#itemCode_${row} option:selected`).data('type');
 
             $(`#item_type_${row}`).val(itemType === 'jasa' ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 1 : parseInt(itemQty));
+            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 1 : parseFloat(itemQty));
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
             let total = qty * parseFloat(itemPrice || 0);
@@ -381,7 +381,7 @@
             $('#purchaseDetails tr').each(function() {
                 let qtyInput = parseFloat($(this).find('input[name="qty[]"]').val());
                 let qtyExisting = parseFloat($(this).find('input[name="qty_exist[]"]').val());
-                let originalQty = parseInt($(this).find('input[name="original_qty[]"]').val()) || 0;
+                let originalQty = parseFloat($(this).find('input[name="original_qty[]"]').val()) || 0;
 
                 let code = $(this).find('select[name="itemCode[]"]').val();
                 let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name');
@@ -451,7 +451,7 @@
                                 <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
                             </td>
                             <td>
-                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="1" step="1" onkeypress="return event.charCode >= 48 && event.charCode <= 57" value="1">
+                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.5" step="0.5" value="1">
                                 <input type="hidden" name="original_qty[]" value="0">
 
                             </td>
@@ -470,7 +470,7 @@
                 // support both shapes: {code, name, stock, price} and {item:{code,name}, stockIn, stockOut}
                 let code = i.code || (i.item && i.item.code);
                 let name = i.name || (i.item && i.item.name);
-                let stock = parseInt(i.stock ?? (i.stockIn - i.stockOut || 0));
+                let stock = parseFloat(i.stock ?? (i.stockIn - i.stockOut || 0));
                 let price = i.price ?? (i.item ? i.item.price : 0);
                 html +=
                     `<option value="${code}" data-name="${name}" data-qty="${stock}" data-price="${price}" data-type="${i.type ?? (i.item ? i.item.type : '')}">${code} - ${name}</option>`;

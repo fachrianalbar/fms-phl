@@ -196,8 +196,8 @@
                         <td>{{ $transaction['date'] }}</td>
                         <td class="text-left">{{ $transaction['transactionCode'] }}</td>
                         <td>{{ $transaction['transactionType'] }}</td>
-                        <td class="text-right">{{ number_format($transaction['qtyIn'], 0, ',', '.') }}</td>
-                        <td class="text-right">{{ number_format($transaction['qtyOut'], 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($transaction['qtyIn'], abs($transaction['qtyIn'] - round($transaction['qtyIn'])) > 0.0001 ? 1 : 0, ',', '.') }}</td>
+                        <td class="text-right">{{ number_format($transaction['qtyOut'], abs($transaction['qtyOut'] - round($transaction['qtyOut'])) > 0.0001 ? 1 : 0, ',', '.') }}</td>
                         <td class="text-right highlight">{{ number_format($transaction['currentStock'], 0, ',', '.') }}</td>
                         <td class="text-left">{{ $transaction['createdAt'] }}</td>
                     </tr>

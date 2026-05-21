@@ -6,8 +6,10 @@ use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Item;
+use App\Models\Inventory\Stock;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
+use App\Models\StockTransaction;
 use App\Services\Inventory\SupplierService;
 use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseService;
@@ -93,9 +95,13 @@ class PurchaseController extends Controller
                 }
             }],
             'qty' => ['required', 'array', function ($attribute, $value, $fail) {
-                foreach ($value as $price) {
-                    if ($price == 0 || $price == null) {
-                        $fail('The qty cannot be 0.');
+                foreach ($value as $qty) {
+                    if (! is_numeric($qty) || (float) $qty <= 0) {
+                        $fail('The qty must be greater than 0.');
+                    }
+
+                    if (abs(((float) $qty * 2) - round((float) $qty * 2)) > 0.0001) {
+                        $fail('The qty must be an integer or .5 increment.');
                     }
                 }
             }],
@@ -199,9 +205,13 @@ class PurchaseController extends Controller
                 }
             }],
             'qty' => ['required', 'array', function ($attribute, $value, $fail) {
-                foreach ($value as $price) {
-                    if ($price == 0 || $price == null) {
-                        $fail('The qty cannot be 0.');
+                foreach ($value as $qty) {
+                    if (! is_numeric($qty) || (float) $qty <= 0) {
+                        $fail('The qty must be greater than 0.');
+                    }
+
+                    if (abs(((float) $qty * 2) - round((float) $qty * 2)) > 0.0001) {
+                        $fail('The qty must be an integer or .5 increment.');
                     }
                 }
             }],
@@ -241,9 +251,9 @@ class PurchaseController extends Controller
         $pd = PurchaseDetail::where('id', $id)->first();
 
         // Rollback stock transaction
-        $stockTransaction = \App\Models\StockTransaction::where('transactionDetailCode', $pd->code)->first();
+        $stockTransaction = StockTransaction::where('transactionDetailCode', $pd->code)->first();
         if ($stockTransaction) {
-            \App\Models\Inventory\Stock::where('itemCode', $stockTransaction->itemCode)->decrement('stockIn', $stockTransaction->qtyIn);
+            Stock::where('itemCode', $stockTransaction->itemCode)->decrement('stockIn', $stockTransaction->qtyIn);
             $stockTransaction->delete();
         }
 
@@ -275,7 +285,7 @@ class PurchaseController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');

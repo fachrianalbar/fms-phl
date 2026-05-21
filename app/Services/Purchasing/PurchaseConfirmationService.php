@@ -62,7 +62,7 @@ class PurchaseConfirmationService
         $receivedQty = null;
 
         if (count($selectedPurchase) == 1) {
-            $receivedQty = $request->receivedQty;
+            $receivedQty = (float) $request->receivedQty;
         }
 
         $filtered = Arr::only($request->all(), ['qty', 'itemCode', 'purchaseDetailCode', 'price']);
@@ -73,7 +73,7 @@ class PurchaseConfirmationService
             $pd->update([
                 'status' => 1,
                 'description' => $request->description,
-                'receivedQty' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
+                'receivedQty' => $receivedQty ?: $filtered['qty'][$i],
                 'qtyUsed' => 0,
             ]);
 
@@ -91,7 +91,7 @@ class PurchaseConfirmationService
                 Stock::create([
                     'code' => GenerateCode::generateCode('FSTC', true),
                     'itemCode' => $pd->itemCode,
-                    'stockIn' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
+                    'stockIn' => $receivedQty ?: $filtered['qty'][$i],
                     'stockOut' => 0,
                 ]);
             }
@@ -99,7 +99,7 @@ class PurchaseConfirmationService
             StockTransaction::create([
                 'code' => GenerateCode::generateCode('FPD', true),
                 'itemCode' => $pd->itemCode,
-                'qty' => $receivedQty ? (int) $receivedQty : $filtered['qty'][$i],
+                'qty' => $receivedQty ?: $filtered['qty'][$i],
                 'transactionCode' => $pd->code,
                 'date' => Carbon::now(),
                 'type' => 'IN',

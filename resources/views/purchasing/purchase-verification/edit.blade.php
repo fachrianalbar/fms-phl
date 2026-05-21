@@ -151,7 +151,7 @@
                         </td>
 
                         <td>
-                            <input class="form-control" type="number" min="0" step="0.1" name="qty[]"
+                            <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]"
                                 id="qty_{{ $loop->iteration }}" value="{{ $item->qty }}" readonly
                                 onchange="updateTotalPrice({{ $loop->iteration }})">
                         </td>
@@ -315,7 +315,7 @@
                                 </select>
                             </td>s
                             <td>
-                                <input class="form-control" type="number" min="0.1" step="0.1" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
+                                <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
                             </td>
                             <td>
                                 <input class="form-control" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this)" value="0">
