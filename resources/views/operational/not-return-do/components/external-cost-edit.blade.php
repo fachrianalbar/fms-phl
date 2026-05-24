@@ -13,14 +13,15 @@
                     <tr>
                         <th class="text-center" style="width: 5%">#</th>
                         <th>{{ __('menu_order.component_name') }}</th>
+                        <th style="width: 20%">Tipe</th>
                         <th>{{ __('menu_order.nominal') }}</th>
                         <th>{{ __('menu_order.description') }}</th>
                     </tr>
                 </thead>
                 <tbody id="externalCostForm">
                     @php
-                        // Filter only "On Charge" costs with is_route = 0 (external fleet costs)
-                        $externalCosts = $cost->where('type', 'On Charge')->where('is_route', 0);
+                        // Filter all manual costs with is_route = 0
+                        $externalCosts = $cost->where('is_route', 0);
                     @endphp
 
                     @if ($externalCosts->count() > 0)
@@ -45,6 +46,13 @@
                                 </select>
                             </td>
                             <td>
+                                <select class="form-control js-example-basic-single cost-type-select w-100" style="width:100%" 
+                                    name="externalCostType[]" id="costType_edit_{{ $loop->iteration }}" required>
+                                    <option value="On Charge" {{ $item->type == 'On Charge' ? 'selected' : '' }}>On Charge</option>
+                                    <option value="Off Charge" {{ $item->type == 'Off Charge' ? 'selected' : '' }}>Off Charge</option>
+                                </select>
+                            </td>
+                            <td>
                                 <input class="form-control nominal-input text-end" name="externalCostNominal[]" 
                                     type="text" oninput="formatAngka(this)" placeholder="{{ __('menu_order.nominal') }}" 
                                     value="{{ number_format($item->nominal, 0, ',', '.') }}" required>
@@ -60,7 +68,7 @@
                         @endforeach
                     @else
                         <tr id="empty-row">
-                            <td colspan="4" class="text-center text-muted py-3">
+                            <td colspan="5" class="text-center text-muted py-3">
                                 {{ __('general.no_data') }}
                             </td>
                         </tr>
@@ -98,13 +106,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeExternalCostSelect2() {
-    const selects = document.querySelectorAll('.cost-component-select');
+    const selects = document.querySelectorAll('.cost-component-select, .cost-type-select');
     if (typeof $ !== 'undefined' && $.fn.select2) {
         selects.forEach(select => {
             if (!$(select).hasClass('select2-hidden-accessible')) {
                 $(select).select2({
-                    placeholder: "{{ __('general.choose') }}...",
-                    allowClear: true,
+                    placeholder: $(select).hasClass('cost-component-select') ? "{{ __('general.choose') }}..." : undefined,
+                    allowClear: $(select).hasClass('cost-component-select'),
                     width: '100%'
                 });
             }
@@ -141,6 +149,13 @@ function addExternalCostRow() {
             </select>
         </td>
         <td>
+            <select class="form-control js-example-basic-single cost-type-select w-100" style="width:100%" 
+                name="externalCostType[]" id="costType_${rowCount}" required>
+                <option value="On Charge" selected>On Charge</option>
+                <option value="Off Charge">Off Charge</option>
+            </select>
+        </td>
+        <td>
             <input class="form-control nominal-input text-end" name="externalCostNominal[]" 
                 type="text" oninput="formatAngka(this)" placeholder="{{ __('menu_order.nominal') }}" required>
         </td>
@@ -154,12 +169,16 @@ function addExternalCostRow() {
     
     tbody.appendChild(newRow);
     
-    // Initialize Select2 for the new select element
+    // Initialize Select2 for the new select elements
     const newSelect = newRow.querySelector(`#costComponent_${rowCount}`);
+    const newTypeSelect = newRow.querySelector(`#costType_${rowCount}`);
     if (typeof $ !== 'undefined' && $.fn.select2) {
         $(newSelect).select2({
             placeholder: "{{ __('general.choose') }}...",
             allowClear: true,
+            width: '100%'
+        });
+        $(newTypeSelect).select2({
             width: '100%'
         });
     }
@@ -202,7 +221,7 @@ function removeExternalCost(button) {
             const newEmptyRow = document.createElement('tr');
             newEmptyRow.id = 'empty-row';
             newEmptyRow.innerHTML = `
-                <td colspan="4" class="text-center text-muted py-3">
+                <td colspan="5" class="text-center text-muted py-3">
                     {{ __('general.no_data') }}
                 </td>
             `;

@@ -15,4 +15,5 @@ return [
     'fleet' => 'Armada',
     'driver' => 'Sopir',
     'return_date' => 'Tanggal Pengembalian',
+    'action' => 'Aksi',
 ];

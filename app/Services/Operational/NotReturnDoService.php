@@ -131,13 +131,18 @@ class NotReturnDoService
             logger()->info('Route-based OrderCost cleared for external fleet on NotReturnDo update', ['order' => $order->code]);
         }
 
-        // Handle "On Charge" costs (is_route = 0) for both internal and external fleets
+        // Handle "On Charge" and "Off Charge" manual costs (is_route = 0) for both internal and external fleets
         // Only delete existing costs if the request actually provides at least one valid component
         if ($request->has('externalCostComponent')) {
             // Normalize to array if single value provided
             $externalCostComponentsRaw = $request->externalCostComponent;
             if (! is_array($externalCostComponentsRaw)) {
                 $externalCostComponentsRaw = [$externalCostComponentsRaw];
+            }
+
+            $externalCostTypesRaw = $request->externalCostType ?? [];
+            if (! is_array($externalCostTypesRaw)) {
+                $externalCostTypesRaw = [$externalCostTypesRaw];
             }
 
             $externalCostNominalsRaw = $request->externalCostNominal ?? [];
@@ -170,18 +175,16 @@ class NotReturnDoService
                     }
                 }
 
-                // Delete existing external/on-charge costs that are not in the current list
+                // Delete existing manual costs (is_route = 0) that are not in the current list
                 $existingIds = array_filter($externalCostIdsRaw, fn($id) => ! empty($id));
                 if (! empty($existingIds)) {
                     $this->orderCost->where('orderCode', $order->code)
-                        ->where('type', 'On Charge')
                         ->where('is_route', 0)
                         ->whereNotIn('id', $existingIds)
                         ->delete();
                 } else {
-                    // If no existing IDs, delete all existing On Charge costs
+                    // If no existing IDs, delete all existing manual costs
                     $this->orderCost->where('orderCode', $order->code)
-                        ->where('type', 'On Charge')
                         ->where('is_route', 0)
                         ->delete();
                 }
@@ -191,6 +194,7 @@ class NotReturnDoService
                         continue;
                     }
 
+                    $type = $externalCostTypesRaw[$index] ?? 'On Charge';
                     $nominalRaw = $externalCostNominalsRaw[$index] ?? 0;
                     $nominal = (int) str_replace('.', '', (string) $nominalRaw);
                     $description = $externalCostDescriptionsRaw[$index] ?? null;
@@ -207,6 +211,7 @@ class NotReturnDoService
                         $this->orderCost->where('id', $existingId)->update([
                             'componentType' => $componentCode,
                             'nominal' => $nominal,
+                            'type' => $type,
                             'description' => $description,
                         ]);
                     } else {
@@ -216,7 +221,7 @@ class NotReturnDoService
                             'orderCode' => $order->code,
                             'componentType' => $componentCode,
                             'nominal' => $nominal,
-                            'type' => 'On Charge',
+                            'type' => $type,
                             'description' => $description,
                             'is_route' => 0,
                         ]);

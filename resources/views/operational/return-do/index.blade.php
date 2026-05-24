@@ -38,6 +38,7 @@
                     <thead>
                         <tr>
                             <th>Detail</th>
+                            <th>{{ __('menu_return_do.action') }}</th>
                             <th>{{ __('menu_return_do.no') }}</th>
                             <th>{{ __('menu_return_do.order_date') }}</th>
                             <th>{{ __('menu_return_do.shipment_no') }}</th>
@@ -157,6 +158,9 @@
                     "data": 'detail'
                 },
                 {
+                    "data": 'action'
+                },
+                {
                     "data": 'DT_RowIndex'
                 },
                 {
@@ -186,15 +190,15 @@
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 2]
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1]
+                    "targets": [0, 1, 2]
                 }
             ],
             "order": [
-                [2, 'asc']
+                [3, 'asc']
             ]
         })
     });

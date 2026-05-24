@@ -15,4 +15,5 @@ return [
     'fleet' => 'Fleet',
     'driver' => 'Driver',
     'return_date' => 'Return Date',
+    'action' => 'Action',
 ];
