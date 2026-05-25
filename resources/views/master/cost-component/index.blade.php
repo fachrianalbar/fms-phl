@@ -129,7 +129,7 @@
                             <th>No</th>
                             <th>Name</th>
                             <th>Price</th>
-                            {{-- <th>Type</th> --}}
+                            <th>Type</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -234,6 +234,12 @@
                 },
                 {
                     "data": 'formatted_price'
+                },
+                {
+                    "data": 'type',
+                    "render": function(data, type, row) {
+                        return data ? data.charAt(0).toUpperCase() + data.slice(1) : '-';
+                    }
                 },
             ],
             "columnDefs": [{

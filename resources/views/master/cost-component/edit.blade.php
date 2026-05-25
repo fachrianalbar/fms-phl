@@ -34,18 +34,18 @@
                     <label class="form-label" for="price">Price</label>
                     <input class="form-control" name="price" id="price" value="{{ $data->price ? number_format($data->price, 0, ',', '.') : '' }}" type="text"
                         placeholder="Price (e.g: 1.000.000)">
-                </div> {{-- <div class="col-md-12 position-relative">
+                <div class="col-md-12 position-relative">
                         <label class="form-label" for="type">Type</label>
                         <select class="js-example-basic-single" name="type" id="type" required="">
                             <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                 @foreach ($type as $item)
                 <option value="{{ $item->value }}" {{ $item->value == $data->type ? 'selected' : '' }}>
-                    {{ $item->value }}
+                    {{ ucfirst($item->value) }}
                 </option>
                 @endforeach
                 </select>
                 <div class="invalid-tooltip">Please select a valid state.</div>
-        </div> --}}
+        </div>
 
 
         <div class="col-12">
