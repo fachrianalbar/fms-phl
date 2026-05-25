@@ -237,12 +237,38 @@ class NotReturnDoService
                     'valid' => count($externalCostComponents),
                     'count_after' => $countAfter,
                 ]);
-            } else {
-                // No valid components provided; keep existing costs untouched
-                logger()->info('No external cost components provided in request; existing costs kept', ['order' => $order->code]);
             }
-        } else {
-            logger()->info('No external cost component fields present in request', ['order' => $order->code]);
+        }
+        // Update Material Data if provided in the request
+        if (isset($request->materialCode)) {
+            $order->orderMaterial()->delete();
+
+            $materialCodes = $request->materialCode;
+            $unitCodes = $request->unitCode ?? [];
+            $materialQties = $request->materialQty ?? [];
+            $unitCodes2 = $request->unitCode2 ?? [];
+            $materialQties2 = $request->materialQty2 ?? [];
+
+            for ($i = 0; $i < count($materialCodes); $i++) {
+                if (empty($materialCodes[$i])) {
+                    continue;
+                }
+
+                // Sleep for 1ms to ensure unique millisecond component in code generator
+                usleep(1000);
+
+                $orderMaterial = $order->orderMaterial()->create([
+                    'code' => GenerateCode::generateCode('FOM', true),
+                    'orderCode' => $order->code,
+                    'materialCode' => $materialCodes[$i] ?? null,
+                    'unitCode' => $unitCodes[$i] ?? null,
+                    'materialQty' => isset($materialQties[$i]) ? (int) $materialQties[$i] : null,
+                    'unitCode2' => $unitCodes2[$i] ?? null,
+                    'materialQty2' => isset($materialQties2[$i]) ? (int) $materialQties2[$i] : null,
+                ]);
+
+                $this->logActivity('Order Material', $orderMaterial, 'Create');
+            }
         }
 
         // Log after update

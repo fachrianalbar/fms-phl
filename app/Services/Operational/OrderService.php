@@ -551,6 +551,8 @@ class OrderService
         $filtered = Arr::only($request->all(), ['materialCode', 'unitCode', 'materialQty', 'unitCode2', 'materialQty2']);
 
         for ($i = 0; $i < count($request->materialCode); $i++) {
+            // Sleep for 1ms to ensure unique millisecond component in code generator
+            usleep(1000);
 
             $orderMaterial = $this->orderMaterial->create([
                 'code' => GenerateCode::generateCode('FOM', true),
