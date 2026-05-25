@@ -1,104 +1,281 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Driver Salary Report</title>
+    <title>Slip Gaji Driver</title>
     <style>
         @page {
-            margin: 10px
+            margin: 15mm 10mm 10mm 10mm;
         }
 
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #fff;
+            font-size: 12px;
         }
 
-        .container {
+        .slip-container {
             width: 100%;
-            margin: 40px auto;
-            padding: 10px;
+            padding: 5mm;
+            page-break-after: always;
         }
 
-        h1 {
+        .slip-container:last-child {
+            page-break-after: auto;
+        }
+
+        /* Header */
+        .header {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .header-left {
+            float: left;
+            width: 30%;
             text-align: center;
-            font-size: 20px;
-            margin-bottom: 20px;
         }
 
-        .info {
-            margin-bottom: 20px;
+        .header-center {
+            float: left;
+            width: 40%;
+        }
+
+        .header-right {
+            float: right;
+            width: 30%;
+            text-align: center;
+        }
+
+        .header::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .company-name {
             font-size: 14px;
+            font-weight: bold;
+            margin-top: 5px;
         }
 
-        .info p {
-            margin: 0;
-            line-height: 1.5;
+        .slip-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
         }
 
-        table {
+        .info-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .info-table td {
+            padding: 2px 5px;
+            font-size: 12px;
+        }
+
+        .info-label {
+            width: 100px;
+            font-weight: normal;
+        }
+
+        .info-separator {
+            width: 15px;
+            text-align: center;
+        }
+
+        /* Main table */
+        .salary-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-bottom: 10px;
         }
 
-        table th,
-        table td {
+        .salary-table th,
+        .salary-table td {
             border: 1px solid #000;
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        .salary-table th {
+            font-weight: bold;
             text-align: center;
-            padding: 8px;
-            font-size: 14px;
+            background-color: #f5f5f5;
         }
 
-        table th {
+        .salary-table .col-no {
+            width: 8%;
+            text-align: center;
+            font-size: 18px;
             font-weight: bold;
         }
 
-        .total-label {
+        .salary-table .col-date {
+            width: 18%;
+        }
+
+        .salary-table .col-route {
+            width: 50%;
+        }
+
+        .salary-table .col-salary {
+            width: 24%;
             text-align: right;
+        }
+
+        .total-row td {
             font-weight: bold;
         }
 
-        .total-amount {
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .footer-table td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+
+        .footer-label {
             font-weight: bold;
+        }
+
+        .signature-area {
+            text-align: right;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 12px;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>DRIVER SALARY REPORT</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Plate Number</th>
-                    <th>Driver Name</th>
-                    <th>Ritase</th>
-                    <th>Nilai</th>
-                    <th>Keterangan</th>
-                    <th>TTD</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($data as $item)
-                    <tr>
-                        <td>{{ $loop->iteration }}</td>
-                        <td>{{ isset($item->fleet->plateNumber) ? $item->fleet->plateNumber : '' }}</td>
-                        <td>{{ isset($item->driver->name) ? $item->driver->name : '' }}</td>
-                        <td>{{ $item->total_orders }}</td>
-                        <td>{{ number_format($item->total_orders * 100000, 0, ',', '.') }}</td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                @endforeach
+    @foreach ($driverData as $driver)
+        <div class="slip-container">
+            {{-- Header --}}
+            <div class="header">
+                <div class="header-right">
+                    <div class="slip-title">SLIP GAJI</div>
+                </div>
+            </div>
 
-            </tbody>
-        </table>
-    </div>
+            {{-- Info --}}
+            <table class="info-table">
+                <tr>
+                    <td class="info-label">Nama</td>
+                    <td class="info-separator">=</td>
+                    <td><strong>{{ $driver['driverName'] }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="info-label">No. Polisi</td>
+                    <td class="info-separator">=</td>
+                    <td><strong>{{ $driver['plateNumber'] }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="info-label">Bulan</td>
+                    <td class="info-separator">=</td>
+                    <td><strong>{{ $driver['month'] }}</strong></td>
+                </tr>
+            </table>
+
+            {{-- Main salary table --}}
+            <table class="salary-table">
+                <thead>
+                    <tr>
+                        <th>No.RIT</th>
+                        <th>Tanggal</th>
+                        <th>Rute</th>
+                        <th>Jumlah Gaji</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($driver['rows'] as $row)
+                        <tr>
+                            <td class="col-no">{{ $row['no'] }}</td>
+                            <td class="col-date">{{ $row['date'] }}</td>
+                            <td class="col-route">{{ $row['route'] }}</td>
+                            <td class="col-salary">Rp. {{ number_format($row['salary'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+
+                    {{-- Empty rows to fill up to 8 minimum --}}
+                    @for ($i = count($driver['rows']); $i < 8; $i++)
+                        <tr>
+                            <td class="col-no">{{ $i + 1 }}</td>
+                            <td class="col-date">&nbsp;</td>
+                            <td class="col-route">&nbsp;</td>
+                            <td class="col-salary">&nbsp;</td>
+                        </tr>
+                    @endfor
+
+                    {{-- Total row --}}
+                    <tr class="total-row">
+                        <td colspan="3" style="text-align: left;">Total Gaji</td>
+                        <td class="col-salary">Rp. {{ number_format($driver['grandTotal'], 0, ',', '.') }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            {{-- Footer info --}}
+            <table class="footer-table">
+                <tr>
+                    <td class="footer-label" style="width: 25%;">Potong Utang :</td>
+                    <td style="width: 20%;">Utang Tgl :</td>
+                    <td style="width: 35%;"></td>
+                    <td style="width: 20%;"></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Utang Tgl :</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td>Utang Tgl :</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class="footer-label">Gaji Kenek</td>
+                    <td colspan="2"></td>
+                    <td style="text-align: right;">Rp.</td>
+                </tr>
+                <tr>
+                    <td class="footer-label">Bonus ...</td>
+                    <td colspan="2"></td>
+                    <td style="text-align: right;">Rp.</td>
+                </tr>
+                <tr>
+                    <td class="footer-label">Bonus ...</td>
+                    <td colspan="2"></td>
+                    <td style="text-align: right;">Rp.</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td style="text-align: center; font-weight: bold;">Total Gaji :</td>
+                    <td style="text-align: right; font-weight: bold;">Rp. {{ number_format($driver['grandTotal'], 0, ',', '.') }}</td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td style="text-align: center; font-weight: bold;">Diterima Tanggal :</td>
+                    <td></td>
+                </tr>
+            </table>
+
+            <div class="signature-area">
+                Tanda Tangan
+            </div>
+        </div>
+    @endforeach
 </body>
 
 </html>

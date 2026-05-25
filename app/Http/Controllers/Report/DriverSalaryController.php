@@ -5,25 +5,20 @@ namespace App\Http\Controllers\Report;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Operational\Order;
+use App\Models\Operational\OrderCost;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\View;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
-use ZipArchive;
 
 class DriverSalaryController extends Controller
 {
-    protected $service;
-
     protected $title;
 
     protected $view;
-
-    protected $menuSvc;
 
     protected $driverSvc;
 
@@ -33,7 +28,6 @@ class DriverSalaryController extends Controller
         EmployeeService $driverSvc,
         FleetService $fleetSvc,
     ) {
-        $this->service = '';
         $this->title = 'Driver Salary';
         $this->view = 'report.driver-salary.';
         $this->driverSvc = $driverSvc;
@@ -48,190 +42,168 @@ class DriverSalaryController extends Controller
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
 
-        return view($this->view.'index')
+        return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('driver', $driver)
             ->with('fleet', $fleet)
             ->with('title', $this->title);
     }
 
-    public function datatable(Request $request)
+    /**
+     * Build the base query for driver salary report.
+     * Returns orders that have at least one OrderCost whose CostComponent.type = 'salary'.
+     */
+    private function buildSalaryQuery(Request $request)
     {
-        if ($request->ajax()) {
-            $data = Order::select('fleetCode', 'driverCode', DB::raw('COUNT(*) as total_orders'))
-                ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
-                ->join('employee', 'employee.code', '=', 'order.driverCode')
-                ->with(['fleet', 'driver'])
-                ->whereNull('order.deleted_at')
-                ->groupBy('fleetCode', 'fleet.code')
-                ->groupBy('driverCode', 'employee.code');
-            // Use fleet.plateNumber
-            // ->orderBy('fleet.plateNumber');  // Order by plateNumber
+        $query = Order::with(['fleet', 'driver', 'route.originLocation', 'route.destinationLocation'])
+            ->whereHas('cost', function ($q) {
+                $q->whereHas('costComponent', function ($q2) {
+                    $q2->where('type', 'salary');
+                });
+            })
+            ->whereNull('order.deleted_at');
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'fleetCode' => $request->fleetCode,
-                'driverCode' => $request->driverCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
-
-            $dateFilters = [
-                'orderDate' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
-                })
-
-                ->editColumn('driver.name', function ($row) {
-                    $driver = '';
-
-                    if (isset($row->driver->name)) {
-                        $driver = $row->driver->name;
-                    }
-
-                    return $driver;
-                })
-                ->addColumn('value', function ($row) {
-                    $value = $row->total_orders * 100000;
-
-                    return number_format($value, 0, ',', '.');
-                })
-                ->addColumn('description', function ($row) {
-                    return '';
-                })
-                ->addColumn('ttd', function ($row) {
-                    return '';
-                })
-
-                ->rawColumns(['fleet.plateNumber', 'driver.name', 'value', 'description', 'ttd'])
-                ->toJson();
-        }
-    }
-
-    public function pdfDriverSalary(Request $request)
-    {
-        // Definisikan kolom filter dengan alias
-        // Definisikan kolom filter dengan alias
+        // Apply filters
         $filters = [
-            'fleetCode' => $request->fleetCode,
             'driverCode' => $request->driverCode,
+            'fleetCode'  => $request->fleetCode,
         ];
-
-        // Hubungkan alias ke relasi dan kolom yang sesuai
-        $relations = [];
 
         $dateFilters = [
             'orderDate' => [
                 'start' => $request->startDate,
-                'end' => $request->endDate,
+                'end'   => $request->endDate,
             ],
         ];
 
-        $query = Order::select('fleetCode', 'driverCode', DB::raw('COUNT(*) as total_orders'))
-            ->join('fleet', 'fleet.code', '=', 'order.fleetCode')
-            ->join('employee', 'employee.code', '=', 'order.driverCode')
-            ->with(['fleet', 'driver'])
-            ->whereNull('order.deleted_at')
-            ->groupBy('fleetCode', 'fleet.code')
-            ->groupBy('driverCode', 'employee.code');
+        $query = FilterHelper::applyFilters($query, $filters, [], $dateFilters);
 
-        $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
-
-        // $mpdf = new Mpdf(
-        //     [
-        //         'orientation' => 'P',
-        //         'format' => [215, 330],
-        //     ]
-        // );
-
-        // $mpdf->setAutoTopMargin = 'stretch';
-        // $mpdf->setAutoBottomMargin = 'stretch';
-
-        // // $mpdf->WriteHTML(
-        // //     view($this->view . 'report.driver-salary-pdf')
-        // //         ->with('data', $data->get())
-        // // );
-        // // $mpdf->WriteHTML(
-        // //     view('finance.invoice.pdf.customer.teguh-wibawa-bhakti-persada')
-        // //         ->with('data', $data->get())
-        // // );
-        // $mpdf->WriteHTML(
-        //     view('finance.invoice.pdf.header.phl')
-        //         ->with('data', $data->get())
-        // );
-
-        // return $mpdf->Output('Driver Salary Report.pdf', 'I');
-
-        $viewDir = resource_path('views/finance/invoice/pdf/customer');
-        $bladeFiles = File::files($viewDir);
-        $outputFolder = storage_path('app/customer-invoice');
-        $zipPath = storage_path('app/customer-invoice.zip');
-
-        // Buat folder output kalau belum ada
-        if (! File::exists($outputFolder)) {
-            File::makeDirectory($outputFolder, 0755, true);
-        } else {
-            File::cleanDirectory($outputFolder);
-        }
-
-        // Generate PDF dari setiap blade
-        foreach ($bladeFiles as $bladeFile) {
-            $filename = str_replace('.blade.php', '', $bladeFile->getFilename());
-            $viewName = 'finance.invoice.pdf.customer.'.$filename;
-
-            // Render view ke HTML
-            $html = View::make($viewName, ['data' => $this->getDummyData()])->render();
-
-            // ✅ Konfigurasi mPDF milik kamu
-            $mpdf = new Mpdf([
-                'orientation' => 'P',
-                'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp'),
-
-            ]);
-            $mpdf->setAutoTopMargin = 'stretch';
-            $mpdf->setAutoBottomMargin = 'stretch';
-
-            // Tulis HTML ke PDF
-            $mpdf->WriteHTML($html);
-            $mpdf->Output("{$outputFolder}/{$filename}.pdf", \Mpdf\Output\Destination::FILE);
-        }
-
-        // Buat ZIP
-        $zip = new ZipArchive;
-        if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) === true) {
-            foreach (File::files($outputFolder) as $pdfFile) {
-                $zip->addFile($pdfFile->getRealPath(), 'customer-invoice/'.$pdfFile->getFilename());
-            }
-            $zip->close();
-        }
-
-        // Kirim ZIP ke user
-        return response()->download($zipPath)->deleteFileAfterSend(true);
+        return $query->orderBy('driverCode')->orderBy('orderDate', 'asc');
     }
 
-    protected function getDummyData()
+    /**
+     * Get salary total for a single order (sum of OrderCost where costComponent.type = 'salary').
+     */
+    private function getSalaryTotal($orderCode)
     {
-        return [
-            'customer_name' => 'Contoh Customer',
-            'total' => 'Rp1.000.000',
-            // Tambah data lain sesuai isi Blade kamu
-        ];
+        return OrderCost::where('orderCode', $orderCode)
+            ->whereHas('costComponent', function ($q) {
+                $q->where('type', 'salary');
+            })
+            ->sum('nominal');
+    }
+
+    /**
+     * AJAX datatable endpoint - returns flat order rows for DataTable rendering.
+     */
+    public function datatable(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = $this->buildSalaryQuery($request);
+
+            return Datatables::of($query)
+                ->addIndexColumn()
+                ->editColumn('orderDate', function ($row) {
+                    return Carbon::parse($row->orderDate)->format('d-m-Y');
+                })
+                ->addColumn('driverName', function ($row) {
+                    return $row->driver->name ?? '-';
+                })
+                ->addColumn('plateNumber', function ($row) {
+                    return $row->fleet->plateNumber ?? '-';
+                })
+                ->addColumn('routeName', function ($row) {
+                    if (! $row->route) {
+                        return '-';
+                    }
+                    $origin = $row->route->originLocation->name ?? '';
+                    $dest   = $row->route->destinationLocation->name ?? '';
+
+                    return $row->route->name . ' (' . $origin . ' - ' . $dest . ')';
+                })
+                ->addColumn('salaryTotal', function ($row) {
+                    $total = $this->getSalaryTotal($row->code);
+
+                    return number_format($total, 0, ',', '.');
+                })
+                ->addColumn('salaryTotalRaw', function ($row) {
+                    return $this->getSalaryTotal($row->code);
+                })
+                ->rawColumns(['driverName', 'plateNumber', 'routeName', 'salaryTotal'])
+                ->toJson();
+        }
+    }
+
+    /**
+     * Generate PDF Slip Gaji per driver.
+     */
+    public function pdfDriverSalary(Request $request)
+    {
+        $query = $this->buildSalaryQuery($request);
+        $orders = $query->get();
+
+        // Group by driverCode
+        $grouped = $orders->groupBy('driverCode');
+
+        // Build data structure per driver
+        $driverData = [];
+        foreach ($grouped as $driverCode => $driverOrders) {
+            $driver = $driverOrders->first()->driver;
+            $fleet  = $driverOrders->first()->fleet;
+
+            $rows = [];
+            $grandTotal = 0;
+
+            foreach ($driverOrders as $index => $order) {
+                $salaryTotal = $this->getSalaryTotal($order->code);
+                $grandTotal += $salaryTotal;
+
+                $routeName = '-';
+                if ($order->route) {
+                    $origin = $order->route->originLocation->name ?? '';
+                    $dest   = $order->route->destinationLocation->name ?? '';
+                    $routeName = $order->route->name . ' (' . $origin . ' - ' . $dest . ')';
+                }
+
+                $rows[] = [
+                    'no'        => $index + 1,
+                    'date'      => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                    'route'     => $routeName,
+                    'salary'    => $salaryTotal,
+                ];
+            }
+
+            // Determine month label from date filter or from data
+            $monthLabel = '';
+            if ($request->startDate) {
+                $monthLabel = Carbon::parse($request->startDate)->translatedFormat('F Y');
+            } elseif ($driverOrders->count() > 0) {
+                $monthLabel = Carbon::parse($driverOrders->first()->orderDate)->translatedFormat('F Y');
+            }
+
+            $driverData[] = [
+                'driverName'   => $driver->name ?? '-',
+                'plateNumber'  => $fleet->plateNumber ?? '-',
+                'month'        => $monthLabel,
+                'rows'         => $rows,
+                'grandTotal'   => $grandTotal,
+            ];
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format'      => [215, 330],
+            'tempDir'     => storage_path('app/mpdf-temp'),
+        ]);
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $html = view($this->view . 'report.driver-salary-pdf')
+            ->with('driverData', $driverData)
+            ->render();
+
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output('Slip_Gaji_Driver.pdf', 'I');
     }
 }
