@@ -219,46 +219,57 @@
                     {{-- Total row --}}
                     <tr class="total-row">
                         <td colspan="3" style="text-align: left;">Total Gaji</td>
-                        <td class="col-salary">Rp. {{ number_format($driver['grandTotal'], 0, ',', '.') }}</td>
+                        <td class="col-salary">Rp. {{ number_format($driver['totalSalary'] ?? $driver['grandTotal'], 0, ',', '.') }}</td>
                     </tr>
                 </tbody>
             </table>
 
-            {{-- Footer info --}}
+            {{-- Footer info with adjustments --}}
             <table class="footer-table">
-                <tr>
-                    <td class="footer-label" style="width: 25%;">Potong Utang :</td>
-                    <td style="width: 20%;">Utang Tgl :</td>
-                    <td style="width: 35%;"></td>
-                    <td style="width: 20%;"></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>Utang Tgl :</td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td></td>
-                    <td>Utang Tgl :</td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td class="footer-label">Gaji Kenek</td>
-                    <td colspan="2"></td>
-                    <td style="text-align: right;">Rp.</td>
-                </tr>
-                <tr>
-                    <td class="footer-label">Bonus ...</td>
-                    <td colspan="2"></td>
-                    <td style="text-align: right;">Rp.</td>
-                </tr>
-                <tr>
-                    <td class="footer-label">Bonus ...</td>
-                    <td colspan="2"></td>
-                    <td style="text-align: right;">Rp.</td>
-                </tr>
+                @php
+                    $adjustments = $driver['adjustments'] ?? [];
+                    $deductions = array_filter($adjustments, fn($a) => $a['type'] === 'deduction');
+                    $additions = array_filter($adjustments, fn($a) => $a['type'] === 'addition');
+                @endphp
+
+                {{-- Deductions --}}
+                @if(count($deductions) > 0)
+                    @foreach($deductions as $idx => $adj)
+                        <tr>
+                            <td class="footer-label" style="width: 25%;">{{ $idx === array_key_first($deductions) ? 'Potongan :' : '' }}</td>
+                            <td style="width: 20%;">Tgl : {{ $adj['date'] }}</td>
+                            <td style="width: 35%;">{{ $adj['description'] }}</td>
+                            <td style="width: 20%; text-align: right;">- Rp. {{ number_format($adj['nominal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td class="footer-label" style="width: 25%;">Potongan :</td>
+                        <td style="width: 20%;"></td>
+                        <td style="width: 35%;"></td>
+                        <td style="width: 20%;"></td>
+                    </tr>
+                @endif
+
+                {{-- Additions --}}
+                @if(count($additions) > 0)
+                    @foreach($additions as $idx => $adj)
+                        <tr>
+                            <td class="footer-label">{{ $idx === array_key_first($additions) ? 'Tambahan :' : '' }}</td>
+                            <td>Tgl : {{ $adj['date'] }}</td>
+                            <td>{{ $adj['description'] }}</td>
+                            <td style="text-align: right;">+ Rp. {{ number_format($adj['nominal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td class="footer-label">Tambahan :</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                @endif
+
                 <tr>
                     <td colspan="2"></td>
                     <td style="text-align: center; font-weight: bold;">Total Gaji :</td>

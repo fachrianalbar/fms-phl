@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Report;
 
 use App\Helpers\FilterHelper;
+use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Report\DriverSalary;
+use App\Models\Report\DriverSalaryDetail;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -135,7 +139,265 @@ class DriverSalaryController extends Controller
     }
 
     /**
-     * Generate PDF Slip Gaji per driver.
+     * Store a new processed driver salary.
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'driverCode' => 'required|string',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'adjustments' => 'nullable|array',
+            'adjustments.*.date' => 'required|date',
+            'adjustments.*.description' => 'required|string',
+            'adjustments.*.type' => 'required|in:addition,deduction',
+            'adjustments.*.nominal' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('report.driver-salary.index')
+                ->with('fail', $validator->errors()->first());
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Calculate total salary from orders
+            $orders = Order::whereHas('cost', function ($q) {
+                    $q->whereHas('costComponent', function ($q2) {
+                        $q2->where('type', 'salary');
+                    });
+                })
+                ->where('driverCode', $request->driverCode)
+                ->whereDate('orderDate', '>=', $request->startDate)
+                ->whereDate('orderDate', '<=', $request->endDate)
+                ->whereNull('deleted_at')
+                ->get();
+
+            $totalSalary = 0;
+            foreach ($orders as $order) {
+                $totalSalary += $this->getSalaryTotal($order->code);
+            }
+
+            // Calculate total adjustment
+            $totalAdjustment = 0;
+            $adjustments = $request->adjustments ?? [];
+            foreach ($adjustments as $adj) {
+                if ($adj['type'] === 'addition') {
+                    $totalAdjustment += floatval($adj['nominal']);
+                } else {
+                    $totalAdjustment -= floatval($adj['nominal']);
+                }
+            }
+
+            $grandTotal = $totalSalary + $totalAdjustment;
+
+            // Create driver salary record
+            $driverSalary = DriverSalary::create([
+                'code' => GenerateCode::generateCode('DS'),
+                'driverCode' => $request->driverCode,
+                'startDate' => $request->startDate,
+                'endDate' => $request->endDate,
+                'totalSalary' => $totalSalary,
+                'totalAdjustment' => $totalAdjustment,
+                'grandTotal' => $grandTotal,
+                'notes' => $request->notes,
+            ]);
+
+            // Create adjustment details
+            foreach ($adjustments as $adj) {
+                DriverSalaryDetail::create([
+                    'code' => GenerateCode::generateCode('DSD', true),
+                    'driverSalaryCode' => $driverSalary->code,
+                    'date' => $adj['date'],
+                    'description' => $adj['description'],
+                    'type' => $adj['type'],
+                    'nominal' => floatval($adj['nominal']),
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('report.driver-salary.index')
+                ->with('success', 'Gaji driver berhasil diproses. Kode: ' . $driverSalary->code);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route('report.driver-salary.index')
+                ->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+        }
+    }
+
+    /**
+     * Show processed salary detail.
+     */
+    public function show($id)
+    {
+        $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
+
+        // Get orders for this driver and period
+        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
+            ->whereHas('cost', function ($q) {
+                $q->whereHas('costComponent', function ($q2) {
+                    $q2->where('type', 'salary');
+                });
+            })
+            ->where('driverCode', $salary->driverCode)
+            ->whereDate('orderDate', '>=', $salary->startDate)
+            ->whereDate('orderDate', '<=', $salary->endDate)
+            ->whereNull('deleted_at')
+            ->orderBy('orderDate', 'asc')
+            ->get();
+
+        // Attach salary total to each order
+        foreach ($orders as $order) {
+            $order->salaryAmount = $this->getSalaryTotal($order->code);
+        }
+
+        return view($this->view . 'show')
+            ->with('salary', $salary)
+            ->with('orders', $orders)
+            ->with('title', $this->title . ' - Detail');
+    }
+
+    /**
+     * Delete a processed salary.
+     */
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $salary = DriverSalary::findOrFail($id);
+            // Delete details first
+            DriverSalaryDetail::where('driverSalaryCode', $salary->code)->delete();
+            $salary->delete();
+
+            DB::commit();
+
+            return redirect()->route('report.driver-salary.index')
+                ->with('success', 'Data gaji berhasil dihapus.');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route('report.driver-salary.index')
+                ->with('fail', 'Gagal menghapus: ' . $th->getMessage());
+        }
+    }
+
+    /**
+     * AJAX datatable for processed salaries.
+     */
+    public function datatableProcessed(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = DriverSalary::with('driver')->orderBy('created_at', 'desc');
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('driverName', function ($row) {
+                    return $row->driver->name ?? '-';
+                })
+                ->editColumn('startDate', function ($row) {
+                    return Carbon::parse($row->startDate)->format('d-m-Y');
+                })
+                ->editColumn('endDate', function ($row) {
+                    return Carbon::parse($row->endDate)->format('d-m-Y');
+                })
+                ->addColumn('totalSalaryFormatted', function ($row) {
+                    return number_format($row->totalSalary, 0, ',', '.');
+                })
+                ->addColumn('totalAdjustmentFormatted', function ($row) {
+                    $prefix = $row->totalAdjustment >= 0 ? '+' : '';
+                    return $prefix . number_format($row->totalAdjustment, 0, ',', '.');
+                })
+                ->addColumn('grandTotalFormatted', function ($row) {
+                    return number_format($row->grandTotal, 0, ',', '.');
+                })
+                ->addColumn('action', function ($row) {
+                    $showUrl = route('report.driver-salary.show', $row->id);
+                    $pdfUrl = route('report.driver-salary.pdf-processed', $row->id);
+                    $buttons = '<div class="btn-group" role="group">';
+                    $buttons .= '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="Detail"><i class="mdi mdi-eye fs-14"></i></a>';
+                    $buttons .= '<a href="' . $pdfUrl . '" target="_blank" class="btn btn-sm btn-outline-danger" title="PDF"><i class="mdi mdi-file-pdf-box fs-14"></i></a>';
+                    $buttons .= '<button type="button" onclick="deleteSalary(\'' . $row->id . '\')" class="btn btn-sm btn-outline-warning" title="Hapus"><i class="mdi mdi-delete fs-14"></i></button>';
+                    $buttons .= '</div>';
+                    return $buttons;
+                })
+                ->rawColumns(['action'])
+                ->toJson();
+        }
+    }
+
+    /**
+     * AJAX - Get order salary data for preview before processing.
+     */
+    public function getOrderSalary(Request $request)
+    {
+        $driverCode = $request->driverCode;
+        $startDate = $request->startDate;
+        $endDate = $request->endDate;
+
+        if (!$driverCode || !$startDate || !$endDate) {
+            return response()->json(['error' => 'Parameter tidak lengkap'], 422);
+        }
+
+        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
+            ->whereHas('cost', function ($q) {
+                $q->whereHas('costComponent', function ($q2) {
+                    $q2->where('type', 'salary');
+                });
+            })
+            ->where('driverCode', $driverCode)
+            ->whereDate('orderDate', '>=', $startDate)
+            ->whereDate('orderDate', '<=', $endDate)
+            ->whereNull('deleted_at')
+            ->orderBy('orderDate', 'asc')
+            ->get();
+
+        $result = [];
+        $totalSalary = 0;
+
+        foreach ($orders as $order) {
+            $salary = $this->getSalaryTotal($order->code);
+            $totalSalary += $salary;
+
+            $routeName = '-';
+            if ($order->route) {
+                $origin = $order->route->originLocation->name ?? '';
+                $dest = $order->route->destinationLocation->name ?? '';
+                $routeName = $order->route->name . ' (' . $origin . ' - ' . $dest . ')';
+            }
+
+            $result[] = [
+                'orderCode' => $order->code,
+                'orderDate' => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                'plateNumber' => $order->fleet->plateNumber ?? '-',
+                'routeName' => $routeName,
+                'salary' => $salary,
+                'salaryFormatted' => number_format($salary, 0, ',', '.'),
+            ];
+        }
+
+        return response()->json([
+            'orders' => $result,
+            'totalSalary' => $totalSalary,
+            'totalSalaryFormatted' => number_format($totalSalary, 0, ',', '.'),
+        ]);
+    }
+
+    /**
+     * AJAX - Get processed salary detail.
+     */
+    public function getDetail($id)
+    {
+        $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
+
+        return response()->json($salary);
+    }
+
+    /**
+     * Generate PDF Slip Gaji per driver (from report filter - original behavior).
      */
     public function pdfDriverSalary(Request $request)
     {
@@ -187,6 +449,7 @@ class DriverSalaryController extends Controller
                 'month'        => $monthLabel,
                 'rows'         => $rows,
                 'grandTotal'   => $grandTotal,
+                'adjustments'  => [],
             ];
         }
 
@@ -205,5 +468,94 @@ class DriverSalaryController extends Controller
         $mpdf->WriteHTML($html);
 
         return $mpdf->Output('Slip_Gaji_Driver.pdf', 'I');
+    }
+
+    /**
+     * Generate PDF Slip Gaji for a processed salary.
+     */
+    public function pdfDriverSalaryProcessed($id)
+    {
+        $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
+
+        // Get orders for this driver and period
+        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
+            ->whereHas('cost', function ($q) {
+                $q->whereHas('costComponent', function ($q2) {
+                    $q2->where('type', 'salary');
+                });
+            })
+            ->where('driverCode', $salary->driverCode)
+            ->whereDate('orderDate', '>=', $salary->startDate)
+            ->whereDate('orderDate', '<=', $salary->endDate)
+            ->whereNull('deleted_at')
+            ->orderBy('orderDate', 'asc')
+            ->get();
+
+        $rows = [];
+        $grandTotal = 0;
+        $fleet = null;
+
+        foreach ($orders as $index => $order) {
+            $salaryTotal = $this->getSalaryTotal($order->code);
+            $grandTotal += $salaryTotal;
+
+            if (!$fleet && $order->fleet) {
+                $fleet = $order->fleet;
+            }
+
+            $routeName = '-';
+            if ($order->route) {
+                $origin = $order->route->originLocation->name ?? '';
+                $dest   = $order->route->destinationLocation->name ?? '';
+                $routeName = $order->route->name . ' (' . $origin . ' - ' . $dest . ')';
+            }
+
+            $rows[] = [
+                'no'     => $index + 1,
+                'date'   => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                'route'  => $routeName,
+                'salary' => $salaryTotal,
+            ];
+        }
+
+        $monthLabel = Carbon::parse($salary->startDate)->translatedFormat('F Y');
+
+        // Build adjustments array
+        $adjustments = [];
+        foreach ($salary->details as $detail) {
+            $adjustments[] = [
+                'date' => Carbon::parse($detail->date)->format('d-m-Y'),
+                'description' => $detail->description,
+                'type' => $detail->type,
+                'nominal' => $detail->nominal,
+            ];
+        }
+
+        $driverData = [[
+            'driverName'     => $salary->driver->name ?? '-',
+            'plateNumber'    => $fleet->plateNumber ?? '-',
+            'month'          => $monthLabel,
+            'rows'           => $rows,
+            'grandTotal'     => $salary->grandTotal,
+            'totalSalary'    => $salary->totalSalary,
+            'totalAdjustment' => $salary->totalAdjustment,
+            'adjustments'    => $adjustments,
+        ]];
+
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format'      => [215, 330],
+            'tempDir'     => storage_path('app/mpdf-temp'),
+        ]);
+        $mpdf->setAutoTopMargin = 'stretch';
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        $html = view($this->view . 'report.driver-salary-pdf')
+            ->with('driverData', $driverData)
+            ->render();
+
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output('Slip_Gaji_' . ($salary->driver->name ?? 'Driver') . '.pdf', 'I');
     }
 }

@@ -16,6 +16,7 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('excel-profit-loss', [ProfitLossController::class, 'excelProfitLoss'])->name('profit-loss.excel-profit-loss');
     Route::resource('driver-salary', DriverSalaryController::class);
     Route::get('pdf-driver-salary', [DriverSalaryController::class, 'pdfDriverSalary'])->name('driver-salary.pdf-driver-salary');
+    Route::get('pdf-driver-salary-processed/{id}', [DriverSalaryController::class, 'pdfDriverSalaryProcessed'])->name('driver-salary.pdf-processed');
     Route::resource('driver-tonase', DriverTonaseController::class);
     Route::get('excel-driver-tonase', [DriverTonaseController::class, 'excelDriverTonase'])->name('driver-tonase.excel-driver-tonase');
     Route::resource('fleet-tonase', FleetTonaseController::class);
@@ -46,6 +47,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('profit-loss-order', [ProfitLossController::class, 'datatableOrder'])->name('profit-loss-order');
     Route::get('profit-loss-maintenance', [ProfitLossController::class, 'datatableMaintenance'])->name('profit-loss-maintenance');
     Route::get('driver-salary', [DriverSalaryController::class, 'datatable'])->name('driver-salary');
+    Route::get('driver-salary-processed', [DriverSalaryController::class, 'datatableProcessed'])->name('driver-salary-processed');
     Route::get('fleet-tonase', [FleetTonaseController::class, 'datatable'])->name('fleet-tonase');
     Route::get('driver-tonase', [DriverTonaseController::class, 'datatable'])->name('driver-tonase');
     Route::get('all-order-list', [AllOrderListController::class, 'datatable'])->name('all-order-list');
@@ -63,4 +65,6 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('maintenance-fleet-detail-items/{maintenanceCode}', [MaintenancePerFleetController::class, 'detailItems'])->name('maintenance-fleet-detail-items');
     Route::get('maintenance-company-internal-detail-items/{maintenanceCode}', [MaintenancePerCompanyController::class, 'detailItems'])->name('maintenance-company-internal-detail-items');
     Route::get('supplier-purchase-detail-items/{purchaseCode}', [SupplierPurchaseController::class, 'detailItems'])->name('supplier-purchase-detail-items');
+    Route::get('driver-salary-orders', [DriverSalaryController::class, 'getOrderSalary'])->name('driver-salary-orders');
+    Route::get('driver-salary-detail/{id}', [DriverSalaryController::class, 'getDetail'])->name('driver-salary-detail');
 });
