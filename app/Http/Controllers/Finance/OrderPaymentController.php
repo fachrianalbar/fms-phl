@@ -141,28 +141,12 @@ class OrderPaymentController extends Controller
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->addColumn('cost', function ($row) {
-                    $cost = 0;
-                    foreach ($row->cost as $item) {
-                        $cost += $item->nominal;
-                    }
+                    $cost = $this->getRouteAmount($row);
 
                     return '' . number_format($cost, 0, ',', '.');
                 })
                 ->addColumn('pph', function ($row) {
-                    $cost = 0;
-                    foreach ($row->cost as $item) {
-                        $cost += $item->nominal;
-                    }
-
-                    $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
-
-                    return '' . number_format($pph, 0, ',', '.');
-                })
-                ->addColumn('pph', function ($row) {
-                    $cost = 0;
-                    foreach ($row->cost as $item) {
-                        $cost += $item->nominal;
-                    }
+                    $cost = $this->getRouteAmount($row);
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
 
@@ -172,10 +156,7 @@ class OrderPaymentController extends Controller
                     return '' . number_format($row->orderPayment->total ?? 0, 0, ',', '.');
                 })
                 ->addColumn('total', function ($row) {
-                    $cost = 0;
-                    foreach ($row->cost as $item) {
-                        $cost += $item->nominal;
-                    }
+                    $cost = $this->getRouteAmount($row);
 
                     $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
                     $payment = $row->orderPayment->total ?? 0;
@@ -293,7 +274,7 @@ class OrderPaymentController extends Controller
         $totalGrandTotal = 0;
 
         foreach ($orders as $order) {
-            $costSum = $order->cost ? $order->cost->sum('nominal') : 0;
+            $costSum = $this->getRouteAmount($order);
             $pph = $order->customer->pph ?? 0;
             $pphAmount = ($costSum * $pph) / 100;
             $grandTotal = $costSum + $pphAmount;
@@ -324,6 +305,7 @@ class OrderPaymentController extends Controller
                 ->with('totalAdditionalCost', 0)
                 ->with('totalPphAmount', $totalPphAmount)
                 ->with('totalGrandTotal', $totalGrandTotal)
+                ->with('isOrderPaymentPdf', true)
         );
 
         return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');
@@ -332,5 +314,10 @@ class OrderPaymentController extends Controller
     public function orderDetailPayment($orderCode)
     {
         return $this->service->orderPaymentDetail($orderCode);
+    }
+
+    private function getRouteAmount($order): float
+    {
+        return (float) ($order->routeAmount ?? 0);
     }
 }

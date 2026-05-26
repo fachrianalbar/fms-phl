@@ -109,12 +109,18 @@
             @endphp
             @foreach ($orders as $order)
                 @php
-                    $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
-                    $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+                    $isOrderPaymentPdf = $isOrderPaymentPdf ?? false;
+                    $qty = (float) ($order->qty ?? 0);
+                    $routeAmount = (float) ($order->routeAmount ?? 0);
+                    $unitPrice = $isOrderPaymentPdf
+                        ? (float) ($order->price ?? ($qty > 0 ? $routeAmount / $qty : $routeAmount))
+                        : (float) ($order->route->personalVendorPrice ?? 0);
+                    $subtotal = $isOrderPaymentPdf ? $routeAmount : $qty * $unitPrice;
+                    $additionalCost = $isOrderPaymentPdf ? 0 : ($order->cost ? $order->cost->sum('nominal') : 0);
                     $totalBefore = $subtotal + $additionalCost;
-                    $pph = $order->fleet->company->pph ?? 0;
+                    $pph = $isOrderPaymentPdf ? $order->customer->pph ?? 0 : $order->fleet->company->pph ?? 0;
                     $pphAmount = ($totalBefore * $pph) / 100;
-                    $grandTotal = $totalBefore - $pphAmount;
+                    $grandTotal = $isOrderPaymentPdf ? $totalBefore + $pphAmount : $totalBefore - $pphAmount;
 
                     $subtotalAll += $subtotal;
                     $additionalCostAll += $additionalCost;
@@ -133,7 +139,7 @@
                     <td>{{ $order->route->originLocation->name ?? '-' }}</td>
                     <td>{{ $order->route->destinationLocation->name ?? '-' }}</td>
                     <td>{{ number_format($order->qty ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format($order->route->personalVendorPrice ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format($unitPrice, 0, ',', '.') }}</td>
                     <td style="text-align: right;">{{ number_format($subtotal, 0, ',', '.') }}</td>
                 </tr>
             @endforeach

@@ -60,34 +60,33 @@ class OrderPaymentService
         }
 
         $payment = $status == 1 ? $request->total : $request->paymentAmount;
+        $billingCost = (float) ($request->cost ?? 0);
+        $billingPph = (float) ($request->pph ?? 0);
+        $billingTotal = $billingCost + $billingPph;
 
         if (! $orderPayment) {
             $data = $this->service->create([
                 'code' => GenerateCode::generateCode('FOP'),
                 'orderCode' => $request->orderCode,
-                'cost' => $request->cost,
-                'pph' => $request->pph,
+                'cost' => $billingCost,
+                'pph' => $billingPph,
                 'total' => $payment,
+                'status' => ((float) $payment >= $billingTotal) ? 1 : $status,
             ]);
 
             $this->logActivity($title, $data, 'Create');
         } else {
             $this->logActivity($title, $orderPayment, 'Before Update');
 
-            if ($request->type == 'Dp') {
-                if ($orderPayment->total + $request->paymentAmount == $orderPayment->cost + $orderPayment->pph) {
-                    $orderPayment->update([
-                        'status' => 1,
-                    ]);
-                }
-            } else {
-                $orderPayment->update([
-                    'status' => 1,
-                ]);
-            }
+            $newTotal = $status == 1
+                ? (float) $request->total + (float) $orderPayment->total
+                : (float) $request->paymentAmount + (float) $orderPayment->total;
 
             $orderPayment->update([
-                'total' => $status == 1 ? $request->total + $orderPayment->total : $request->paymentAmount + $orderPayment->total,
+                'cost' => $billingCost,
+                'pph' => $billingPph,
+                'total' => $newTotal,
+                'status' => $newTotal >= $billingTotal ? 1 : 0,
             ]);
 
             $this->logActivity($title, $orderPayment->refresh(), 'After Update');
@@ -123,12 +122,9 @@ class OrderPaymentService
 
     public function orderPaymentDetail($orderCode)
     {
-        $data = $this->order->where('code', $orderCode)->with(['customer', 'orderPayment', 'orderPaymentHistory', 'cost'])->first();
+        $data = $this->order->where('code', $orderCode)->with(['customer', 'orderPayment', 'orderPaymentHistory'])->first();
 
-        $cost = 0;
-        foreach ($data->cost as $item) {
-            $cost += $item->nominal;
-        }
+        $cost = (float) ($data->routeAmount ?? 0);
 
         $pph = isset($data->customer->pph) ? $cost * ($data->customer->pph / 100) : 0;
         $payment = $data->orderPayment->total ?? 0;
