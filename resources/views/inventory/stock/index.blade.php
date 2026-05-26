@@ -399,7 +399,7 @@
                 "pageLength": 10,
                 "lengthChange": true,
                 "searching": true,
-                "ordering": true,
+                "ordering": false,
                 "info": true,
                 "autoWidth": false,
                 "columns": [
@@ -411,11 +411,11 @@
                     },
                     {
                         "data": "date",
-                        "orderable": true
+                        "orderable": false
                     },
                     {
                         "data": "transactionCode",
-                        "orderable": true
+                        "orderable": false
                     },
                     {
                         "data": "transactionTypeHtml",
@@ -424,12 +424,12 @@
                     },
                     {
                         "data": "qtyIn",
-                        "orderable": true,
+                        "orderable": false,
                         "className": "text-end"
                     },
                     {
                         "data": "qtyOut",
-                        "orderable": true,
+                        "orderable": false,
                         "className": "text-end"
                     },
                     {
@@ -440,7 +440,7 @@
                     },
                     {
                         "data": "createdAt",
-                        "orderable": true,
+                        "orderable": false,
                         "className": "text-end"
                     }
                 ],
@@ -451,7 +451,7 @@
                         "targets": [0]
                     }
                 ],
-                "order": [[1, 'desc']],
+                "order": [],
                 "language": {
                     "search": "Cari:",
                     "lengthMenu": "Tampilkan _MENU_ data",

@@ -74,14 +74,14 @@
 
     <!-- Header Nota Pembayaran -->
     <div style="margin-top: 20px;">
-        <h3 style="text-align: center; margin: 5px 0;">NOTA PEMBAYARAN MULTI</h3>
+        <h3 style="text-align: center; margin: 5px 0;">NOTA PEMBAYARAN</h3>
     </div>
 
     <!-- Info Pembayaran -->
     <table style="margin-top: 15px;">
         <tr>
             <td style="width: 15%;">Untuk :</td>
-            <td style="width: 50%;">{{ $customer->company->name ?? '-' }}</td>
+            <td style="width: 50%;">{{ $customer->name ?? '-' }}</td>
             <td style="width: 15%;">Tanggal :</td>
             <td style="width: 20%; font-weight: bold;">{{ Carbon::now()->format('d/m/Y') }}</td>
         </tr>

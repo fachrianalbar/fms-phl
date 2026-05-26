@@ -126,10 +126,7 @@ class StockController extends Controller
         $warehouseCode = $request->warehouseCode;
 
         // Get all transactions for this item and warehouse
-        $transactions = StockTransaction::with(['item'])
-            ->where('itemCode', $itemCode)
-            ->where('warehouseCode', $warehouseCode)
-            ->orderBy('created_at', 'asc')
+        $transactions = $this->stockDetailQuery($itemCode, $warehouseCode, ['item'])
             ->get()
             ->map(function ($item) {
                 // Map transaction type to readable labels
@@ -285,17 +282,8 @@ class StockController extends Controller
         $warehouseCode = $request->warehouseCode;
 
         if ($request->ajax()) {
-            // Query ordered by newest first for display
-            $query = StockTransaction::with(['item'])
-                ->where('itemCode', $itemCode)
-                ->where('warehouseCode', $warehouseCode)
-                ->orderBy('created_at', 'desc');
-
-            // Get all transactions in ascending order to calculate running balance correctly
-            $allTransactions = StockTransaction::where('itemCode', $itemCode)
-                ->where('warehouseCode', $warehouseCode)
-                ->orderBy('created_at', 'asc')
-                ->get();
+            $query = $this->stockDetailNewestQuery($itemCode, $warehouseCode, ['item']);
+            $runningBalances = $this->runningBalancesByTransactionId($itemCode, $warehouseCode);
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -309,7 +297,7 @@ class StockController extends Controller
                         });
                     }
                 })
-                ->addColumn('date', function ($row) {
+                ->editColumn('date', function ($row) {
                     return $row->date ? date('d/m/Y', strtotime($row->date)) : '-';
                 })
                 ->addColumn('transactionType', function ($row) {
@@ -351,17 +339,8 @@ class StockController extends Controller
                 ->addColumn('qtyOut', function ($row) {
                     return $this->formatQuantity($row->qtyOut);
                 })
-                ->addColumn('currentStock', function ($row) use ($allTransactions) {
-                    // Calculate running balance up to this transaction
-                    $runningBalance = 0;
-                    foreach ($allTransactions as $transaction) {
-                        $runningBalance += $transaction->qtyIn - $transaction->qtyOut;
-                        if ($transaction->id === $row->id) {
-                            break;
-                        }
-                    }
-
-                    return number_format($runningBalance, 0, ',', '.');
+                ->addColumn('currentStock', function ($row) use ($runningBalances) {
+                    return $this->formatQuantity($runningBalances[$row->id] ?? 0);
                 })
                 ->addColumn('createdAt', function ($row) {
                     return date('d/m/Y H:i', strtotime($row->created_at));
@@ -410,12 +389,11 @@ class StockController extends Controller
         $warehouse = Warehouse::where('code', $warehouseCode)->first();
 
         // Get all transactions for this item and warehouse
-        $transactions = StockTransaction::with(['item'])
-            ->where('itemCode', $itemCode)
-            ->where('warehouseCode', $warehouseCode)
-            ->orderBy('created_at', 'asc')
+        $runningBalances = $this->runningBalancesByTransactionId($itemCode, $warehouseCode);
+
+        $transactions = $this->stockDetailNewestQuery($itemCode, $warehouseCode, ['item'])
             ->get()
-            ->map(function ($trans) {
+            ->map(function ($trans) use ($runningBalances) {
                 $typeLabel = $trans->transactionType ?? '-';
 
                 if ($trans->transactionType === 'INITIAL') {
@@ -433,18 +411,10 @@ class StockController extends Controller
                     'transactionType' => $typeLabel,
                     'qtyIn' => (float) $trans->qtyIn,
                     'qtyOut' => (float) $trans->qtyOut,
+                    'currentStock' => $runningBalances[$trans->id] ?? 0,
                     'createdAt' => date('d/m/Y H:i', strtotime($trans->created_at)),
                 ];
             });
-
-        // Calculate running balance for each transaction
-        $transactionsWithBalance = [];
-        $runningBalance = 0;
-        foreach ($transactions as $trans) {
-            $runningBalance += $trans['qtyIn'] - $trans['qtyOut'];
-            $trans['currentStock'] = $runningBalance;
-            $transactionsWithBalance[] = $trans;
-        }
 
         // Calculate totals
         $totalIn = collect($transactions)->sum('qtyIn');
@@ -454,7 +424,7 @@ class StockController extends Controller
         $reportData = [
             'item' => $item,
             'warehouse' => $warehouse,
-            'transactions' => $transactionsWithBalance,
+            'transactions' => $transactions,
             'totalIn' => $totalIn,
             'totalOut' => $totalOut,
             'currentStock' => $currentStock,
@@ -468,5 +438,56 @@ class StockController extends Controller
         $filename = 'Detail_Stock_'.$itemCode.'_'.date('Y-m-d_His').'.pdf';
 
         return $mpdf->Output($filename, 'I');
+    }
+
+    private function stockDetailQuery(string $itemCode, string $warehouseCode, array $with = [])
+    {
+        $query = StockTransaction::with($with)
+            ->where('itemCode', $itemCode)
+            ->where('warehouseCode', $warehouseCode);
+
+        return $this->orderStockDetailChronologically($query);
+    }
+
+    private function stockDetailNewestQuery(string $itemCode, string $warehouseCode, array $with = [])
+    {
+        $query = StockTransaction::with($with)
+            ->where('itemCode', $itemCode)
+            ->where('warehouseCode', $warehouseCode);
+
+        return $this->orderStockDetailNewestFirst($query);
+    }
+
+    private function orderStockDetailChronologically($query)
+    {
+        return $query
+            ->orderByRaw('CASE WHEN stock_transaction.date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('stock_transaction.date', 'asc')
+            ->orderBy('stock_transaction.created_at', 'asc')
+            ->orderBy('stock_transaction.id', 'asc');
+    }
+
+    private function orderStockDetailNewestFirst($query)
+    {
+        return $query
+            ->orderByRaw('CASE WHEN stock_transaction.date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('stock_transaction.date', 'desc')
+            ->orderBy('stock_transaction.created_at', 'desc')
+            ->orderBy('stock_transaction.id', 'desc');
+    }
+
+    private function runningBalancesByTransactionId(string $itemCode, string $warehouseCode): array
+    {
+        $runningBalance = 0;
+        $balances = [];
+
+        $this->stockDetailQuery($itemCode, $warehouseCode)
+            ->get(['id', 'qtyIn', 'qtyOut'])
+            ->each(function ($transaction) use (&$runningBalance, &$balances) {
+                $runningBalance += (float) $transaction->qtyIn - (float) $transaction->qtyOut;
+                $balances[$transaction->id] = $runningBalance;
+            });
+
+        return $balances;
     }
 }

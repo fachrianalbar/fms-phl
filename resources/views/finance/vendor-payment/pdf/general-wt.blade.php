@@ -66,7 +66,7 @@
     <table style="margin-top: 15px;">
         <tr>
             <td style="width: 15%;">Untuk :</td>
-            <td style="width: 50%;">{{ $order->fleet->company->name ?? '-' }}</td>
+            <td style="width: 50%;">{{ $order->customer->name ?? $customer->name ?? '-' }}</td>
             <td style="width: 15%;">No :</td>
             <td style="width: 20%; font-weight: bold;">{{ $order->shipmentNumber ?? '-' }}</td>
         </tr>
