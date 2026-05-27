@@ -6,6 +6,7 @@ use App\Http\Controllers\Report\DriverTonaseController;
 use App\Http\Controllers\Report\FleetTonaseController;
 use App\Http\Controllers\Report\MaintenancePerCompanyController;
 use App\Http\Controllers\Report\MaintenancePerFleetController;
+use App\Http\Controllers\Report\MaintenanceItemController;
 use App\Http\Controllers\Report\OrderDetailController;
 use App\Http\Controllers\Report\ProfitLossController;
 use App\Http\Controllers\Report\SupplierPurchaseController;
@@ -43,6 +44,9 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('pdf-supplier', [SupplierPurchaseController::class, 'pdfSupplier'])->name('supplier.pdf-supplier');
     Route::get('excel-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'excelSupplierDetail'])->name('supplier.excel-supplier-detail');
     Route::get('pdf-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'pdfSupplierDetail'])->name('supplier.pdf-supplier-detail');
+    Route::resource('maintenance-item', MaintenanceItemController::class);
+    Route::get('excel-maintenance-item', [MaintenanceItemController::class, 'excelMaintenanceItem'])->name('maintenance-item.excel-maintenance-item');
+    Route::get('pdf-maintenance-item', [MaintenanceItemController::class, 'pdfMaintenanceItem'])->name('maintenance-item.pdf-maintenance-item');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -61,6 +65,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('maintenance-company-internal-detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'datatableDetail'])->name('maintenance-company-internal-detail');
     Route::get('report-supplier', [SupplierPurchaseController::class, 'datatable'])->name('report-supplier');
     Route::get('report-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'datatableDetail'])->name('report-supplier-detail');
+    Route::get('maintenance-item', [MaintenanceItemController::class, 'datatable'])->name('maintenance-item');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
