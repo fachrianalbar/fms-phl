@@ -25,6 +25,7 @@ class MaintenanceDetail extends Model
         'status',
         'price',
         'total',
+        'description',
     ];
 
     protected $casts = [

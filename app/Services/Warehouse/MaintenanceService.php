@@ -97,7 +97,7 @@ class MaintenanceService
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
-            $filtered = Arr::only($request->all(), ['itemCode', 'qty']);
+            $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'description']);
 
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $itemCode = $filtered['itemCode'][$i];
@@ -131,6 +131,7 @@ class MaintenanceService
                     'maintenanceCode' => $data->code,
                     'itemCode' => $itemCode,
                     'qty' => $requestedQty,
+                    'description' => $filtered['description'][$i] ?? null,
                 ]);
 
                 if ($isJasa) {
@@ -206,7 +207,7 @@ class MaintenanceService
             $maintenanceCode = $request->code;
 
             $detailMap = [];
-            $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode']);
+            $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode', 'description']);
 
             // STEP 1: Rollback qtyUsed hanya untuk data yang digunakan di maintenance_fifo
             foreach ($itemCodes as $i => $itemCode) {
@@ -230,7 +231,7 @@ class MaintenanceService
 
                         // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
                         MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)
-                            ->update(['qty' => 0]);
+                                ->update(['qty' => 0]);
 
                         // Reset stockOut
                         Stock::query()->where('itemCode', $itemCode)
@@ -248,6 +249,7 @@ class MaintenanceService
                 $qty = (float) $qtys[$i];
                 $originalQty = (float) $originalQtys[$i];
                 $isJasa = $this->isJasaItem($itemCode);
+                $description = $filtered['description'][$i] ?? null;
                 // $isLifo = $qty < $originalQty;
 
                 if ($qty <= 0) {
@@ -261,7 +263,10 @@ class MaintenanceService
                 $detail = $detailMap[$itemCode] ?? null;
 
                 if ($detail) {
-                    $detail->update(['qty' => $qty]);
+                    $detail->update([
+                        'qty' => $qty,
+                        'description' => $description,
+                    ]);
                 } else {
                     $data = $this->getById($id);
                     $detail = $data->details()->create([
@@ -269,6 +274,7 @@ class MaintenanceService
                         'maintenanceCode' => $maintenanceCode,
                         'itemCode' => $itemCode,
                         'qty' => $qty,
+                        'description' => $description,
                     ]);
                 }
 

@@ -85,11 +85,6 @@ class OrderPaymentController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
-                ->addColumn('select', function ($row) {
-                    $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
-
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-order-checkbox" data-order-code="' . $row->code . '" data-order-format="' . e($orderFormat) . '"></div>';
-                })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
 
@@ -221,7 +216,7 @@ class OrderPaymentController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['select', 'action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'pph', 'paymentAmount', 'total', 'paymentStatus'])
+                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'pph', 'paymentAmount', 'total', 'paymentStatus'])
                 ->toJson();
         }
     }

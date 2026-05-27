@@ -176,7 +176,8 @@
                                             <th>No</th>
                                             <th>Item Code</th>
                                             <th>Item Name</th>
-                                            <th>Stock</th>
+                                            <th>Description</th>
+                                            <th>Qty</th>
                                             <th style="text-align: right">Price</th>
                                             <th style="text-align: right">Total</th>
                                         </tr>
@@ -337,10 +338,11 @@
                     if (response.details && response.details.length > 0) {
                         response.details.forEach(function(item, index) {
                             itemsHtml += '<tr>';
-                            itemsHtml += '<td>' + (index + 1) + '</td>';
+                            itemsHtml += '<td class="text-center">' + (index + 1) + '</td>';
                             itemsHtml += '<td>' + item.itemCode + '</td>';
                             itemsHtml += '<td>' + (item.item ? item.item.name : '-') + '</td>';
-                            itemsHtml += '<td>' + item.qty + '</td>';
+                            itemsHtml += '<td>' + (item.description || '-') + '</td>';
+                            itemsHtml += '<td class="text-center">' + parseFloat(item.qty) + '</td>';
                             itemsHtml += '<td style="text-align: right">' + new Intl.NumberFormat(
                                 'id-ID').format(item.price || 0) + '</td>';
                             itemsHtml += '<td style="text-align: right">' + new Intl.NumberFormat(
@@ -348,7 +350,7 @@
                             itemsHtml += '</tr>';
                         });
                     } else {
-                        itemsHtml = '<tr><td colspan="4" class="text-center">No items found</td></tr>';
+                        itemsHtml = '<tr><td colspan="7" class="text-center">No items found</td></tr>';
                     }
                     $('#detail-items').html(itemsHtml);
 

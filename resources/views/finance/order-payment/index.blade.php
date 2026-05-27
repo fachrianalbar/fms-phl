@@ -29,9 +29,6 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4>{{ $title }} Data</h4>
-                <div>
-                    <button id="printMultiPdfBtn" class="btn btn-sm btn-danger">Cetak Terpilih</button>
-                </div>
             </div>
             <div class="card-body">
                 @include('partials.alert')
@@ -39,9 +36,9 @@
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
                             <tr>
-                                <th>Select</th>
                                 <th>#</th>
-                                <th>No</th>
+                                <th>Aksi</th>
+                                <th>No Order</th>
                                 <th>{{ __('menu_vendor_payment.order_date') }}</th>
                                 <th>{{ __('menu_vendor_payment.plate_number') }}</th>
                                 <th>{{ __('menu_vendor_payment.driver') }}</th>
@@ -150,29 +147,25 @@
                                             placeholder="{{ __('menu_vendor_payment.amount') }}" required>
                                     </div> --}}
 
-                                    <div class="col-md-12" id="payment-type-container">
-                                        <label class="form-label" for="type">
-                                            {{ __('menu_order_payment.payment_date') }} <i
+                                    <!-- Use Tax Switch (PPH) -->
+                                    <div class="col-md-12 mb-2" id="pph-checkbox-container" style="display: none;">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" role="switch" id="usePph" checked>
+                                            <label class="form-check-label" for="usePph">Gunakan Pajak (PPH)</label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Visible Nominal Input (like vendor-payment) -->
+                                    <div class="col-md-12">
+                                        <label class="form-label" for="nominalInput">Nominal Pembayaran <i
                                                 class="mdi mdi-information text-danger"></i></label>
-                                        <select class="js-example-basic" name="type" id="type" required="">
-                                            <option selected="" disabled="" value="">
-                                                {{ __('general.choose') }}...</option>
-                                            <option value="Full">
-                                                Full</option>
-                                            <option value="Dp">
-                                                Dp</option>
-
-                                        </select>
+                                        <input class="form-control" id="nominalInput" type="text"
+                                            placeholder="Masukkan Nominal Pembayaran" oninput="formatAngka(this)" required>
                                     </div>
 
-                                    <div class="col-md-12 d-none">
-                                        <label class="form-label"
-                                            for="paymentAmount">{{ __('menu_order_payment.payment_amount') }}
-                                            <i class="mdi mdi-information text-danger"></i></label>
-                                        <input class="form-control" name="paymentAmount" id="paymentAmount"
-                                            type="text" placeholder="{{ __('menu_order_payment.payment_amount') }}"
-                                            oninput="formatAngka(this)">
-                                    </div>
+                                    <!-- Hidden Inputs for type and paymentAmount expected by controller -->
+                                    <input type="hidden" name="type" id="type" value="Full">
+                                    <input type="hidden" name="paymentAmount" id="paymentAmountHidden">
 
                                     <div class="col-md-12">
                                         <label class="form-label"
@@ -195,11 +188,7 @@
 
     </div>
 
-    <form id="order-payment-multi-form" method="post" action="{{ route('finance.order-payment.pdf-multi') }}"
-        target="_blank" style="display:none">
-        @csrf
-        <input type="hidden" name="orderCodes" id="orderCodesInput">
-    </form>
+
 
     <form id="delete-form" method="post">
         @csrf
@@ -233,9 +222,11 @@
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
     <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
-    {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
-
     <script>
+        let currentCost = 0;
+        let originalPph = 0;
+        let currentPaid = 0;
+
         $(document).ready(function() {
             $('#dt').DataTable({
                 "processing": true,
@@ -244,64 +235,36 @@
                 "ajax": {
                     "url": "{{ route('dt.order-payment') }}",
                 },
-                "columns": [{
-                        "data": 'select'
-                    }, {
-                        "data": 'DT_RowIndex'
-                    },
-                    {
-                        "data": 'code'
-                    },
-                    {
-                        "data": 'orderDate'
-                    },
-                    {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'driver.name'
-                    },
-                    {
-                        "data": "shipmentNumber"
-                    },
-                    {
-                        "data": 'customer.name'
-                    },
-                    {
-                        "data": 'route.originLocation.name'
-                    },
-                    {
-                        "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'cost'
-                    },
-                    {
-                        "data": 'pph'
-                    },
-                    {
-                        "data": 'paymentAmount'
-                    },
-                    {
-                        "data": 'total'
-                    },
-                    {
-                        "data": 'paymentStatus'
-                    }
+                "columns": [
+                    { "data": 'DT_RowIndex' },
+                    { "data": 'action', "orderable": false, "searchable": false },
+                    { "data": 'code' },
+                    { "data": 'orderDate' },
+                    { "data": 'fleet.plateNumber' },
+                    { "data": 'driver.name' },
+                    { "data": 'shipmentNumber' },
+                    { "data": 'customer.name' },
+                    { "data": 'route.originLocation.name' },
+                    { "data": 'route.destinationLocation.name' },
+                    { "data": 'cost' },
+                    { "data": 'pph' },
+                    { "data": 'paymentAmount' },
+                    { "data": 'total' },
+                    { "data": 'paymentStatus' }
                 ],
                 "columnDefs": [{
                         "searchable": false,
-                        "targets": [0, 2]
+                        "targets": [0, 1]
                     },
                     {
                         "orderable": false,
-                        "targets": [0, 2]
+                        "targets": [0, 1]
                     }
                 ],
                 "order": [
-                    [1, 'asc']
+                    [2, 'asc']
                 ]
-            })
+            });
         });
 
         function showModal(code) {
@@ -316,149 +279,89 @@
 
         function formatAngkaValue(value) {
             if (value == null) return ""; // hindari error kalau undefined/null
-            let angka = value.toString().replace(/\./g, "");
+            let angka = Math.round(value).toString().replace(/\./g, "");
             return new Intl.NumberFormat("id-ID").format(angka);
         }
 
         function getorderPaymentDetail(orderCode) {
             $.get("/ajax/order-detail-payment/" + orderCode, function(data) {
-                $('#cost').val(formatAngkaValue(data.cost));
-                $('#costHidden').val(data.cost);
-                $('#pph').val(formatAngkaValue(data.pph));
-                $('#pphHidden').val(data.pph);
-                $('#payment').val(formatAngkaValue(data.payment));
-                $('#total').val(formatAngkaValue(data.total));
-                $('#totalHidden').val(data.total);
+                currentCost = parseFloat(data.cost) || 0;
+                originalPph = parseFloat(data.pph) || 0;
+                currentPaid = parseFloat(data.payment) || 0;
 
-                const container = document.getElementById('payment-type-container');
-                const existingSelect = document.getElementById('type');
-                const existingHidden = document.getElementById('hidden-payment-type');
-                const label = container.querySelector('label[for="type"]');
+                $('#cost').val(formatAngkaValue(currentCost));
+                $('#costHidden').val(currentCost);
 
-                if (data.payment > 0) {
-                    // Destroy Select2 dan hapus select jika ada
-                    if (existingSelect) {
-                        if ($(existingSelect).hasClass('select2-hidden-accessible')) {
-                            $(existingSelect).select2('destroy');
-                        }
-                        existingSelect.remove();
-                    }
-
-                    // Sembunyikan label
-                    if (label) label.style.display = 'none';
-
-                    // Tambah input hidden jika belum ada
-                    if (!existingHidden) {
-                        const input = document.createElement('input');
-                        input.type = 'hidden';
-                        input.name = 'type';
-                        input.value = 'Full';
-                        input.id = 'hidden-payment-type';
-                        container.appendChild(input);
-                    }
+                // Show/hide usePph container based on whether there is PPH in the data
+                if (originalPph > 0) {
+                    $('#pph-checkbox-container').show();
+                    $('#usePph').prop('checked', true);
                 } else {
-                    // Hapus input hidden jika ada
-                    if (existingHidden) existingHidden.remove();
-
-                    // Tampilkan kembali label
-                    if (label) label.style.display = '';
-
-                    // Tambahkan kembali select jika belum ada
-                    if (!existingSelect) {
-                        const select = document.createElement('select');
-                        select.className = 'form-control js-example-basic';
-                        select.name = 'type';
-                        select.id = 'type';
-                        select.required = true;
-                        select.innerHTML = `
-                            <option selected disabled value="">Choose...</option>
-                            <option value="Full">Full</option>
-                            <option value="Dp">Dp</option>
-                        `;
-                        container.appendChild(select);
-
-                        // Inisialisasi Select2 ulang
-                        $(select).select2({
-                            dropdownParent: $('#payment-modal'),
-                            width: "100%",
-                        });
-                    }
+                    $('#pph-checkbox-container').hide();
+                    $('#usePph').prop('checked', false);
                 }
 
-
+                updateCalculatedTotal();
             });
         }
 
+        function updateCalculatedTotal() {
+            let activePph = 0;
+            if ($('#usePph').is(':checked')) {
+                activePph = originalPph;
+            }
+
+            let sisaTagihan = currentCost + activePph - currentPaid;
+            if (sisaTagihan < 0) sisaTagihan = 0;
+
+            $('#pph').val(formatAngkaValue(activePph));
+            $('#pphHidden').val(activePph);
+            $('#payment').val(formatAngkaValue(currentPaid));
+            $('#total').val(formatAngkaValue(sisaTagihan));
+            $('#totalHidden').val(sisaTagihan);
+
+            // Auto-fill nominal input with the sisaTagihan by default
+            $('#nominalInput').val(formatAngkaValue(sisaTagihan));
+        }
+
+        // Handle PPH switch change
+        $(document).on('change', '#usePph', function() {
+            updateCalculatedTotal();
+        });
 
         function validateAndFormatForm(paymentAmountId) {
-            const type = document.getElementById("type").value;
+            const total = parseInt(document.getElementById("totalHidden").value) || 0;
+            const nominalInput = document.getElementById("nominalInput");
+            const paymentAmount = parseInt(nominalInput.value.replace(/\./g, "")) || 0;
 
-            if (type === "Dp") {
-                const total = parseInt(document.getElementById("total").value.replace(/\./g, ""));
-                const paymentAmountInput = document.getElementById(paymentAmountId);
-                const paymentAmount = parseInt(paymentAmountInput.value.replace(/\./g, ""));
+            if (paymentAmount <= 0) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "Nominal pembayaran harus lebih besar dari 0",
+                    icon: "warning",
+                });
+                return false;
+            }
 
-                if (paymentAmount > total) {
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "Payment Amount tidak boleh lebih besar dari Total",
-                        icon: "warning",
-                    })
-                    return false; // Stop submit
-                }
+            if (paymentAmount > total) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "Nominal pembayaran tidak boleh lebih besar dari Total Sisa Tagihan",
+                    icon: "warning",
+                });
+                return false; // Stop submit
+            }
 
-                // Format angka: hilangkan titik sebelum submit
-                paymentAmountInput.value = paymentAmount;
+            // Set hidden fields
+            if (paymentAmount === total) {
+                document.getElementById("type").value = "Full";
+                document.getElementById("paymentAmountHidden").value = total;
+            } else {
+                document.getElementById("type").value = "Dp";
+                document.getElementById("paymentAmountHidden").value = paymentAmount;
             }
 
             return true; // Lanjut submit
         }
-
-        $('#type').on('change', function() {
-            const selectedType = $(this).val();
-
-            if (selectedType === 'Dp') {
-                $('#paymentAmount').attr('required', true); // wajib diisi
-                $('#paymentAmount').closest('.col-md-12').removeClass('d-none'); // tampilkan div-nya
-            } else {
-                $('#paymentAmount').removeAttr('required'); // hapus wajib isi
-                $('#paymentAmount').val(''); // kosongkan input
-                $('#paymentAmount').closest('.col-md-12').addClass('d-none'); // sembunyikan div-nya
-            }
-        });
-
-        // Handle dynamic checkbox changes (DataTable generated)
-        const selectedOrders = {};
-
-        $(document).on('change', '.row-order-checkbox', function() {
-            const code = $(this).data('order-code');
-            const format = $(this).data('order-format');
-
-            if ($(this).is(':checked')) {
-                selectedOrders[code] = format;
-            } else {
-                delete selectedOrders[code];
-            }
-        });
-
-        $('#printMultiPdfBtn').on('click', function(e) {
-            e.preventDefault();
-
-            const codes = Object.keys(selectedOrders);
-            if (codes.length === 0) {
-                swal('Pilih minimal 1 order');
-                return;
-            }
-
-            const formats = Object.values(selectedOrders).filter(Boolean);
-            const uniqueFormats = [...new Set(formats)];
-            if (uniqueFormats.length > 1) {
-                swal('Format customer berbeda. Pilih order dengan format yang sama.');
-                return;
-            }
-
-            $('#orderCodesInput').val(codes.join(','));
-            $('#order-payment-multi-form').submit();
-        });
     </script>
 @endpush

@@ -30,180 +30,163 @@
 @endpush
 
 @section('content')
-    <form method="post" method="post" action="{{ route($view . 'update', $data->id) }}">
+    <form method="post" action="{{ route($view . 'update', $data->id) }}">
         @csrf
         @method('PUT')
-        @csrf
         <div class="col-sm-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
-                    <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+            <!-- Card 1: Maintenance Information -->
+            <div class="card shadow-sm border-0 mb-4 rounded-3">
+                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h5 class="m-0 fw-bold text-dark"><i class="mdi mdi-tools me-2 text-primary"></i>{{ $title }} - {{ __('general.edit_data') }}</h5>
+                    <a href="{{ route($view . 'index') }}" class="btn btn-sm btn-outline-primary px-3"><i class="mdi mdi-arrow-left me-1"></i>{{ __('general.back_to_list') }}</a>
                 </div>
-                <div class="card-body col-md-6">
+                <div class="card-body">
                     <div class="row g-3">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <label class="form-label" for="code">Code <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
-                                <input class="form-control" name="code" type="text" value="{{ $data->code }}"
-                                    required placeholder="Code" readonly disabled>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary" for="code">Code <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="mdi mdi-barcode-scan"></i></span>
+                                <input class="form-control bg-light fw-bold" name="code" type="text" value="{{ $data->code }}" required placeholder="Code" readonly disabled>
                             </div>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_maintenance.date') }} <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
-                                <input class="form-control" name="date" id="datetime-local" type="date" required
-                                    placeholder="Order Date" value="{{ $data->date }}">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">{{ __('menu_maintenance.time') }}</label>
-                                <input class="form-control digits" name="time" type="time"
-                                    value="{{ $data->time }}">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary" for="datetime-local">{{ __('menu_maintenance.date') }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="mdi mdi-calendar"></i></span>
+                                <input class="form-control" name="date" id="datetime-local" type="date" required value="{{ $data->date }}">
                             </div>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-12">
-                                <label class="form-label" for="fleetCode">{{ __('menu_maintenance.fleet') }} <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
-                                <select class="js-example-basic-single" name="fleetCode" id="fleetCode" required>
-                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold text-secondary" for="time">{{ __('menu_maintenance.time') }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted"><i class="mdi mdi-clock-outline"></i></span>
+                                <input class="form-control" name="time" id="time" type="time" required value="{{ $data->time }}">
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary" for="fleetCode">{{ __('menu_maintenance.fleet') }} <span class="text-danger">*</span></label>
+                            <select class="js-example-basic-single form-select" name="fleetCode" id="fleetCode" required>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($fleet as $item)
+                                    <option value="{{ $item->code }}" {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
+                                        {{ $item->plateNumber }}
                                     </option>
-                                    @foreach ($fleet as $item)
-                                        <option value="{{ $item->code }}"
-                                            {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
-                                            {{ $item->plateNumber }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-12">
-                                <label class="form-label" for="warehouseCode">Warehouse <i
-                                        class="icofont icofont-warning-alt text-danger"></i></label>
-                                <select class="js-example-basic-single" name="warehouseCode" id="warehouseCode" required>
-                                    <option selected="" disabled="" value="">{{ __('general.choose') }}...
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-secondary" for="warehouseCode">Warehouse <span class="text-danger">*</span></label>
+                            <select class="js-example-basic-single form-select" name="warehouseCode" id="warehouseCode" required>
+                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($warehouse as $item)
+                                    <option value="{{ $item->code }}" {{ $data->warehouseCode == $item->code ? 'selected' : '' }}>
+                                        {{ $item->name }}
                                     </option>
-                                    @foreach ($warehouse as $item)
-                                        <option value="{{ $item->code }}"
-                                            {{ $data->warehouseCode == $item->code ? 'selected' : '' }}>
-                                            {{ $item->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                @endforeach
+                            </select>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Detail {{ $title }}</h4>
-                    <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
+            <!-- Card 2: Detail Items / Pemeliharaan -->
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-header bg-light border-bottom d-flex justify-content-between align-items-center py-3">
+                    <h5 class="m-0 fw-bold text-dark"><i class="mdi mdi-format-list-bulleted me-2 text-primary"></i>Detail {{ $title }}</h5>
+                    <button class="btn btn-sm btn-primary px-3" type="button" id="save"><i class="mdi mdi-plus-box me-1"></i>{{ __('general.add_data') }}</button>
                 </div>
-                <div class="card-body col-md-12">
+                <div class="card-body">
                     @include('partials.alert')
-                    {{-- <td>
-                                        <div class="mx-5">
-                                            <input class="form-control" type="text" value="{{ $it->item->name }}"
-                            id="itemName_{{ $loop->iteration }}" required readonly>
-            </div>
-            </td> --}}
-                    <table class="table table-sm" id="dt">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Item/Part</th>
-                                {{-- <th>Item/Part</th> --}}
-                                <th>Stock</th>
-                                <th>Qty</th>
-                                <th style="text-align: right">Price</th>
-                                <th style="text-align: right">Total</th>
-                            </tr>
-                        </thead>
-                        <tbody id="purchaseDetails">
-                            @foreach ($data->details as $it)
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle" id="dt" style="min-width: 900px;">
+                            <thead class="table-light">
                                 <tr>
-                                    <td>
-                                        <a href="javascript:deleteMaintenanceDetail('{{ $it->id }}')"
-                                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
-                                            title="Delete">
-                                            <i class="mdi mdi-delete fs-14 text-danger"></i>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <input type="hidden" name="maintenanceDetailCode[]"
-                                            value="{{ $it->code }}">
-
-                                        <select class="js-example-basic-single" name="itemCode[]"
-                                            id="itemCode_{{ $loop->iteration }}"
-                                            required onchange="loadItemDetails({{ $loop->iteration }})">
-                                            <option selected="" disabled="" value="">
-                                                {{ __('general.choose') }}...
-                                            </option>
-
-                                            <option value="{{ $it->item->code }}" data-name="{{ $it->item->name }}"
-                                                data-qty="0" data-price="{{ $it->item->price }}"
-                                                data-type="{{ $it->item->type ?? '' }}" selected>
-                                                {{ $it->item->code . ' - ' . $it->item->name }}
-                                            </option>
-                                        </select>
-                                        <input type="hidden" name="item_type[]" id="item_type_{{ $loop->iteration }}"
-                                            value="{{ $it->item->type ?? '' }}">
-                                    </td>
-
-                                    <td>
-                                        <input class="form-control  " type="number" name="qty_exist[]"
-                                            id="qty_exist_{{ $loop->iteration }}" readonly value="0">
-                                    </td>
-                                    <td>
-                                        <input class="form-control qty-input" type="number" name="qty[]"
-                                            id="qty_{{ $loop->iteration }}" required min="0.5" step="0.5"
-                                            value="{{ $it->qty + 0 }}">
-                                        <input type="hidden" name="original_qty[]" value="{{ $it->qty + 0 }}">
-                                    </td>
-                                    <td>
-                                        <input class="form-control text-end" type="text" name="price[]"
-                                            id="price_{{ $loop->iteration }}" readonly
-                                            value="{{ number_format($it->price ?? ($it->item->price ?? 0), 0, ',', '.') }}">
-                                    </td>
-                                    <td>
-                                        <input class="form-control text-end" type="text" name="total[]"
-                                            id="total_{{ $loop->iteration }}" readonly
-                                            value="{{ number_format($it->total ?? $it->qty * ($it->price ?? ($it->item->price ?? 0)), 0, ',', '.') }}">
-                                    </td>
+                                    <th style="width: 50px;" class="text-center">#</th>
+                                    <th style="width: 30%;">Item/Part <span class="text-danger">*</span></th>
+                                    <th style="width: 25%;">Description / Deskripsi</th>
+                                    <th style="width: 12%;" class="text-center">Stock</th>
+                                    <th style="width: 10%;" class="text-center">Qty <span class="text-danger">*</span></th>
+                                    <th style="text-align: right; width: 10%;">Price</th>
+                                    <th style="text-align: right; width: 13%;">Total</th>
                                 </tr>
-                            @endforeach
+                            </thead>
+                            <tbody id="purchaseDetails">
+                                @foreach ($data->details as $it)
+                                    <tr>
+                                        <td class="text-center">
+                                            <a href="javascript:deleteMaintenanceDetail('{{ $it->id }}')"
+                                                class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                                                title="Delete">
+                                                <i class="mdi mdi-delete fs-14 text-danger"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <input type="hidden" name="maintenanceDetailCode[]"
+                                                value="{{ $it->code }}">
 
-                        </tbody>
-                    </table>
+                                            <select class="js-example-basic-single" name="itemCode[]"
+                                                id="itemCode_{{ $loop->iteration }}"
+                                                required onchange="loadItemDetails({{ $loop->iteration }})">
+                                                <option selected="" disabled="" value="">
+                                                    {{ __('general.choose') }}...
+                                                </option>
 
-                    <div class="d-flex justify-content-end mt-2">
-                        <div>
-                            <div class="fw-bold">Grand Total: <span
-                                    id="grand_total_display">{{ number_format($data->grand_total ?? 0, 0, ',', '.') }}</span>
+                                                <option value="{{ $it->item->code }}" data-name="{{ $it->item->name }}"
+                                                    data-qty="0" data-price="{{ $it->item->price }}"
+                                                    data-type="{{ $it->item->type ?? '' }}" selected>
+                                                    {{ $it->item->code . ' - ' . $it->item->name }}
+                                                </option>
+                                            </select>
+                                            <input type="hidden" name="item_type[]" id="item_type_{{ $loop->iteration }}"
+                                                value="{{ $it->item->type ?? '' }}">
+                                        </td>
+                                        <td>
+                                            <input class="form-control" type="text" name="description[]" id="description_{{ $loop->iteration }}" placeholder="Catatan/Deskripsi..." value="{{ $it->description }}">
+                                        </td>
+                                        <td>
+                                            <input class="form-control text-center bg-light" type="number" name="qty_exist[]"
+                                                id="qty_exist_{{ $loop->iteration }}" readonly value="0">
+                                        </td>
+                                        <td>
+                                            <input class="form-control qty-input text-center fw-bold" type="number" name="qty[]"
+                                                id="qty_{{ $loop->iteration }}" required min="0.5" step="0.5"
+                                                value="{{ $it->qty + 0 }}">
+                                            <input type="hidden" name="original_qty[]" value="{{ $it->qty + 0 }}">
+                                        </td>
+                                        <td>
+                                            <input class="form-control text-end bg-light fw-bold" type="text" name="price[]"
+                                                id="price_{{ $loop->iteration }}" readonly
+                                                value="{{ number_format($it->price ?? ($it->item->price ?? 0), 0, ',', '.') }}">
+                                        </td>
+                                        <td>
+                                            <input class="form-control text-end bg-light fw-bold" type="text" name="total[]"
+                                                id="total_{{ $loop->iteration }}" readonly
+                                                value="{{ number_format($it->total ?? $it->qty * ($it->price ?? ($it->item->price ?? 0)), 0, ',', '.') }}">
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <div class="card bg-primary-subtle border-0 p-3 rounded-3" style="min-width: 300px;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-semibold text-primary fs-14">Grand Total</span>
+                                <span class="fw-bold text-primary fs-16">Rp <span id="grand_total_display" class="fs-18 fw-bolder">{{ number_format($data->grand_total ?? 0, 0, ',', '.') }}</span></span>
                             </div>
-                            <input type="hidden" name="grand_total" id="grand_total"
-                                value="{{ $data->grand_total ?? 0 }}">
+                            <input type="hidden" name="grand_total" id="grand_total" value="{{ $data->grand_total ?? 0 }}">
                         </div>
                     </div>
 
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="col-12">
-                    <div class="card-body">
-                        <button class="btn btn-primary" id="submit"
-                            type="submit">{{ __('general.save_changes') }}</button>
+                    <hr class="mt-4 mb-3 text-muted">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{{ route($view . 'index') }}" class="btn btn-outline-secondary px-4"><i class="mdi mdi-arrow-left me-1"></i> Kembali</a>
+                        <button class="btn btn-primary px-4 fw-bold" id="submit" type="submit"><i class="mdi mdi-content-save-outline me-1"></i> Simpan Data</button>
                     </div>
                 </div>
             </div>
@@ -434,7 +417,7 @@
             let row = $('#purchaseDetails tr').length + 1;
 
             let newRow = `<tr>
-                            <td class="remove-btn">
+                            <td class="remove-btn text-center align-middle">
                                  <a href="javascript:removeDetailRow(${row})"
                                 class="btn btn-icon btn-sm bg-danger-subtle"
                                 data-bs-toggle="tooltip" title="Delete">
@@ -448,18 +431,20 @@
                                 <input type="hidden" name="item_type[]" id="item_type_${row}" value="">
                             </td>
                             <td>
-                                <input class="form-control" type="number" readony value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
+                                <input class="form-control" type="text" name="description[]" id="description_${row}" placeholder="Catatan/Deskripsi...">
                             </td>
                             <td>
-                                <input class="form-control qty-input" type="number" name="qty[]" id="qty_${row}" required min="0.5" step="0.5" value="1">
+                                <input class="form-control text-center bg-light" type="number" readonly value="0" name="qty_exist[]" readonly id="qty_exist_${row}">
+                            </td>
+                            <td>
+                                <input class="form-control qty-input text-center fw-bold" type="number" name="qty[]" id="qty_${row}" required min="0.5" step="0.5" value="1">
                                 <input type="hidden" name="original_qty[]" value="0">
-
                             </td>
                             <td>
-                                <input class="form-control text-end" type="text" name="price[]" id="price_${row}" readonly value="0">
+                                <input class="form-control text-end bg-light fw-bold" type="text" name="price[]" id="price_${row}" readonly value="0">
                             </td>
                             <td>
-                                <input class="form-control text-end" type="text" name="total[]" id="total_${row}" readonly value="0">
+                                <input class="form-control text-end bg-light fw-bold" type="text" name="total[]" id="total_${row}" readonly value="0">
                             </td>
                           </tr>`;
             $('#purchaseDetails').append(newRow);
