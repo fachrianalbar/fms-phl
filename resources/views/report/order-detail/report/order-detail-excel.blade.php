@@ -12,83 +12,91 @@
     <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
         <thead>
             <tr>
-                <th colspan="12" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
+                <th colspan="13" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
                     Order Detail Report</th>
             </tr>
             <tr>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">No</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Shipment No</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Order Date</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Customer</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Origin</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Destination</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Plate Number</th>
-                <!-- Fleet Type removed from exports -->
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Driver</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Sales</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Cost Detail</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Total Cost</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black;">Profit</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">No</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Shipment No</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Order Date</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Customer</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Origin</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Destination</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Plate Number</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Driver</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Sales</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nama Komponen</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nominal</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Total Cost</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Profit</th>
             </tr>
         </thead>
 
         <tbody>
             @foreach ($order as $item)
-            <tr>
-                <td style="text-align: center; border: 1px solid black;">{{ $loop->iteration }}</td>
-                <td style="text-align: center; border: 1px solid black;">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>
-                <td style="text-align: center; border: 1px solid black;">{{ $item->orderDate ? date('d-m-Y', strtotime($item->orderDate)) : '' }}</td>
-                <td style="text-align: left; border: 1px solid black;">{{ $item->customer->name ?? '' }}</td>
-                <td style="text-align: left; border: 1px solid black;">{{ $item->route->originLocation->name ?? '' }}</td>
-                <td style="text-align: left; border: 1px solid black;">{{ $item->route->destinationLocation->name ?? '' }}</td>
-                <td style="text-align: center; border: 1px solid black;">{{ $item->fleet->plateNumber ?? '' }}</td>
-                <!-- Fleet Type removed from exports -->
-                <td style="text-align: left; border: 1px solid black;">{{ $item->driver->name ?? '' }}</td>
-                <td style="text-align: right; border: 1px solid black;">
-                    @php
-                    // `routeAmount` stored as total for the order
+                @php
                     $sales = $item->routeAmount;
-                    @endphp
-                    {{ number_format($sales, 0, ',', '.') }}
-                </td>
-                <td style="text-align: left; border: 1px solid black;">
-                    @php
-                    $costDetails = [];
-                    if ($item->cost) {
-                    foreach ($item->cost as $cost) {
-                    $costDetails[] = [
-                    'name' => ($cost->costComponent->name ?? 'N/A'),
-                    'nominal' => $cost->nominal,
-                    ];
-                    }
-                    }
-                    @endphp
-                    @if(empty($costDetails))
-                    -
-                    @else
-                    @foreach($costDetails as $k => $c)
-                    <div>{{ $k+1 }}. {{ $c['name'] }}: {{ number_format($c['nominal'],0,',','.') }}</div>
-                    @endforeach
-                    @endif
-                </td>
-                <td style="text-align: right; border: 1px solid black;">
-                    @php
                     $totalCost = 0;
                     if ($item->cost) {
-                    foreach ($item->cost as $cost) {
-                    $totalCost += $cost->nominal;
+                        foreach ($item->cost as $cost) {
+                            $totalCost += $cost->nominal;
+                        }
                     }
-                    }
-                    @endphp
-                    {{ number_format($totalCost, 0, ',', '.') }}
-                </td>
-                <td style="text-align: right; border: 1px solid black;">
-                    @php
                     $profit = $sales - $totalCost;
-                    @endphp
-                    {{ number_format($profit, 0, ',', '.') }}
-                </td>
-            </tr>
+                    
+                    $costDetails = [];
+                    if ($item->cost) {
+                        foreach ($item->cost as $cost) {
+                            $costDetails[] = [
+                                'name' => ($cost->costComponent->name ?? 'N/A'),
+                                'nominal' => $cost->nominal,
+                            ];
+                        }
+                    }
+                    $costCount = count($costDetails);
+                @endphp
+
+                @if ($costCount == 0)
+                    <tr>
+                        <td style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $loop->iteration }}</td>
+                        <td style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>
+                        <td style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $item->orderDate ? date('d-m-Y', strtotime($item->orderDate)) : '' }}</td>
+                        <td style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->customer->name ?? '' }}</td>
+                        <td style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->originLocation->name ?? '' }}</td>
+                        <td style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->destinationLocation->name ?? '' }}</td>
+                        <td style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $item->fleet->plateNumber ?? '' }}</td>
+                        <td style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->driver->name ?? '' }}</td>
+                        <td style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $sales }}</td>
+                        <td style="text-align: center; border: 1px solid black; vertical-align: middle;">-</td>
+                        <td style="text-align: right; border: 1px solid black; vertical-align: middle;">0</td>
+                        <td style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $totalCost }}</td>
+                        <td style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $profit }}</td>
+                    </tr>
+                @else
+                    @foreach ($costDetails as $index => $c)
+                        <tr>
+                            @if ($index == 0)
+                                <td rowspan="{{ $costCount }}" style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $loop->parent->iteration }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $item->orderDate ? date('d-m-Y', strtotime($item->orderDate)) : '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->customer->name ?? '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->originLocation->name ?? '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->destinationLocation->name ?? '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $item->fleet->plateNumber ?? '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->driver->name ?? '' }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $sales }}</td>
+                            @endif
+                            
+                            <td style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $c['name'] }}</td>
+                            <td style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $c['nominal'] }}</td>
+                            
+                            @if ($index == 0)
+                                <td rowspan="{{ $costCount }}" style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $totalCost }}</td>
+                                <td rowspan="{{ $costCount }}" style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $profit }}</td>
+                            @endif
+                        </tr>
+                    @endforeach
+                @endif
             @endforeach
         </tbody>
     </table>

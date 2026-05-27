@@ -25,6 +25,9 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('excel-all-order-list', [AllOrderListController::class, 'excelAllOrderList'])->name('all-order-list.excel-all-order-list');
     Route::resource('order-detail', OrderDetailController::class);
     Route::get('excel-order-detail', [OrderDetailController::class, 'excelOrderDetail'])->name('order-detail.excel-order-detail');
+    Route::get('excel-order-detail-init', [OrderDetailController::class, 'excelOrderDetailInit'])->name('order-detail.excel-order-detail-init');
+    Route::get('excel-order-detail-chunk', [OrderDetailController::class, 'excelOrderDetailChunk'])->name('order-detail.excel-order-detail-chunk');
+    Route::get('excel-order-detail-download', [OrderDetailController::class, 'excelOrderDetailDownload'])->name('order-detail.excel-order-detail-download');
     Route::get('pdf-order-detail', [OrderDetailController::class, 'pdfOrderDetail'])->name('order-detail.pdf-order-detail');
     Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'index'])->name('maintenance-fleet.index');
     Route::get('maintenance-fleet/detail/{fleetCode}', [MaintenancePerFleetController::class, 'detail'])->name('maintenance-fleet.detail');

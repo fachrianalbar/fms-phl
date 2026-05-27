@@ -14,19 +14,62 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
 {
     use Exportable;
 
-    protected $request;
+    protected $orders;
 
-    public function __construct($request)
+    public function __construct($ordersOrRequest)
     {
-        $this->request = $request;
+        if ($ordersOrRequest instanceof \Illuminate\Http\Request) {
+            $query = Order::with([
+                'fleet',
+                'fleet.type',
+                'driver',
+                'customer',
+                'route.destinationLocation',
+                'route.originLocation',
+                'material',
+                'cost.costComponent',
+            ])->orderBy('orderDate', 'desc');
+
+            $filters = [
+                'fleet_plateNumber' => $ordersOrRequest->plateNumber,
+                'customer_name' => $ordersOrRequest->customerName,
+                'driver_name' => $ordersOrRequest->driverName,
+                'fleetType_name' => $ordersOrRequest->fleetTypeName,
+                'shipmentNumber' => $ordersOrRequest->shipmentNumber,
+                'origin' => $ordersOrRequest->origin,
+                'destination' => $ordersOrRequest->destination,
+                'orderTypeCode' => $ordersOrRequest->orderTypeCode,
+            ];
+
+            $relations = [
+                'fleet_plateNumber' => 'fleet.plateNumber',
+                'customer_name' => 'customer.name',
+                'driver_name' => 'driver.name',
+                'fleetType_name' => 'fleet.type.name',
+                'origin' => 'route.originLocation.name',
+                'destination' => 'route.destinationLocation.name',
+            ];
+
+            $dateFilters = [
+                'orderDate' => [
+                    'start' => $ordersOrRequest->startDate,
+                    'end' => $ordersOrRequest->endDate,
+                ],
+            ];
+
+            $this->orders = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters)->get();
+        } else {
+            $this->orders = $ordersOrRequest;
+        }
     }
 
     public function columnFormats(): array
     {
         return [
-            'L' => '#,##0_);(#,##0)',
-            'M' => '#,##0_);(#,##0)',
-            'N' => '#,##0_);(#,##0)',
+            'I' => '#,##0',
+            'K' => '#,##0',
+            'L' => '#,##0',
+            'M' => '#,##0',
         ];
     }
 
@@ -37,51 +80,7 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
 
     public function view(): View
     {
-        $request = $this->request;
-
-        $data = Order::with([
-            'fleet',
-            'fleet.type',
-            'driver',
-            'customer',
-            'route.destinationLocation',
-            'route.originLocation',
-            'material',
-            'cost.costComponent',
-        ])->orderBy('orderDate', 'desc');
-
-        // Define filters
-        $filters = [
-            'fleet_plateNumber' => $request->plateNumber,
-            'customer_name' => $request->customerName,
-            'driver_name' => $request->driverName,
-            'fleetType_name' => $request->fleetTypeName,
-            'shipmentNumber' => $request->shipmentNumber,
-            'origin' => $request->origin,
-            'destination' => $request->destination,
-            'orderTypeCode' => $request->orderTypeCode,
-        ];
-
-        // Map filters to relations
-        $relations = [
-            'fleet_plateNumber' => 'fleet.plateNumber',
-            'customer_name' => 'customer.name',
-            'driver_name' => 'driver.name',
-            'fleetType_name' => 'fleet.type.name',
-            'origin' => 'route.originLocation.name',
-            'destination' => 'route.destinationLocation.name',
-        ];
-
-        $dateFilters = [
-            'orderDate' => [
-                'start' => $request->startDate,
-                'end' => $request->endDate,
-            ],
-        ];
-
-        $order = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
         return view('report.order-detail.report.order-detail-excel')
-            ->with('order', $order->get());
+            ->with('order', $this->orders);
     }
 }

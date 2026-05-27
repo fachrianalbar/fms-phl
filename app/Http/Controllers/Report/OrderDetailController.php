@@ -13,6 +13,7 @@ use App\Services\Master\FleetTypeService;
 use App\Services\Master\LocationService;
 use App\Services\Master\OrderTypeService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
@@ -82,47 +83,7 @@ class OrderDetailController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Order::with([
-                'fleet',
-                'fleet.type',
-                'driver',
-                'customer',
-                'route.destinationLocation',
-                'route.originLocation',
-                'material',
-                'cost.costComponent',
-            ])->orderBy('orderDate', 'desc');
-
-            // Define filters
-            $filters = [
-                'fleet_plateNumber' => $request->plateNumber,
-                'customer_name' => $request->customerName,
-                'driver_name' => $request->driverName,
-                'fleetType_name' => $request->fleetTypeName,
-                'shipmentNumber' => $request->shipmentNumber,
-                'origin' => $request->origin,
-                'destination' => $request->destination,
-                'orderTypeCode' => $request->orderTypeCode,
-            ];
-
-            // Map filters to relations
-            $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
-                'customer_name' => 'customer.name',
-                'driver_name' => 'driver.name',
-                'fleetType_name' => 'fleet.type.name',
-                'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name',
-            ];
-
-            $dateFilters = [
-                'orderDate' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->getFilteredOrdersQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -203,14 +164,19 @@ class OrderDetailController extends Controller
         }
     }
 
-    public function excelOrderDetail(Request $request)
+    private function getFilteredOrdersQuery(Request $request)
     {
-        return Excel::download(new OrderDetailReport($request), 'Order-Detail-Report.xlsx');
-    }
+        $query = Order::with([
+            'fleet',
+            'fleet.type',
+            'driver',
+            'customer',
+            'route.destinationLocation',
+            'route.originLocation',
+            'material',
+            'cost.costComponent',
+        ])->orderBy('orderDate', 'desc');
 
-    public function pdfOrderDetail(Request $request)
-    {
-        // Define filters
         $filters = [
             'fleet_plateNumber' => $request->plateNumber,
             'customer_name' => $request->customerName,
@@ -222,7 +188,6 @@ class OrderDetailController extends Controller
             'orderTypeCode' => $request->orderTypeCode,
         ];
 
-        // Map filters to relations
         $relations = [
             'fleet_plateNumber' => 'fleet.plateNumber',
             'customer_name' => 'customer.name',
@@ -239,18 +204,79 @@ class OrderDetailController extends Controller
             ],
         ];
 
-        $query = Order::with([
-            'fleet',
-            'fleet.type',
-            'driver',
-            'customer',
-            'route.destinationLocation',
-            'route.originLocation',
-            'material',
-            'cost.costComponent',
-        ])->orderBy('orderDate', 'desc');
+        return FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
+    }
 
-        $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters)->get();
+    public function excelOrderDetail(Request $request)
+    {
+        return Excel::download(new OrderDetailReport($request), 'Order-Detail-Report.xlsx');
+    }
+
+    public function excelOrderDetailInit(Request $request)
+    {
+        $query = $this->getFilteredOrdersQuery($request);
+        $total = $query->count();
+        $downloadId = 'dl_' . uniqid() . '_' . time();
+        
+        Cache::put('excel_export_orders_' . $downloadId, [], 60);
+        
+        return response()->json([
+            'download_id' => $downloadId,
+            'total' => $total
+        ]);
+    }
+
+    public function excelOrderDetailChunk(Request $request)
+    {
+        $downloadId = $request->download_id;
+        $offset = (int) $request->offset;
+        $limit = (int) $request->limit;
+        
+        if (!$downloadId) {
+            return response()->json(['error' => 'Missing download ID'], 400);
+        }
+        
+        $query = $this->getFilteredOrdersQuery($request);
+        $orders = $query->offset($offset)->limit($limit)->get();
+        
+        $key = 'excel_export_orders_' . $downloadId;
+        $existing = Cache::get($key, []);
+        $merged = array_merge($existing, $orders->all());
+        
+        Cache::put($key, $merged, 60);
+        
+        return response()->json(['success' => true]);
+    }
+
+    public function excelOrderDetailDownload(Request $request)
+    {
+        $downloadId = $request->download_id;
+        if (!$downloadId) {
+            abort(400, 'Missing download ID');
+        }
+        
+        $key = 'excel_export_orders_' . $downloadId;
+        $orders = Cache::get($key);
+        
+        if ($orders === null) {
+            abort(404, 'Export data expired or not found');
+        }
+        
+        Cache::forget($key);
+        
+        $collection = collect($orders);
+        
+        $response = Excel::download(new OrderDetailReport($collection), 'Order-Detail-Report.xlsx');
+        if ($request->has('download_token')) {
+            $cookie = cookie('download_token', $request->download_token, 5, null, null, false, false);
+            $response->headers->setCookie($cookie);
+        }
+        return $response;
+    }
+
+    public function pdfOrderDetail(Request $request)
+    {
+        $data = $this->getFilteredOrdersQuery($request)->get();
 
         $mpdf = new Mpdf([
             'orientation' => 'L',
