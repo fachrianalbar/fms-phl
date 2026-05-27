@@ -174,4 +174,222 @@ class VendorPaymentService
             'skipped_order_codes' => $skippedOrderCodes,
         ];
     }
+
+    /**
+     * Membatalkan pembayaran vendor (hard delete).
+     *
+     * @param string $orderCode
+     * @param string $title
+     * @throws \Exception
+     */
+    public function cancelPayment($orderCode, $title)
+    {
+        $vendorPayment = $this->service->where('orderCode', $orderCode)->first();
+
+        if (! $vendorPayment) {
+            throw new \Exception('Data pembayaran vendor tidak ditemukan untuk order ini.');
+        }
+
+        $order = $this->order->where('code', $orderCode)->first();
+        if (! $order) {
+            throw new \Exception('Data order tidak ditemukan.');
+        }
+
+        // 1. Dapatkan riwayat pembayaran untuk mengembalikan saldo bank
+        $histories = $vendorPayment->paymentHistory;
+
+        foreach ($histories as $history) {
+            $amount = (float) $history->amount;
+            $bankCode = $history->user_bank_code;
+
+            // Kembalikan saldo LiveMutation (kurangi credit)
+            $liveMutation = \App\Models\LiveMutation::where('userBankCode', $bankCode)->first();
+            if ($liveMutation) {
+                $liveMutation->credit -= $amount;
+                $liveMutation->balance = $liveMutation->debit - $liveMutation->credit;
+                $liveMutation->save();
+            }
+
+            // Hapus Mutation record (hard delete)
+            \App\Models\Mutation::where('transactionCode', $vendorPayment->code)
+                ->where('userBankCode', $bankCode)
+                ->where('description', 'like', '%' . $orderCode . '%')
+                ->forceDelete();
+
+            // Hapus history record (hard delete)
+            $history->forceDelete();
+        }
+
+        // 2. Hapus VendorPayment record (hard delete)
+        $vendorPayment->forceDelete();
+
+        // 3. Kembalikan status Order
+        // Jika order sudah di-invoice, statusnya 5 (Order Invoice).
+        // Jika tidak, statusnya 4 (Order Return Do).
+        $isInvoiced = \App\Models\Finance\InvoiceDetail::where('orderCode', $orderCode)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        $order->update([
+            'status' => $isInvoiced ? 5 : 4,
+        ]);
+
+        $this->logActivity($title, $vendorPayment, 'Cancel Payment');
+    }
+
+    /**
+     * Generate nomor nota berformat YYYYMMDDXXXX.
+     * XXXX = urutan yang reset setiap bulan baru.
+     */
+    public function generateNotaNumber()
+    {
+        $now = now();
+        $yearMonth = $now->format('Ym'); // e.g. 202605
+        $datePrefix = $now->format('Ymd'); // e.g. 20260527
+
+        // Cari nota_number tertinggi di bulan ini (format: YYYYMM...)
+        $lastNota = $this->service
+            ->where('nota_number', 'like', $yearMonth . '%')
+            ->orderByDesc('nota_number')
+            ->value('nota_number');
+
+        if ($lastNota) {
+            // Ambil 4 digit terakhir dari nota terakhir dan tambah 1
+            $lastSequence = (int) substr($lastNota, -4);
+            $nextSequence = $lastSequence + 1;
+        } else {
+            $nextSequence = 1;
+        }
+
+        return $datePrefix . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Assign nomor nota ke beberapa order sekaligus.
+     *
+     * @param array $orderCodes
+     * @param string $userBankCode
+     * @param string $title
+     * @return string Nomor nota yang dihasilkan
+     * @throws \Exception
+     */
+    public function assignNota(array $orderCodes, $userBankCode, $title)
+    {
+        $orderCodes = array_values(array_unique(array_filter($orderCodes)));
+
+        if (empty($orderCodes)) {
+            throw new \Exception('Pilih minimal satu order untuk di-nota-kan.');
+        }
+
+        // Ambil semua order terpilih dengan relasi customer dan company
+        $orders = $this->order->with(['customer.company'])->whereIn('code', $orderCodes)->get();
+        if ($orders->count() !== count($orderCodes)) {
+            throw new \Exception('Beberapa order tidak ditemukan.');
+        }
+
+        // Validasi 1: Pelanggan (customer) yang berbeda tidak boleh dalam satu nota
+        $customerCodes = $orders->pluck('customerCode')->filter()->unique();
+        if ($customerCodes->count() > 1) {
+            throw new \Exception('Gagal: Order yang dipilih memiliki pelanggan (customer) yang berbeda. Satu nota hanya untuk satu pelanggan.');
+        }
+
+        // Validasi 3: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh dalam satu nota
+        $companyFormats = $orders->map(function ($order) {
+            return strtoupper(trim((string) ($order->customer->company->format ?? '')));
+        })->filter()->unique();
+        if ($companyFormats->count() > 1) {
+            throw new \Exception('Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' . $companyFormats->implode(', ') . '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.');
+        }
+
+        // Cari vendor payment yang sudah ada untuk order-order ini
+        $vendorPayments = $this->service
+            ->whereIn('orderCode', $orderCodes)
+            ->get();
+
+        // Validasi: tidak boleh ada order yang sudah memiliki nota
+        $alreadyNota = $vendorPayments->whereNotNull('nota_number');
+        if ($alreadyNota->isNotEmpty()) {
+            throw new \Exception('Order sudah memiliki nota: ' . $alreadyNota->pluck('orderCode')->implode(', '));
+        }
+
+        $notaNumber = $this->generateNotaNumber();
+
+        $logPayment = null;
+
+        foreach ($orderCodes as $orderCode) {
+            $order = $orders->firstWhere('code', $orderCode);
+            $vendorPayment = $vendorPayments->firstWhere('orderCode', $orderCode);
+
+            if ($vendorPayment) {
+                // Update yang sudah ada
+                $vendorPayment->update([
+                    'nota_number' => $notaNumber,
+                    'user_bank_code' => $userBankCode,
+                ]);
+            } else {
+                // Buat baru jika belum ada
+                $vendorPayment = $this->service->create([
+                    'date' => now()->format('Y-m-d'),
+                    'amount' => $order->vendorPrice ?? 0,
+                    'paid_amount' => 0,
+                    'remaining_amount' => $order->vendorPrice ?? 0,
+                    'payment_status' => 'pending',
+                    'orderCode' => $orderCode,
+                    'nota_number' => $notaNumber,
+                    'user_bank_code' => $userBankCode,
+                ]);
+            }
+
+            if (!$logPayment) {
+                $logPayment = $vendorPayment;
+            }
+        }
+
+        // Log activity
+        if ($logPayment) {
+            $this->logActivity($title, $logPayment, 'Generate Nota ' . $notaNumber);
+        }
+
+        return $notaNumber;
+    }
+
+    public function cancelNota($orderCode, $title)
+    {
+        $vendorPayment = $this->service->where('orderCode', $orderCode)->first();
+
+        if (!$vendorPayment) {
+            throw new \Exception('Data pembayaran tidak ditemukan.');
+        }
+
+        $notaNumber = $vendorPayment->nota_number;
+
+        if ($notaNumber) {
+            // Ambil semua vendor payment yang memiliki nomor nota yang sama
+            $paymentsInNota = $this->service->where('nota_number', $notaNumber)->get();
+
+            // Validasi: tidak boleh ada yang sudah dibayar di grup nota ini
+            $alreadyPaid = $paymentsInNota->filter(function ($vp) {
+                return $vp->paid_amount > 0 || $vp->payment_status !== 'pending';
+            });
+
+            if ($alreadyPaid->isNotEmpty()) {
+                throw new \Exception('Nota tidak dapat dibatalkan karena beberapa order di dalam nota ini (' . $notaNumber . ') sudah dibayar. Batalkan pembayaran terlebih dahulu.');
+            }
+
+            // Hapus semua record vendor_payment di grup nota ini secara fisik (hard delete)
+            foreach ($paymentsInNota as $payment) {
+                $payment->forceDelete();
+            }
+
+            // Log activity
+            $this->logActivity($title, $vendorPayment, 'Cancel Nota ' . $notaNumber . ' (All associated orders reset)');
+        } else {
+            if ($vendorPayment->paid_amount > 0 || $vendorPayment->payment_status !== 'pending') {
+                throw new \Exception('Pembayaran sudah dilakukan, tidak dapat dibatalkan.');
+            }
+            $vendorPayment->forceDelete();
+            $this->logActivity($title, $vendorPayment, 'Cancel Unassigned Payment Record');
+        }
+    }
 }
+

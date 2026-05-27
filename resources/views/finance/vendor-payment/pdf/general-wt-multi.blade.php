@@ -85,6 +85,14 @@
             <td style="width: 15%;">Tanggal :</td>
             <td style="width: 20%; font-weight: bold;">{{ Carbon::now()->format('d/m/Y') }}</td>
         </tr>
+        @if(isset($notaNumber) && $notaNumber)
+        <tr>
+            <td></td>
+            <td></td>
+            <td>No Nota :</td>
+            <td style="font-weight: bold;">{{ $notaNumber }}</td>
+        </tr>
+        @endif
     </table>
 
     <!-- Tabel Data Pembayaran -->
@@ -188,12 +196,15 @@
                 <table style="border: none;">
                     <tr>
                         <td style="border: none; width: 35%;">Pembayaran Via :</td>
-                        <td style="border: none; font-weight: bold;">{{ $customer->company->bankName ?? '-' }}</td>
+                        <td style="border: none; font-weight: bold;">{{ $userBank && $userBank->bank ? $userBank->bank->name : ($customer->company->bankName ?? '-') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: none;">Nama Rekening :</td>
+                        <td style="border: none; font-weight: bold;">{{ $userBank ? $userBank->accountName : ($customer->company->name ?? '-') }}</td>
                     </tr>
                     <tr>
                         <td style="border: none;">No Rekening :</td>
-                        <td style="border: none; font-weight: bold;">{{ $customer->company->accountNumber ?? '-' }}
-                        </td>
+                        <td style="border: none; font-weight: bold;">{{ $userBank ? $userBank->accountNumber : ($customer->company->accountNumber ?? '-') }}</td>
                     </tr>
                 </table>
             </td>

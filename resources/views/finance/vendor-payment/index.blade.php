@@ -29,6 +29,9 @@
                     <button class="btn btn-warning" type="button" id="printMultiPdfBtn" disabled>
                         <i class="mdi mdi-printer"></i> Cetak Terpilih
                     </button>
+                    <button class="btn btn-primary" type="button" id="generateNotaBtn" disabled>
+                        <i class="mdi mdi-file-document-outline"></i> Generate Nota
+                    </button>
                     <button class="btn btn-success" type="button" id="openPaymentModalBtn" disabled>
                         Bayar Order Terpilih
                     </button>
@@ -45,6 +48,7 @@
                                         id="selectAllPayments"></th>
                                 <th>Aksi</th>
                                 <th>No</th>
+                                <th>No Nota</th>
                                 <th>{{ __('menu_vendor_payment.order_date') }}</th>
                                 <th>{{ __('menu_vendor_payment.plate_number') }}</th>
                                 <th>{{ __('menu_vendor_payment.driver') }}</th>
@@ -91,6 +95,11 @@
                                     <div class="col-md-12">
                                         <label class="form-label">Kode Order Dipilih</label>
                                         <textarea class="form-control" id="selectedOrderList" rows="2" readonly></textarea>
+                                    </div>
+
+                                    <div class="col-md-12" id="notaNumberContainer" style="display: none;">
+                                        <label class="form-label">Nomor Nota Kalender</label>
+                                        <input class="form-control" id="selectedNotaNumber" type="text" readonly>
                                     </div>
 
                                     <div class="col-md-12">
@@ -165,15 +174,20 @@
                     <div class="card">
                         <div class="card-body col-md-12">
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('menu_vendor_payment.payment_code') }}</label>
-                                    <input class="form-control" id="detail-code" type="text" readonly>
-                                </div>
+                                 <div class="col-md-4">
+                                     <label class="form-label">{{ __('menu_vendor_payment.payment_code') }}</label>
+                                     <input class="form-control" id="detail-code" type="text" readonly>
+                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">Status Pembayaran</label>
-                                    <input class="form-control" id="detail-payment-status" type="text" readonly>
-                                </div>
+                                 <div class="col-md-4">
+                                     <label class="form-label">Status Pembayaran</label>
+                                     <input class="form-control" id="detail-payment-status" type="text" readonly>
+                                 </div>
+
+                                 <div class="col-md-4">
+                                     <label class="form-label">Nomor Nota Kalender</label>
+                                     <input class="form-control" id="detail-nota-number" type="text" readonly>
+                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('menu_vendor_payment.order_code') }}</label>
@@ -258,9 +272,61 @@
         <div id="multiPdfOrderCodesContainer"></div>
     </form>
 
+    <!-- Form & Modal untuk Generate Nota -->
+    <form id="generate-nota-form" method="post" action="{{ route('finance.vendor-payment.generate-nota') }}">
+        @csrf
+        <div class="modal fade bd-example-modal-lg" id="nota-modal" tabindex="-1" role="dialog"
+            aria-labelledby="notaModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div id="notaOrderCodesContainer"></div>
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="notaModalLabel">Generate Nota Pembayaran</h4>
+                        <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="card">
+                        <div class="card-body col-md-12">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Jumlah Order Dipilih</label>
+                                    <input class="form-control" id="notaOrderCount" type="text" readonly>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label">Kode Order Dipilih</label>
+                                    <textarea class="form-control" id="notaOrderList" rows="2" readonly></textarea>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="form-label" for="notaUserBankCode">Akun Bank Pembayaran <span
+                                            class="text-danger">*</span></label>
+                                    <select class="form-select" name="userBankCode" id="notaUserBankCode" required>
+                                        <option value="">Pilih Bank</option>
+                                        <option value="" disabled>-- Loading data bank --</option>
+                                    </select>
+                                    <small class="form-text text-muted">Pilih bank yang ditargetkan untuk pembayaran nota ini</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer justify-content-start">
+                        <button class="btn btn-primary" type="submit">Generate Nota Sekarang!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
     <form id="delete-form" method="post">
         @csrf
         @method('DELETE')
+    </form>
+
+    <!-- Form untuk Batal Nota -->
+    <form id="cancel-nota-form" method="post" style="display: none;">
+        @csrf
     </form>
 @endsection
 
@@ -348,7 +414,7 @@
         function restoreSelectedCheckboxes() {
             $('.row-payment-checkbox').each(function() {
                 const checkbox = $(this);
-                const orderCode = checkbox.data('order-code');
+                const orderCode = checkbox.attr('data-order-code');
 
                 checkbox.prop('checked', !!selectedOrders[orderCode]);
             });
@@ -359,20 +425,43 @@
             const summaryEl = $('#selectionSummary');
             const openModalButton = $('#openPaymentModalBtn');
             const printMultiPdfBtn = $('#printMultiPdfBtn');
+            const generateNotaBtn = $('#generateNotaBtn');
 
             if (selectedCount === 0) {
                 summaryEl.text('Belum ada order dipilih.');
                 openModalButton.prop('disabled', true);
                 printMultiPdfBtn.prop('disabled', true);
+                generateNotaBtn.prop('disabled', true);
                 syncSelectAllCheckbox();
 
                 return;
             }
 
+            // Pisahkan berdasarkan tipe checkbox
+            const selectedList = Object.values(selectedOrders);
+            const paymentOrders = selectedList.filter(item => item.checkboxType === 'payment');
+            const notaOrders = selectedList.filter(item => item.checkboxType === 'nota');
+
             const totals = calculateSelectedTotals();
-            summaryEl.text(selectedCount + ' order dipilih. Total sisa tagihan: Rp ' + formatCurrency(totals.remaining));
-            openModalButton.prop('disabled', false);
-            printMultiPdfBtn.prop('disabled', false);
+
+            let summaryText = selectedCount + ' order dipilih.';
+            if (paymentOrders.length > 0) {
+                summaryText += ' ' + paymentOrders.length + ' siap untuk bayar/cetak (sisa: Rp ' + formatCurrency(totals.remaining) + ').';
+            }
+            if (notaOrders.length > 0) {
+                summaryText += ' ' + notaOrders.length + ' siap untuk generate nota.';
+            }
+            summaryEl.text(summaryText);
+
+            // Tombol bayar aktif hanya jika ada payment-type (sudah punya nota) dan tidak bercampur dengan nota-type
+            openModalButton.prop('disabled', paymentOrders.length === 0 || notaOrders.length > 0);
+            
+            // Tombol cetak terpilih aktif hanya jika ada payment-type (sudah punya nota) dan tidak bercampur dengan nota-type
+            printMultiPdfBtn.prop('disabled', paymentOrders.length === 0 || notaOrders.length > 0);
+
+            // Tombol generate nota aktif hanya jika ada nota-type (belum punya nota) dan tidak bercampur dengan payment-type
+            generateNotaBtn.prop('disabled', notaOrders.length === 0 || paymentOrders.length > 0);
+
             syncSelectAllCheckbox();
         }
 
@@ -390,6 +479,9 @@
                         "data": 'action'
                     }, {
                         "data": 'DT_RowIndex'
+                    },
+                    {
+                        "data": 'notaNumber'
                     },
                     {
                         "data": 'orderDate'
@@ -438,7 +530,7 @@
                     }
                 ],
                 "order": [
-                    [3, 'asc']
+                    [4, 'asc']
                 ],
                 "drawCallback": function() {
                     restoreSelectedCheckboxes();
@@ -452,16 +544,21 @@
             // Selection per baris
             $(document).on('change', '.row-payment-checkbox', function() {
                 const checkbox = $(this);
-                const orderCode = checkbox.data('order-code');
-                const orderFormat = String(checkbox.data('order-format') || '').toUpperCase().trim();
+                const orderCode = checkbox.attr('data-order-code');
+                const orderFormat = String(checkbox.attr('data-order-format') || '').toUpperCase().trim();
+                const customerCode = String(checkbox.attr('data-customer-code') || '');
+                const notaNumber = String(checkbox.attr('data-nota-number') || '');
 
                 if (checkbox.is(':checked')) {
                     selectedOrders[orderCode] = {
                         orderCode: orderCode,
                         orderFormat: orderFormat,
-                        billingAmount: Number(checkbox.data('billing-amount') || 0),
-                        paidAmount: Number(checkbox.data('paid-amount') || 0),
-                        remainingAmount: Number(checkbox.data('remaining-amount') || 0),
+                        customerCode: customerCode,
+                        notaNumber: notaNumber,
+                        checkboxType: String(checkbox.attr('data-checkbox-type') || 'payment'),
+                        billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
+                        paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
+                        remainingAmount: Number(checkbox.attr('data-remaining-amount') || 0),
                     };
                 } else {
                     delete selectedOrders[orderCode];
@@ -505,6 +602,17 @@
                 $('#billingAmount').val(formatCurrency(totals.billing));
                 $('#paidAmount').val(formatCurrency(totals.paid));
                 $('#remainingAmount').val(formatCurrency(totals.remaining));
+
+                // Ambil unique nomor nota yang dipilih
+                const selectedList = Object.values(selectedOrders);
+                const uniqueNotas = [...new Set(selectedList.map(item => item.notaNumber).filter(n => n !== ''))];
+                if (uniqueNotas.length > 0) {
+                    $('#selectedNotaNumber').val(uniqueNotas.join(', '));
+                    $('#notaNumberContainer').show();
+                } else {
+                    $('#selectedNotaNumber').val('');
+                    $('#notaNumberContainer').hide();
+                }
 
                 $('#totalPaymentAmount').val(formatCurrency(totals.remaining));
                 $('#hiddenPaymentAmount').val(totals.remaining);
@@ -580,11 +688,13 @@
                         options += '<option value="" disabled>Tidak ada data bank</option>';
                     }
                     $('#userBankCode').html(options);
+                    $('#notaUserBankCode').html(options);
                 },
                 error: function(xhr) {
                     let options = '<option value="">Pilih Bank</option>';
                     options += '<option value="" disabled>Error memuat data</option>';
                     $('#userBankCode').html(options);
+                    $('#notaUserBankCode').html(options);
                 }
             });
         }
@@ -596,6 +706,7 @@
                 success: function(data) {
                     if (data) {
                         $('#detail-code').val(data.batch_code || data.code || '');
+                        $('#detail-nota-number').val(data.nota_number || '-');
                         $('#detail-order-code').val(data.order ? data.order.code : '');
                         $('#detail-shipment-number').val(data.shipmentNumber || data.shipment_number || (data
                             .order ? data.order.shipmentNumber : '') || '');
@@ -702,6 +813,107 @@
 
             // Submit form untuk membuka PDF di tab baru
             $('#multi-pdf-form').submit();
+        });
+
+        // Function untuk konfirmasi pembatalan pembayaran
+        function confirmCancelPayment(orderCode) {
+            const url = '{{ route('finance.vendor-payment.index') }}/' + orderCode;
+            $('#delete-form').attr('action', url);
+
+            swal({
+                title: "Apakah Anda yakin?",
+                text: "Seluruh pembayaran untuk order " + orderCode + " akan dibatalkan secara permanen!",
+                icon: "warning",
+                buttons: ["Batal", "Ya, Batalkan!"],
+                dangerMode: true,
+            }).then((willCancel) => {
+                if (willCancel) {
+                    $('#delete-form').submit();
+                }
+            });
+        }
+
+        // Function untuk konfirmasi pembatalan nota pembayaran
+        function confirmCancelNota(orderCode) {
+            const url = '{{ route('finance.vendor-payment.index') }}/cancel-nota/' + orderCode;
+            $('#cancel-nota-form').attr('action', url);
+
+            swal({
+                title: "Apakah Anda yakin?",
+                text: "Nota pembayaran untuk order " + orderCode + " akan dibatalkan!",
+                icon: "warning",
+                buttons: ["Batal", "Ya, Batalkan Nota!"],
+                dangerMode: true,
+            }).then((willCancel) => {
+                if (willCancel) {
+                    $('#cancel-nota-form').submit();
+                }
+            });
+        }
+
+        // Handler untuk tombol Generate Nota
+        $('#generateNotaBtn').on('click', function() {
+            const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
+            const selectedCodes = notaOrders.map(item => item.orderCode);
+
+            if (selectedCodes.length === 0) {
+                swal('Peringatan', 'Pilih minimal satu order yang belum memiliki nota.', 'warning');
+                return;
+            }
+
+            // Validasi 1: Pelanggan (customer) yang berbeda tidak boleh digabung dalam satu nota
+            const uniqueCustomers = [...new Set(notaOrders.map(item => item.customerCode).filter(c => c !== ''))];
+            if (uniqueCustomers.length > 1) {
+                swal('Peringatan', 'Gagal: Order yang dipilih memiliki pelanggan (customer) yang berbeda. Satu nota hanya diperbolehkan untuk pelanggan yang sama.', 'warning');
+                return;
+            }
+
+            // Validasi 3: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh digabung dalam satu nota
+            const uniqueFormats = [...new Set(notaOrders.map(item => item.orderFormat).filter(f => f !== ''))];
+            if (uniqueFormats.length > 1) {
+                swal('Peringatan', 'Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' + uniqueFormats.join(', ') + '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.', 'warning');
+                return;
+            }
+
+            // Populate modal fields
+            $('#notaOrderCount').val(selectedCodes.length + ' order');
+            $('#notaOrderList').val(selectedCodes.join(', '));
+            $('#notaUserBankCode').val(''); // Reset bank selection
+
+            // Populate hidden inputs
+            const container = $('#notaOrderCodesContainer');
+            container.html('');
+            selectedCodes.forEach(function(orderCode) {
+                container.append(`<input type="hidden" name="orderCodes[]" value="${orderCode}">`);
+            });
+
+            // Tampilkan modal generate nota
+            $('#nota-modal').modal('show');
+        });
+
+        // Handler untuk submit form generate nota
+        $('#generate-nota-form').on('submit', function(e) {
+            e.preventDefault();
+
+            const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
+            const selectedCodes = notaOrders.map(item => item.orderCode);
+            const selectedBank = $('#notaUserBankCode').val();
+
+            if (!selectedBank) {
+                swal('Peringatan', 'Pilih bank pembayaran terlebih dahulu.', 'warning');
+                return false;
+            }
+
+            swal({
+                title: "Generate Nota Pembayaran?",
+                text: selectedCodes.length + " order akan dikelompokkan ke dalam satu nota resmi dan ditargetkan ke akun bank yang dipilih. Order yang sudah di-nota tidak bisa dipindahkan ke nota lain.",
+                icon: "info",
+                buttons: ["Batal", "Ya, Generate Nota!"],
+            }).then((willGenerate) => {
+                if (willGenerate) {
+                    $('#generate-nota-form').off('submit').submit();
+                }
+            });
         });
     </script>
 @endpush

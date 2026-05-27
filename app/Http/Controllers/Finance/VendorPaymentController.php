@@ -91,16 +91,24 @@ class VendorPaymentController extends Controller
                     $paidAmount = $vendorPayment ? (float) ($vendorPayment->paid_amount ?? 0) : 0;
                     $remainingAmount = $vendorPayment ? (float) ($vendorPayment->remaining_amount ?? 0) : $billingAmount;
                     $paymentStatus = $vendorPayment ? ($vendorPayment->payment_status ?? 'pending') : 'pending';
+                    $notaNumber = $vendorPayment ? ($vendorPayment->nota_number ?? null) : null;
                     $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
 
                     $isExternalFleet = isset($row->fleet->company->type) && strcasecmp((string) $row->fleet->company->type, 'external') === 0;
-                    $canBePaid = $isExternalFleet && $paymentStatus !== 'paid' && $remainingAmount > 0;
 
-                    if (! $canBePaid) {
+                    // Order yang sudah punya nota bisa dipilih untuk bayar/cetak
+                    // Order yang belum punya nota wajib di-generate nota terlebih dahulu
+                    $canBePaid = $isExternalFleet && $notaNumber;
+                    $canBeNota = $isExternalFleet && ! $notaNumber;
+
+                    if (! $canBePaid && ! $canBeNota) {
                         return '<span class="text-muted">-</span>';
                     }
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '"></div>';
+                    $checkboxType = $canBePaid ? 'payment' : 'nota';
+                    $customerCode = $row->customerCode ?? ($row->customer->code ?? '');
+
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-customer-code="' . e($customerCode) . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '" data-checkbox-type="' . $checkboxType . '" data-nota-number="' . ($notaNumber ?? '') . '"></div>';
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -199,6 +207,16 @@ class VendorPaymentController extends Controller
 
                     return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
+                ->addColumn('notaNumber', function ($row) {
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
+                    $notaNumber = $vendorPayment ? ($vendorPayment->nota_number ?? null) : null;
+
+                    if ($notaNumber) {
+                        return '<span class="badge rounded-pill text-bg-primary">' . $notaNumber . '</span>';
+                    }
+
+                    return '<span class="text-muted">-</span>';
+                })
                 ->editColumn('status', function ($row) {
                     $statusText = '';
                     $badgeClass = 'primary';
@@ -223,12 +241,21 @@ class VendorPaymentController extends Controller
                     // Build button group for cleaner UI
                     $buttons = [];
 
-                    // PDF (always show)
-                    $buttons[] = '<a href="' . route('finance.vendor-payment.pdf', $row->code) . '" target="_blank" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Print PDF"><i class="mdi mdi-file fs-14"></i></a>';
-
                     // Detail (if payment history exists)
                     if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
                         $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                    }
+
+                    // Batal Nota (hanya tampil jika sudah bernota tetapi belum ada pembayaran sama sekali)
+                    $hasNotaOnly = $vendorPayment && $vendorPayment->nota_number && $vendorPayment->paid_amount == 0 && $vendorPayment->payment_status === 'pending';
+                    if ($hasNotaOnly) {
+                        $buttons[] = '<button type="button" onclick="confirmCancelNota(\'' . $row->code . '\')" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
+                    }
+
+                    // Batal Pembayaran (hanya tampil jika sudah pernah ada pembayaran nyata)
+                    $hasPaymentMade = $vendorPayment && ($vendorPayment->paid_amount > 0 || $vendorPayment->payment_status !== 'pending');
+                    if ($hasPaymentMade) {
+                        $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $row->code . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
                     }
 
                     // Wrap buttons in a group
@@ -236,7 +263,7 @@ class VendorPaymentController extends Controller
 
                     return $html;
                 })
-                ->rawColumns(['select', 'action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus'])
+                ->rawColumns(['select', 'action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'status', 'paymentStatus', 'notaNumber'])
                 ->toJson();
         }
     }
@@ -317,6 +344,10 @@ class VendorPaymentController extends Controller
             ->where('orderCode', $orderCode)
             ->first();
 
+        if (! $vendorPayment || ! $vendorPayment->nota_number) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Nomor nota belum di-generate untuk order ini. Silakan generate nota terlebih dahulu.');
+        }
+
         $paymentHistories = collect($vendorPayment?->paymentHistory ?? []);
         $paymentHistoryTotal = $paymentHistories->sum('amount');
 
@@ -368,6 +399,28 @@ class VendorPaymentController extends Controller
 
         if (empty($orderCodes)) {
             return redirect()->route($this->view . 'index')->with('fail', 'Tidak ada order yang dipilih');
+        }
+
+        // Ambil semua nomor nota yang terkait dengan order terpilih
+        $selectedNotaNumbers = \App\Models\Finance\VendorPayment::whereIn('orderCode', $orderCodes)
+            ->whereNotNull('nota_number')
+            ->pluck('nota_number')
+            ->unique();
+
+        if ($selectedNotaNumbers->isNotEmpty()) {
+            // Ambil semua orderCode yang memiliki salah satu dari nomor nota di atas
+            $allOrderCodesWithSameNotas = \App\Models\Finance\VendorPayment::whereIn('nota_number', $selectedNotaNumbers)
+                ->pluck('orderCode')
+                ->toArray();
+
+            // Gabungkan order codes asal dengan order codes hasil pencarian nota
+            $orderCodes = array_values(array_unique(array_merge($orderCodes, $allOrderCodesWithSameNotas)));
+        }
+
+        // Validasi: semua order terpilih harus memiliki nota_number
+        $vendorPayments = \App\Models\Finance\VendorPayment::whereIn('orderCode', $orderCodes)->get();
+        if ($vendorPayments->count() < count($orderCodes) || $vendorPayments->contains(fn($vp) => !$vp->nota_number)) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Beberapa order terpilih belum memiliki nomor nota. Silakan generate nota terlebih dahulu.');
         }
 
         // Fetch semua orders dengan relasi
@@ -429,6 +482,19 @@ class VendorPaymentController extends Controller
         $company = CompanySetting::first();
         $customerFirst = $orders->first()->customer;
 
+        // Ambil nomor nota dan bank yang dipilih
+        $vendorPayment = \App\Models\Finance\VendorPayment::whereIn('orderCode', $orderCodes)
+            ->whereNotNull('nota_number')
+            ->first();
+
+        $notaNumber = $vendorPayment ? $vendorPayment->nota_number : null;
+        $userBankCode = $vendorPayment ? $vendorPayment->user_bank_code : null;
+
+        $userBank = null;
+        if ($userBankCode) {
+            $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
+        }
+
         $mpdf = new Mpdf(
             [
                 'orientation' => 'P',
@@ -449,8 +515,90 @@ class VendorPaymentController extends Controller
                 ->with('totalAdditionalCost', $totalAdditionalCost)
                 ->with('totalPphAmount', $totalPphAmount)
                 ->with('totalGrandTotal', $totalGrandTotal)
+                ->with('notaNumber', $notaNumber)
+                ->with('userBank', $userBank)
         );
 
         return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');
+    }
+
+    /**
+     * Membatalkan pembayaran vendor (hard delete).
+     *
+     * @param string $orderCode
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function destroy($orderCode)
+    {
+        try {
+            DB::beginTransaction();
+
+            $this->service->cancelPayment($orderCode, $this->title);
+
+            DB::commit();
+
+            return redirect()->route($this->view . 'index')
+                ->with('success', 'Pembayaran vendor untuk order ' . $orderCode . ' berhasil dibatalkan secara permanen.');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route($this->view . 'index')
+                ->with('fail', 'Gagal membatalkan pembayaran: ' . $th->getMessage());
+        }
+    }
+
+    /**
+     * Generate nomor nota untuk order-order yang dipilih.
+     */
+    public function generateNota(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'orderCodes' => 'required|array|min:1',
+            'orderCodes.*' => 'required|string',
+            'userBankCode' => 'required|string|exists:user_bank,code',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route($this->view . 'index')
+                ->with('fail', $validator->errors()->all()[0]);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $notaNumber = $this->service->assignNota($request->orderCodes, $request->userBankCode, $this->title);
+
+            DB::commit();
+
+            return redirect()->route($this->view . 'index')
+                ->with('success', 'Nota pembayaran berhasil di-generate dengan nomor: ' . $notaNumber);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route($this->view . 'index')
+                ->with('fail', 'Gagal generate nota: ' . $th->getMessage());
+        }
+    }
+
+    /**
+     * Membatalkan nomor nota pembayaran (jika belum dibayar).
+     */
+    public function cancelNota($orderCode)
+    {
+        try {
+            DB::beginTransaction();
+
+            $this->service->cancelNota($orderCode, $this->title);
+
+            DB::commit();
+
+            return redirect()->route($this->view . 'index')
+                ->with('success', 'Nota pembayaran untuk order ' . $orderCode . ' berhasil dibatalkan.');
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return redirect()->route($this->view . 'index')
+                ->with('fail', 'Gagal membatalkan nota: ' . $th->getMessage());
+        }
     }
 }

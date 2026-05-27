@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('finance')->name('finance.')->group(function () {
     Route::resource('invoice-payment', InvoicePaymentController::class);
     Route::resource('invoice', InvoiceController::class);
+    Route::post('vendor-payment/generate-nota', [VendorPaymentController::class, 'generateNota'])->name('vendor-payment.generate-nota');
+    Route::post('vendor-payment/cancel-nota/{orderCode}', [VendorPaymentController::class, 'cancelNota'])->name('vendor-payment.cancel-nota');
     Route::resource('vendor-payment', VendorPaymentController::class);
     Route::resource('order-payment', OrderPaymentController::class);
     Route::put('invoice-detail/{id}', [InvoiceController::class, 'storeInvoiceDetail'])->name('invoice-detail.store');

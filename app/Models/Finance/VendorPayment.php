@@ -23,6 +23,8 @@ class VendorPayment extends Model
         'paid_amount',
         'remaining_amount',
         'payment_status',
+        'nota_number',
+        'user_bank_code',
         'description',
         'date',
     ];
