@@ -51,6 +51,7 @@
                                 <th>No Nota</th>
                                 <th>{{ __('menu_vendor_payment.order_date') }}</th>
                                 <th>{{ __('menu_vendor_payment.plate_number') }}</th>
+                                <th>Perusahaan Kendaraan</th>
                                 <th>{{ __('menu_vendor_payment.driver') }}</th>
                                 <th>{{ __('menu_vendor_payment.shipment_no') }}</th>
                                 <th>{{ __('menu_vendor_payment.customer') }}</th>
@@ -199,10 +200,15 @@
                                     <input class="form-control" id="detail-shipment-number" type="text" readonly>
                                 </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label">{{ __('menu_vendor_payment.plate_number') }}</label>
-                                    <input class="form-control" id="detail-plate-number" type="text" readonly>
-                                </div>
+                                 <div class="col-md-6">
+                                     <label class="form-label">{{ __('menu_vendor_payment.plate_number') }}</label>
+                                     <input class="form-control" id="detail-plate-number" type="text" readonly>
+                                 </div>
+ 
+                                 <div class="col-md-6">
+                                     <label class="form-label">Perusahaan Kendaraan</label>
+                                     <input class="form-control" id="detail-fleet-company" type="text" readonly>
+                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">{{ __('menu_vendor_payment.driver') }}</label>
@@ -490,6 +496,9 @@
                         "data": 'fleet.plateNumber'
                     },
                     {
+                        "data": 'fleet.company.name'
+                    },
+                    {
                         "data": 'driver.name'
                     },
                     {
@@ -547,6 +556,7 @@
                 const orderCode = checkbox.attr('data-order-code');
                 const orderFormat = String(checkbox.attr('data-order-format') || '').toUpperCase().trim();
                 const customerCode = String(checkbox.attr('data-customer-code') || '');
+                const fleetCompanyCode = String(checkbox.attr('data-fleet-company-code') || '');
                 const notaNumber = String(checkbox.attr('data-nota-number') || '');
 
                 if (checkbox.is(':checked')) {
@@ -554,6 +564,7 @@
                         orderCode: orderCode,
                         orderFormat: orderFormat,
                         customerCode: customerCode,
+                        fleetCompanyCode: fleetCompanyCode,
                         notaNumber: notaNumber,
                         checkboxType: String(checkbox.attr('data-checkbox-type') || 'payment'),
                         billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
@@ -712,6 +723,7 @@
                             .order ? data.order.shipmentNumber : '') || '');
                         $('#detail-plate-number').val(data.order && data.order.fleet ? data.order.fleet
                             .plateNumber : '');
+                        $('#detail-fleet-company').val(data.order && data.order.fleet && data.order.fleet.company ? data.order.fleet.company.name : '-');
                         $('#detail-driver').val(data.order && data.order.driver ? data.order.driver.name : '');
                         $('#detail-customer').val(data.order && data.order.customer ? data.order.customer.name :
                             '');
@@ -861,10 +873,10 @@
                 return;
             }
 
-            // Validasi 1: Pelanggan (customer) yang berbeda tidak boleh digabung dalam satu nota
-            const uniqueCustomers = [...new Set(notaOrders.map(item => item.customerCode).filter(c => c !== ''))];
-            if (uniqueCustomers.length > 1) {
-                swal('Peringatan', 'Gagal: Order yang dipilih memiliki pelanggan (customer) yang berbeda. Satu nota hanya diperbolehkan untuk pelanggan yang sama.', 'warning');
+            // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh digabung dalam satu nota
+            const uniqueFleetCompanies = [...new Set(notaOrders.map(item => item.fleetCompanyCode).filter(f => f !== ''))];
+            if (uniqueFleetCompanies.length > 1) {
+                swal('Peringatan', 'Gagal: Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.', 'warning');
                 return;
             }
 

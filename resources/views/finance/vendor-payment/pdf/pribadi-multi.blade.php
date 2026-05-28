@@ -81,7 +81,7 @@
     <table style="margin-top: 15px;">
         <tr>
             <td style="width: 15%;">Untuk :</td>
-            <td style="width: 50%;">{{ $customer->name ?? '-' }}</td>
+            <td style="width: 50%;">{{ $orders->first()->fleet->company->name ?? '-' }}</td>
             <td style="width: 15%;">Tanggal :</td>
             <td style="width: 20%; font-weight: bold;">{{ Carbon::now()->format('d/m/Y') }}</td>
         </tr>
@@ -215,7 +215,6 @@
 
     <!-- Tanda Tangan -->
     <div class="mt-60 text-right">
-        <p>HORMAT KAMI</p>
         <br><br><br>
         <p class="">EVI IRAWATI</p>
     </div>

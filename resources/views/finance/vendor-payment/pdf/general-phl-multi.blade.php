@@ -81,17 +81,17 @@
     <table style="margin-top: 15px;">
         <tr>
             <td style="width: 15%;">Untuk :</td>
-            <td style="width: 50%;">{{ $customer->name ?? '-' }}</td>
+            <td style="width: 50%;">{{ $orders->first()->fleet->company->name ?? '-' }}</td>
             <td style="width: 15%;">Tanggal :</td>
             <td style="width: 20%; font-weight: bold;">{{ Carbon::now()->format('d/m/Y') }}</td>
         </tr>
         @if(isset($notaNumber) && $notaNumber)
-        <tr>
-            <td></td>
-            <td></td>
-            <td>No Nota :</td>
-            <td style="font-weight: bold;">{{ $notaNumber }}</td>
-        </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td>No Nota :</td>
+                <td style="font-weight: bold;">{{ $notaNumber }}</td>
+            </tr>
         @endif
     </table>
 
@@ -155,24 +155,27 @@
                 <td colspan="6" style="border-left: none; border-right: none; border-bottom: none;"></td>
                 <td style="text-align: right; font-weight: bold; border-bottom: none;">Jumlah</td>
                 <td style="text-align: right; font-weight: bold; border-bottom: none;">
-                    {{ number_format($totalSubtotal, 0, ',', '.') }}</td>
+                    {{ number_format($totalSubtotal, 0, ',', '.') }}
+                </td>
             </tr>
             @if ($totalAdditionalCost > 0)
                 <tr>
-                    <td colspan="6"
-                        style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                    <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;">
+                    </td>
                     <td style="text-align: right; border-bottom: none; border-top: none;">Biaya Tambahan</td>
                     <td style="text-align: right; border-bottom: none; border-top: none;">
-                        {{ number_format($totalAdditionalCost, 0, ',', '.') }}</td>
+                        {{ number_format($totalAdditionalCost, 0, ',', '.') }}
+                    </td>
                 </tr>
             @endif
             @if ($totalPphAmount > 0)
                 <tr>
-                    <td colspan="6"
-                        style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
+                    <td colspan="6" style="border-left: none; border-right: none; border-bottom: none; border-top: none;">
+                    </td>
                     <td style="text-align: right; border-bottom: none; border-top: none;">PPH</td>
                     <td style="text-align: right; border-bottom: none; border-top: none;">
-                        {{ number_format($totalPphAmount, 0, ',', '.') }}</td>
+                        {{ number_format($totalPphAmount, 0, ',', '.') }}
+                    </td>
                 </tr>
             @endif
             <tr>
@@ -184,7 +187,8 @@
                 <td colspan="6" style="border: none;"></td>
                 <td style="text-align: right; font-weight: bold; border: none;">Total</td>
                 <td style="text-align: right; font-weight: bold; border: none;">
-                    {{ number_format($totalGrandTotal, 0, ',', '.') }}</td>
+                    {{ number_format($totalGrandTotal, 0, ',', '.') }}
+                </td>
             </tr>
         </tbody>
     </table>
@@ -196,15 +200,19 @@
                 <table style="border: none;">
                     <tr>
                         <td style="border: none; width: 35%;">Pembayaran Via :</td>
-                        <td style="border: none; font-weight: bold;">{{ $userBank && $userBank->bank ? $userBank->bank->name : ($customer->company->bankName ?? '-') }}</td>
+                        <td style="border: none; font-weight: bold;">
+                            {{ $userBank && $userBank->bank ? $userBank->bank->name : ($customer->company->bankName ?? '-') }}
+                        </td>
                     </tr>
                     <tr>
                         <td style="border: none;">Nama Rekening :</td>
-                        <td style="border: none; font-weight: bold;">{{ $userBank ? $userBank->accountName : ($customer->company->name ?? '-') }}</td>
+                        <td style="border: none; font-weight: bold;">
+                            {{ $userBank ? $userBank->accountName : ($customer->company->name ?? '-') }}</td>
                     </tr>
                     <tr>
                         <td style="border: none;">No Rekening :</td>
-                        <td style="border: none; font-weight: bold;">{{ $userBank ? $userBank->accountNumber : ($customer->company->accountNumber ?? '-') }}</td>
+                        <td style="border: none; font-weight: bold;">
+                            {{ $userBank ? $userBank->accountNumber : ($customer->company->accountNumber ?? '-') }}</td>
                     </tr>
                 </table>
             </td>
@@ -215,7 +223,6 @@
 
     <!-- Tanda Tangan -->
     <div class="mt-60 text-right">
-        <p>HORMAT KAMI</p>
         <br><br><br>
         <p class="">EVI IRAWATI</p>
     </div>

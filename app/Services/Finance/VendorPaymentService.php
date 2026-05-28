@@ -238,30 +238,33 @@ class VendorPaymentService
     }
 
     /**
-     * Generate nomor nota berformat YYYYMMDDXXXX.
-     * XXXX = urutan yang reset setiap bulan baru.
+     * Generate nomor nota berformat PREFIX/SEQUENCE/YEAR.
+     * SEQUENCE = urutan yang reset setiap tahun baru.
      */
-    public function generateNotaNumber()
+    public function generateNotaNumber($prefix)
     {
-        $now = now();
-        $yearMonth = $now->format('Ym'); // e.g. 202605
-        $datePrefix = $now->format('Ymd'); // e.g. 20260527
+        $year = now()->format('Y');
+        $pattern = $prefix . '/%/' . $year;
 
-        // Cari nota_number tertinggi di bulan ini (format: YYYYMM...)
+        // Cari nota_number tertinggi dengan prefix dan tahun ini
         $lastNota = $this->service
-            ->where('nota_number', 'like', $yearMonth . '%')
+            ->where('nota_number', 'like', $pattern)
             ->orderByDesc('nota_number')
             ->value('nota_number');
 
         if ($lastNota) {
-            // Ambil 4 digit terakhir dari nota terakhir dan tambah 1
-            $lastSequence = (int) substr($lastNota, -4);
-            $nextSequence = $lastSequence + 1;
+            $parts = explode('/', $lastNota);
+            if (count($parts) === 3) {
+                $lastSequence = (int) $parts[1];
+                $nextSequence = $lastSequence + 1;
+            } else {
+                $nextSequence = 1;
+            }
         } else {
             $nextSequence = 1;
         }
 
-        return $datePrefix . str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
+        return $prefix . '/' . str_pad($nextSequence, 5, '0', STR_PAD_LEFT) . '/' . $year;
     }
 
     /**
@@ -281,16 +284,18 @@ class VendorPaymentService
             throw new \Exception('Pilih minimal satu order untuk di-nota-kan.');
         }
 
-        // Ambil semua order terpilih dengan relasi customer dan company
-        $orders = $this->order->with(['customer.company'])->whereIn('code', $orderCodes)->get();
+        // Ambil semua order terpilih dengan relasi customer, company, dan fleet
+        $orders = $this->order->with(['customer.company', 'fleet.company'])->whereIn('code', $orderCodes)->get();
         if ($orders->count() !== count($orderCodes)) {
             throw new \Exception('Beberapa order tidak ditemukan.');
         }
 
-        // Validasi 1: Pelanggan (customer) yang berbeda tidak boleh dalam satu nota
-        $customerCodes = $orders->pluck('customerCode')->filter()->unique();
-        if ($customerCodes->count() > 1) {
-            throw new \Exception('Gagal: Order yang dipilih memiliki pelanggan (customer) yang berbeda. Satu nota hanya untuk satu pelanggan.');
+        // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh dalam satu nota
+        $fleetCompanyCodes = $orders->map(function ($order) {
+            return $order->fleet->fleetCompanyCode ?? null;
+        })->filter()->unique();
+        if ($fleetCompanyCodes->count() > 1) {
+            throw new \Exception('Gagal: Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.');
         }
 
         // Validasi 3: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh dalam satu nota
@@ -312,7 +317,20 @@ class VendorPaymentService
             throw new \Exception('Order sudah memiliki nota: ' . $alreadyNota->pluck('orderCode')->implode(', '));
         }
 
-        $notaNumber = $this->generateNotaNumber();
+        // Ambil format perusahaan dari order pertama
+        $firstOrder = $orders->first();
+        $companyFormat = strtoupper(trim((string) ($firstOrder->customer->company->format ?? '')));
+
+        // Map format ke prefix nota
+        if ($companyFormat === 'P') {
+            $prefix = 'P';
+        } elseif ($companyFormat === 'WTMS' || $companyFormat === 'WT') {
+            $prefix = 'WTMS';
+        } else {
+            $prefix = 'PHL';
+        }
+
+        $notaNumber = $this->generateNotaNumber($prefix);
 
         $logPayment = null;
 

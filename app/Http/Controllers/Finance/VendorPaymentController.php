@@ -107,8 +107,9 @@ class VendorPaymentController extends Controller
 
                     $checkboxType = $canBePaid ? 'payment' : 'nota';
                     $customerCode = $row->customerCode ?? ($row->customer->code ?? '');
+                    $fleetCompanyCode = $row->fleet->fleetCompanyCode ?? '';
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-customer-code="' . e($customerCode) . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '" data-checkbox-type="' . $checkboxType . '" data-nota-number="' . ($notaNumber ?? '') . '"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . $row->code . '" data-customer-code="' . e($customerCode) . '" data-fleet-company-code="' . e($fleetCompanyCode) . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '" data-checkbox-type="' . $checkboxType . '" data-nota-number="' . ($notaNumber ?? '') . '"></div>';
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
                     $fleet = '';
@@ -118,6 +119,15 @@ class VendorPaymentController extends Controller
                     }
 
                     return $fleet;
+                })
+                ->addColumn('fleet.company.name', function ($row) {
+                    $company = '';
+
+                    if (isset($row->fleet->company->name)) {
+                        $company = $row->fleet->company->name;
+                    }
+
+                    return $company;
                 })
 
                 ->editColumn('customer.name', function ($row) {
