@@ -49,7 +49,7 @@
                                 <select class="form-control js-example-basic-single cost-type-select w-100" style="width:100%" 
                                     name="externalCostType[]" id="costType_edit_{{ $loop->iteration }}" required>
                                     <option value="On Charge" {{ $item->type == 'On Charge' ? 'selected' : '' }}>On Charge</option>
-                                    <option value="Off Charge" {{ $item->type == 'Off Charge' ? 'selected' : '' }}>Off Charge</option>
+                                    <option value="Off Charge" {{ ($item->type == 'Off Charge' || !$item->type) ? 'selected' : '' }}>Off Charge</option>
                                 </select>
                             </td>
                             <td>
@@ -151,8 +151,8 @@ function addExternalCostRow() {
         <td>
             <select class="form-control js-example-basic-single cost-type-select w-100" style="width:100%" 
                 name="externalCostType[]" id="costType_${rowCount}" required>
-                <option value="On Charge" selected>On Charge</option>
-                <option value="Off Charge">Off Charge</option>
+                <option value="On Charge">On Charge</option>
+                <option value="Off Charge" selected>Off Charge</option>
             </select>
         </td>
         <td>

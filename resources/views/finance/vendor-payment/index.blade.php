@@ -421,8 +421,30 @@
             $('.row-payment-checkbox').each(function() {
                 const checkbox = $(this);
                 const orderCode = checkbox.attr('data-order-code');
+                const notaNumber = String(checkbox.attr('data-nota-number') || '');
 
-                checkbox.prop('checked', !!selectedOrders[orderCode]);
+                // If this order is explicitly selected, or if any order in the same nota is selected
+                let isSelected = !!selectedOrders[orderCode];
+                if (!isSelected && notaNumber !== '') {
+                    // Check if any order in selectedOrders has the same notaNumber
+                    isSelected = Object.values(selectedOrders).some(item => item.notaNumber === notaNumber);
+                    if (isSelected) {
+                        // Automatically select this one as well to keep the group synced
+                        selectedOrders[orderCode] = {
+                            orderCode: orderCode,
+                            orderFormat: String(checkbox.attr('data-order-format') || '').toUpperCase().trim(),
+                            customerCode: String(checkbox.attr('data-customer-code') || ''),
+                            fleetCompanyCode: String(checkbox.attr('data-fleet-company-code') || ''),
+                            notaNumber: notaNumber,
+                            checkboxType: String(checkbox.attr('data-checkbox-type') || 'payment'),
+                            billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
+                            paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
+                            remainingAmount: Number(checkbox.attr('data-remaining-amount') || 0),
+                        };
+                    }
+                }
+
+                checkbox.prop('checked', isSelected);
             });
         }
 
@@ -551,29 +573,64 @@
             loadBankData();
 
             // Selection per baris
-            $(document).on('change', '.row-payment-checkbox', function() {
+            $(document).on('change', '.row-payment-checkbox', function(e, data) {
+                // Prevent infinite loop when programmatically triggering changes
+                if (data && data.isSyncing) return;
+
                 const checkbox = $(this);
                 const orderCode = checkbox.attr('data-order-code');
                 const orderFormat = String(checkbox.attr('data-order-format') || '').toUpperCase().trim();
                 const customerCode = String(checkbox.attr('data-customer-code') || '');
                 const fleetCompanyCode = String(checkbox.attr('data-fleet-company-code') || '');
                 const notaNumber = String(checkbox.attr('data-nota-number') || '');
+                const isChecked = checkbox.is(':checked');
 
-                if (checkbox.is(':checked')) {
-                    selectedOrders[orderCode] = {
-                        orderCode: orderCode,
-                        orderFormat: orderFormat,
-                        customerCode: customerCode,
-                        fleetCompanyCode: fleetCompanyCode,
-                        notaNumber: notaNumber,
-                        checkboxType: String(checkbox.attr('data-checkbox-type') || 'payment'),
-                        billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
-                        paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
-                        remainingAmount: Number(checkbox.attr('data-remaining-amount') || 0),
-                    };
-                } else {
-                    delete selectedOrders[orderCode];
+                const syncState = (code, format, cust, fleet, nota, type, bill, paid, rem, checked) => {
+                    if (checked) {
+                        selectedOrders[code] = {
+                            orderCode: code,
+                            orderFormat: format,
+                            customerCode: cust,
+                            fleetCompanyCode: fleet,
+                            notaNumber: nota,
+                            checkboxType: type,
+                            billingAmount: bill,
+                            paidAmount: paid,
+                            remainingAmount: rem,
+                        };
+                    } else {
+                        delete selectedOrders[code];
+                    }
+                };
+
+                if (notaNumber !== '') {
+                    // Sync all checkboxes on the current page that have the same notaNumber
+                    $('.row-payment-checkbox[data-nota-number="' + notaNumber + '"]').each(function() {
+                        const targetCheckbox = $(this);
+                        if (targetCheckbox.is(':checked') !== isChecked) {
+                            targetCheckbox.prop('checked', isChecked);
+                            const tCode = targetCheckbox.attr('data-order-code');
+                            const tFormat = String(targetCheckbox.attr('data-order-format') || '').toUpperCase().trim();
+                            const tCust = String(targetCheckbox.attr('data-customer-code') || '');
+                            const tFleet = String(targetCheckbox.attr('data-fleet-company-code') || '');
+                            const tType = String(targetCheckbox.attr('data-checkbox-type') || 'payment');
+                            const tBill = Number(targetCheckbox.attr('data-billing-amount') || 0);
+                            const tPaid = Number(targetCheckbox.attr('data-paid-amount') || 0);
+                            const tRem = Number(targetCheckbox.attr('data-remaining-amount') || 0);
+                            
+                            syncState(tCode, tFormat, tCust, tFleet, notaNumber, tType, tBill, tPaid, tRem, isChecked);
+                            targetCheckbox.trigger('change', { isSyncing: true });
+                        }
+                    });
                 }
+
+                // Ensure the explicitly clicked checkbox state is recorded
+                syncState(orderCode, orderFormat, customerCode, fleetCompanyCode, notaNumber, 
+                          String(checkbox.attr('data-checkbox-type') || 'payment'), 
+                          Number(checkbox.attr('data-billing-amount') || 0), 
+                          Number(checkbox.attr('data-paid-amount') || 0), 
+                          Number(checkbox.attr('data-remaining-amount') || 0), 
+                          isChecked);
 
                 updateSelectionSummary();
             });
@@ -627,20 +684,12 @@
 
                 $('#totalPaymentAmount').val(formatCurrency(totals.remaining));
                 $('#hiddenPaymentAmount').val(totals.remaining);
-                if (selectedCodes.length === 1) {
-                    $('#totalPaymentAmount').prop('readonly', false);
-                    $('#totalPaymentAmount').attr('data-max', totals.remaining);
-                    $('#paymentAmountLabel').text('Total Pembayaran (Bisa bayar sebagian/DP)');
-                    $('#paymentAmountHelp').text(
-                        'Anda dapat mengubah nominal ini untuk membayar sebagian (DP). Maksimal: Rp ' +
-                        formatCurrency(totals.remaining));
-                } else {
-                    $('#totalPaymentAmount').prop('readonly', true);
-                    $('#totalPaymentAmount').removeAttr('data-max');
-                    $('#paymentAmountLabel').text('Total Pembayaran (Otomatis Lunas)');
-                    $('#paymentAmountHelp').text(
-                        'Nominal ini otomatis mengikuti total sisa tagihan order yang dipilih.');
-                }
+                $('#totalPaymentAmount').prop('readonly', false);
+                $('#totalPaymentAmount').attr('data-max', totals.remaining);
+                $('#paymentAmountLabel').text('Total Pembayaran (Bisa bayar sebagian/DP)');
+                $('#paymentAmountHelp').text(
+                    'Anda dapat mengubah nominal ini untuk membayar sebagian (DP). Maksimal: Rp ' +
+                    formatCurrency(totals.remaining));
 
                 $('#date').val(new Date().toISOString().split('T')[0]);
                 $('#description').val('');
@@ -718,21 +767,27 @@
                     if (data) {
                         $('#detail-code').val(data.batch_code || data.code || '');
                         $('#detail-nota-number').val(data.nota_number || '-');
-                        $('#detail-order-code').val(data.order ? data.order.code : '');
-                        $('#detail-shipment-number').val(data.shipmentNumber || data.shipment_number || (data
-                            .order ? data.order.shipmentNumber : '') || '');
-                        $('#detail-plate-number').val(data.order && data.order.fleet ? data.order.fleet
-                            .plateNumber : '');
-                        $('#detail-fleet-company').val(data.order && data.order.fleet && data.order.fleet.company ? data.order.fleet.company.name : '-');
-                        $('#detail-driver').val(data.order && data.order.driver ? data.order.driver.name : '');
-                        $('#detail-customer').val(data.order && data.order.customer ? data.order.customer.name :
-                            '');
-
+                        if (data.associated_payments && data.associated_payments.length > 0) {
+                            $('#detail-order-code').val(data.associated_payments.map(ap => ap.order ? ap.order.code : '').filter(c => c !== '').join(', '));
+                            $('#detail-shipment-number').val(data.associated_payments.map(ap => ap.order ? (ap.order.shipmentNumber || '') : '').filter(s => s !== '').join(', '));
+                            $('#detail-plate-number').val(data.associated_payments.map(ap => ap.order && ap.order.fleet ? ap.order.fleet.plateNumber : '').filter(p => p !== '').join(', '));
+                            $('#detail-fleet-company').val([...new Set(data.associated_payments.map(ap => ap.order && ap.order.fleet && ap.order.fleet.company ? ap.order.fleet.company.name : '').filter(c => c !== ''))].join(', '));
+                            $('#detail-driver').val([...new Set(data.associated_payments.map(ap => ap.order && ap.order.driver ? ap.order.driver.name : '').filter(d => d !== ''))].join(', '));
+                            $('#detail-customer').val([...new Set(data.associated_payments.map(ap => ap.order && ap.order.customer ? ap.order.customer.name : '').filter(c => c !== ''))].join(', '));
+                        } else {
+                            $('#detail-order-code').val(data.order ? data.order.code : '');
+                            $('#detail-shipment-number').val(data.shipmentNumber || data.shipment_number || (data.order ? data.order.shipmentNumber : '') || '');
+                            $('#detail-plate-number').val(data.order && data.order.fleet ? data.order.fleet.plateNumber : '');
+                            $('#detail-fleet-company').val(data.order && data.order.fleet && data.order.fleet.company ? data.order.fleet.company.name : '-');
+                            $('#detail-driver').val(data.order && data.order.driver ? data.order.driver.name : '');
+                            $('#detail-customer').val(data.order && data.order.customer ? data.order.customer.name : '');
+                        }
+ 
                         // Menampilkan amount details
-                        const billingAmount = data.amount || 0;
-                        const paidAmount = data.paid_amount || 0;
-                        const remainingAmount = data.remaining_amount || 0;
-
+                        const billingAmount = data.total_billing || data.amount || 0;
+                        const paidAmount = data.total_paid || data.paid_amount || 0;
+                        const remainingAmount = data.total_remaining || data.remaining_amount || 0;
+ 
                         $('#detail-billing-amount').val('Rp ' + new Intl.NumberFormat('id-ID').format(
                             billingAmount));
                         $('#detail-paid-amount').val('Rp ' + new Intl.NumberFormat('id-ID').format(paidAmount));

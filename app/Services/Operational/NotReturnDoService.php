@@ -194,7 +194,7 @@ class NotReturnDoService
                         continue;
                     }
 
-                    $type = $externalCostTypesRaw[$index] ?? 'On Charge';
+                    $type = $externalCostTypesRaw[$index] ?? 'Off Charge';
                     $nominalRaw = $externalCostNominalsRaw[$index] ?? 0;
                     $nominal = (int) str_replace('.', '', (string) $nominalRaw);
                     $description = $externalCostDescriptionsRaw[$index] ?? null;

@@ -66,4 +66,9 @@ class Employee extends Model
     {
         return $this->hasMany(DownPayment::class, 'driverCode', 'code');
     }
+
+    public function bank()
+    {
+        return $this->belongsTo(\App\Models\Bank\BankAccount::class, 'bankCode', 'code');
+    }
 }

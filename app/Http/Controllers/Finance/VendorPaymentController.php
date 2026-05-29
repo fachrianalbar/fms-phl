@@ -251,21 +251,30 @@ class VendorPaymentController extends Controller
                     // Build button group for cleaner UI
                     $buttons = [];
 
-                    // Detail (if payment history exists)
-                    if ($vendorPayment && $vendorPayment->paymentHistory->isNotEmpty()) {
-                        $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
-                    }
+                    $notaNumber = $vendorPayment ? ($vendorPayment->nota_number ?? null) : null;
+                    if ($notaNumber) {
+                        // Check if any payment has been made in this nota group
+                        $hasPaymentInNota = \App\Models\Finance\VendorPayment::where('nota_number', $notaNumber)
+                            ->where(function ($q) {
+                                $q->where('paid_amount', '>', 0)
+                                  ->orWhere('payment_status', '!=', 'pending');
+                            })->exists();
 
-                    // Batal Nota (hanya tampil jika sudah bernota tetapi belum ada pembayaran sama sekali)
-                    $hasNotaOnly = $vendorPayment && $vendorPayment->nota_number && $vendorPayment->paid_amount == 0 && $vendorPayment->payment_status === 'pending';
-                    if ($hasNotaOnly) {
-                        $buttons[] = '<button type="button" onclick="confirmCancelNota(\'' . $row->code . '\')" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
-                    }
-
-                    // Batal Pembayaran (hanya tampil jika sudah pernah ada pembayaran nyata)
-                    $hasPaymentMade = $vendorPayment && ($vendorPayment->paid_amount > 0 || $vendorPayment->payment_status !== 'pending');
-                    if ($hasPaymentMade) {
-                        $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $row->code . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                        if ($hasPaymentInNota) {
+                            // Detail button
+                            $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                            // Batal Pembayaran button
+                            $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $row->code . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                        } else {
+                            // Batal Nota button
+                            $buttons[] = '<button type="button" onclick="confirmCancelNota(\'' . $row->code . '\')" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
+                        }
+                    } else {
+                        // No nota yet. If payment history exists (fallback check)
+                        if ($vendorPayment && ($vendorPayment->paid_amount > 0 || $vendorPayment->payment_status !== 'pending')) {
+                            $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $row->code . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                            $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $row->code . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                        }
                     }
 
                     // Wrap buttons in a group
@@ -280,52 +289,78 @@ class VendorPaymentController extends Controller
 
     public function getDetail($orderCode)
     {
-        $vendorPayment = VendorPayment::with(['order.fleet', 'order.driver', 'order.customer', 'paymentHistory.userBank.bank'])
+        $vendorPayment = VendorPayment::with(['order.fleet.company', 'order.driver', 'order.customer.company', 'paymentHistory.userBank.bank'])
             ->where('orderCode', $orderCode)
             ->first();
-
+ 
         if ($vendorPayment) {
+            // Find all associated payments sharing the same batch code or same nota number
+            $query = VendorPayment::with(['order.fleet.company', 'order.driver', 'order.customer.company', 'paymentHistory.userBank.bank']);
+            if ($vendorPayment->nota_number) {
+                $query->where('nota_number', $vendorPayment->nota_number);
+            } else {
+                $query->where('code', $vendorPayment->code);
+            }
+            $allAssociated = $query->get();
+            
+            $vendorPayment->associated_payments = $allAssociated;
+            $vendorPayment->total_billing = $allAssociated->sum('amount');
+            $vendorPayment->total_paid = $allAssociated->sum('paid_amount');
+            $vendorPayment->total_remaining = $allAssociated->sum('remaining_amount');
+
             // Get mutation record for bank information
             $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->orderByDesc('created_at')
                 ->first();
-
-            $vendorPayment->batch_code = $mutation->transactionCode ?? null;
+ 
+            $vendorPayment->batch_code = $vendorPayment->code;
             $vendorPayment->shipmentNumber = $vendorPayment->order->shipmentNumber ?? null;
             $vendorPayment->shipment_number = $vendorPayment->order->shipmentNumber ?? null;
-
+ 
             $vendorPayment->bankInfo = $mutation && $mutation->userBank ? [
                 'bank_name' => $mutation->userBank->bank->name ?? 'N/A',
                 'account_number' => $mutation->userBank->accountNumber ?? 'N/A',
                 'account_name' => $mutation->userBank->accountName ?? 'N/A',
             ] : null;
-
+ 
             // Add transaction date from created_at
             $vendorPayment->transaction_date = $vendorPayment->created_at;
-
-            // Format payment history
-            if ($vendorPayment->paymentHistory) {
-                $vendorPayment->payment_histories = $vendorPayment->paymentHistory->map(function ($history) {
-                    $bankName = $history->userBank->bank->name ?? null;
-                    $accountNumber = $history->userBank->accountNumber ?? null;
-                    $accountName = $history->userBank->accountName ?? null;
-
-                    return [
-                        'amount' => $history->amount,
-                        'payment_date' => $history->payment_date,
-                        'user_bank_code' => $history->user_bank_code,
-                        'bank_info' => $bankName && $accountNumber && $accountName
-                            ? $bankName . ' - ' . $accountNumber . ' (' . $accountName . ')'
-                            : $history->user_bank_code,
-                        'description' => $history->description,
-                        'created_at' => $history->created_at,
-                    ];
-                });
+ 
+            // Merge all payment histories of associated orders and group by date and description
+            $allHistories = collect();
+            foreach ($allAssociated as $assoc) {
+                if ($assoc->paymentHistory) {
+                    foreach ($assoc->paymentHistory as $history) {
+                        $allHistories->push($history);
+                    }
+                }
             }
-        }
 
+            $groupedHistories = $allHistories->groupBy(function ($history) {
+                return $history->payment_date . '_' . $history->description . '_' . $history->user_bank_code;
+            })->map(function ($group) {
+                $first = $group->first();
+                $bankName = $first->userBank->bank->name ?? null;
+                $accountNumber = $first->userBank->accountNumber ?? null;
+                $accountName = $first->userBank->accountName ?? null;
+
+                return [
+                    'amount' => $group->sum('amount'),
+                    'payment_date' => $first->payment_date,
+                    'user_bank_code' => $first->user_bank_code,
+                    'bank_info' => $bankName && $accountNumber && $accountName
+                        ? $bankName . ' - ' . $accountNumber . ' (' . $accountName . ')'
+                        : $first->user_bank_code,
+                    'description' => $first->description,
+                    'created_at' => $first->created_at,
+                ];
+            })->values();
+ 
+            $vendorPayment->payment_histories = $groupedHistories;
+        }
+ 
         return response()->json($vendorPayment);
     }
 
@@ -499,12 +534,39 @@ class VendorPaymentController extends Controller
 
         $notaNumber = $vendorPayment ? $vendorPayment->nota_number : null;
         $userBankCode = $vendorPayment ? $vendorPayment->user_bank_code : null;
-
+ 
         $userBank = null;
         if ($userBankCode) {
             $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
         }
 
+        // Fetch payment histories for all selected orders
+        $vendorPayments = \App\Models\Finance\VendorPayment::with(['paymentHistory.userBank.bank'])
+            ->whereIn('orderCode', $orderCodes)
+            ->get();
+
+        $allHistories = collect();
+        foreach ($vendorPayments as $vp) {
+            if ($vp->paymentHistory) {
+                foreach ($vp->paymentHistory as $ph) {
+                    $allHistories->push($ph);
+                }
+            }
+        }
+
+        $groupedHistories = $allHistories->groupBy(function ($history) {
+            return $history->payment_date . '_' . $history->description . '_' . $history->user_bank_code;
+        })->map(function ($group) {
+            $first = $group->first();
+            return (object)[
+                'payment_date' => $first->payment_date,
+                'description' => $first->description,
+                'amount' => $group->sum('amount')
+            ];
+        })->values();
+
+        $paymentHistoryTotal = $groupedHistories->sum('amount');
+ 
         $mpdf = new Mpdf(
             [
                 'orientation' => 'P',
@@ -512,10 +574,10 @@ class VendorPaymentController extends Controller
                 'tempDir' => storage_path('app/mpdf-temp'),
             ]
         );
-
+ 
         $mpdf->setAutoTopMargin = 'stretch';
         $mpdf->setAutoBottomMargin = 'stretch';
-
+ 
         $mpdf->WriteHTML(
             view($pdfTemplate . '-multi')
                 ->with('orders', $orders)
@@ -527,6 +589,8 @@ class VendorPaymentController extends Controller
                 ->with('totalGrandTotal', $totalGrandTotal)
                 ->with('notaNumber', $notaNumber)
                 ->with('userBank', $userBank)
+                ->with('paymentHistories', $groupedHistories)
+                ->with('paymentHistoryTotal', $paymentHistoryTotal)
         );
 
         return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');

@@ -2,67 +2,83 @@
 <html lang="en">
 
 <head>
-    <!DOCTYPE html>
-    <html lang="en">
+    <meta charset="UTF-8">
+    <title>Nota Pembayaran - {{ $order->code }}</title>
+    <style>
+        @page {
+            header: page-header;
+        }
 
-    <head>
-        <meta charset="UTF-8">
-        <title>Nota Pembayaran - {{ $order->code }}</title>
-        <style>
-            @page {
-                header: page-header;
-            }
+        body {
+            font-family: Calibri, sans-serif;
+            font-size: 10pt;
+            line-height: 20px;
+        }
 
-            body {
-                font-family: Calibri, sans-serif;
-                font-size: 10pt;
-                line-height: 20px;
-            }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-            table {
-                width: 100%;
-                border-collapse: collapse;
-            }
+        .bordered,
+        .bordered td,
+        .bordered th {
+            border: 1px solid black;
+        }
 
-            .bordered,
-            .bordered td,
-            .bordered th {
-                border: 1px solid black;
-            }
+        .bordered th,
+        .bordered td {
+            padding: 5px;
+            text-align: center;
+        }
 
-            .bordered th,
-            .bordered td {
-                padding: 5px;
-                text-align: center;
-            }
+        .text-left {
+            text-align: left;
+        }
 
-            .mt-20 {
-                margin-top: 20px;
-            }
+        .text-right {
+            text-align: right;
+        }
 
-            .mt-60 {
-                margin-top: 60px;
-            }
+        .bold {
+            font-weight: bold;
+        }
 
-            th {
-                font-weight: normal;
-            }
-        </style>
-    </head>
+        .mt-20 {
+            margin-top: 20px;
+        }
+
+        .mt-60 {
+            margin-top: 60px;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        th {
+            font-weight: normal;
+        }
+    </style>
+</head>
 
 <body>
+
     <htmlpageheader name="page-header">
         @include('finance.invoice.pdf.header.wt')
     </htmlpageheader>
 
     @php
         use Carbon\Carbon;
+        use App\Helpers\TerbilangHelper;
     @endphp
 
+    <!-- Header Nota Pembayaran -->
     <div style="margin-top: 20px;">
         <h3 style="text-align: center; margin: 5px 0;">NOTA PEMBAYARAN</h3>
     </div>
 
+    <!-- Info Pembayaran -->
     <table style="margin-top: 15px;">
         <tr>
             <td style="width: 15%;">Untuk :</td>
@@ -72,10 +88,10 @@
         </tr>
     </table>
 
+    <!-- Tabel Data Pembayaran -->
     <table class="bordered mt-20">
         <thead>
             <tr>
-                <th style="width: 8%;">No</th>
                 <th>TGL MUAT</th>
                 <th>NO KEND</th>
                 <th>MUATAN</th>
@@ -83,12 +99,11 @@
                 <th>TUJUAN</th>
                 <th>Tonase</th>
                 <th>Ongkos</th>
-                <th style="width: 12%;">TOTAL JUMLAH</th>
+                <th style="width: 15%;">TOTAL JUMLAH</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td>1</td>
                 <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
                 <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
                 <td>
@@ -116,89 +131,69 @@
                 $remainingTotal = $grandTotal - ($paymentHistoryTotal ?? 0);
             @endphp
 
-            @if (!empty($vendorPayment) && $paymentHistories->isNotEmpty())
-                @foreach ($paymentHistories as $history)
-                    <tr>
-                        <td colspan="8"
-                            style="border-left: none; border-right: none; border-bottom: none; border-top: none; font-style: italic; color: #1f4e79; text-align: center;">
-                            {{ $history->description ?? '-' }}
-                            @if (!empty($history->payment_date))
-                                tgl {{ Carbon::parse($history->payment_date)->format('d/m/y') }}
-                            @endif
-                        </td>
-                        <td
-                            style="text-align: right; border-bottom: none; border-top: none; font-style: italic; color: #1f4e79;">
-                            {{ number_format($history->amount ?? 0, 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
+            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
+                <tr>
+                    <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
+                    <td style="text-align: right; font-weight: bold;">
+                        {{ number_format($subtotal, 0, ',', '.') }}</td>
+                </tr>
             @endif
-
-            <tr>
-                <td colspan="7" style="border-left: none; border-right: none; border-bottom: none;"></td>
-                <td style="text-align: right; font-weight: bold; border-bottom: none;">Jumlah</td>
-                <td style="text-align: right; font-weight: bold; border-bottom: none;">
-                    {{ number_format($remainingTotal, 0, ',', '.') }}</td>
-            </tr>
             @if ($order->cost && $order->cost->count() > 0)
                 @foreach ($order->cost as $cost)
                     <tr>
-                        <td colspan="7"
-                            style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
-                        <td style="text-align: right; border-bottom: none; border-top: none;">
+                        <td colspan="7" style="text-align: center;">
                             {{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
-                        <td style="text-align: right; border-bottom: none; border-top: none;">
+                        <td style="text-align: right;">
                             {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             @endif
             @if ($pph > 0)
                 <tr>
-                    <td colspan="7"
-                        style="border-left: none; border-right: none; border-bottom: none; border-top: none;"></td>
-                    <td style="text-align: right; border-bottom: none; border-top: none;">PPH
-                        {{ number_format($pph, 2, ',', '.') }}%</td>
-                    <td style="text-align: right; border-bottom: none; border-top: none;">
+                    <td colspan="7" style="text-align: center;">PPH {{ number_format($pph, 2, ',', '.') }}%</td>
+                    <td style="text-align: right;">
                         {{ number_format($pphAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
+
+            @if (!empty($vendorPayment) && $paymentHistories->isNotEmpty())
+                <tr>
+                    <td colspan="7" style="text-align: center; font-weight: bold;">Total Tagihan</td>
+                    <td style="text-align: right; font-weight: bold;">
+                        {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                </tr>
+                @foreach ($paymentHistories as $history)
+                    <tr>
+                        <td colspan="7" style="text-align: center; font-style: italic; color: #1f4e79;">
+                            {{ $history->description ?? 'DP/Partial' }}
+                            @if (!empty($history->payment_date))
+                                tgl {{ Carbon::parse($history->payment_date)->format('d/m/y') }}
+                            @endif
+                        </td>
+                        <td style="text-align: right; font-style: italic; color: #1f4e79;">
+                            {{ number_format($history->amount ?? 0, 0, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            @endif
             <tr>
-                <td colspan="9"
-                    style="border-left: none; border-right: none; border-top: 2px solid black; border-bottom: none;">
-                </td>
+                <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
+                <td style="text-align: right; font-weight: bold;">
+                    {{ number_format($remainingTotal, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td colspan="7" style="border: none;"></td>
-                <td style="text-align: right; font-weight: bold; border: none;">Total</td>
-                <td style="text-align: right; font-weight: bold; border: none;">
-                    {{ number_format($remainingTotal, 0, ',', '.') }}</td>
+                <td colspan="8" style="text-align: center; font-style: italic; padding: 5px;">
+                    <strong>Terbilang:</strong> {{ $remainingTotal > 0 ? TerbilangHelper::terbilang($remainingTotal) : 'Nol' }} Rupiah
+                </td>
             </tr>
         </tbody>
     </table>
 
-    <table style="margin-top: 20px; border: none;">
-        <tr>
-            <td style="width: 50%; border: none; vertical-align: top;">
-                <table style="border: none;">
-                    <tr>
-                        <td style="border: none; width: 35%;">Pembayaran Via :</td>
-                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->bankName ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td style="border: none;">No Rekening :</td>
-                        <td style="border: none; font-weight: bold;">{{ $order->fleet->company->accountNumber ?? '-' }}
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td style="width: 50%; border: none; vertical-align: top;"></td>
-        </tr>
-    </table>
-
+    <!-- Tanda Tangan -->
     <div class="mt-60 text-right">
         <br><br><br>
-        <p class="">HENDRI WIJAYA</p>
+        <p class="" style="font-weight: bold; font-size: 11pt;">{{ $order->fleet->company->name ?? 'HENDRI WIJAYA' }}</p>
     </div>
+
 </body>
 
 </html>
-<td style="border: none; font-weight: bold;">{{ $order->fleet->company->accountNumber ?? '-' }}</td>

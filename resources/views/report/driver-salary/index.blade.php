@@ -26,19 +26,19 @@
         .salary-amount { text-align: right; font-weight: 500; }
 
         /* ── Modal premium styling ── */
-        #processSalaryModal .modal-content {
+        #processSalaryModal .modal-content, #editSalaryModal .modal-content {
             border: none;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 25px 60px rgba(0,0,0,.15);
         }
-        #processSalaryModal .modal-header {
+        #processSalaryModal .modal-header, #editSalaryModal .modal-header {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #a855f7 100%);
             border-bottom: none;
             padding: 20px 24px;
             position: relative;
         }
-        #processSalaryModal .modal-header::after {
+        #processSalaryModal .modal-header::after, #editSalaryModal .modal-header::after {
             content: '';
             position: absolute;
             bottom: 0;
@@ -47,12 +47,12 @@
             height: 4px;
             background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
         }
-        #processSalaryModal .modal-title {
+        #processSalaryModal .modal-title, #editSalaryModal .modal-title {
             font-weight: 700;
             font-size: 18px;
             letter-spacing: -0.3px;
         }
-        #processSalaryModal .modal-body {
+        #processSalaryModal .modal-body, #editSalaryModal .modal-body {
             padding: 24px;
             background: #f8fafc;
             max-height: calc(100vh - 210px);
@@ -60,20 +60,20 @@
         }
 
         /* ── Custom elegant scrollbar for modal body ── */
-        #processSalaryModal .modal-body::-webkit-scrollbar {
+        #processSalaryModal .modal-body::-webkit-scrollbar, #editSalaryModal .modal-body::-webkit-scrollbar {
             width: 8px;
         }
-        #processSalaryModal .modal-body::-webkit-scrollbar-track {
+        #processSalaryModal .modal-body::-webkit-scrollbar-track, #editSalaryModal .modal-body::-webkit-scrollbar-track {
             background: #f8fafc;
         }
-        #processSalaryModal .modal-body::-webkit-scrollbar-thumb {
+        #processSalaryModal .modal-body::-webkit-scrollbar-thumb, #editSalaryModal .modal-body::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 4px;
         }
-        #processSalaryModal .modal-body::-webkit-scrollbar-thumb:hover {
+        #processSalaryModal .modal-body::-webkit-scrollbar-thumb:hover, #editSalaryModal .modal-body::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
         }
-        #processSalaryModal .modal-footer {
+        #processSalaryModal .modal-footer, #editSalaryModal .modal-footer {
             background: #fff;
             border-top: 1px solid #e2e8f0;
             padding: 16px 24px;
@@ -269,40 +269,43 @@
         }
 
         /* ── Input Group and Focus styling ── */
-        #processSalaryModal .input-group {
+        #processSalaryModal .input-group, #editSalaryModal .input-group {
             border-radius: 8px;
             transition: all 0.2s ease;
         }
-        #processSalaryModal .input-group:focus-within {
+        #processSalaryModal .input-group:focus-within, #editSalaryModal .input-group:focus-within {
             box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.15) !important;
         }
         #processSalaryModal .input-group:focus-within .input-group-text,
+        #editSalaryModal .input-group:focus-within .input-group-text,
         #processSalaryModal .input-group:focus-within input.form-control,
-        #processSalaryModal .input-group:focus-within .select2-container--default .select2-selection--single {
+        #editSalaryModal .input-group:focus-within input.form-control,
+        #processSalaryModal .input-group:focus-within .select2-container--default .select2-selection--single,
+        #editSalaryModal .input-group:focus-within .select2-container--default .select2-selection--single {
             border-color: #818cf8 !important;
         }
-        #processSalaryModal .input-group .input-group-text {
+        #processSalaryModal .input-group .input-group-text, #editSalaryModal .input-group .input-group-text {
             border-color: #cbd5e1;
             transition: all 0.2s ease;
         }
-        #processSalaryModal .input-group input.form-control {
+        #processSalaryModal .input-group input.form-control, #editSalaryModal .input-group input.form-control {
             border-color: #cbd5e1;
             transition: all 0.2s ease;
         }
-        #processSalaryModal .input-group input.form-control:focus {
+        #processSalaryModal .input-group input.form-control:focus, #editSalaryModal .input-group input.form-control:focus {
             box-shadow: none !important;
         }
 
         /* ── Select2 inside input-group styling overrides ── */
-        #processSalaryModal .input-group .select2-wrapper {
+        #processSalaryModal .input-group .select2-wrapper, #editSalaryModal .input-group .select2-wrapper {
             flex: 1 1 auto;
             width: 1%;
             display: flex;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-container {
+        #processSalaryModal .input-group .select2-wrapper .select2-container, #editSalaryModal .input-group .select2-wrapper .select2-container {
             width: 100% !important;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-selection--single {
+        #processSalaryModal .input-group .select2-wrapper .select2-selection--single, #editSalaryModal .input-group .select2-wrapper .select2-selection--single {
             border-top-left-radius: 0 !important;
             border-bottom-left-radius: 0 !important;
             border-radius: 0 8px 8px 0 !important;
@@ -315,16 +318,19 @@
             background-color: #fff !important;
             transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__rendered {
+        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__rendered,
+        #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__rendered {
             color: #334155 !important;
             padding: 0 !important;
             font-size: 14px !important;
             line-height: normal !important;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder {
+        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder,
+        #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder {
             color: #94a3b8 !important;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__arrow {
+        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__arrow,
+        #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__arrow {
             height: 36px !important;
             right: 8px !important;
         }
@@ -529,6 +535,167 @@
         </div>
     </div>
 
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    {{-- Modal: Edit Salary                                         --}}
+    {{-- ═══════════════════════════════════════════════════════════ --}}
+    <div class="modal fade" id="editSalaryModal" tabindex="-1" aria-labelledby="editSalaryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <form method="POST" id="editSalaryForm">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="editSalaryId" name="salaryId">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-white" id="editSalaryModalLabel">
+                            <i class="mdi mdi-pencil me-2"></i> Edit Gaji Driver
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        {{-- Section 1: Select driver & period --}}
+                        <div class="modal-section">
+                            <div class="modal-section-title">
+                                <span class="section-badge">1</span>
+                                Pilih Driver & Periode
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Nama Supir <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                            <i class="mdi mdi-account fs-16"></i>
+                                        </span>
+                                        <div class="flex-grow-1 select2-wrapper">
+                                            <select class="js-example-basic-single" name="driverCode" id="editDriverCode" required>
+                                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                                @foreach ($driver as $item)
+                                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Mulai <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                            <i class="mdi mdi-calendar-range fs-16"></i>
+                                        </span>
+                                        <input class="form-control border-start-0 bg-white" name="startDate" id="editStartDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Akhir <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                            <i class="mdi mdi-calendar-range fs-16"></i>
+                                        </span>
+                                        <input class="form-control border-start-0 bg-white" name="endDate" id="editEndDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-search-order w-100" id="btnEditSearchOrders" style="height: 38px; border-radius: 8px; font-size: 14px; padding: 0;">
+                                        <i class="mdi mdi-magnify me-1"></i> Cari
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Section 2: Order preview --}}
+                        <div id="editOrderPreviewSection" style="display: none;">
+                            <div class="modal-section">
+                                <div class="modal-section-title">
+                                    <span class="section-badge">2</span>
+                                    Daftar Order
+                                    <span class="ms-auto badge bg-primary rounded-pill" id="editOrderCount">0 order</span>
+                                </div>
+                                <div class="table-responsive custom-scrollbar" style="max-height: 280px;">
+                                    <table class="table table-bordered table-sm mb-0" id="editOrderPreviewTable">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 5%;">No</th>
+                                                <th style="width: 12%;">Tanggal</th>
+                                                <th style="width: 14%;">No. Polisi</th>
+                                                <th style="width: 45%;">Rute</th>
+                                                <th style="width: 16%;" class="text-end">Gaji</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {{-- Section 3: Adjustments --}}
+                            <div class="modal-section">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="modal-section-title mb-0">
+                                        <span class="section-badge">3</span>
+                                        Penambah / Pengurang
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-add-adj" id="btnEditAddAdjustment">
+                                        <i class="mdi mdi-plus me-1"></i> Tambah Item
+                                    </button>
+                                </div>
+
+                                <div id="editAdjustmentsContainer">
+                                    <div class="text-center text-muted py-2" id="editNoAdjustmentHint" style="font-size:13px;">
+                                        <i class="mdi mdi-information-outline me-1"></i> Belum ada item penambah/pengurang. Klik tombol di atas untuk menambahkan.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Section 4: Summary --}}
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-salary">
+                                        <h5>Total Gaji Order</h5>
+                                        <h3 id="editSummaryTotalSalary">Rp 0</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-adj">
+                                        <h5>Total Penyesuaian</h5>
+                                        <h3 id="editSummaryTotalAdjustment">Rp 0</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="summary-card summary-grand">
+                                        <h5>Grand Total</h5>
+                                        <h3 id="editSummaryGrandTotal">Rp 0</h3>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Notes --}}
+                            <div class="modal-section" style="margin-bottom: 0;">
+                                <label class="form-label fw-semibold">Catatan <span class="text-muted fw-normal">(Opsional)</span></label>
+                                <textarea class="form-control" name="notes" id="editNotes" rows="2" placeholder="Catatan tambahan..." style="border-radius:8px;"></textarea>
+                            </div>
+                        </div>
+
+                        {{-- No data message --}}
+                        <div id="editNoOrderMessage" style="display: none;">
+                            <div class="modal-section">
+                                <div class="empty-state">
+                                    <i class="mdi mdi-truck-remove-outline"></i>
+                                    <p>Tidak ada order dengan komponen gaji untuk driver dan periode yang dipilih.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:8px;">Tutup</button>
+                        <button type="submit" class="btn btn-submit-salary" id="btnUpdateSalary" style="display: none;">
+                            <i class="mdi mdi-check-circle me-1"></i> Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     {{-- Delete form (hidden) --}}
     <form id="deleteForm" method="POST" style="display: none;">
         @csrf
@@ -556,6 +723,9 @@
     <script>
         let totalSalaryFromOrders = 0;
         let startPicker, endPicker;
+        
+        let editTotalSalaryFromOrders = 0;
+        let editStartPicker, editEndPicker;
 
         $(document).ready(function() {
 
@@ -585,6 +755,29 @@
                 });
             });
 
+            editStartPicker = flatpickr('#editStartDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (editEndPicker) editEndPicker.set('minDate', dateStr);
+                }
+            });
+
+            editEndPicker = flatpickr('#editEndDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (editStartPicker) editStartPicker.set('maxDate', dateStr);
+                }
+            });
+
+            $('#editSalaryModal').on('shown.bs.modal', function () {
+                $('#editDriverCode').select2({
+                    dropdownParent: $('#editSalaryModal'),
+                    placeholder: 'Pilih Supir...'
+                });
+            });
+
             // Reset modal state when closed
             $('#processSalaryModal').on('hidden.bs.modal', function () {
                 totalSalaryFromOrders = 0;
@@ -605,6 +798,28 @@
                 if (endPicker) endPicker.clear();
                 
                 recalcSummary();
+            });
+
+            // Reset edit modal state when closed
+            $('#editSalaryModal').on('hidden.bs.modal', function () {
+                editTotalSalaryFromOrders = 0;
+                $('#editOrderPreviewSection').hide();
+                $('#editNoOrderMessage').hide();
+                $('#btnUpdateSalary').hide();
+                $('#editOrderPreviewTable tbody').html('');
+                $('#editAdjustmentsContainer').html(
+                    '<div class="text-center text-muted py-2" id="editNoAdjustmentHint" style="font-size:13px;">' +
+                    '<i class="mdi mdi-information-outline me-1"></i> Belum ada item penambah/pengurang. Klik tombol di atas untuk menambahkan.' +
+                    '</div>'
+                );
+                $('#editSalaryForm')[0].reset();
+                $('#editDriverCode').val('').trigger('change');
+                
+                // Clear flatpickr values
+                if (editStartPicker) editStartPicker.clear();
+                if (editEndPicker) editEndPicker.clear();
+                
+                recalcEditSummary();
             });
 
             // ============================================================
@@ -769,6 +984,116 @@
                     $(this).val(cleanVal);
                 });
             });
+
+            // ============================================================
+            // Modal Edit: Search orders
+            // ============================================================
+            $('#btnEditSearchOrders').on('click', function() {
+                const driverCode = $('#editDriverCode').val();
+                const startDate = $('#editStartDate').val();
+                const endDate = $('#editEndDate').val();
+
+                if (!driverCode || !startDate || !endDate) {
+                    swal('Peringatan', 'Pilih driver dan periode terlebih dahulu.', 'warning');
+                    return;
+                }
+
+                const btn = $(this);
+                btn.prop('disabled', true).html('<i class="mdi mdi-loading mdi-spin me-1"></i> Mencari...');
+
+                $.ajax({
+                    url: "{{ route('ajax.driver-salary-orders') }}",
+                    data: { driverCode, startDate, endDate },
+                    success: function(response) {
+                        if (response.orders.length === 0) {
+                            $('#editOrderPreviewSection').hide();
+                            $('#editNoOrderMessage').show();
+                            $('#btnUpdateSalary').hide();
+                            editTotalSalaryFromOrders = 0;
+                            return;
+                        }
+
+                        editTotalSalaryFromOrders = response.totalSalary;
+
+                        // Populate table
+                        let tbody = '';
+                        response.orders.forEach(function(order, idx) {
+                            tbody += '<tr>' +
+                                '<td class="text-center">' + (idx + 1) + '</td>' +
+                                '<td>' + order.orderDate + '</td>' +
+                                '<td>' + order.plateNumber + '</td>' +
+                                '<td>' + order.routeName + '</td>' +
+                                '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                                '</tr>';
+                        });
+                        tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+                            '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
+                            '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
+                            '</tr>';
+
+                        $('#editOrderPreviewTable tbody').html(tbody);
+                        $('#editOrderCount').text(response.orders.length + ' order');
+                        $('#editOrderPreviewSection').show();
+                        $('#editNoOrderMessage').hide();
+                        $('#btnUpdateSalary').show();
+                        recalcEditSummary();
+                    },
+                    error: function(xhr) {
+                        swal('Error', xhr.responseJSON?.error || 'Terjadi kesalahan', 'error');
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false).html('<i class="mdi mdi-magnify me-1"></i> Cari');
+                    }
+                });
+            });
+
+            // ============================================================
+            // Modal Edit: Adjustment rows
+            // ============================================================
+            $('#btnEditAddAdjustment').on('click', function() {
+                $('#editNoAdjustmentHint').hide();
+                addEditAdjustmentRow('', '', 'addition', '');
+            });
+
+            // ============================================================
+            // Edit Form Submit validation
+            // ============================================================
+            $('#editSalaryForm').on('submit', function(e) {
+                e.preventDefault();
+
+                if (editTotalSalaryFromOrders <= 0) {
+                    swal('Peringatan', 'Cari order terlebih dahulu sebelum memproses gaji.', 'warning');
+                    return;
+                }
+
+                // Clean dots from adjustments nominal fields so the backend receives raw numbers
+                $('.edit-adj-nominal').each(function() {
+                    const rawVal = $(this).val() || '';
+                    const cleanVal = rawVal.replace(/\./g, '');
+                    $(this).val(cleanVal);
+                });
+
+                const form = $(this);
+                const actionUrl = form.attr('action');
+
+                $.ajax({
+                    url: actionUrl,
+                    method: 'POST',
+                    data: form.serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            $('#editSalaryModal').modal('hide');
+                            swal('Sukses', response.message, 'success');
+                            processedTable.ajax.reload(null, false);
+                        } else {
+                            swal('Error', response.message || 'Gagal menyimpan perubahan', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        swal('Error', xhr.responseJSON?.message || 'Terjadi kesalahan saat menyimpan data', 'error');
+                    }
+                });
+            });
         });
 
         // ============================================================
@@ -794,6 +1119,147 @@
             const adjPrefix = totalAdj >= 0 ? '+' : '';
             $('#summaryTotalAdjustment').text(adjPrefix + 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.abs(totalAdj)));
             $('#summaryGrandTotal').text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
+        }
+
+        function editSalary(id) {
+            // Show loading
+            swal({
+                title: "Loading...",
+                text: "Mengambil data gaji...",
+                buttons: false,
+                closeOnClickOutside: false,
+                closeOnEsc: false
+            });
+
+            $.ajax({
+                url: "{{ url('report/driver-salary') }}/" + id + "/edit",
+                method: "GET",
+                success: function(response) {
+                    swal.close();
+                    
+                    // Prepopulate form fields
+                    $('#editSalaryId').val(response.salary.id);
+                    $('#editSalaryForm').attr('action', "{{ url('report/driver-salary') }}/" + response.salary.id);
+                    
+                    // Set driver
+                    $('#editDriverCode').val(response.salary.driverCode).trigger('change');
+                    
+                    // Set dates
+                    if (editStartPicker) editStartPicker.setDate(response.salary.startDate);
+                    if (editEndPicker) editEndPicker.setDate(response.salary.endDate);
+                    
+                    // Set notes
+                    $('#editNotes').val(response.salary.notes || '');
+                    
+                    // Set orders preview
+                    editTotalSalaryFromOrders = parseFloat(response.salary.totalSalary) || 0;
+                    let tbody = '';
+                    response.orders.forEach(function(order, idx) {
+                        tbody += '<tr>' +
+                            '<td class="text-center">' + (idx + 1) + '</td>' +
+                            '<td>' + order.orderDate + '</td>' +
+                            '<td>' + order.plateNumber + '</td>' +
+                            '<td>' + order.routeName + '</td>' +
+                            '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                            '</tr>';
+                    });
+                    tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+                        '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
+                        '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders) + '</td>' +
+                        '</tr>';
+                    
+                    $('#editOrderPreviewTable tbody').html(tbody);
+                    $('#editOrderCount').text(response.orders.length + ' order');
+                    
+                    // Set adjustments
+                    $('#editAdjustmentsContainer').html('');
+                    editAdjIndex = 0;
+                    
+                    if (response.salary.details && response.salary.details.length > 0) {
+                        $('#editNoAdjustmentHint').hide();
+                        response.salary.details.forEach(function(detail) {
+                            const formattedNominal = new Intl.NumberFormat('id-ID').format(parseFloat(detail.nominal));
+                            addEditAdjustmentRow(detail.date, detail.description, detail.type, formattedNominal);
+                        });
+                    } else {
+                        $('#editAdjustmentsContainer').html(
+                            '<div class="text-center text-muted py-2" id="editNoAdjustmentHint" style="font-size:13px;">' +
+                            '<i class="mdi mdi-information-outline me-1"></i> Belum ada item penambah/pengurang. Klik tombol di atas untuk menambahkan.' +
+                            '</div>'
+                        );
+                    }
+                    
+                    // Show sections
+                    $('#editOrderPreviewSection').show();
+                    $('#editNoOrderMessage').hide();
+                    $('#btnUpdateSalary').show();
+                    
+                    recalcEditSummary();
+                    
+                    // Show modal
+                    $('#editSalaryModal').modal('show');
+                },
+                error: function(xhr) {
+                    swal('Error', 'Gagal mengambil data gaji', 'error');
+                }
+            });
+        }
+
+        function addEditAdjustmentRow(date, description, type, nominal) {
+            const formattedDate = date ? date.substring(0, 10) : '';
+            const html = `
+                <div class="edit-adjustment-row" data-index="${editAdjIndex}">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-2">
+                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tanggal</label>
+                            <input type="date" class="form-control form-control-sm" name="adjustments[${editAdjIndex}][date]" value="${formattedDate}" required style="border-radius:6px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Deskripsi</label>
+                            <input type="text" class="form-control form-control-sm" name="adjustments[${editAdjIndex}][description]" value="${description}" placeholder="Contoh: Potong utang, Bonus, dll" required style="border-radius:6px;">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tipe</label>
+                            <select class="form-select form-select-sm edit-adj-type" name="adjustments[${editAdjIndex}][type]" required style="border-radius:6px;">
+                                <option value="addition" ${type === 'addition' ? 'selected' : ''}>➕ Penambah</option>
+                                <option value="deduction" ${type === 'deduction' ? 'selected' : ''}>➖ Pengurang</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Nominal (Rp)</label>
+                            <input type="text" class="form-control form-control-sm edit-adj-nominal" name="adjustments[${editAdjIndex}][nominal]" value="${nominal}" placeholder="0" oninput="formatAngka(this)" required style="border-radius:6px;">
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-center">
+                            <button type="button" class="btn btn-sm btn-remove-edit-adj" title="Hapus">
+                                <i class="mdi mdi-close"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $('#editAdjustmentsContainer').append(html);
+            editAdjIndex++;
+        }
+
+        function recalcEditSummary() {
+            let totalAdj = 0;
+            $('.edit-adjustment-row').each(function() {
+                const type = $(this).find('.edit-adj-type').val();
+                const rawVal = $(this).find('.edit-adj-nominal').val() || '';
+                const nominal = parseFloat(rawVal.replace(/\./g, '')) || 0;
+                if (type === 'addition') {
+                    totalAdj += nominal;
+                } else {
+                    totalAdj -= nominal;
+                }
+            });
+
+            const grandTotal = editTotalSalaryFromOrders + totalAdj;
+
+            $('#editSummaryTotalSalary').text('Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders));
+            const adjPrefix = totalAdj >= 0 ? '+' : '';
+            $('#editSummaryTotalAdjustment').text(adjPrefix + 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.abs(totalAdj)));
+            $('#editSummaryGrandTotal').text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
         }
 
         function deleteSalary(id) {

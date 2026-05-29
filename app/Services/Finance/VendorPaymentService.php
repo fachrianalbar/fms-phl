@@ -48,34 +48,98 @@ class VendorPaymentService
     {
         $orderCodes = collect($request->orderCodes ?? [])->filter()->unique()->values();
         $userBank = $this->userBank->where('code', $request->userBankCode)->first();
-
+ 
         if ($orderCodes->isEmpty()) {
             throw new \Exception('Order yang dipilih tidak valid.');
         }
-
+ 
         if (! $userBank) {
             throw new \Exception('Sumber dana (bank) tidak ditemukan.');
         }
-
+ 
         // Satu kode batch untuk satu kali submit pembayaran multi-order.
         $batchCode = GenerateCode::generateCode('FVB', true);
-
+ 
         $processedOrderCodes = [];
         $skippedOrderCodes = [];
+ 
+        // 1. Hitung sisa tagihan saat ini untuk masing-masing order
+        $orderRemainingAmounts = [];
+        $totalRemaining = 0;
+        foreach ($orderCodes as $orderCode) {
+            $vp = $this->service->where('orderCode', $orderCode)->first();
+            $order = $this->order->where('code', $orderCode)->first();
+            if (!$order) {
+                throw new \Exception('Order ' . $orderCode . ' tidak ditemukan.');
+            }
+            $rem = $vp ? (float)$vp->remaining_amount : (float)($order->vendorPrice ?? 0);
+            $orderRemainingAmounts[$orderCode] = $rem;
+            $totalRemaining += $rem;
+        }
+
+        $totalPaymentAmount = $request->filled('paymentAmount') ? (float) $request->paymentAmount : null;
+        if ($totalPaymentAmount !== null && $totalPaymentAmount > $totalRemaining) {
+            throw new \Exception('Nominal pembayaran tidak boleh melebihi sisa tagihan (Rp ' . number_format($totalRemaining, 0, ',', '.') . ').');
+        }
+
+        // 2. Alokasikan pembayaran secara merata di antara order yang belum lunas
+        $allocations = [];
+        foreach ($orderCodes as $orderCode) {
+            $allocations[$orderCode] = 0;
+        }
+
+        if ($totalPaymentAmount !== null) {
+            $remainingToAllocate = $totalPaymentAmount;
+            while ($remainingToAllocate > 0.01) {
+                $eligibleOrders = [];
+                foreach ($orderCodes as $orderCode) {
+                    $rem = $orderRemainingAmounts[$orderCode] - $allocations[$orderCode];
+                    if ($rem > 0) {
+                        $eligibleOrders[] = $orderCode;
+                    }
+                }
+                
+                if (empty($eligibleOrders)) {
+                    break;
+                }
+                
+                $share = $remainingToAllocate / count($eligibleOrders);
+                $allocatedInThisRound = 0;
+                
+                foreach ($eligibleOrders as $orderCode) {
+                    $rem = $orderRemainingAmounts[$orderCode] - $allocations[$orderCode];
+                    $amountToAlloc = min($share, $rem);
+                    $allocations[$orderCode] += $amountToAlloc;
+                    $allocatedInThisRound += $amountToAlloc;
+                }
+                
+                $remainingToAllocate -= $allocatedInThisRound;
+                if ($allocatedInThisRound <= 0) {
+                    break;
+                }
+            }
+        } else {
+            // Full payment for each order
+            foreach ($orderCodes as $orderCode) {
+                $allocations[$orderCode] = $orderRemainingAmounts[$orderCode];
+            }
+        }
 
         foreach ($orderCodes as $orderCode) {
             $order = $this->order->where('code', $orderCode)->first();
+            $paymentAmount = $allocations[$orderCode];
 
-            if (! $order) {
-                throw new \Exception('Order ' . $orderCode . ' tidak ditemukan.');
+            if ($paymentAmount <= 0) {
+                $skippedOrderCodes[] = $orderCode;
+                continue;
             }
 
             // Cek apakah sudah ada vendor payment untuk order ini
             $vendorPayment = $this->service->where('orderCode', $orderCode)->first();
-
+ 
             // Tagihan awal dari order
             $billingAmount = $vendorPayment ? (float) ($vendorPayment->amount ?? 0) : (float) ($order->vendorPrice ?? 0);
-
+ 
             $created = false;
             if (! $vendorPayment) {
                 // Pertama kali: buat vendor payment baru
@@ -92,31 +156,13 @@ class VendorPaymentService
                 ]);
                 $created = true;
             }
-
-            // Pembayaran vendor
-            $remainingAmount = (float) ($vendorPayment->remaining_amount ?? 0);
-            if ($remainingAmount <= 0) {
-                $skippedOrderCodes[] = $orderCode;
-                continue;
-            }
-
-            if (count($orderCodes) === 1 && $request->filled('paymentAmount')) {
-                $paymentAmount = (float) $request->paymentAmount;
-                if ($paymentAmount > $remainingAmount) {
-                    throw new \Exception('Nominal pembayaran tidak boleh melebihi sisa tagihan (Rp ' . number_format($remainingAmount, 0, ',', '.') . ').');
-                }
-            } else {
-                // Jika batch (lebih dari 1), wajib bayar lunas dari sisa tagihannya
-                $paymentAmount = $remainingAmount;
-            }
-
+ 
             // Update paid amount dan remaining amount
             $newPaidAmount = ((float) ($vendorPayment->paid_amount ?? 0)) + $paymentAmount;
             $newRemainingAmount = max(0, ((float) ($vendorPayment->amount ?? $billingAmount)) - $newPaidAmount);
-
-            // Karena full payment, status selalu paid saat berhasil diproses
+ 
             $paymentStatus = $newRemainingAmount <= 0 ? 'paid' : 'partial';
-
+ 
             // Update vendor payment record
             $vendorPayment->update([
                 'date' => $request->date,
@@ -126,7 +172,7 @@ class VendorPaymentService
                 'remaining_amount' => $newRemainingAmount,
                 'payment_status' => $paymentStatus,
             ]);
-
+ 
             // Simpan payment history
             $this->paymentHistory->create([
                 'vendor_payment_id' => $vendorPayment->id,
@@ -135,10 +181,10 @@ class VendorPaymentService
                 'user_bank_code' => $request->userBankCode,
                 'description' => $request->description,
             ]);
-
+ 
             // Update LiveMutation dengan CREDIT (pengeluaran uang)
             LiveMutationHelper::updateLiveMutation($userBank->code, $paymentAmount, 'credit');
-
+ 
             // Create mutation record for accounting
             $this->mutation->create([
                 'code' => GenerateCode::generateCode('FMT', true),
@@ -150,22 +196,22 @@ class VendorPaymentService
                 'transactionCode' => $batchCode,
                 'transactionTypeCode' => 'FTT251208001130', // Vendor Payment transaction type
             ]);
-
+ 
             // Update order status jika sudah full bayar
             if ($paymentStatus === 'paid') {
                 $order->update([
                     'status' => 6, // Status paid
                 ]);
             }
-
+ 
             $this->logActivity($title, $vendorPayment, $created ? 'Create' : 'Update');
             $processedOrderCodes[] = $orderCode;
         }
-
+ 
         if (empty($processedOrderCodes)) {
             throw new \Exception('Semua order terpilih sudah lunas.');
         }
-
+ 
         return [
             'batch_code' => $batchCode,
             'processed_count' => count($processedOrderCodes),
@@ -190,51 +236,72 @@ class VendorPaymentService
             throw new \Exception('Data pembayaran vendor tidak ditemukan untuk order ini.');
         }
 
-        $order = $this->order->where('code', $orderCode)->first();
-        if (! $order) {
-            throw new \Exception('Data order tidak ditemukan.');
+        // Get all vendor payments sharing the same payment batch code (code column)
+        // If code is empty, default to only this vendor payment
+        $batchCode = $vendorPayment->code;
+        if ($batchCode) {
+            $paymentsInBatch = $this->service->where('code', $batchCode)->get();
+        } else {
+            $paymentsInBatch = collect([$vendorPayment]);
         }
 
-        // 1. Dapatkan riwayat pembayaran untuk mengembalikan saldo bank
-        $histories = $vendorPayment->paymentHistory;
+        foreach ($paymentsInBatch as $payment) {
+            $currentOrderCode = $payment->orderCode;
+            $order = $this->order->where('code', $currentOrderCode)->first();
 
-        foreach ($histories as $history) {
-            $amount = (float) $history->amount;
-            $bankCode = $history->user_bank_code;
+            // 1. Dapatkan riwayat pembayaran untuk mengembalikan saldo bank
+            $histories = $payment->paymentHistory;
 
-            // Kembalikan saldo LiveMutation (kurangi credit)
-            $liveMutation = \App\Models\LiveMutation::where('userBankCode', $bankCode)->first();
-            if ($liveMutation) {
-                $liveMutation->credit -= $amount;
-                $liveMutation->balance = $liveMutation->debit - $liveMutation->credit;
-                $liveMutation->save();
+            foreach ($histories as $history) {
+                $amount = (float) $history->amount;
+                $bankCode = $history->user_bank_code;
+
+                // Kembalikan saldo LiveMutation (kurangi credit)
+                $liveMutation = \App\Models\LiveMutation::where('userBankCode', $bankCode)->first();
+                if ($liveMutation) {
+                    $liveMutation->credit -= $amount;
+                    $liveMutation->balance = $liveMutation->debit - $liveMutation->credit;
+                    $liveMutation->save();
+                }
+
+                // Hapus Mutation record (hard delete)
+                \App\Models\Mutation::where('transactionCode', $payment->code)
+                    ->where('userBankCode', $bankCode)
+                    ->where('description', 'like', '%' . $currentOrderCode . '%')
+                    ->forceDelete();
+
+                // Hapus history record (hard delete)
+                $history->forceDelete();
             }
 
-            // Hapus Mutation record (hard delete)
-            \App\Models\Mutation::where('transactionCode', $vendorPayment->code)
-                ->where('userBankCode', $bankCode)
-                ->where('description', 'like', '%' . $orderCode . '%')
-                ->forceDelete();
+            // 2. Reset or delete VendorPayment record
+            if ($payment->nota_number) {
+                // If it has a nota_number, we must preserve it!
+                // Reset paid_amount, remaining_amount, and payment_status to pending
+                $payment->update([
+                    'paid_amount' => 0,
+                    'remaining_amount' => $payment->amount,
+                    'payment_status' => 'pending',
+                    'code' => null, // clear the batch payment code since payment is cancelled!
+                ]);
+            } else {
+                // If no nota_number, safe to force delete
+                $payment->forceDelete();
+            }
 
-            // Hapus history record (hard delete)
-            $history->forceDelete();
+            // 3. Kembalikan status Order
+            if ($order) {
+                $isInvoiced = \App\Models\Finance\InvoiceDetail::where('orderCode', $currentOrderCode)
+                    ->whereNull('deleted_at')
+                    ->exists();
+
+                $order->update([
+                    'status' => $isInvoiced ? 5 : 4,
+                ]);
+            }
+
+            $this->logActivity($title, $payment, 'Cancel Payment');
         }
-
-        // 2. Hapus VendorPayment record (hard delete)
-        $vendorPayment->forceDelete();
-
-        // 3. Kembalikan status Order
-        // Jika order sudah di-invoice, statusnya 5 (Order Invoice).
-        // Jika tidak, statusnya 4 (Order Return Do).
-        $isInvoiced = \App\Models\Finance\InvoiceDetail::where('orderCode', $orderCode)
-            ->whereNull('deleted_at')
-            ->exists();
-
-        $order->update([
-            'status' => $isInvoiced ? 5 : 4,
-        ]);
-
-        $this->logActivity($title, $vendorPayment, 'Cancel Payment');
     }
 
     /**

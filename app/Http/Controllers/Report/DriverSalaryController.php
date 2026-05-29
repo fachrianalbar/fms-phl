@@ -286,6 +286,152 @@ class DriverSalaryController extends Controller
     }
 
     /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit($id)
+    {
+        $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
+        
+        // Also fetch orders for this driver and period to populate the modal's order list
+        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
+            ->whereHas('cost', function ($q) {
+                $q->whereHas('costComponent', function ($q2) {
+                    $q2->where('type', 'salary');
+                });
+            })
+            ->where('driverCode', $salary->driverCode)
+            ->whereDate('orderDate', '>=', $salary->startDate)
+            ->whereDate('orderDate', '<=', $salary->endDate)
+            ->whereNull('deleted_at')
+            ->orderBy('orderDate', 'asc')
+            ->get();
+
+        $orderList = [];
+        foreach ($orders as $order) {
+            $salaryAmount = $this->getSalaryTotal($order->code);
+            $routeName = '-';
+            if ($order->route) {
+                $origin = $order->route->originLocation->name ?? '';
+                $dest = $order->route->destinationLocation->name ?? '';
+                $routeName = $order->route->name . ' (' . $origin . ' - ' . $dest . ')';
+            }
+
+            $orderList[] = [
+                'orderCode' => $order->code,
+                'orderDate' => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                'plateNumber' => $order->fleet->plateNumber ?? '-',
+                'routeName' => $routeName,
+                'salary' => $salaryAmount,
+                'salaryFormatted' => number_format($salaryAmount, 0, ',', '.'),
+            ];
+        }
+
+        return response()->json([
+            'salary' => $salary,
+            'orders' => $orderList,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'driverCode' => 'required|string',
+            'startDate' => 'required|date',
+            'endDate' => 'required|date|after_or_equal:startDate',
+            'adjustments' => 'nullable|array',
+            'adjustments.*.date' => 'required|date',
+            'adjustments.*.description' => 'required|string',
+            'adjustments.*.type' => 'required|in:addition,deduction',
+            'adjustments.*.nominal' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $driverSalary = DriverSalary::findOrFail($id);
+
+            // Calculate total salary from orders for new driver/period
+            $orders = Order::whereHas('cost', function ($q) {
+                    $q->whereHas('costComponent', function ($q2) {
+                        $q2->where('type', 'salary');
+                    });
+                })
+                ->where('driverCode', $request->driverCode)
+                ->whereDate('orderDate', '>=', $request->startDate)
+                ->whereDate('orderDate', '<=', $request->endDate)
+                ->whereNull('deleted_at')
+                ->get();
+
+            $totalSalary = 0;
+            foreach ($orders as $order) {
+                $totalSalary += $this->getSalaryTotal($order->code);
+            }
+
+            // Calculate total adjustment
+            $totalAdjustment = 0;
+            $adjustments = $request->adjustments ?? [];
+            foreach ($adjustments as $adj) {
+                if ($adj['type'] === 'addition') {
+                    $totalAdjustment += floatval($adj['nominal']);
+                } else {
+                    $totalAdjustment -= floatval($adj['nominal']);
+                }
+            }
+
+            $grandTotal = $totalSalary + $totalAdjustment;
+
+            // Update main record
+            $driverSalary->update([
+                'driverCode' => $request->driverCode,
+                'startDate' => $request->startDate,
+                'endDate' => $request->endDate,
+                'totalSalary' => $totalSalary,
+                'totalAdjustment' => $totalAdjustment,
+                'grandTotal' => $grandTotal,
+                'notes' => $request->notes,
+            ]);
+
+            // Re-sync details: delete existing ones and create new ones
+            DriverSalaryDetail::where('driverSalaryCode', $driverSalary->code)->delete();
+
+            foreach ($adjustments as $adj) {
+                DriverSalaryDetail::create([
+                    'code' => GenerateCode::generateCode('DSD', true),
+                    'driverSalaryCode' => $driverSalary->code,
+                    'date' => $adj['date'],
+                    'description' => $adj['description'],
+                    'type' => $adj['type'],
+                    'nominal' => floatval($adj['nominal']),
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Gaji driver berhasil diperbarui.'
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => $th->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * AJAX datatable for processed salaries.
      */
     public function datatableProcessed(Request $request)
@@ -320,6 +466,7 @@ class DriverSalaryController extends Controller
                     $buttons = '<div class="btn-group" role="group">';
                     $buttons .= '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="Detail"><i class="mdi mdi-eye fs-14"></i></a>';
                     $buttons .= '<a href="' . $pdfUrl . '" target="_blank" class="btn btn-sm btn-outline-danger" title="PDF"><i class="mdi mdi-file-pdf-box fs-14"></i></a>';
+                    $buttons .= '<button type="button" onclick="editSalary(\'' . $row->id . '\')" class="btn btn-sm btn-outline-success" title="Edit"><i class="mdi mdi-pencil fs-14"></i></button>';
                     $buttons .= '<button type="button" onclick="deleteSalary(\'' . $row->id . '\')" class="btn btn-sm btn-outline-warning" title="Hapus"><i class="mdi mdi-delete fs-14"></i></button>';
                     $buttons .= '</div>';
                     return $buttons;
