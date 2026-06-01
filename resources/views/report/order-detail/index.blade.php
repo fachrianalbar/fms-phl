@@ -214,6 +214,7 @@
                             <th>{{ __('menu_order.plate_number') }}</th>
                             <th>{{ __('menu_order.driver') }}</th>
                             <th>{{ __('menu_order_detail.sales') }}</th>
+                            <th>{{ __('menu_order_detail.income') }}</th>
                             <th>{{ __('menu_order_detail.cost_detail') }}</th>
                             <th>{{ __('menu_order_detail.total_cost') }}</th>
                             <th>{{ __('menu_order_detail.profit') }}</th>
@@ -312,6 +313,9 @@
                 },
                 {
                     "data": 'sales'
+                },
+                {
+                    "data": 'income'
                 },
                 {
                     "data": 'cost_detail'

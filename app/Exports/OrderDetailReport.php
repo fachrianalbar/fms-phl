@@ -66,10 +66,12 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
     public function columnFormats(): array
     {
         return [
-            'I' => '#,##0',
-            'K' => '#,##0',
-            'L' => '#,##0',
-            'M' => '#,##0',
+            'I' => '#,##0',   // Sales
+            'K' => '#,##0',   // Nominal Pendapatan
+            'L' => '#,##0',   // Total Pendapatan
+            'N' => '#,##0',   // Nominal Biaya
+            'O' => '#,##0',   // Total Biaya
+            'P' => '#,##0',   // Profit
         ];
     }
 

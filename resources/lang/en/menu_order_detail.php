@@ -4,6 +4,7 @@ return [
     'order_detail_report' => 'Order Detail Report',
     'no' => 'No',
     'sales' => 'Sales',
+    'income' => 'Income',
     'cost_detail' => 'Cost Detail',
     'total_cost' => 'Total Cost',
     'profit' => 'Profit',

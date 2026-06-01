@@ -114,12 +114,42 @@ class OrderDetailController extends Controller
 
                     return number_format($sales, 0, ',', '.');
                 })
+                ->addColumn('income', function ($row) {
+                    // Income = On Charge cost components (show breakdown)
+                    $incomeDetails = [];
+                    $incomeTotal = 0;
+                    if ($row->cost) {
+                        foreach ($row->cost as $cost) {
+                            if (strtolower($cost->type) === 'on charge') {
+                                $costName = $cost->costComponent->name ?? 'N/A';
+                                $incomeDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                                $incomeTotal += $cost->nominal;
+                            }
+                        }
+                    }
+
+                    if (empty($incomeDetails)) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    $html = '<div class="cost-detail-list" style="font-size: 12px;">';
+                    foreach ($incomeDetails as $key => $detail) {
+                        $html .= '<div class="cost-detail-item">'.($key + 1).'. '.$detail.'</div>';
+                    }
+                    $html .= '<div class="cost-detail-item" style="border-top:1px solid #ccc; font-weight:bold; margin-top:2px; padding-top:2px;">Total: '.number_format($incomeTotal, 0, ',', '.').'</div>';
+                    $html .= '</div>';
+
+                    return $html;
+                })
                 ->addColumn('cost_detail', function ($row) {
                     $costDetails = [];
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
-                            $costName = $cost->costComponent->name ?? 'N/A';
-                            $costDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                            // Only show Off Charge costs in detail
+                            if (strtolower($cost->type) !== 'on charge') {
+                                $costName = $cost->costComponent->name ?? 'N/A';
+                                $costDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                            }
                         }
                     }
 
@@ -140,7 +170,10 @@ class OrderDetailController extends Controller
                     $totalCost = 0;
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
-                            $totalCost += $cost->nominal;
+                            // Only sum Off Charge costs
+                            if (strtolower($cost->type) !== 'on charge') {
+                                $totalCost += $cost->nominal;
+                            }
                         }
                     }
 
@@ -149,17 +182,23 @@ class OrderDetailController extends Controller
                 ->addColumn('profit', function ($row) {
                     // `routeAmount` is total for the order
                     $sales = $row->routeAmount;
+                    $income = 0;
                     $totalCost = 0;
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
-                            $totalCost += $cost->nominal;
+                            if (strtolower($cost->type) === 'on charge') {
+                                $income += $cost->nominal;
+                            } else {
+                                $totalCost += $cost->nominal;
+                            }
                         }
                     }
-                    $profit = $sales - $totalCost;
+                    // Profit = Sales + Income (On Charge) - Total Cost (Off Charge)
+                    $profit = $sales + $income - $totalCost;
 
                     return number_format($profit, 0, ',', '.');
                 })
-                ->rawColumns(['cost_detail'])
+                ->rawColumns(['cost_detail', 'income'])
                 ->toJson();
         }
     }

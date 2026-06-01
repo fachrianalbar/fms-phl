@@ -4,6 +4,7 @@ return [
     'order_detail_report' => 'Laporan Detail Pesanan',
     'no' => 'No',
     'sales' => 'Penjualan',
+    'income' => 'Pendapatan',
     'cost_detail' => 'Detail Biaya',
     'total_cost' => 'Total Biaya',
     'profit' => 'Keuntungan',

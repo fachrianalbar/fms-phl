@@ -65,6 +65,7 @@
                 <th>Plate Number</th>
                 <th>Driver</th>
                 <th>Sales</th>
+                <th>Pendapatan</th>
                 <th>Cost Detail</th>
                 <th>Total Cost</th>
                 <th>Profit</th>
