@@ -40,6 +40,19 @@
         @method('PUT')
         <div class="col-sm-12">
             @include('partials.alert')
+            @if ($hasMismatch)
+                <div class="alert alert-warning dark alert-dismissible fade show animate__animated animate__fadeIn" role="alert" id="mismatchAlert">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <div>
+                            <i class="mdi mdi-alert-circle fs-16 me-2"></i>
+                            <strong>Perhatian:</strong> Terdapat ketidaksesuaian antara harga/komponen biaya tersimpan pada order ini dengan data master rute terbaru.
+                        </div>
+                        <button type="button" class="btn btn-sm btn-light text-dark font-weight-bold d-inline-flex align-items-center gap-1" id="btnSyncMaster">
+                            <i class="mdi mdi-refresh"></i> Sesuaikan dengan Harga Master
+                        </button>
+                    </div>
+                </div>
+            @endif
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -1095,13 +1108,13 @@
             });
         }
 
+        let isInitialLoad = true;
+
         // Initialize DataTable only if element exists
         $(document).ready(function() {
             if ($('#dt').length) {
                 $('#dt').DataTable();
             }
-            // Initialize price info on page load
-            updatePriceInfo();
         });
 
         // Preloader functions
@@ -1148,6 +1161,9 @@
 
         // Function to update price information
         function updatePriceInfo() {
+            if (isInitialLoad) {
+                return;
+            }
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
             const qty = $('#qty').val() || 1;
@@ -1265,9 +1281,20 @@
             setTimeout(function() {
                 $('#routeData').val('{{ $data->routeCode }}');
                 $('#routeData').trigger('change');
+                
+                // Allow updates on subsequent manual user interactions
+                isInitialLoad = false;
             }, 100);
 
             syncCostComponentVisibility();
+        });
+
+        // Click handler for sync button
+        $(document).on('click', '#btnSyncMaster', function() {
+            isInitialLoad = false;
+            updatePriceInfo();
+            checkAndLoadRoute();
+            $('#mismatchAlert').fadeOut();
         });
     </script>
 @endpush

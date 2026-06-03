@@ -717,6 +717,78 @@ class OrderService
         return $this->fleet->with('company')->whereNotIn('code', $fleetArr)->whereNotNull('fleetCompanyCode')->get();
     }
 
+    public function checkRoutePriceMismatch($order)
+    {
+        if (! $order || ! $order->routeCode) {
+            return false;
+        }
+
+        // Get the route
+        $route = $this->route->where('code', $order->routeCode)->first();
+        if (! $route) {
+            return false;
+        }
+
+        // Get the fleet and check company type
+        $fleet = $this->fleet->where('code', $order->fleetCode)->with('company')->first();
+        $isExternalFleet = ($fleet && $fleet->company && strcasecmp((string) $fleet->company->type, 'external') === 0);
+
+        $qty = (float) ($order->qty ?? 0);
+        $masterPrice = (float) ($route->price ?? 0);
+        $computedRouteAmount = $masterPrice * $qty;
+
+        if ($isExternalFleet) {
+            $routePriceExt = RoutePriceExternal::where('route_id', $route->id)
+                ->where('fleet_company_id', $fleet->company->id)
+                ->first();
+
+            $vendorPriceSingle = (float) ($routePriceExt ? $routePriceExt->amount : 0);
+            $vendorPrice = $vendorPriceSingle * $qty;
+            $personalVendorPriceSingle = 0.0;
+            $personalVendorPrice = 0.0;
+        } else {
+            $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
+            $personalVendorPrice = $personalVendorPriceSingle * $qty;
+            $vendorPriceSingle = 0.0;
+            $vendorPrice = 0.0;
+        }
+
+        // Check price mismatch
+        if ((float) $order->price !== $masterPrice ||
+            (float) $order->routeAmount !== $computedRouteAmount ||
+            (float) $order->vendorPriceSingle !== $vendorPriceSingle ||
+            (float) $order->vendorPrice !== $vendorPrice ||
+            (float) $order->personalVendorPriceSingle !== $personalVendorPriceSingle ||
+            (float) $order->personalVendorPrice !== $personalVendorPrice) {
+            return true;
+        }
+
+        // Get all master route details for this route
+        $routeDetails = \App\Models\Data\RouteDetail::where('routeCode', $order->routeCode)->get()->keyBy('componentCode');
+
+        // Get all order costs for this order
+        $orderCosts = $this->orderCost->where('orderCode', $order->code)->get();
+
+        foreach ($orderCosts as $cost) {
+            if ($cost->is_route == 1) {
+                $routeDetail = $routeDetails->get($cost->componentType);
+                if (! $routeDetail || (int) $routeDetail->amount !== (int) $cost->nominal) {
+                    return true;
+                }
+            }
+        }
+
+        // Also check if any master route detail is missing in the order's route costs
+        $orderRouteComponents = $orderCosts->where('is_route', 1)->pluck('componentType')->toArray();
+        foreach ($routeDetails as $componentCode => $detail) {
+            if (! in_array($componentCode, $orderRouteComponents)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function deleteOrderMaterial($id)
     {
         $data = $this->orderMaterial->where('id', $id)->first();

@@ -236,6 +236,12 @@ class OrderController extends Controller
     public function showOrder(string $id)
     {
         $data = $this->service->getById($id);
+        
+        $hasMismatch = false;
+        if ($data) {
+            $hasMismatch = $this->service->checkRoutePriceMismatch($data);
+        }
+
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
         $route = Route::where('code', $data->routeCode)->first();
         $component = CostComponent::get();
@@ -285,6 +291,7 @@ class OrderController extends Controller
             ->with('orderCost', OrderCostType::cases())
             ->with('cost', $cost)
             ->with('customerDetailOrder', $customerDetailOrder)
+            ->with('hasMismatch', $hasMismatch)
             ->with('title', $this->title);
     }
 
@@ -298,6 +305,8 @@ class OrderController extends Controller
         if (! $data) {
             return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
         }
+
+        $hasMismatch = $this->service->checkRoutePriceMismatch($data);
 
         // Check if status is 5 or 6 - cannot edit for non-authorized roles
         if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']) && in_array($data->status, [5, 6])) {
@@ -352,6 +361,7 @@ class OrderController extends Controller
             ->with('company', $company)
             ->with('customerDetailOrder', $customerDetailOrder)
             ->with('unit', $unit)
+            ->with('hasMismatch', $hasMismatch)
             ->with('data', $data);
     }
 

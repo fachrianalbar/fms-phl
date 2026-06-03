@@ -156,25 +156,27 @@
                     </div>
 
                     <div class="card-body">
-                        <table class="table table-order table-bordered dt-responsive table-responsive nowrap"
-                            id="routeTable">
-                            <thead>
-                                <tr>
-                                    <th>{{ __('menu_route.action') }}</th>
-                                    <th>{{ __('menu_route.route_name') }}</th>
-                                    <th>{{ __('menu_route.customer') }}</th>
-                                    <th>{{ __('menu_route.load_type') }}</th>
-                                    <th>{{ __('menu_route.origin') }}</th>
-                                    <th>{{ __('menu_route.destination') }}</th>
-                                    <th>{{ __('menu_route.price') }}</th>
-                                    <th>{{ __('menu_route.vendor_price') }}</th>
-                                    <th>{{ __('menu_route.personal_vendor_price') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody id="routeList">
-                                <!-- Table rows will be dynamically added here -->
-                            </tbody>
-                        </table>
+                        <div class="table-responsive custom-scrollbar">
+                            <table class="table table-order table-bordered dt-responsive nowrap"
+                                id="routeTable">
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('menu_route.action') }}</th>
+                                        <th>{{ __('menu_route.route_name') }}</th>
+                                        <th>{{ __('menu_route.customer') }}</th>
+                                        <th>{{ __('menu_route.load_type') }}</th>
+                                        <th>{{ __('menu_route.origin') }}</th>
+                                        <th>{{ __('menu_route.destination') }}</th>
+                                        <th>{{ __('menu_route.price') }}</th>
+                                        <th>{{ __('menu_route.vendor_price') }}</th>
+                                        <th>{{ __('menu_route.personal_vendor_price') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="routeList">
+                                    <!-- Table rows will be dynamically added here -->
+                                </tbody>
+                            </table>
+                        </div>
 
                         <div class="col-12 mt-4">
                             <button class="btn btn-primary" type="submit">{{ __('general.save') }}</button>

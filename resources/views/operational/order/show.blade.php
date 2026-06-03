@@ -35,6 +35,12 @@
             @csrf
             @method('PUT')
             <div class="col-sm-12">
+                @if ($hasMismatch)
+                    <div class="alert alert-warning dark alert-dismissible fade show" role="alert" id="mismatchAlert">
+                        <i class="mdi mdi-alert-circle"></i>
+                        <strong>Perhatian:</strong> Terdapat ketidaksesuaian antara harga/komponen biaya tersimpan pada order ini dengan data master rute terbaru.
+                    </div>
+                @endif
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h4>{{ $title }} Detail Data</h4>
@@ -703,7 +709,7 @@
 
             // Initialize price info on page load
             $(document).ready(function() {
-                updatePriceInfo();
+                // Do not run on page load to preserve saved order values
             });
 
             function formatNumber(number) {
