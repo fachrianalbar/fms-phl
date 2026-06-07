@@ -136,8 +136,9 @@ class ReturnDoController extends Controller
                 })
 
                 ->addColumn('action', function ($row) {
-                    $editBtn = '<a href="' . route('operational.return-do.edit-order', $row->code) . '" class="btn btn-sm btn-primary" title="Edit"><i class="mdi mdi-pencil"></i></a>';
-                    return $editBtn;
+                    $editBtn = '<a href="' . route('operational.return-do.edit-order', $row->code) . '" class="btn btn-sm btn-primary me-1" title="Edit"><i class="mdi mdi-pencil"></i></a>';
+                    $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn" title="Rollback Status" data-id="' . $row->id . '" data-shipment="' . $row->shipmentNumber . '"><i class="mdi mdi-undo"></i></button>';
+                    return $editBtn . $rollbackBtn;
                 })
                 ->addColumn('detail', function ($row) {
                     $onChargeCosts = $row->onChargeCost;
@@ -322,5 +323,21 @@ class ReturnDoController extends Controller
 
             return redirect()->back()->with('error', 'Error: ' . $th->getMessage())->withInput();
         }
+    }
+
+    /**
+     * Rollback order status from Return DO (status 4) back to Not Return DO (status 3).
+     */
+    public function rollbackStatus(string $id)
+    {
+        $data = $this->service->getById($id);
+
+        if (! $data) {
+            return redirect()->route('operational.return-do.index')->with('fail', 'Data not found');
+        }
+
+        $this->service->rollbackStatus($id);
+
+        return redirect()->route('operational.return-do.index')->with('success', 'Status berhasil di-rollback ke Not Return DO');
     }
 }

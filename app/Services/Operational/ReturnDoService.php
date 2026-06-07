@@ -51,4 +51,22 @@ class ReturnDoService
                 'onChargeCost.costComponent',
             ])->orderBy('order.created_at', 'desc');
     }
+
+    public function getById($id)
+    {
+        return $this->service->where('id', $id)->first();
+    }
+
+    /**
+     * Rollback order status from Return DO (4) back to Not Return DO (3).
+     * Clears returnDate and returnDescription.
+     */
+    public function rollbackStatus($id)
+    {
+        $this->service->where('id', $id)->update([
+            'status' => 3,
+            'returnDate' => null,
+            'returnDescription' => null,
+        ]);
+    }
 }
