@@ -118,20 +118,18 @@ class RouteController extends Controller
             'routeTypeCode.*' => 'required|string',
             'price' => 'required|array|min:1',
             'price.*' => 'required|numeric|min:0',
-            'vendorPrice' => 'required|array|min:1',
-            'vendorPrice.*' => 'required|numeric|min:0',
             'personalVendorPrice' => 'required|array|min:1',
             'personalVendorPrice.*' => 'required|numeric|min:0',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->back()->withInput()->with('fail', $validator->errors()->all()[0]);
         }
 
         $originLocations = (array) $request->originLocationCode;
         $destinationLocations = (array) $request->destinationLocationCode;
         foreach ($originLocations as $index => $originLocation) {
             if (($destinationLocations[$index] ?? null) === $originLocation) {
-                return redirect()->route($this->view . 'index')->with('fail', 'Origin and destination location cannot be same');
+                return redirect()->back()->withInput()->with('fail', 'Origin and destination location cannot be same');
             }
         }
 
@@ -146,7 +144,7 @@ class RouteController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->withInput()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 

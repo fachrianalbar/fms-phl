@@ -168,7 +168,6 @@
                                         <th>{{ __('menu_route.origin') }}</th>
                                         <th>{{ __('menu_route.destination') }}</th>
                                         <th>{{ __('menu_route.price') }}</th>
-                                        <th>{{ __('menu_route.vendor_price') }}</th>
                                         <th>{{ __('menu_route.personal_vendor_price') }}</th>
                                     </tr>
                                 </thead>
@@ -221,6 +220,14 @@
     <script>
         $(document).ready(function() {
             $('#routeTable').DataTable()
+
+            @if (Session::has('fail'))
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "{!! Session::get('fail') !!}",
+                    icon: "error",
+                })
+            @endif
         });
 
         // function locationByCustomer(code) {
@@ -323,7 +330,6 @@
                 originValue: originValue,
                 destinationValue: destinationValue,
                 price: '',
-                vendorPrice: '',
                 personalVendorPrice: ''
             });
 
@@ -372,9 +378,6 @@
                         <input type="text" class="form-control" name="price[]" id="price-${index}" value="${route.price}" oninput="updatePrice(${index}, 'price', this.value); formatAngka(this)" required>
                     </td>
                     <td>
-                        <input type="text" class="form-control" name="vendorPrice[]" id="vendorPrice-${index}" value="${route.vendorPrice}" oninput="updatePrice(${index}, 'vendorPrice', this.value); formatAngka(this)" required>
-                    </td>
-                    <td>
                         <input type="text" class="form-control" name="personalVendorPrice[]" id="personalVendorPrice-${index}" value="${route.personalVendorPrice}" oninput="updatePrice(${index}, 'personalVendorPrice', this.value); formatAngka(this)" required>
                     </td>
                   
@@ -392,10 +395,9 @@
         function validatePrices() {
             for (let index = 0; index < routeData.length; index++) {
                 const priceInput = document.getElementById(`price-${index}`);
-                const vendorPriceInput = document.getElementById(`vendorPrice-${index}`);
                 const personalVendorPriceInput = document.getElementById(`personalVendorPrice-${index}`);
 
-                if (!priceInput.value || !vendorPriceInput.value || !personalVendorPriceInput.value) {
+                if (!priceInput.value || !personalVendorPriceInput.value) {
                     swal({
                         title: "{{ __('general.warning') }}",
                         text: "{{ __('menu_route.please_enter_price_for_all_added_routes') }}",
@@ -406,18 +408,7 @@
                 }
 
                 const price = parseLocaleNumber(priceInput.value);
-                const vendorPrice = parseLocaleNumber(vendorPriceInput.value);
                 const personalVendorPrice = parseLocaleNumber(personalVendorPriceInput.value);
-
-                if (vendorPrice > price) {
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "{{ __('menu_route.vendor_price_validation') }}",
-                        icon: "warning",
-                    })
-
-                    return false;
-                }
 
                 if (personalVendorPrice > price) {
                     swal({
@@ -469,15 +460,12 @@
 
             routeData.forEach((route, index) => {
                 const priceInput = document.getElementById(`price-${index}`);
-                const vendorPriceInput = document.getElementById(`vendorPrice-${index}`);
                 const personalVendorPriceInput = document.getElementById(`personalVendorPrice-${index}`);
 
                 const price = parseLocaleNumber(priceInput.value);
-                const vendorPrice = parseLocaleNumber(vendorPriceInput.value);
                 const personalVendorPrice = parseLocaleNumber(personalVendorPriceInput.value);
 
                 priceInput.value = price.toFixed(2);
-                vendorPriceInput.value = vendorPrice.toFixed(2);
                 personalVendorPriceInput.value = personalVendorPrice.toFixed(2);
             });
             return true; // Allow form submission after formatting is removed

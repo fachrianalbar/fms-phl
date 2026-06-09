@@ -31,7 +31,8 @@ class RouteService
             ->leftJoin('location as destination_location', 'destination_location.code', 'route.destinationLocationCode')
             ->leftJoin('route_type', 'route_type.code', 'route.routeTypeCode')
             ->leftJoin('fleet_type', 'fleet_type.code', 'route.fleetTypeCode')
-            ->select('route.*');
+            ->select('route.*')
+            ->orderBy('route.created_at', 'desc');
     }
 
     public function getById($id)
@@ -43,7 +44,6 @@ class RouteService
     {
         $filtered = Arr::only($request->all(), [
             'price',
-            'vendorPrice',
             'personalVendorPrice',
             'customerCode',
             'routeTypeCode',
@@ -54,12 +54,7 @@ class RouteService
 
         for ($i = 0; $i < count($request->price); $i++) {
             $price = $this->normalizeDecimal($filtered['price'][$i] ?? 0);
-            $vendorPrice = $this->normalizeDecimal($filtered['vendorPrice'][$i] ?? 0);
             $personalVendorPrice = $this->normalizeDecimal($filtered['personalVendorPrice'][$i] ?? 0);
-
-            if ($vendorPrice > $price) {
-                throw new \InvalidArgumentException('Vendor price cannot be greater than price');
-            }
 
             if ($personalVendorPrice > $price) {
                 throw new \InvalidArgumentException('Personal vendor price cannot be greater than price');
@@ -72,7 +67,7 @@ class RouteService
                     'originLocationCode' => $filtered['originLocationCode'][$i],
                     'destinationLocationCode' => $filtered['destinationLocationCode'][$i],
                     'price' => $price,
-                    'vendorPrice' => $vendorPrice,
+                    'vendorPrice' => 0,
                     'routeTypeCode' => $filtered['routeTypeCode'][$i],
                     'personalVendorPrice' => $personalVendorPrice,
                     'code' => GenerateCode::generateCode('TR', true),
