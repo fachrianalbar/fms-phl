@@ -164,11 +164,11 @@
                                         <th>{{ __('menu_route.action') }}</th>
                                         <th>{{ __('menu_route.route_name') }}</th>
                                         <th>{{ __('menu_route.customer') }}</th>
-                                        <th>{{ __('menu_route.load_type') }}</th>
+                                        <th style="max-width: 100px;">{{ __('menu_route.load_type') }}</th>
                                         <th>{{ __('menu_route.origin') }}</th>
                                         <th>{{ __('menu_route.destination') }}</th>
-                                        <th>{{ __('menu_route.price') }}</th>
-                                        <th>{{ __('menu_route.personal_vendor_price') }}</th>
+                                        <th style="min-width: 200px;">{{ __('menu_route.price') }}</th>
+                                        <th style="min-width: 200px;">{{ __('menu_route.personal_vendor_price') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="routeList">
