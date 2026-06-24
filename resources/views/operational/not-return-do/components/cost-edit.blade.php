@@ -1,4 +1,132 @@
 
+<style>
+    /* Styling khusus tabel biaya komponen modern */
+    .modern-cost-table {
+        border-collapse: separate;
+        border-spacing: 0 4px; /* Row spacing */
+    }
+    
+    .modern-cost-table thead th {
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #4b5563 !important;
+        border-bottom: 2px solid #e5e7eb !important;
+        background-color: #f9fafb !important;
+        padding: 10px 12px !important;
+    }
+    
+    .modern-cost-table tbody tr.cost-row {
+        background-color: #ffffff;
+        transition: all 0.2s ease;
+    }
+    
+    .modern-cost-table tbody tr.cost-row:hover {
+        background-color: rgba(99, 102, 241, 0.02) !important;
+    }
+    
+    /* Input & Select styling inside modern table */
+    .modern-cost-table .form-control {
+        background-color: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        padding: 6px 12px;
+        height: 38px;
+        transition: all 0.2s ease;
+        color: #1f2937;
+    }
+    
+    .modern-cost-table .form-control:focus {
+        background-color: #ffffff;
+        border-color: #a5b4fc;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        color: #111827;
+    }
+    
+    /* Select2 custom styling to match our form inputs */
+    .modern-cost-table .select2-container--default .select2-selection--single {
+        background-color: #f9fafb !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 6px !important;
+        height: 38px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .modern-cost-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        color: #1f2937 !important;
+        font-weight: 400 !important;
+        font-size: 0.875rem !important;
+        padding-left: 12px !important;
+    }
+    
+    .modern-cost-table .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #9ca3af !important;
+    }
+    
+    .modern-cost-table .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 8px !important;
+    }
+    
+    .modern-cost-table .select2-container--default.select2-container--open .select2-selection--single,
+    .modern-cost-table .select2-container--default .select2-selection--single:focus {
+        border-color: #a5b4fc !important;
+        background-color: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+    }
+    
+    /* Rounded Action Delete Button */
+    .remove-internal-cost-btn {
+        background: rgba(239, 68, 68, 0.05);
+        border: 1px solid rgba(239, 68, 68, 0.1) !important;
+        color: #ef4444 !important;
+        border-radius: 50% !important;
+        width: 32px !important;
+        height: 32px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: all 0.2s ease !important;
+        padding: 0 !important;
+    }
+    
+    .remove-internal-cost-btn:hover {
+        background: #ef4444 !important;
+        color: #ffffff !important;
+        border-color: #ef4444 !important;
+        transform: scale(1.08);
+        box-shadow: 0 2px 5px rgba(239, 68, 68, 0.25);
+    }
+    
+    /* Custom badge styling */
+    .badge-indigo {
+        background-color: rgba(99, 102, 241, 0.1) !important;
+        color: #4f46e5 !important;
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        font-weight: 600;
+        padding: 5px 10px;
+    }
+    
+    /* Total footer row */
+    .modern-cost-table tfoot tr {
+        background-color: rgba(99, 102, 241, 0.03) !important;
+    }
+    
+    .modern-cost-table tfoot td {
+        padding: 12px !important;
+        border-top: 2px solid #e5e7eb !important;
+    }
+    
+    #internalCostTotal {
+        font-size: 1.05rem;
+        color: #4f46e5;
+        font-weight: 700;
+    }
+</style>
+
 <div class="row g-3">
     <div class="col-md-12">
         <div class="d-flex justify-content-end align-items-center mb-3">
@@ -7,7 +135,7 @@
                 $totalCost = $allCosts->sum('nominal');
             @endphp
             <div class="d-flex align-items-center gap-2">
-                <span class="badge bg-primary rounded-pill" id="internalCostBadge">
+                <span class="badge badge-indigo rounded-pill" id="internalCostBadge">
                     {{ $allCosts->count() }} item
                 </span>
                 <button class="btn btn-primary btn-sm" type="button" id="add-internal-cost">
@@ -17,7 +145,7 @@
         </div>
 
         <div class="table-responsive">
-            <table class="table table-sm table-hover w-100 nowrap" id="dt-internal-cost">
+            <table class="table table-sm table-hover modern-cost-table w-100 nowrap" id="dt-internal-cost">
                 <thead class="table-light">
                     <tr>
                         <th class="text-center" style="width: 5%">#</th>

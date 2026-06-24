@@ -475,62 +475,7 @@
                 </div>
             </div>
 
-            <!-- Return Order Section -->
-            <div class="card shadow-sm border-0">
-                <div class="card-header">
-                    <h4 class="mb-0"><i class="mdi mdi-calendar-check me-1"></i> Konfirmasi Return Order</h4>
-                </div>
-                <div class="card-body col-md-12">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="returnDate">
-                                <i class="mdi mdi-calendar-clock"></i> Tanggal & Waktu Return
-                            </label>
-                            <input class="form-control" name="returnDate" id="returnDate" type="datetime-local"
-                                placeholder="Tanggal & Waktu Return"
-                                value="{{ $data->returnDate ? date('Y-m-d\TH:i', strtotime($data->returnDate)) : '' }}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="returnDescription">
-                                <i class="mdi mdi-text-box-outline"></i> Deskripsi Return (Opsional)
-                            </label>
-                            <textarea class="form-control" name="returnDescription" id="returnDescription" rows="3"
-                                placeholder="Masukkan deskripsi return...">{{ $data->returnDescription ?? '' }}</textarea>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <label class="form-label" for="suratJalanFiles">
-                                <i class="mdi mdi-file-upload-outline"></i> Upload Surat Jalan (Opsional)
-                            </label>
-                            <input class="form-control" name="suratJalanFiles[]" id="suratJalanFiles" type="file"
-                                multiple accept=".pdf,.jpg,.jpeg,.png"
-                                title="Upload file surat jalan (PDF, JPG, JPEG, PNG - Max 5MB per file)">
-                            <small class="text-muted">
-                                Upload file surat jalan dalam format PDF, JPG, JPEG, atau PNG (maksimal 5MB per file)
-                            </small>
-                        </div>
-                    </div>
-
-                    <!-- Hidden field untuk menandai konfirmasi return -->
-                    <input type="hidden" name="confirm_return" id="confirmReturn"
-                        value="{{ old('confirm_return', '1') }}">
-
-                    <div class="row mt-3">
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="confirmReturnCheckbox"
-                                    {{ (string) old('confirm_return', '1') === '1' ? 'checked' : '' }}
-                                    onchange="document.getElementById('confirmReturn').value = this.checked ? '1' : '0'">
-                                <label class="form-check-label" for="confirmReturnCheckbox">
-                                    <strong>Konfirmasi Return Order</strong> - Centang untuk mengkonfirmasi return order ini
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <input type="hidden" name="confirm_return" id="confirmReturn" value="0">
 
             <div class="card">
                 <div class="col-12">
