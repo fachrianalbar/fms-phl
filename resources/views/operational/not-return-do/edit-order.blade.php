@@ -42,12 +42,12 @@
         <div class="col-sm-12">
             @include('partials.alert')
 
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
+                    <h4 class="mb-0"><i class="mdi mdi-file-document-edit me-1"></i> {{ $title }} {{ __('general.edit_data') }}</h4>
 
                     <a href="{{ route('operational.not-return-do.index') }}"
-                        class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                        class="btn btn-outline-secondary btn-sm"><i class="mdi mdi-arrow-left me-1"></i>{{ __('general.back_to_list') }}</a>
 
                 </div>
                 <div class="card-body col-md-12">
@@ -221,10 +221,10 @@
 
             <!-- Card Informasi Harga -->
             <div class="card shadow-sm border-0" id="priceInfoCard">
-                <div class="card-header bg-gradient-primary text-white">
-                    <h5 class="mb-0">
-                        <i class="mdi mdi-cash-multiple"></i> Informasi Harga
-                    </h5>
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="mdi mdi-cash-multiple me-1"></i> Informasi Harga
+                    </h4>
                 </div>
                 <div class="card-body">
                     <div class="row g-4">
@@ -323,12 +323,12 @@
                 </div>
             </div>
 
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4>Material Data</h4>
+                    <h4 class="mb-0"><i class="mdi mdi-package-variant me-1"></i> Material Data</h4>
 
-                    <button class="btn btn-primary" type="button"
-                        id="add-material">{{ __('general.add_data') }}</button>
+                    <button class="btn btn-primary btn-sm" type="button"
+                        id="add-material"><i class="mdi mdi-plus-circle me-1"></i>{{ __('general.add_data') }}</button>
 
 
                 </div>
@@ -466,34 +466,19 @@
 
             </div>
 
-            @php
-                // Cek apakah fleet adalah external
-                $fleetData = $data->fleet;
-                $isExternalFleet =
-                    $fleetData && $fleetData->company && strtolower($fleetData->company->type) === 'external';
-            @endphp
-
-            @if (!$isExternalFleet)
-                <div class="card">
-                    <div class="card-body col-md-12">
-                        @include('operational.not-return-do.components.cost-edit')
-                    </div>
-                </div>
-            @endif
-
-            <div class="card">
-                <div class="card-header">
-                    <h4>{{ __('menu_order.external_company_cost') }}</h4>
+            <div class="card shadow-sm border-0">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="mdi mdi-cash-register me-1"></i> Biaya Komponen</h4>
                 </div>
                 <div class="card-body col-md-12">
-                    @include('operational.not-return-do.components.external-cost-edit')
+                    @include('operational.not-return-do.components.cost-edit')
                 </div>
             </div>
 
             <!-- Return Order Section -->
-            <div class="card">
+            <div class="card shadow-sm border-0">
                 <div class="card-header">
-                    <h4><i class="mdi mdi-calendar-check"></i> Konfirmasi Return Order</h4>
+                    <h4 class="mb-0"><i class="mdi mdi-calendar-check me-1"></i> Konfirmasi Return Order</h4>
                 </div>
                 <div class="card-body col-md-12">
                     <div class="row g-3">
@@ -547,12 +532,15 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="col-12">
-                    <div class="card-body">
-                        <button class="btn btn-primary" id="save"
-                            type="submit">{{ __('general.save_changes') }}</button>
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        <i class="mdi mdi-information-outline me-1"></i>
+                        Pastikan semua data sudah benar sebelum menyimpan.
                     </div>
+                    <button class="btn btn-primary btn-lg px-4" id="save" type="submit">
+                        <i class="mdi mdi-content-save me-1"></i>{{ __('general.save_changes') }}
+                    </button>
                 </div>
             </div>
 
