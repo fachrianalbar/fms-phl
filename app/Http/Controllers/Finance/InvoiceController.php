@@ -463,7 +463,7 @@ class InvoiceController extends Controller
 
         $company = CompanySetting::first();
 
-        // Get invoice details with related data
+        // Get invoice details with related data, sorted by order date
         $invoiceDetails = $data->details()->with([
             'order.orderMaterial.material',
             'order.orderMaterial.unit',
@@ -473,7 +473,12 @@ class InvoiceController extends Controller
             'order.driver',
             'order.route.originLocation',
             'order.route.destinationLocation',
-        ])->get();
+        ])->get()->sortBy(function ($detail) {
+            return $detail->order->orderDate ?? '';
+        })->values();
+
+        // Set sorted details on data so templates using $data->details get sorted data
+        $data->setRelation('details', $invoiceDetails);
 
         // Tentukan template PDF berdasarkan customer invoicePdf field
         $customer = $data->customer;
