@@ -347,5 +347,83 @@
             }
         });
     }
+
+    $(document).on('click', '.btn-suggest-number', function() {
+        var id = $(this).data('id');
+        var currentNumber = $(this).data('invoice-number');
+
+        swal({
+            title: "Memuat...",
+            text: "Sedang menghitung nomor invoice yang tidak konflik.",
+            icon: "info",
+            buttons: false,
+            closeOnClickOutside: false,
+            closeOnEsc: false
+        });
+
+        $.ajax({
+            url: "{{ route('ajax.invoice.suggest-number', ':id') }}".replace(':id', id),
+            type: "GET",
+            success: function(response) {
+                swal.close();
+                if (response.success) {
+                    var suggested = response.suggestedNumber;
+                    swal({
+                        title: "Saran Nomor Invoice Baru",
+                        text: "Nomor saat ini:\n" + currentNumber + "\n\nSaran nomor baru (bebas konflik):\n" + suggested + "\n\nApakah Anda ingin memperbarui nomor invoice ini?",
+                        icon: "info",
+                        buttons: {
+                            cancel: "Batal",
+                            confirm: {
+                                text: "Ya, Perbarui",
+                                value: true
+                            }
+                        }
+                    }).then((willUpdate) => {
+                        if (willUpdate) {
+                            $.ajax({
+                                url: "{{ route('finance.invoice.update-number', ':id') }}".replace(':id', id),
+                                type: "POST",
+                                data: {
+                                    _token: "{{ csrf_token() }}",
+                                    invoiceNumber: suggested
+                                },
+                                success: function(updateResponse) {
+                                    swal({
+                                        title: "Berhasil!",
+                                        text: updateResponse.message,
+                                        icon: "success",
+                                    }).then(function() {
+                                        $('#dt').DataTable().ajax.reload();
+                                    });
+                                },
+                                error: function(xhr) {
+                                    let errorMsg = 'Terjadi kesalahan saat mengubah nomor invoice';
+                                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                                        errorMsg = xhr.responseJSON.message;
+                                    }
+                                    swal({
+                                        title: "Gagal!",
+                                        text: errorMsg,
+                                        icon: "error",
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    swal("Gagal!", "Gagal memuat saran nomor invoice.", "error");
+                }
+            },
+            error: function(xhr) {
+                swal.close();
+                let errorMsg = 'Terjadi kesalahan saat memuat saran nomor';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                }
+                swal("Gagal!", errorMsg, "error");
+            }
+        });
+    });
 </script>
 @endpush

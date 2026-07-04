@@ -305,6 +305,15 @@ class InvoiceController extends Controller
                             data-bs-toggle="tooltip" title="Edit">
                                 <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
                             </a>';
+
+                        $btn .= '
+                            <a href="javascript:void(0)" 
+                            class="btn btn-icon btn-sm bg-secondary-subtle me-1 btn-suggest-number"
+                            data-bs-toggle="tooltip" title="Saran Nomor Baru"
+                            data-id="' . $row->id . '"
+                            data-invoice-number="' . htmlspecialchars($row->invoiceNumber) . '">
+                                <i class="mdi mdi-auto-fix fs-14 text-secondary"></i>
+                            </a>';
                     }
 
                     // Tombol recalculate
@@ -653,6 +662,56 @@ class InvoiceController extends Controller
         } catch (\Throwable $th) {
             DB::rollback();
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function updateInvoiceNumber(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'invoiceNumber' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $this->service->updateInvoiceNumber($id, $request->invoiceNumber);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Nomor invoice berhasil diperbarui dan nomor lain yang berkonflik telah disesuaikan.',
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function suggestInvoiceNumber($id)
+    {
+        try {
+            $suggested = $this->service->getSuggestedInvoiceNumber($id);
+            return response()->json([
+                'success' => true,
+                'suggestedNumber' => $suggested,
+            ]);
+        } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $th->getMessage(),

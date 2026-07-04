@@ -21,6 +21,7 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::post('pdf-order-payment-multi', [OrderPaymentController::class, 'pdfOrderPaymentMulti'])->name('order-payment.pdf-multi');
     Route::post('invoice/{id}/payment', [InvoiceController::class, 'processPayment'])->name('invoice.process-payment');
     Route::post('invoice/{id}/recalculate', [InvoiceController::class, 'recalculate'])->name('invoice.recalculate');
+    Route::post('invoice/{id}/update-number', [InvoiceController::class, 'updateInvoiceNumber'])->name('invoice.update-number');
     Route::get('invoice-payment/export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('invoice-payment.export-pdf');
     Route::get('invoice-payment/export/excel', [InvoicePaymentController::class, 'exportExcel'])->name('invoice-payment.export-excel');
 });
@@ -36,6 +37,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('customer-invoice/{customerCode}', [InvoiceController::class, 'customerInvoice'])->name('customer-finance');
     Route::get('invoice-number-format/{id}', [InvoiceController::class, 'invoiceNumberFormat'])->name('invoice-number-format');
+    Route::get('invoice/{id}/suggest-number', [InvoiceController::class, 'suggestInvoiceNumber'])->name('invoice.suggest-number');
     Route::get('order-detail-payment/{orderCode}', [OrderPaymentController::class, 'orderDetailPayment'])->name('order-detail-payment');
     Route::get('vendor-payment-detail/{orderCode}', [VendorPaymentController::class, 'getDetail'])->name('vendor-payment-detail');
 });

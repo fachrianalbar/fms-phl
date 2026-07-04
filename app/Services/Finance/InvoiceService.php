@@ -387,9 +387,9 @@ class InvoiceService
         // Ambil invoiceNumber terakhir milik customer yang bersangkutan di bulan dan tahun dari invoiceDate
         $lastInvoice = $this->service
             ->where('customerCode', $customer->code)
-            ->whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $dateToUse->month)
-            ->orderByDesc('created_at')
+            ->whereYear('invoiceDate', $currentYear)
+            ->whereMonth('invoiceDate', $dateToUse->month)
+            ->orderByDesc('invoiceNumber')
             ->first();
 
         // Default increment = 1 jika belum ada invoice sebelumnya
@@ -434,5 +434,113 @@ class InvoiceService
             'ppnAmount' => $totals['ppn'],
             'total' => $totals['total'],
         ];
+    }
+
+    public function updateInvoiceNumber($id, $newInvoiceNumber)
+    {
+        $invoice = $this->getById($id);
+        if (! $invoice) {
+            throw new \InvalidArgumentException('Invoice tidak ditemukan');
+        }
+
+        // Validate format: INV/FORMAT/CUSTOMER/SEQ/MONTH/YEAR
+        if (! preg_match('/^INV\/([^\/]+)\/([^\/]+)\/(\d{5})\/(\d{2})\/(\d{4})$/', $newInvoiceNumber, $matches)) {
+            throw new \InvalidArgumentException('Format nomor invoice tidak valid. Harus seperti: INV/PHL/MLB/00018/06/2026');
+        }
+
+        $companyFormat = $matches[1];
+        $customerCode = $matches[2];
+        $targetSequence = (int) $matches[3];
+        $month = $matches[4];
+        $year = $matches[5];
+
+        // If the number hasn't changed, do nothing
+        if ($invoice->invoiceNumber === $newInvoiceNumber) {
+            return $invoice;
+        }
+
+        // Fetch other invoices of the same customer in the same month and year
+        $otherInvoices = $this->service
+            ->where('customerCode', $customerCode)
+            ->where('id', '!=', $id)
+            ->whereYear('invoiceDate', $year)
+            ->whereMonth('invoiceDate', (int) $month)
+            ->get();
+
+        // Map and parse the sequence numbers of other invoices
+        $invoicesToShift = [];
+        foreach ($otherInvoices as $other) {
+            if (preg_match('/^INV\/([^\/]+)\/([^\/]+)\/(\d{5})\/(\d{2})\/(\d{4})$/', $other->invoiceNumber, $m)) {
+                $seq = (int) $m[3];
+                if ($seq >= $targetSequence) {
+                    $invoicesToShift[] = [
+                        'invoice' => $other,
+                        'sequence' => $seq,
+                    ];
+                }
+            }
+        }
+
+        // Sort descending by sequence to avoid duplicates during update
+        usort($invoicesToShift, function ($a, $b) {
+            return $b['sequence'] <=> $a['sequence'];
+        });
+
+        // Shift each sequence up by 1
+        foreach ($invoicesToShift as $item) {
+            $nextSeq = str_pad($item['sequence'] + 1, 5, '0', STR_PAD_LEFT);
+            $newNum = "INV/{$companyFormat}/{$customerCode}/{$nextSeq}/{$month}/{$year}";
+            
+            $item['invoice']->update([
+                'invoiceNumber' => $newNum
+            ]);
+
+            $this->logActivity('Invoice', $item['invoice'], 'Shift Invoice Number due to Conflict');
+        }
+
+        // Finally, update the target invoice
+        $this->service->where('id', $id)->update([
+            'invoiceNumber' => $newInvoiceNumber
+        ]);
+
+        $updatedInvoice = $this->getById($id);
+        $this->logActivity('Invoice', $updatedInvoice, 'Update Invoice Number Manually');
+
+        return $updatedInvoice;
+    }
+
+    public function getSuggestedInvoiceNumber($id)
+    {
+        $invoice = $this->getById($id);
+        if (! $invoice) {
+            throw new \InvalidArgumentException('Invoice tidak ditemukan');
+        }
+
+        $customer = $invoice->customer;
+        $dateToUse = Carbon::parse($invoice->invoiceDate);
+        $currentYear = $dateToUse->year;
+        $currentMonth = str_pad($dateToUse->month, 2, '0', STR_PAD_LEFT);
+
+        // Find the maximum sequence number in the DB for this customer/month/year
+        $invoices = $this->service
+            ->where('customerCode', $invoice->customerCode)
+            ->whereYear('invoiceDate', $currentYear)
+            ->whereMonth('invoiceDate', $dateToUse->month)
+            ->get();
+
+        $maxNumber = 0;
+        foreach ($invoices as $inv) {
+            if (preg_match('/^INV\/([^\/]+)\/([^\/]+)\/(\d{5})\/(\d{2})\/(\d{4})$/', $inv->invoiceNumber, $matches)) {
+                $seq = (int) $matches[3];
+                if ($seq > $maxNumber) {
+                    $maxNumber = $seq;
+                }
+            }
+        }
+
+        $nextNumber = str_pad($maxNumber + 1, 5, '0', STR_PAD_LEFT);
+        $companyFormat = $customer->company->format ?? 'DEFAULT';
+
+        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $nextNumber . '/' . $currentMonth . '/' . $currentYear;
     }
 }
