@@ -346,19 +346,16 @@ class InvoiceController extends Controller
     public function datatableOrder(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->getOrder();
+            $customerCode = $request->customerCode;
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'customer_code' => $request->customerCode,
-            ];
+            if (empty($customerCode)) {
+                return DataTables::of(collect([]))->toJson();
+            }
 
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'customer_code' => 'customer.code',
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations);
+            $data = $this->service->getOrder()
+                ->whereHas('customer', function ($q) use ($customerCode) {
+                    $q->where('code', $customerCode);
+                });
 
             return DataTables::of($data->get())
                 ->addIndexColumn()

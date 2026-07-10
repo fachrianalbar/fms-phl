@@ -238,8 +238,8 @@
 
             // Validate form fields
             let isValid = true;
-            $('form input[required]').each(function() {
-                if ($(this).val() === '') {
+            $('form input[required], form select[required]').each(function() {
+                if ($(this).val() === '' || $(this).val() === null) {
 
                     isValid = false;
 
@@ -248,7 +248,7 @@
                         text: "Please fill all required fields",
                         icon: "warning",
                     })
-                    return;
+                    return false;
                 }
             });
             table.ajax.reload();
@@ -422,6 +422,8 @@
     }
 
     $('#customerCode').on('change', function() {
+        selectedOrders = [];
+        $('.order-checkbox').prop('checked', false);
         $('body').append(`
             <div class="loader-wrapper">
                 <div class="loader">

@@ -99,10 +99,24 @@ class InvoiceService
         }
     }
 
+    protected function ensureOrdersBelongToCustomer(array $orderCodes, string $customerCode): void
+    {
+        $invalidOrders = $this->order->newQuery()
+            ->whereIn('code', $orderCodes)
+            ->where('customerCode', '!=', $customerCode)
+            ->pluck('code')
+            ->toArray();
+
+        if (! empty($invalidOrders)) {
+            throw new \RuntimeException('Order berikut tidak sesuai dengan customer invoice: ' . implode(', ', $invalidOrders));
+        }
+    }
+
     public function store($request, $title, $selectedOrders)
     {
         $orderCodes = array_values(array_unique(array_filter((array) $selectedOrders)));
         $this->ensureOrdersAreNotInInvoice($orderCodes);
+        $this->ensureOrdersBelongToCustomer($orderCodes, $request->customerCode);
 
         $usePpn = (bool) ($request->input('usePpn') ?? false);
 
@@ -241,6 +255,7 @@ class InvoiceService
         $orderCodes = array_values(array_unique(array_filter((array) $selectedOrders)));
 
         $this->ensureOrdersAreNotInInvoice($orderCodes);
+        $this->ensureOrdersBelongToCustomer($orderCodes, $invoice->customerCode);
 
         if (! empty($orderCodes)) {
 
