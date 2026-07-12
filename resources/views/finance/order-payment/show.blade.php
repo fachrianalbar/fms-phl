@@ -1,8 +1,8 @@
 @extends('layouts.main', [
     'title' => $title,
     'pageTitle' => $title,
-    'firstSegment' => $title,
-    'secondSegment' => 'Detail',
+    'firstSegment' => 'Finance',
+    'secondSegment' => 'Order Payment Details',
 ])
 
 @php
@@ -10,436 +10,319 @@
 @endphp
 
 @push('style')
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
-    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
-
-    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
-    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
-    <link rel="stylesheet" type="text/css"
-        href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css"
-        href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+    <style>
+        .finance-card-summary {
+            transition: all 0.3s ease;
+        }
+        .finance-card-summary:hover {
+            transform: translateY(-2px);
+        }
+        .light-bg-detail {
+            background-color: #f8f9fa;
+        }
+    </style>
 @endpush
 
 @section('content')
-    <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
-        @csrf
-        @method('PUT')
-        <form class="row g-3" method="post" action="{{ route($view . 'update', $data->id) }}">
-            @csrf
-            @method('PUT')
-            <div class="col-sm-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4>{{ $title }} Data</h4>
+    <div class="col-sm-12">
+        <!-- Header Info & Actions -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <span class="badge bg-primary px-3 py-2 fs-6 fw-bold">Order: {{ $data->code }}</span>
+                            @php
+                                $grandTotal = $orderPayment['grand_total'];
+                                $payment = $orderPayment['payment'];
 
-                        <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                                $paymentStatus = 'Belum Bayar';
+                                $badgeClass = 'bg-danger text-white';
 
-                    </div>
-                    <div class="card-body col-md-12">
-                        <div class="row g-3">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.order_code') }}</label>
-                                    <input class="form-control" type="text" required readonly
-                                        value="{{ $data->code }}">
-                                </div>
-
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="fleetCode">{{ __('menu_order.plate_number') }}</label>
-
-
-                                    <input class="form-control" name="fleetCode" type="text" readonly required
-                                        placeholder="{{ __('menu_order.plate_number') }}"
-                                        value="{{ $data->fleet->plateNumber }}">
-                                </div>
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-3 position-relative">
-                                    <label class="form-label" for="Cost">Cost</label>
-                                    <input class="form-control" type="text" readonly required
-                                        placeholder="{{ __('menu_order.driver') }}"
-                                        value="{{ number_format($orderPayment['cost'], 0, ',', '.') }}">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label" for="notes">PPH</label>
-                                    <input class="form-control" name="notes" id="notes" type="text" readonly
-                                        placeholder="{{ __('menu_order.notes') }}"
-                                        value="{{ number_format($orderPayment['pph'], 0, ',', '.') }}">
-                                </div>
-
-                                <div class="col-md-3 position-relative">
-                                    <label class="form-label" for="Cost">Payment Amount</label>
-                                    <input class="form-control" type="text" readonly required
-                                        placeholder="{{ __('menu_order.driver') }}"
-                                        value="{{ number_format($orderPayment['payment'], 0, ',', '.') }}">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label" for="notes">Total</label>
-                                    <input class="form-control" name="notes" id="notes" type="text" readonly
-                                        placeholder="{{ __('menu_order.notes') }}"
-                                        value="{{ number_format($orderPayment['total'], 0, ',', '.') }}">
-                                </div>
-
-                            </div>
-
-
-
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
-                                    <input class="form-control" name="orderDate" type="text" readonly required
-                                        placeholder="{{ __('menu_order.order_date') }}" value="{{ $data->orderDate }}">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                        for="shipmentNumber">{{ __('menu_order.shipment_no') }}</label>
-                                    <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text"
-                                        readonly required placeholder="{{ __('menu_order.shipment_no') }}"
-                                        value="{{ $data->shipmentNumber }}">
-                                </div>
-
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="driverCode">{{ __('menu_order.driver') }}</label>
-                                    <input class="form-control" name="driverCode" id="driverCode" type="text"
-                                        readonly required placeholder="{{ __('menu_order.driver') }}"
-                                        value="{{ $data->driver->name }}">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label" for="notes">{{ __('menu_order.notes') }}</label>
-                                    <input class="form-control" name="notes" id="notes" type="text" readonly
-                                        placeholder="{{ __('menu_order.notes') }}" value="{{ $data->notes }}">
-                                </div>
-
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label" for="customerCode">{{ __('menu_order.customer') }} </label>
-                                    <input class="form-control" name="customerCode" id="customerCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.customer') }}"
-                                        value="{{ $data->customer->name }}">
-                                </div>
-
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label"
-                                        for="orderTypeCode">{{ __('menu_order.route_type') }}</label>
-                                    <input class="form-control" name="routeTypeCode" id="routeTypeCode" type="text"
-                                        readonly placeholder="{{ __('menu_order.route_type') }}"
-                                        value="{{ $route->routeType->name }}">
-                                </div>
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label"
-                                        for="originLocationCode">{{ __('menu_order.origin_location') }}</label>
-                                    <input class="form-control" name="originLocationCode" id="originLocationCode"
-                                        type="text" readonly placeholder="{{ __('menu_order.origin_location') }}"
-                                        value="{{ $route->originLocation->name }}">
-                                </div>
-
-                                <div class="col-md-6 position-relative">
-                                    <label class="form-label"
-                                        for="destinationLocationCode">{{ __('menu_order.destination_location') }}
-                                    </label>
-                                    <input class="form-control" name="destinationLocationCode"
-                                        id="destinationLocationCode" type="text" readonly
-                                        placeholder="{{ __('menu_order.destination_location') }}"
-                                        value="{{ $route->destinationLocation->name }}">
-                                </div>
-                            </div>
-
-                            <div class="row mt-4">
-                                @php
-                                    $label = '';
-
-                                    if ($data->route->routeTypeCode == 'TONASE') {
-                                        $label = 'Tonase';
-                                    } elseif ($data->route->routeTypeCode == 'TRIP') {
-                                        $label = 'Trip';
+                                if ($payment > 0) {
+                                    if ($payment == $grandTotal) {
+                                        $paymentStatus = 'Lunas';
+                                        $badgeClass = 'bg-success text-white';
+                                    } elseif ($payment > $grandTotal) {
+                                        $paymentStatus = 'Kelebihan Bayar';
+                                        $badgeClass = 'bg-info text-white';
                                     } else {
-                                        $label = 'Kubik';
+                                        $paymentStatus = 'Belum Lunas';
+                                        $badgeClass = 'bg-warning text-dark';
                                     }
-                                @endphp
-                                <div class="col-md-6 position-relative " id="qtyField">
-                                    <label class="form-label" id="qtyLabel" for="qty">{{ $label }}</label>
-                                    <input class="form-control" name="qty" id="qty" step="any"
-                                        min="1" min="1" type="number" value="{{ $data->qty }}"
-                                        placeholder="" required>
+                                }
+                            @endphp
+                            <span class="badge rounded-pill {{ $badgeClass }} px-3 py-2 fs-7 fw-bold">{{ $paymentStatus }}</span>
+                        </div>
+                        <h4 class="text-dark fw-bold mb-0">Rincian Pembayaran Order</h4>
+                        <span class="text-muted small">Kelola dan pantau detail tagihan serta riwayat transaksi pembayaran.</span>
+                    </div>
+                    <div>
+                        <a href="{{ route($view . 'index') }}" class="btn btn-outline-secondary px-4 py-2 fw-semibold">
+                            <i class="mdi mdi-arrow-left me-1"></i> Kembali ke Daftar
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Side: Operational & Payment Details -->
+            <div class="col-lg-8">
+                <!-- Operational Details -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                        <h5 class="card-title fw-bold text-dark mb-0">
+                            <i class="mdi mdi-truck-delivery text-primary me-2"></i>Detail Operasional & Rute
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">Customer</span>
+                                    <span class="fw-bold text-dark">{{ $data->customer->name }}</span>
                                 </div>
                             </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">No. Polisi / Plat</span>
+                                    <span class="fw-bold text-dark">{{ $data->fleet->plateNumber ?? '-' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">Driver</span>
+                                    <span class="fw-bold text-dark">{{ $data->driver->name ?? '-' }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">Tanggal Order</span>
+                                    <span class="fw-bold text-dark">{{ \Carbon\Carbon::parse($data->orderDate)->format('d-m-Y') }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">No. Surat Jalan</span>
+                                    <span class="fw-bold text-dark">{{ $data->shipmentNumber ?? '-' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="p-3 border rounded light-bg-detail h-100">
+                                    <span class="text-muted d-block small mb-1">Tipe Rute & Qty</span>
+                                    @php
+                                        $routeTypeLabel = '';
+                                        if ($data->route->routeTypeCode == 'TONASE') {
+                                            $routeTypeLabel = 'Tonase';
+                                        } elseif ($data->route->routeTypeCode == 'TRIP') {
+                                            $routeTypeLabel = 'Trip';
+                                        } else {
+                                            $routeTypeLabel = 'Kubik';
+                                        }
+                                    @endphp
+                                    <span class="fw-bold text-dark">{{ $routeTypeLabel }}: {{ number_format($data->qty, 2, ',', '.') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-12">
+                                <div class="p-3 border rounded light-bg-detail">
+                                    <span class="text-muted d-block small mb-1">Rute Perjalanan</span>
+                                    <span class="fw-bold text-dark fs-6">
+                                        {{ $route->originLocation->name ?? '-' }} 
+                                        <i class="mdi mdi-arrow-right mx-2 text-primary"></i> 
+                                        {{ $route->destinationLocation->name ?? '-' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            @if($data->notes)
+                                <div class="col-md-12">
+                                    <div class="p-3 border rounded light-bg-detail">
+                                        <span class="text-muted d-block small mb-1">Catatan</span>
+                                        <span class="text-dark">{{ $data->notes }}</span>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4>{{ $title }} Detail Data</h4>
+                <!-- Biaya Tambahan (On Charge) Breakdown -->
+                @php
+                    $onChargeCosts = $data->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge');
+                @endphp
+                @if($onChargeCosts->isNotEmpty())
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                            <h5 class="card-title fw-bold text-dark mb-0">
+                                <i class="mdi mdi-playlist-plus text-primary me-2"></i>Rincian Biaya Tambahan (On Charge)
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr class="table-light">
+                                            <th style="width: 5%">#</th>
+                                            <th>Komponen Biaya</th>
+                                            <th>Keterangan</th>
+                                            <th class="text-end" style="width: 25%">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($onChargeCosts as $c)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>
+                                                    <span class="fw-semibold text-dark">{{ $c->costComponent->name ?? 'Custom Component' }}</span>
+                                                </td>
+                                                <td><span class="text-muted small">{{ $c->description ?? '-' }}</span></td>
+                                                <td class="text-end fw-bold text-dark">Rp {{ number_format($c->nominal, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                        <tr class="table-light">
+                                            <td colspan="3" class="text-end fw-bold">Total Biaya Tambahan</td>
+                                            <td class="text-end text-primary fw-bold">Rp {{ number_format($onChargeCosts->sum('nominal'), 0, ',', '.') }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body col-md-12">
-                        {{-- <ul class="nav nav-tabs" id="icon-tab" role="tablist">
-                            <li class="nav-item"><a class="nav-link active txt-success" id="icon-home-tab"
-                                    data-bs-toggle="tab" href="#icon-home" role="tab" aria-controls="icon-home"
-                                    aria-selected="true">Additional
-                                    Cost</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="icon-tabContent">
-                            @include('operational.order.components.cost-edit')
-                        </div> --}}
-                        <table class="table table-striped w-100 nowrap" id="dt">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>Date</th>
-                                    <th>Amount</th>
-                                    <th>Description</th>
-                                    <th>Payment Type</th>
-                                    <th>User Bank</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                @endif
 
-                                @php
-                                    $i = 1;
-                                @endphp
-
-                                @foreach ($data->orderPaymentHistory as $item)
-                                    <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $item->date }}</td>
-                                        <td>{{ number_format($item->total, 0, ',', '.') }}</td>
-                                        <td>{{ $item->description }}</td>
-                                        <td>{{ $item->paymentType }}</td>
-                                        <td>{{ $item?->userBank?->accountNumber . ' - ' . $item?->userBank?->bank?->name . ' - ' . $item?->userBank?->accountName }}
-                                        </td>
-                                        {{-- <td>{{ $ite }}</td> --}}
-                                    </tr>
-                                @endforeach
-
-                                <!-- New rows will be added here -->
-                            </tbody>
-                        </table>
+                <!-- Payment History -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                        <h5 class="card-title fw-bold text-dark mb-0">
+                            <i class="mdi mdi-history text-primary me-2"></i>Riwayat Pembayaran
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        @if($data->orderPaymentHistory->isEmpty())
+                            <div class="text-center py-4">
+                                <i class="mdi mdi-credit-card-off fs-1 text-muted d-block mb-2"></i>
+                                <span class="text-muted small">Belum ada riwayat pembayaran untuk order ini.</span>
+                            </div>
+                        @else
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0">
+                                    <thead>
+                                        <tr class="table-light">
+                                            <th style="width: 5%">No</th>
+                                            <th>Tanggal Bayar</th>
+                                            <th>Tipe</th>
+                                            <th>Bank Akun</th>
+                                            <th>Keterangan</th>
+                                            <th class="text-end" style="width: 25%">Nominal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($data->orderPaymentHistory as $item)
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($item->date)->format('d-m-Y') }}</td>
+                                                <td>
+                                                    <span class="badge {{ $item->paymentType === 'Full' ? 'bg-success text-white' : 'bg-primary text-white' }} px-2 py-1 fs-8">
+                                                        {{ $item->paymentType }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-dark small fw-semibold">
+                                                        {{ $item?->userBank?->accountNumber }} - {{ $item?->userBank?->bank?->name }}
+                                                    </span>
+                                                    <span class="text-muted d-block small">
+                                                        a/n {{ $item?->userBank?->accountName }}
+                                                    </span>
+                                                </td>
+                                                <td><span class="text-muted small">{{ $item->description ?? '-' }}</span></td>
+                                                <td class="text-end fw-bold text-success">
+                                                    Rp {{ number_format($item->total, 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
                     </div>
                 </div>
             </div>
-        </form>
-        <form id="delete-form" method="post">
-            @csrf
-            @method('DELETE')
-        </form>
-    @endsection
 
-    @push('script')
-        <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
-        <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
-        <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
-        <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
-        <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-        <!-- dataTables.bootstrap5 -->
-        <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-        <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
-
-        <!-- dataTables.keyTable -->
-        <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
-        <script src="{{ asset('assets/libs/datatables.net-keytable-bs5/js/keyTable.bootstrap5.min.js') }}"></script>
-
-        <!-- dataTable.responsive -->
-        <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-        <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
-
-        <!-- dataTables.select -->
-        <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
-        <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
-        <script src=" {{ asset('assets/js/helper.js') }}"></script>
-
-
-        <script>
-            $(document).ready(function() {
-
-                const selectedType = $('#routeTypeCode').select2('val');
-
-                // loadQty(selectedType)
-            });
-
-            function deleteCost(id) {
-                var url = '{{ route('operational.order-cost.destroy', ':id') }}'; // Use placeholder ':id'
-                url = url.replace(':id', id); // Replace the placeholder with actual id
-
-                $('#delete-form').attr('action', url);
-
-                swal({
-                    title: "{{ __('general.are_you_sure') }}",
-                    text: "{{ __('general.want_to_delete_this_data') }}",
-                    icon: "warning",
-                    buttons: true,
-                    dangerMode: true,
-                }).then((willDelete) => {
-                    if (willDelete) {
-                        $('#delete-form').submit();
-                    } else {
-                        swal("{{ __('general.your_data_is_save') }}");
-                    }
-                });
-            }
-
-            $('#save').click(function(e) {
-                const routeTypeCode = $('#routeTypeCode').select2('val');
-
-                if (routeTypeCode === 'TONASE') {
-                    const qty = $('#qty').val();
-
-                    // if (qty > 100) {
-                    //     e.preventDefault();
-                    //     swal({
-                    //         title: "{{ __('general.warning') }}",
-                    //         text: "Tonase cannot be higher than 100",
-                    //         icon: "warning",
-                    //     })
-                    //     return;
-                    // }
-                }
-
-            });
-
-
-            function checkAndLoadOriginLocation() {
-                const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-                const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-
-                if (customerCode && routeTypeCode) {
-                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-                    $('#originLocationCode').html(html);
-
-                    $.get("{{ url('ajax/origin-by-customer') }}/" + customerCode + "/" + routeTypeCode, function(data) {
-                        data.forEach(i => {
-                            html += '<option value="' + i.code + '">' + i.name + '</option>';
-                        });
-                        $('#originLocationCode').html(html);
-                        // Reinitialize Select2 for origin location dropdown after updating options
-                        $('#originLocationCode').select2();
-                    });
-                }
-            }
-
-            function loadQty(data) {
-                // Show the correct field based on the selection after 1 second (simulating processing time)
-                if (selectedType === 'TONASE') {
-                    $('#qtyLabel').html(
-                        'Tonase '
-                    ); // Update the label with icon
-                    $('#qty').attr('placeholder', 'Enter Tonase'); // Update placeholder
-                    $('#qty').val(1); // Set default value to 1
-                    $('#qty').removeAttr('readonly'); // Remove readonly if it was set
-                    $('#qtyField').removeClass('d-none'); // Show the field
-                } else if (selectedType === 'TRIP') {
-                    $('#qtyLabel').html(
-                        'Ritase '
-                    ); // Update the label with icon
-                    $('#qty').attr('placeholder', 'Enter Ritase'); // Update placeholder
-                    $('#qty').val(1); // Set default value to 1
-                    $('#qty').attr('readonly', true); // Make the field readonly
-                    $('#qtyField').removeClass('d-none'); // Show the field
-                } else if (selectedType == 'KUBIKASE') {
-                    $('#qtyLabel').html(
-                        'Kubikase '
-                    ); // Update the label with icon
-                    $('#qty').attr('placeholder', 'Enter Kubikase'); // Update placeholder
-                    $('#qty').val(1); // Set default value to 1
-                    $('#qty').removeAttr('readonly'); // Remove readonly if it was set
-                    $('#qtyField').removeClass('d-none'); // Show the field
-                } else {
-                    $('#qtyField').addClass('d-none'); // Hide the field if neither is selected
-                }
-            }
-
-            // When routeTypeCode is changed
-            $('#routeTypeCode').on('change', function() {
-                $('body').append(`
-            <div class="loader-wrapper">
-                <div class="loader">
-                    <div class="loader4"></div>
+            <!-- Right Side: Financial Breakdown Summary -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm finance-card-summary mb-4">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                        <h5 class="card-title fw-bold text-dark mb-0">
+                            <i class="mdi mdi-cash-multiple text-primary me-2"></i>Rincian Keuangan
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="list-group list-group-flush mb-3">
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="text-muted">Harga Rute</span>
+                                <span class="fw-semibold text-dark">Rp {{ number_format($orderPayment['cost'], 0, ',', '.') }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="text-muted">Biaya Tambahan</span>
+                                <span class="fw-semibold text-dark">Rp {{ number_format($orderPayment['additional_cost'] ?? 0, 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <hr class="my-2 text-muted opacity-25">
+                            
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="fw-bold text-dark">Subtotal</span>
+                                <span class="fw-bold text-dark">Rp {{ number_format($orderPayment['cost'] + ($orderPayment['additional_cost'] ?? 0), 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="text-muted">PPN (+)</span>
+                                <span class="fw-semibold text-success">+ Rp {{ number_format($orderPayment['ppn'] ?? 0, 0, ',', '.') }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="text-muted">PPH (-)</span>
+                                <span class="fw-semibold text-danger">- Rp {{ number_format($orderPayment['pph'] ?? 0, 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <hr class="my-2 text-muted opacity-25">
+                            
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="fw-bold text-dark fs-6">Total Tagihan</span>
+                                <span class="fw-bold text-dark fs-6">Rp {{ number_format($orderPayment['grand_total'], 0, ',', '.') }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <span class="text-muted">Sudah Dibayar</span>
+                                <span class="fw-semibold text-success">Rp {{ number_format($orderPayment['payment'], 0, ',', '.') }}</span>
+                            </div>
+                            
+                            <hr class="my-2 text-muted opacity-25">
+                            
+                            @php
+                                $sisaTagihan = $orderPayment['total'];
+                                if ($sisaTagihan < 0) {
+                                    $sisaClass = 'text-info bg-info-subtle border border-info-subtle';
+                                    $sisaLabel = 'Kelebihan Bayar';
+                                    $sisaValue = 'Rp ' . number_format(abs($sisaTagihan), 0, ',', '.');
+                                } elseif ($sisaTagihan > 0) {
+                                    $sisaClass = 'text-danger bg-danger-subtle border border-danger-subtle';
+                                    $sisaLabel = 'Sisa Tagihan';
+                                    $sisaValue = 'Rp ' . number_format($sisaTagihan, 0, ',', '.');
+                                } else {
+                                    $sisaClass = 'text-success bg-success-subtle border border-success-subtle';
+                                    $sisaLabel = 'Lunas';
+                                    $sisaValue = 'Rp 0';
+                                }
+                            @endphp
+                            <div class="list-group-item d-flex justify-content-between align-items-center rounded-3 p-3 mt-3 {{ $sisaClass }}">
+                                <span class="fw-bold fs-7">{{ $sisaLabel }}</span>
+                                <span class="fw-bold fs-5">{{ $sisaValue }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        `);
-
-                const selectedType = $('#routeTypeCode').select2('val'); // Get the selected value from select2
-
-                setTimeout(function() {
-
-                    loadQty(selectedType)
-                    // Remove the loader once the logic is complete
-                    $('.loader-wrapper').remove();
-                }, 1000); // Simulate 1-second delay for the loader
-            });
-
-
-            function checkAndLoadDestinationLocation() {
-                const customerCode = $('#customerCode').select2('val'); // Use select2 to get the value
-                const routeTypeCode = $('#routeTypeCode').select2('val'); // Use select2 to get the value
-                const originLocationCode = $('#originLocationCode').select2('val'); // Use select2 to get the value
-
-                if (customerCode && routeTypeCode && originLocationCode) {
-                    let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-                    $('#destinationLocationCode').html(html);
-
-                    $.get("{{ url('ajax/destination-by-customer') }}/" + customerCode + "/" + routeTypeCode + "/" +
-                        originLocationCode,
-                        function(data) {
-                            data.forEach(i => {
-                                html += '<option value="' + i.code + '">' + i.name + '</option>';
-                            });
-                            $('#destinationLocationCode').html(html);
-                            // Reinitialize Select2 for destination location dropdown after updating options
-                            $('#destinationLocationCode').select2();
-                        });
-                }
-            }
-
-
-            function checkAndLoadRoute() {
-                const customerCode = $('#customerCode').select2('val');
-                const originLocationCode = $('#originLocationCode').select2('val');
-                const destinationLocationCode = $('#destinationLocationCode').select2('val');
-
-                if (customerCode && originLocationCode && destinationLocationCode) {
-                    $.get("{{ url('ajax/route-by-customer') }}/" + customerCode + "/" + originLocationCode + "/" +
-                        destinationLocationCode,
-                        function(data) {
-
-                        });
-                }
-            }
-
-            // Trigger origin location when both customer and route type are selected
-            $('#customerCode, #routeTypeCode').on('change', function() {
-                checkAndLoadOriginLocation();
-            });
-
-            // Trigger destination location when origin location is also selected
-            $('#originLocationCode').on('select2:select', function() {
-                checkAndLoadDestinationLocation();
-            });
-
-            $('#destinationLocationCode').on('select2:select', function() {
-                checkAndLoadRoute();
-            });
-
-            $('#dt').DataTable()
-        </script>
-    @endpush
+        </div>
+    </div>
+@endsection

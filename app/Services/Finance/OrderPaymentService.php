@@ -61,14 +61,18 @@ class OrderPaymentService
 
         $payment = $status == 1 ? $request->total : $request->paymentAmount;
         $billingCost = (float) ($request->cost ?? 0);
+        $billingAdditionalCost = (float) ($request->additional_cost ?? 0);
+        $billingPpn = (float) ($request->ppn ?? 0);
         $billingPph = (float) ($request->pph ?? 0);
-        $billingTotal = $billingCost + $billingPph;
+        $billingTotal = $billingCost + $billingAdditionalCost + $billingPpn - $billingPph;
 
         if (! $orderPayment) {
             $data = $this->service->create([
                 'code' => GenerateCode::generateCode('FOP'),
                 'orderCode' => $request->orderCode,
                 'cost' => $billingCost,
+                'additional_cost' => $billingAdditionalCost,
+                'ppn' => $billingPpn,
                 'pph' => $billingPph,
                 'total' => $payment,
                 'status' => ((float) $payment >= $billingTotal) ? 1 : $status,
@@ -84,6 +88,8 @@ class OrderPaymentService
 
             $orderPayment->update([
                 'cost' => $billingCost,
+                'additional_cost' => $billingAdditionalCost,
+                'ppn' => $billingPpn,
                 'pph' => $billingPph,
                 'total' => $newTotal,
                 'status' => $newTotal >= $billingTotal ? 1 : 0,
@@ -122,19 +128,41 @@ class OrderPaymentService
 
     public function orderPaymentDetail($orderCode)
     {
-        $data = $this->order->where('code', $orderCode)->with(['customer', 'orderPayment', 'orderPaymentHistory'])->first();
+        $data = $this->order->where('code', $orderCode)
+            ->with(['customer', 'orderPayment', 'orderPaymentHistory', 'cost'])
+            ->first();
 
         $cost = (float) ($data->routeAmount ?? 0);
 
-        $pph = isset($data->customer->pph) ? $cost * ($data->customer->pph / 100) : 0;
+        if (isset($data->orderPayment)) {
+            $additional_cost = isset($data->orderPayment->additional_cost) 
+                ? (float) $data->orderPayment->additional_cost 
+                : (float) $data->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+
+            $ppn = isset($data->orderPayment->ppn) 
+                ? (float) $data->orderPayment->ppn 
+                : (isset($data->customer->ppn) ? ($cost + $additional_cost) * ($data->customer->ppn / 100) : 0);
+
+            $pph = isset($data->orderPayment->pph) 
+                ? (float) $data->orderPayment->pph 
+                : (isset($data->customer->pph) ? ($cost + $additional_cost) * ($data->customer->pph / 100) : 0);
+        } else {
+            $additional_cost = (float) $data->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+            $ppn = isset($data->customer->ppn) ? ($cost + $additional_cost) * ($data->customer->ppn / 100) : 0;
+            $pph = isset($data->customer->pph) ? ($cost + $additional_cost) * ($data->customer->pph / 100) : 0;
+        }
+
         $payment = $data->orderPayment->total ?? 0;
-        $total = $cost + $pph;
+        $grandTotal = $cost + $additional_cost + $ppn - $pph;
 
         return [
             'cost' => $cost,
+            'additional_cost' => $additional_cost,
+            'ppn' => $ppn,
             'pph' => $pph,
-            'total' => $total - $payment,
+            'grand_total' => $grandTotal,
             'payment' => $payment,
+            'total' => $grandTotal - $payment,
         ];
     }
 }

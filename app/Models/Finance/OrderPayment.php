@@ -19,6 +19,8 @@ class OrderPayment extends Model
         'code',
         'orderCode',
         'cost',
+        'additional_cost',
+        'ppn',
         'pph',
         'total',
         'status',

@@ -125,11 +125,22 @@
                         ? (float) ($order->price ?? ($qty > 0 ? $routeAmount / $qty : $routeAmount))
                         : (float) ($order->route->personalVendorPrice ?? 0);
                     $subtotal = $isOrderPaymentPdf ? $routeAmount : $qty * $unitPrice;
-                    $additionalCost = $isOrderPaymentPdf ? 0 : ($order->cost ? $order->cost->sum('nominal') : 0);
+                    
+                    if ($isOrderPaymentPdf) {
+                        $additionalCost = $order->cost ? $order->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal') : 0;
+                    } else {
+                        $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+                    }
+                    
                     $totalBefore = $subtotal + $additionalCost;
-                    $pph = $isOrderPaymentPdf ? $order->customer->pph ?? 0 : $order->fleet->company->pph ?? 0;
+                    
+                    $ppn = $isOrderPaymentPdf ? ($order->customer->ppn ?? 0) : 0;
+                    $ppnAmount = ($totalBefore * $ppn) / 100;
+                    
+                    $pph = $isOrderPaymentPdf ? ($order->customer->pph ?? 0) : ($order->fleet->company->pph ?? 0);
                     $pphAmount = ($totalBefore * $pph) / 100;
-                    $grandTotal = $isOrderPaymentPdf ? $totalBefore + $pphAmount : $totalBefore - $pphAmount;
+                    
+                    $grandTotal = $isOrderPaymentPdf ? ($totalBefore + $ppnAmount - $pphAmount) : ($totalBefore - $pphAmount);
 
                     $subtotalAll += $subtotal;
                     $additionalCostAll += $additionalCost;
@@ -152,7 +163,7 @@
                     <td style="text-align: right;">{{ number_format($subtotal, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
-            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
+            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || ($isOrderPaymentPdf && isset($totalPpnAmount) && $totalPpnAmount > 0) || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -164,6 +175,13 @@
                     <td colspan="7" style="text-align: center;">Biaya Tambahan</td>
                     <td style="text-align: right;">
                         {{ number_format($totalAdditionalCost, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($isOrderPaymentPdf && isset($totalPpnAmount) && $totalPpnAmount > 0)
+                <tr>
+                    <td colspan="7" style="text-align: center;">PPN</td>
+                    <td style="text-align: right;">
+                        {{ number_format($totalPpnAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
             @if ($totalPphAmount > 0)

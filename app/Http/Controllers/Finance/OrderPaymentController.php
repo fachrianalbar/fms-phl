@@ -56,9 +56,23 @@ class OrderPaymentController extends Controller
 
             DB::commit();
 
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $this->title . ' ' . __('general.data_was_save_successfully')
+                ]);
+            }
+
             return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Line : ' . $th->getLine() . ' - ' . $th->getMessage()
+                ], 500);
+            }
 
             return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
@@ -140,35 +154,138 @@ class OrderPaymentController extends Controller
 
                     return '' . number_format($cost, 0, ',', '.');
                 })
+                ->addColumn('additional_cost', function ($row) {
+                    $additionalCost = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->additional_cost)) {
+                        $additionalCost = (float) $row->orderPayment->additional_cost;
+                    } else {
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                    }
+                    return '' . number_format($additionalCost, 0, ',', '.');
+                })
+                ->addColumn('ppn', function ($row) {
+                    $ppn = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->ppn)) {
+                        $ppn = (float) $row->orderPayment->ppn;
+                    } else {
+                        $cost = $this->getRouteAmount($row);
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                        $subtotal = $cost + $additionalCost;
+                        $ppn = isset($row->customer->ppn) ? $subtotal * ($row->customer->ppn / 100) : 0;
+                    }
+                    return '' . number_format($ppn, 0, ',', '.');
+                })
                 ->addColumn('pph', function ($row) {
-                    $cost = $this->getRouteAmount($row);
-
-                    $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
-
+                    $pph = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->pph)) {
+                        $pph = (float) $row->orderPayment->pph;
+                    } else {
+                        $cost = $this->getRouteAmount($row);
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                        $subtotal = $cost + $additionalCost;
+                        $pph = isset($row->customer->pph) ? $subtotal * ($row->customer->pph / 100) : 0;
+                    }
                     return '' . number_format($pph, 0, ',', '.');
+                })
+                ->addColumn('grand_total', function ($row) {
+                    $cost = $this->getRouteAmount($row);
+                    $additionalCost = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->additional_cost)) {
+                        $additionalCost = (float) $row->orderPayment->additional_cost;
+                    } else {
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                    }
+                    $subtotal = $cost + $additionalCost;
+
+                    $ppn = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->ppn)) {
+                        $ppn = (float) $row->orderPayment->ppn;
+                    } else {
+                        $ppn = isset($row->customer->ppn) ? $subtotal * ($row->customer->ppn / 100) : 0;
+                    }
+
+                    $pph = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->pph)) {
+                        $pph = (float) $row->orderPayment->pph;
+                    } else {
+                        $pph = isset($row->customer->pph) ? $subtotal * ($row->customer->pph / 100) : 0;
+                    }
+
+                    $grandTotal = $subtotal + $ppn - $pph;
+                    return '' . number_format($grandTotal, 0, ',', '.');
                 })
                 ->addColumn('paymentAmount', function ($row) {
                     return '' . number_format($row->orderPayment->total ?? 0, 0, ',', '.');
                 })
                 ->addColumn('total', function ($row) {
                     $cost = $this->getRouteAmount($row);
+                    $additionalCost = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->additional_cost)) {
+                        $additionalCost = (float) $row->orderPayment->additional_cost;
+                    } else {
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                    }
+                    $subtotal = $cost + $additionalCost;
 
-                    $pph = isset($row->customer->pph) ? $cost * ($row->customer->pph / 100) : 0;
+                    $ppn = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->ppn)) {
+                        $ppn = (float) $row->orderPayment->ppn;
+                    } else {
+                        $ppn = isset($row->customer->ppn) ? $subtotal * ($row->customer->ppn / 100) : 0;
+                    }
+
+                    $pph = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->pph)) {
+                        $pph = (float) $row->orderPayment->pph;
+                    } else {
+                        $pph = isset($row->customer->pph) ? $subtotal * ($row->customer->pph / 100) : 0;
+                    }
+
                     $payment = $row->orderPayment->total ?? 0;
-                    $total = $cost + $pph - $payment;
+                    $total = $subtotal + $ppn - $pph - $payment;
 
                     return '' . number_format($total, 0, ',', '.');
                 })
                 ->addColumn('paymentStatus', function ($row) {
-                    $status = 'No Payment';
-                    $badgeClass = 'danger';
-                    if (isset($row->orderPayment)) {
-                        $status = 'Dp';
-                        $badgeClass = 'warning';
+                    $cost = $this->getRouteAmount($row);
+                    $additionalCost = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->additional_cost)) {
+                        $additionalCost = (float) $row->orderPayment->additional_cost;
+                    } else {
+                        $additionalCost = (float) $row->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+                    }
+                    $subtotal = $cost + $additionalCost;
 
-                        if ($row->orderPayment->status == 1) {
-                            $status = 'Full Payment';
+                    $ppn = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->ppn)) {
+                        $ppn = (float) $row->orderPayment->ppn;
+                    } else {
+                        $ppn = isset($row->customer->ppn) ? $subtotal * ($row->customer->ppn / 100) : 0;
+                    }
+
+                    $pph = 0;
+                    if (isset($row->orderPayment) && isset($row->orderPayment->pph)) {
+                        $pph = (float) $row->orderPayment->pph;
+                    } else {
+                        $pph = isset($row->customer->pph) ? $subtotal * ($row->customer->pph / 100) : 0;
+                    }
+
+                    $grandTotal = $subtotal + $ppn - $pph;
+                    $payment = isset($row->orderPayment) ? (float) $row->orderPayment->total : 0;
+
+                    $status = 'Belum Bayar';
+                    $badgeClass = 'danger';
+
+                    if ($payment > 0) {
+                        if ($payment == $grandTotal) {
+                            $status = 'Lunas';
                             $badgeClass = 'success';
+                        } elseif ($payment > $grandTotal) {
+                            $status = 'Kelebihan Bayar';
+                            $badgeClass = 'info';
+                        } else {
+                            $status = 'Belum Lunas';
+                            $badgeClass = 'warning';
                         }
                     }
 
@@ -216,7 +333,7 @@ class OrderPaymentController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'pph', 'paymentAmount', 'total', 'paymentStatus'])
+                ->rawColumns(['action', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'cost', 'additional_cost', 'ppn', 'pph', 'grand_total', 'paymentAmount', 'total', 'paymentStatus'])
                 ->toJson();
         }
     }
@@ -265,16 +382,27 @@ class OrderPaymentController extends Controller
         }
 
         $totalCost = 0;
+        $totalAdditionalCost = 0;
+        $totalPpnAmount = 0;
         $totalPphAmount = 0;
         $totalGrandTotal = 0;
 
         foreach ($orders as $order) {
-            $costSum = $this->getRouteAmount($order);
-            $pph = $order->customer->pph ?? 0;
-            $pphAmount = ($costSum * $pph) / 100;
-            $grandTotal = $costSum + $pphAmount;
+            $routeAmount = $this->getRouteAmount($order);
+            $additionalCost = $order->cost ? $order->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal') : 0;
+            $totalBefore = $routeAmount + $additionalCost;
 
-            $totalCost += $costSum;
+            $ppn = $order->customer->ppn ?? 0;
+            $ppnAmount = ($totalBefore * $ppn) / 100;
+
+            $pph = $order->customer->pph ?? 0;
+            $pphAmount = ($totalBefore * $pph) / 100;
+
+            $grandTotal = $totalBefore + $ppnAmount - $pphAmount;
+
+            $totalCost += $routeAmount;
+            $totalAdditionalCost += $additionalCost;
+            $totalPpnAmount += $ppnAmount;
             $totalPphAmount += $pphAmount;
             $totalGrandTotal += $grandTotal;
         }
@@ -297,7 +425,8 @@ class OrderPaymentController extends Controller
                 ->with('customer', $customerFirst)
                 ->with('company', $company)
                 ->with('totalSubtotal', $totalCost)
-                ->with('totalAdditionalCost', 0)
+                ->with('totalAdditionalCost', $totalAdditionalCost)
+                ->with('totalPpnAmount', $totalPpnAmount)
                 ->with('totalPphAmount', $totalPphAmount)
                 ->with('totalGrandTotal', $totalGrandTotal)
                 ->with('isOrderPaymentPdf', true)
