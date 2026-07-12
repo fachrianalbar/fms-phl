@@ -2,6 +2,7 @@
 
 namespace App\Helpers;
 
+use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 
 class GenerateCode
@@ -20,18 +21,16 @@ class GenerateCode
         $carbonDate = $date ? Carbon::parse($date) : Carbon::now();
         $codeDate = $carbonDate->format('ymd');
 
-        $count = $modelClass::whereDate($dateColumn, $carbonDate->toDateString())->count();
+        $base = "{$prefix}-{$codeDate}";
+        $requestedCode = "{$base}00001";
 
-        do {
-            $increment = str_pad($count + 1, 5, '0', STR_PAD_LEFT);
-            $code = "{$prefix}-{$codeDate}{$increment}";
-
-            // Cek apakah kode sudah ada di database
-            $exists = $modelClass::where($codeColumn, $code)->exists();
-
-            $count++;
-        } while ($exists);
-
-        return $code;
+        return app(UniqueCodeService::class)->resolve(
+            model: $modelClass,
+            field: $codeColumn,
+            requestedCode: $requestedCode,
+            prefix: $base,
+            digits: 5,
+            scope: fn ($query) => $query->whereDate($dateColumn, $carbonDate->toDateString()),
+        )->resolvedCode;
     }
 }

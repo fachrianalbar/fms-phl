@@ -18,6 +18,7 @@ use App\Services\Inventory\WarehouseService;
 use App\Services\Master\FleetService;
 
 use App\Services\MenuService;
+use App\Services\UniqueCodeService;
 use App\Services\Warehouse\MaintenanceService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -102,16 +103,15 @@ class MaintenanceController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title));
+            });
 
-            $this->service->store($request, $this->title);
+            $redirect = redirect()->route($this->view . 'index')
+                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }

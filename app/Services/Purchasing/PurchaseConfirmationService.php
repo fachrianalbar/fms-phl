@@ -68,7 +68,7 @@ class PurchaseConfirmationService
         $filtered = Arr::only($request->all(), ['qty', 'itemCode', 'purchaseDetailCode', 'price']);
 
         for ($i = 0; $i < count($selectedPurchase); $i++) {
-            $pd = PurchaseDetail::where('id', $selectedPurchase[$i])->first();
+            $pd = PurchaseDetail::where('id', $selectedPurchase[$i])->with('purchase')->first();
 
             $pd->update([
                 'status' => 1,
@@ -77,34 +77,54 @@ class PurchaseConfirmationService
                 'qtyUsed' => 0,
             ]);
 
-            $pd = PurchaseDetail::where('id', $selectedPurchase[$i])->first();
+            $newQty = $receivedQty ?: $filtered['qty'][$i];
 
-            $stock = Stock::where('itemCode', $pd->item->code)->first();
+            // Cari StockTransaction yang ada
+            $stockTransaction = StockTransaction::query()
+                ->where('transactionCode', $pd->purchaseCode)
+                ->where('transactionDetailCode', $pd->code)
+                ->first();
 
-            if (isset($stock)) {
-                Stock::where('itemCode', $pd->item->code)->update([
-                    'stockIn' => $stock->stockIn + $pd->receivedQty,
+            $oldQty = 0;
+            if ($stockTransaction) {
+                $oldQty = (float) $stockTransaction->qtyIn;
+                $stockTransaction->update([
+                    'qtyIn' => $newQty,
+                    'date' => $request->receivedDate ?? Carbon::now(),
+                    'warehouseCode' => $pd->purchase->warehouseCode ?? null,
+                    'transactionType' => 'IN',
                 ]);
-            }
-
-            if (! $stock) {
-                Stock::create([
-                    'code' => GenerateCode::generateCode('FSTC', true),
+            } else {
+                StockTransaction::create([
+                    'code' => GenerateCode::generateCode('FST', true),
                     'itemCode' => $pd->itemCode,
-                    'stockIn' => $receivedQty ?: $filtered['qty'][$i],
-                    'stockOut' => 0,
+                    'warehouseCode' => $pd->purchase->warehouseCode ?? null,
+                    'transactionCode' => $pd->purchaseCode,
+                    'transactionDetailCode' => $pd->code,
+                    'qtyIn' => $newQty,
+                    'qtyOut' => 0,
+                    'date' => $request->receivedDate ?? Carbon::now(),
+                    'transactionType' => 'IN',
                 ]);
             }
 
-            StockTransaction::create([
-                'code' => GenerateCode::generateCode('FPD', true),
-                'itemCode' => $pd->itemCode,
-                'qty' => $receivedQty ?: $filtered['qty'][$i],
-                'transactionCode' => $pd->code,
-                'date' => Carbon::now(),
-                'type' => 'IN',
-                'transactionType' => 1,
-            ]);
+            // Update tabel Stock berdasarkan selisih (newQty - oldQty)
+            $diffQty = $newQty - $oldQty;
+            if (abs($diffQty) > 0.0001) {
+                $stock = Stock::where('itemCode', $pd->itemCode)->first();
+                if ($stock) {
+                    $stock->update([
+                        'stockIn' => $stock->stockIn + $diffQty,
+                    ]);
+                } else {
+                    Stock::create([
+                        'code' => GenerateCode::generateCode('FSTC', true),
+                        'itemCode' => $pd->itemCode,
+                        'stockIn' => $newQty,
+                        'stockOut' => 0,
+                    ]);
+                }
+            }
         }
 
         $this->logActivity($title, $this->getById($id), 'After Update');
@@ -116,10 +136,15 @@ class PurchaseConfirmationService
 
         $data = $this->getById($id);
 
-        foreach ($data->details as $item) {
-            Stock::where('itemCode', $item->item->code)->decrement('stockIn', $item->qty);
-            StockTransaction::where('transactionCode', $item->code)->delete();
+        // Rollback stock: kurangi stockIn berdasarkan total qtyIn dari StockTransaction
+        $stockTransactions = StockTransaction::where('transactionCode', $data->code)->get();
+
+        foreach ($stockTransactions as $transaction) {
+            Stock::where('itemCode', $transaction->itemCode)->decrement('stockIn', $transaction->qtyIn);
         }
+
+        // Delete semua StockTransaction untuk purchase ini
+        StockTransaction::where('transactionCode', $data->code)->delete();
 
         $data->details()->delete();
 

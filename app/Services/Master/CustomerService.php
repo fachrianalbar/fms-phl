@@ -7,9 +7,9 @@ use App\Models\Master\Customer;
 use App\Models\Master\CustomerDetail;
 use App\Models\Master\CustomerPic;
 use App\Models\Operational\CustomerDetailOrder;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class CustomerService
 {
@@ -23,7 +23,7 @@ class CustomerService
 
     protected $customerPic;
 
-    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic)
+    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic, private UniqueCodeService $uniqueCode)
     {
         $this->service = $customer;
         $this->customerDetail = $customerDetail;
@@ -48,9 +48,15 @@ class CustomerService
 
     public function store($request, $title)
     {
+        $code = $this->uniqueCode->resolve(
+            model: Customer::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+        );
+
         $data = $this->service->create([
             'name' => $request->name,
-            'code' => $request->code,
+            'code' => $code->resolvedCode,
             // 'picName' => $request->picName,
             // 'nickname' => $request->nickname,
             'email' => $request->email,
@@ -69,18 +75,27 @@ class CustomerService
         ]);
 
         if (isset($request->picName)) {
-            $this->storeCustomerPic($request);
+            $this->storeCustomerPic($request, $data->code);
         }
 
         $this->logActivity($title, $data, 'Create');
+
+        return $code;
     }
 
     public function update($request, $id, $title)
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
+        $current = $this->getById($id);
+        $code = $this->uniqueCode->resolve(
+            model: Customer::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+            ignoreId: $current?->id,
+        );
 
         $this->service->where('id', $id)->update([
-            'code' => $request->code,
+            'code' => $code->resolvedCode,
             'name' => $request->name,
             // 'picName' => $request->picName,
             // 'nickname' => $request->nickname,
@@ -103,7 +118,7 @@ class CustomerService
 
         if (isset($request->picName)) {
             $data->pic()->delete();
-            $this->storeCustomerPic($request);
+            $this->storeCustomerPic($request, $data->code);
         }
 
         if (isset($request->nameDetail)) {
@@ -121,6 +136,8 @@ class CustomerService
             }
         }
         $this->logActivity($title, $this->getById($id), 'After Update');
+
+        return $code;
     }
 
     public function destroy($id, $title)
@@ -128,10 +145,6 @@ class CustomerService
         $this->logActivity($title, $this->getById($id), 'Delete');
 
         $data = $this->getById($id);
-
-        $this->service->where('id', $id)->update([
-            'code' => $data->code.'-del-'.Str::random(3),
-        ]);
 
         $this->service->where('id', $id)->delete();
     }
@@ -168,7 +181,7 @@ class CustomerService
         return $this->service->where('code', $code)->with(['company'])->first();
     }
 
-    public function storeCustomerPic($request)
+    public function storeCustomerPic($request, string $customerCode)
     {
         $filtered = Arr::only($request->all(), ['picName', 'phone']);
 
@@ -178,7 +191,7 @@ class CustomerService
                 'code' => GenerateCode::generateCode('FCP', true),
                 'picName' => $filtered['picName'][$i],
                 'phone' => $filtered['phone'][$i],
-                'customerCode' => $request->code,
+                'customerCode' => $customerCode,
             ]);
 
             $this->logActivity('Customer Pic', $customerPic, 'Create');

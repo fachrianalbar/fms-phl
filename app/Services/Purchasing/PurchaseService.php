@@ -10,6 +10,7 @@ use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Services\Helper\StockManagementService;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,7 +24,7 @@ class PurchaseService
 
     protected StockManagementService $stockManagement;
 
-    public function __construct(Purchase $purchase, StockManagementService $stockManagement)
+    public function __construct(Purchase $purchase, StockManagementService $stockManagement, private UniqueCodeService $uniqueCode)
     {
         $this->service = $purchase;
         $this->stockManagement = $stockManagement;
@@ -59,8 +60,15 @@ class PurchaseService
     public function store(Request $request, string $title)
     {
         $warehouse = Warehouse::query()->first();
+        $code = $this->uniqueCode->resolve(
+            model: Purchase::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+        );
+        $purchaseCode = $code->resolvedCode;
+
         $data = $this->service->create([
-            'code' => $request->code,
+            'code' => $purchaseCode,
             'supplierCode' => $request->supplierCode,
             'warehouseCode' => $warehouse->code,
             'date' => $request->date,
@@ -80,11 +88,11 @@ class PurchaseService
                     'price' => $price,
                 ]);
 
-                $code = $data->code;
+                $currentPurchaseCode = $data->code;
 
                 $pd = PurchaseDetail::query()->where('itemCode', $filtered['itemCode'][$i])
-                    ->whereHas('purchase', function ($query) use ($code) {
-                        $query->where('code', $code);
+                    ->whereHas('purchase', function ($query) use ($currentPurchaseCode) {
+                        $query->where('code', $currentPurchaseCode);
                     })
                     ->first();
 
@@ -95,7 +103,7 @@ class PurchaseService
                         'qty' => $filtered['qty'][$i],
                         'receivedQty' => $filtered['qty'][$i],
                         'status' => 1,
-                        'purchaseCode' => $request->code,
+                        'purchaseCode' => $purchaseCode,
                         'price' => $price,
                         'description' => $filtered['description'][$i] ?? null,
                     ]);
@@ -107,8 +115,8 @@ class PurchaseService
                 }
 
                 $pd = PurchaseDetail::query()->where('itemCode', $filtered['itemCode'][$i])
-                    ->whereHas('purchase', function ($query) use ($code) {
-                        $query->where('code', $code);
+                    ->whereHas('purchase', function ($query) use ($currentPurchaseCode) {
+                        $query->where('code', $currentPurchaseCode);
                     })
                     ->first();
 
@@ -116,7 +124,7 @@ class PurchaseService
                     $filtered['itemCode'][$i],
                     $warehouse->code,
                     $filtered['qty'][$i],
-                    $request->code, // transactionCode = Purchase code
+                    $purchaseCode, // transactionCode = Purchase code
                     $pd->code, // transactionDetailCode = PurchaseDetail code
                     $request->date . ' ' . $request->time,
                     'IN'
@@ -126,7 +134,14 @@ class PurchaseService
             }
         }
 
+        // Recalculate and save total nominal from details
+        $data->refresh();
+        $totalNominal = $data->details->sum(fn ($d) => $d->price * $d->qty);
+        $data->update(['nominal' => $totalNominal]);
+
         $this->logActivity($title, $data, 'Create');
+
+        return $code;
     }
 
     public function update(Request $request, string $id, string $title)
@@ -231,11 +246,15 @@ class PurchaseService
                     ->first();
 
                 if ($stockTransaction) {
-                    $stockTransaction->increment('qtyIn', $filtered['qty'][$i]);
+                    $stockTransaction->update([
+                        'qtyIn' => $stockTransaction->qtyIn + $filtered['qty'][$i],
+                        'warehouseCode' => $purchaseData->warehouseCode,
+                    ]);
                 } else {
                     StockTransaction::create([
                         'code' => GenerateCode::generateCode('FST', true),
                         'itemCode' => $filtered['itemCode'][$i],
+                        'warehouseCode' => $purchaseData->warehouseCode,
                         'qtyIn' => $filtered['qty'][$i],
                         'qtyOut' => 0,
                         'transactionCode' => $purchaseCode,
@@ -256,6 +275,11 @@ class PurchaseService
                 $deleted->delete();
             }
         }
+
+        // Recalculate and save total nominal from details
+        $purchaseData->refresh();
+        $totalNominal = $purchaseData->details->sum(fn ($d) => $d->price * $d->qty);
+        $this->service->query()->where('id', $id)->update(['nominal' => $totalNominal]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
@@ -278,10 +302,6 @@ class PurchaseService
 
         $data->details()->delete();
 
-        // Update code agar tidak bentrok dengan unique constraint
-        $data->update([
-            'code' => $data->code . '-DEL-' . str_pad((string)mt_rand(1, 999999), 6, '0', STR_PAD_LEFT)
-        ]);
         $this->service->query()->where('id', $id)->delete();
     }
 }

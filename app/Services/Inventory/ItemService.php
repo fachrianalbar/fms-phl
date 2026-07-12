@@ -3,6 +3,7 @@
 namespace App\Services\Inventory;
 
 use App\Models\Inventory\Item;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 
 class ItemService
@@ -11,7 +12,7 @@ class ItemService
 
     protected $service;
 
-    public function __construct(Item $item)
+    public function __construct(Item $item, private UniqueCodeService $uniqueCode)
     {
         $this->service = $item;
     }
@@ -29,9 +30,18 @@ class ItemService
     public function store($request, $title)
     {
         $data = $request->all();
+        $code = $this->uniqueCode->resolve(
+            model: Item::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+        );
+        $data['code'] = $code->resolvedCode;
+
         $result = $this->service->create($data);
 
         $this->logActivity($title, $result, 'Create');
+
+        return $code;
     }
 
     public function update($request, $id, $title)

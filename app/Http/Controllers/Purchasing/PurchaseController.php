@@ -13,12 +13,12 @@ use App\Models\StockTransaction;
 use App\Services\Inventory\SupplierService;
 use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseService;
+use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 
 class PurchaseController extends Controller
@@ -77,7 +77,7 @@ class PurchaseController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'code' => ['required', Rule::unique('purchase', 'code')->whereNull('deleted_at')],
+            'code' => ['required', 'string', 'max:30'],
             'supplierCode' => 'required',
             'date' => 'required',
             'time' => 'required',
@@ -110,16 +110,15 @@ class PurchaseController extends Controller
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title));
+            });
 
-            $this->service->store($request, $this->title);
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
@@ -138,9 +137,7 @@ class PurchaseController extends Controller
         $totalPrice = 0;
         $totalQty = 0;
         foreach ($data->details as $item) {
-            $itemStock = Item::where('code', $item->itemCode)->first();
-
-            $totalPrice += intval($itemStock->price) * $item->qty;
+            $totalPrice += intval($item->price) * $item->qty;
             $totalQty += $item->qty;
         }
 
@@ -166,9 +163,7 @@ class PurchaseController extends Controller
         $totalPrice = 0;
         $totalQty = 0;
         foreach ($data->details as $item) {
-            $itemStock = Item::where('code', $item->itemCode)->first();
-
-            $totalPrice += intval($itemStock->price) * $item->qty;
+            $totalPrice += intval($item->price) * $item->qty;
             $totalQty += $item->qty;
         }
 
@@ -318,11 +313,12 @@ class PurchaseController extends Controller
                     return $paymentDate;
                 })
                 ->addColumn('totalPrice', function ($row) {
-                    $totalPrice = 0;
-                    foreach ($row->details as $item) {
-                        if ($item->receivedQty) {
-                            $totalPrice += intval($item->price) * $item->receivedQty;
-                        } else {
+                    // Use nominal from header (saved from detail price * qty)
+                    $totalPrice = $row->nominal ?? 0;
+
+                    // Fallback: recalculate from details if nominal is empty
+                    if (! $totalPrice) {
+                        foreach ($row->details as $item) {
                             $totalPrice += intval($item->price) * $item->qty;
                         }
                     }

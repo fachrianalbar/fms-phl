@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Master\CompanyService;
 use App\Services\Master\CustomerService;
 use App\Services\MenuService;
+use App\Services\UniqueCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,6 +64,7 @@ class CustomerController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:30',
             'name' => 'required',
             // 'phone' => [
             //     Rule::unique('customer', 'phone')->whereNull('deleted_at')
@@ -82,15 +84,15 @@ class CustomerController extends Controller
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title));
+            });
 
-            $this->service->store($request, $this->title);
-            DB::commit();
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
@@ -129,6 +131,7 @@ class CustomerController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:30',
             'name' => 'required',
             // 'email' => [Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
             // 'telegramUsername' => [Rule::unique('customer', 'telegramUsername')->ignore($data->id)->whereNull('deleted_at')],
@@ -142,16 +145,15 @@ class CustomerController extends Controller
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $id) {
+                return DB::transaction(fn () => $this->service->update($request, $id, $this->title));
+            });
 
-            $this->service->update($request, $id, $this->title);
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }

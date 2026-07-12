@@ -11,9 +11,9 @@ use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\Operational\OrderMaterial;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
 
 class OrderService
 {
@@ -33,7 +33,7 @@ class OrderService
 
     protected $orderMaterial;
 
-    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial, private UniqueCodeService $uniqueCode)
     {
         $this->service = $order;
         $this->customerDetailOrder = $customerDetailOrder;
@@ -89,8 +89,20 @@ class OrderService
 
     public function store($request, $title)
     {
+        $code = $this->uniqueCode->resolve(
+            model: Order::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+        );
+        $shipmentNumber = $this->uniqueCode->resolve(
+            model: Order::class,
+            field: 'shipmentNumber',
+            requestedCode: $request->input('shipmentNumber'),
+            normalize: fn ($value) => mb_strtoupper(trim($value)),
+        );
+
         $data = $this->service->create(
-            array_merge(['code' => $request->code, 'shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request))
+            array_merge(['code' => $code->resolvedCode, 'shipmentNumber' => $shipmentNumber->resolvedCode], $this->buildOrderData($request))
         );
 
         // Cek apakah fleet adalah external
@@ -125,6 +137,11 @@ class OrderService
         }
 
         $this->logActivity($title, $data, 'Create');
+
+        return [
+            'code' => $code,
+            'shipmentNumber' => $shipmentNumber,
+        ];
     }
 
     public function update($request, $id, $title)
@@ -133,8 +150,16 @@ class OrderService
         $data = $this->getById($id);
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
+        $shipmentNumber = $this->uniqueCode->resolve(
+            model: Order::class,
+            field: 'shipmentNumber',
+            requestedCode: $request->input('shipmentNumber'),
+            normalize: fn ($value) => mb_strtoupper(trim($value)),
+            ignoreId: $data->id,
+        );
+
         // Prepare update data and sanitize numeric fields (pass isUpdate = true)
-        $updateData = array_merge(['shipmentNumber' => $request->shipmentNumber], $this->buildOrderData($request, true));
+        $updateData = array_merge(['shipmentNumber' => $shipmentNumber->resolvedCode], $this->buildOrderData($request, true));
 
         // Compute route's expected amount based on selected route and qty
         $selectedRoute = $this->route->where('code', $request->routeData)->first();
@@ -205,6 +230,8 @@ class OrderService
         }
 
         $this->logActivity($title, $this->getById($id), 'After Update');
+
+        return $shipmentNumber;
     }
 
     public function destroy($id, $title)
@@ -218,11 +245,6 @@ class OrderService
         $this->orderCost->where('orderCode', $data->code)->delete();
 
         $this->orderMaterial->where('orderCode', $data->code)->delete();
-
-        $this->service->where('id', $id)->update([
-            'code' => $data->code . '-del-' . Str::random(3),
-            'shipmentNumber' => $data->shipmentNumber . '-del-' . Str::random(3),
-        ]);
 
         $this->service->where('id', $id)->delete();
     }

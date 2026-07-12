@@ -11,6 +11,7 @@ use App\Services\Inventory\ItemService;
 use App\Services\Inventory\SupplierService;
 use App\Services\Inventory\WarehouseService;
 use App\Services\Master\UnitService;
+use App\Services\UniqueCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -97,7 +98,7 @@ class ItemController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'code' => ['required', Rule::unique('item', 'code')->whereNull('deleted_at')],
+            'code' => ['required', 'string', 'max:30'],
             'name' => 'required',
             // 'brandName' => 'required',
             // 'categoryCode' => 'required',
@@ -112,15 +113,15 @@ class ItemController extends Controller
             return redirect()->back()->withErrors($validator)->withInput();
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title));
+            });
 
-            $this->service->store($request, $this->title);
-            DB::commit();
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }

@@ -11,8 +11,8 @@ use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
@@ -22,7 +22,7 @@ class MaintenanceService
 
     protected Maintenance $service;
 
-    public function __construct(Maintenance $maintenance)
+    public function __construct(Maintenance $maintenance, private UniqueCodeService $uniqueCode)
     {
         $this->service = $maintenance;
     }
@@ -60,40 +60,21 @@ class MaintenanceService
     {
         $warehouseCode = $request->warehouseCode ?? Warehouse::query()->first()->code;
 
-        $code = $request->code;
-        $data = null;
-        $retryCount = 0;
-        $maxRetries = 10;
+        $code = $this->uniqueCode->resolve(
+            model: Maintenance::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+            scope: fn ($query) => $query->whereDate('date', $request->date),
+        );
 
-        while ($retryCount < $maxRetries) {
-            try {
-                // 1. Simpan data maintenance utama
-                $data = $this->service->create([
-                    'code' => $code,
-                    'date' => $request->date,
-                    'time' => $request->time,
-                    'fleetCode' => $request->fleetCode,
-                    'warehouseCode' => $warehouseCode,
-                ]);
-                break;
-            } catch (QueryException $e) {
-                if ($e->getCode() == 23000 || (isset($e->errorInfo[1]) && $e->errorInfo[1] == 1062)) {
-                    $retryCount++;
-                    $code = GenerateCode::generateCodeAscDate(
-                        'MNT',
-                        Maintenance::class,
-                        'date',
-                        $request->date
-                    );
-                } else {
-                    throw $e;
-                }
-            }
-        }
-
-        if (! $data) {
-            throw new \Exception("Gagal menyimpan data karena duplikasi kode setelah mencoba {$maxRetries} kali.");
-        }
+        // 1. Simpan data maintenance utama
+        $data = $this->service->create([
+            'code' => $code->resolvedCode,
+            'date' => $request->date,
+            'time' => $request->time,
+            'fleetCode' => $request->fleetCode,
+            'warehouseCode' => $warehouseCode,
+        ]);
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
@@ -187,11 +168,15 @@ class MaintenanceService
 
         // 8. Log aktivitas pencatatan
         $this->logActivity($title, $data, 'Create');
+
+        return $code;
     }
 
     public function update(Request $request, string $id, string $title)
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
+
+        $maintenanceData = $this->getById($id);
 
         $this->service->query()->where('id', $id)->update([
             // 'code' => $request->code,
@@ -204,7 +189,7 @@ class MaintenanceService
             $itemCodes = $request->itemCode;
             $qtys = $request->qty;
             $originalQtys = $request->original_qty;
-            $maintenanceCode = $request->code;
+            $maintenanceCode = $maintenanceData->code;
 
             $detailMap = [];
             $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'maintenanceDetailCode', 'description']);
@@ -326,6 +311,7 @@ class MaintenanceService
                         'qtyOut' => $qty,
                         'date' => $request->date.' '.$request->time,
                         'transactionType' => 'OUT',
+                        'warehouseCode' => $maintenanceData->warehouseCode,
                     ]
                 );
             }
@@ -368,10 +354,7 @@ class MaintenanceService
         // 5. Hapus detail maintenance
         $data->details()->delete();
 
-        // 6. Update code agar tidak bentrok dengan unique constraint, lalu hapus data maintenance utama
-        $data->update([
-            'code' => $data->code.'-DEL-'.str_pad((string) mt_rand(1, 999999), 6, '0', STR_PAD_LEFT),
-        ]);
+        // 6. Soft delete maintenance utama tanpa mengubah kode histori.
         $this->service->query()->where('id', $id)->delete();
     }
 }

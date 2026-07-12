@@ -7,6 +7,7 @@ use App\Models\Finance\Invoice;
 use App\Models\Finance\InvoiceDetail;
 use App\Models\Master\Customer;
 use App\Models\Operational\Order;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
 
@@ -22,7 +23,7 @@ class InvoiceService
 
     protected $customer;
 
-    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer)
+    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer, private UniqueCodeService $uniqueCode)
     {
         $this->service = $invoice;
         $this->order = $order;
@@ -119,11 +120,16 @@ class InvoiceService
         $this->ensureOrdersBelongToCustomer($orderCodes, $request->customerCode);
 
         $usePpn = (bool) ($request->input('usePpn') ?? false);
+        $invoiceNumber = $this->resolveInvoiceNumber(
+            $request->invoiceNumber,
+            $request->customerCode,
+            $request->invoiceDate
+        );
 
         $data = $this->service->create([
             'code' => GenerateCode::generateCode('INV'),
             'customerCode' => $request->customerCode,
-            'invoiceNumber' => $request->invoiceNumber,
+            'invoiceNumber' => $invoiceNumber->resolvedCode,
             'receiptNumber' => $request->receiptNumber,
             'poNumber' => $request->poNumber,
             'invoiceDate' => $request->invoiceDate,
@@ -184,6 +190,8 @@ class InvoiceService
             logger()->error('Failed to update invoice status after recalc for invoice ' . $data->code . ': ' . $e->getMessage());
         }
         $this->logActivity($title, $data, 'Create');
+
+        return $invoiceNumber;
     }
 
     public function update($request, $id, $title)
@@ -400,19 +408,21 @@ class InvoiceService
         $currentMonth = str_pad($dateToUse->month, 2, '0', STR_PAD_LEFT);
 
         // Ambil invoiceNumber terakhir milik customer yang bersangkutan di bulan dan tahun dari invoiceDate
-        $lastInvoice = $this->service
+        $invoices = $this->service
+            ->withTrashed()
             ->where('customerCode', $customer->code)
             ->whereYear('invoiceDate', $currentYear)
             ->whereMonth('invoiceDate', $dateToUse->month)
-            ->orderByDesc('invoiceNumber')
-            ->first();
+            ->get();
 
         // Default increment = 1 jika belum ada invoice sebelumnya
         $lastNumber = 0;
 
         // Format: INV/{FORMAT-COMPANY}/{CODE-CUSTOMER}/{NO-URUT}/{BULAN}/{TAHUN}
-        if ($lastInvoice && preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $lastInvoice->invoiceNumber, $matches)) {
-            $lastNumber = (int) $matches[1];
+        foreach ($invoices as $invoice) {
+            if (preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $invoice->invoiceNumber, $matches)) {
+                $lastNumber = max($lastNumber, (int) $matches[1]);
+            }
         }
 
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
@@ -513,15 +523,22 @@ class InvoiceService
             $this->logActivity('Invoice', $item['invoice'], 'Shift Invoice Number due to Conflict');
         }
 
+        $resolved = $this->resolveInvoiceNumber(
+            $newInvoiceNumber,
+            $customerCode,
+            "{$year}-{$month}-01",
+            $id
+        );
+
         // Finally, update the target invoice
         $this->service->where('id', $id)->update([
-            'invoiceNumber' => $newInvoiceNumber
+            'invoiceNumber' => $resolved->resolvedCode
         ]);
 
         $updatedInvoice = $this->getById($id);
         $this->logActivity('Invoice', $updatedInvoice, 'Update Invoice Number Manually');
 
-        return $updatedInvoice;
+        return $resolved;
     }
 
     public function getSuggestedInvoiceNumber($id)
@@ -538,6 +555,7 @@ class InvoiceService
 
         // Find the maximum sequence number in the DB for this customer/month/year
         $invoices = $this->service
+            ->withTrashed()
             ->where('customerCode', $invoice->customerCode)
             ->whereYear('invoiceDate', $currentYear)
             ->whereMonth('invoiceDate', $dateToUse->month)
@@ -557,5 +575,22 @@ class InvoiceService
         $companyFormat = $customer->company->format ?? 'DEFAULT';
 
         return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $nextNumber . '/' . $currentMonth . '/' . $currentYear;
+    }
+
+    private function resolveInvoiceNumber(string $number, string $customerCode, string $invoiceDate, ?string $ignoreId = null)
+    {
+        $date = Carbon::parse($invoiceDate);
+
+        return $this->uniqueCode->resolve(
+            model: Invoice::class,
+            field: 'invoiceNumber',
+            requestedCode: $number,
+            digits: 5,
+            scope: fn ($query) => $query
+                ->where('customerCode', $customerCode)
+                ->whereYear('invoiceDate', $date->year)
+                ->whereMonth('invoiceDate', $date->month),
+            ignoreId: $ignoreId,
+        );
     }
 }

@@ -23,164 +23,535 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
 
 <style>
-    #dt {
-        border-spacing: 0 15px !important;
-        border-collapse: separate !important;
+    /* ===== Card Enhancements ===== */
+    .purchase-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+    .purchase-card:hover {
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .purchase-card .card-header {
+        background: linear-gradient(135deg, #f8f9fe 0%, #eef1f8 100%);
+        border-bottom: 1px solid #e8ecf3;
+        padding: 1rem 1.5rem;
+    }
+    .purchase-card .card-header h4 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .purchase-card .card-header h4 .header-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+    }
+    .header-icon-primary {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: #fff;
+    }
+    .header-icon-info {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: #fff;
+    }
+    .purchase-card .card-body {
+        padding: 1.5rem;
+    }
+
+    /* ===== Form Enhancements ===== */
+    .form-label-custom {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #596780;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 0.4rem;
+    }
+    .form-label-custom .required-dot {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #e74c3c;
+        margin-left: 4px;
+        vertical-align: middle;
+    }
+    .form-control-custom {
+        border: 1.5px solid #e0e5ec;
+        border-radius: 8px;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.92rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        background: #fafbfc;
+    }
+    .form-control-custom:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+        background: #fff;
+    }
+    .form-control-custom:read-only {
+        background: #f0f2f5;
+        color: #6c757d;
+    }
+
+    /* ===== Badge ===== */
+    .badge-edit {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: #fff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 0.3em 0.8em;
+        border-radius: 20px;
+        letter-spacing: 0.3px;
+    }
+
+    /* ===== Table Enhancements ===== */
+    .purchase-table-wrapper {
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid #e8ecf3;
+    }
+    .purchase-table {
+        margin-bottom: 0;
+        border-collapse: collapse;
+    }
+    .purchase-table thead th {
+        background: linear-gradient(135deg, #f0f3ff 0%, #e8ecf8 100%);
+        border-bottom: 2px solid #d5dbe8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 0.6rem;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+    .purchase-table tbody tr {
+        transition: background 0.2s ease;
+        border-bottom: 1px solid #f0f2f5;
+    }
+    .purchase-table tbody tr:hover {
+        background: #f8f9ff;
+    }
+    .purchase-table tbody td {
+        padding: 0.55rem 0.6rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+    .purchase-table .row-number {
+        width: 40px;
+        height: 28px;
+        border-radius: 6px;
+        background: #eef1f8;
+        color: #596780;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .purchase-table .form-control {
+        border-radius: 6px;
+        border: 1.5px solid #e0e5ec;
+        font-size: 0.88rem;
+        padding: 0.4rem 0.6rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .purchase-table .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
+    }
+    .purchase-table .form-control[readonly] {
+        background: #f0f4ff;
+        color: #4a5568;
+        font-weight: 600;
+        border-color: #d5dbe8;
+    }
+
+    /* ===== Delete button ===== */
+    .btn-delete-row {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: none;
+        background: #fff1f0;
+        color: #e74c3c;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .btn-delete-row:hover {
+        background: #e74c3c;
+        color: #fff;
+        transform: scale(1.1);
+    }
+
+    /* ===== Add Item Button ===== */
+    .btn-add-item {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.5rem 1.2rem;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+    }
+    .btn-add-item:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+        color: #fff;
+    }
+    .btn-add-item .plus-icon {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 700;
+    }
+
+    /* ===== Summary Panel ===== */
+    .summary-panel {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .summary-item {
+        text-align: center;
+        flex: 1;
+        min-width: 140px;
+    }
+    .summary-item .summary-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(255,255,255,0.7);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 0.3rem;
+    }
+    .summary-item .summary-value {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1.2;
+        transition: all 0.3s ease;
+    }
+    .summary-item .summary-value.updated {
+        transform: scale(1.08);
+    }
+    .summary-divider {
+        width: 1px;
+        height: 40px;
+        background: rgba(255,255,255,0.2);
+    }
+    .grand-total-highlight {
+        background: rgba(255,255,255,0.15);
+        border-radius: 10px;
+        padding: 0.5rem 1.2rem;
+    }
+    .grand-total-highlight .summary-value {
+        font-size: 1.6rem;
+    }
+
+    /* ===== Submit Button ===== */
+    .btn-submit-purchase {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        border: none;
+        color: #1a5c32;
+        font-weight: 700;
+        font-size: 0.95rem;
+        padding: 0.7rem 2rem;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 12px rgba(67,233,123,0.3);
+    }
+    .btn-submit-purchase:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(67,233,123,0.4);
+        color: #1a5c32;
+    }
+    .btn-submit-purchase:active {
+        transform: translateY(0);
+    }
+
+    /* ===== Back Button ===== */
+    .btn-back {
+        background: #fff;
+        border: 1.5px solid #e0e5ec;
+        color: #596780;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.45rem 1rem;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .btn-back:hover {
+        background: #f8f9fe;
+        border-color: #667eea;
+        color: #667eea;
+    }
+
+    /* ===== Row animation ===== */
+    @keyframes slideInRow {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .purchase-table tbody tr.new-row {
+        animation: slideInRow 0.35s ease forwards;
+    }
+
+    /* ===== Select2 Override ===== */
+    .purchase-table .select2-container--default .select2-selection--single {
+        border: 1.5px solid #e0e5ec;
+        border-radius: 6px;
+        height: 34px;
+    }
+    .purchase-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 32px;
+        font-size: 0.88rem;
+    }
+    .purchase-table .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 32px;
     }
 </style>
 @endpush
 
 @section('content')
-<form method="post" method="post" action="{{ route($view . 'update', $data->id) }}">
+<form method="post" action="{{ route($view . 'update', $data->id) }}">
     @csrf
     @method('PUT')
     <div class="col-sm-12">
-        <div class="card">
+
+        {{-- ===== HEADER CARD: Purchase Info ===== --}}
+        <div class="card purchase-card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} {{ __('general.edit_data') }}</h4>
-                <a href="{{ route($view . 'index') }}" class="btn btn-info">{{ __('general.back_to_list') }}</a>
+                <h4>
+                    <span class="header-icon header-icon-primary">
+                        <i class="mdi mdi-pencil-outline"></i>
+                    </span>
+                    {{ $title }} — {{ __('general.edit_data') }}
+                    <span class="badge-edit ms-2">Edit</span>
+                </h4>
+                <a href="{{ route($view . 'index') }}" class="btn-back">
+                    <i class="mdi mdi-arrow-left"></i>
+                    {{ __('general.back_to_list') }}
+                </a>
             </div>
-            <div class="card-body col-md-6">
+            <div class="card-body">
                 <div class="row g-3">
-                    <div class="row">
-                        <div class="col-md-12">
-                            <label class="form-label" for="code">Code <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="code" type="text" readonly
-                                placeholder="Code" value="{{ $data->code }}">
-                        </div>
+                    {{-- Code --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="code">
+                            Code <span class="required-dot"></span>
+                        </label>
+                        <input class="form-control form-control-custom" name="code" type="text" readonly
+                            placeholder="Code" value="{{ $data->code }}">
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="name">{{ __('menu_purchase.date') }} <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="date" id="datetime-local" type="date" required
-                                placeholder="Order Date" value="{{ $data->date }}">
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('menu_purchase.time') }}</label>
-                            <input class="form-control digits" name="time" type="time"
-                                value="{{ $data->time }}">
-                        </div>
+                    {{-- Date --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="date">
+                            {{ __('menu_purchase.date') }} <span class="required-dot"></span>
+                        </label>
+                        <input class="form-control form-control-custom" name="date" id="datetime-local" type="date" required
+                            placeholder="Order Date" value="{{ $data->date }}">
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-12">
-                            <label class="form-label" for="supplierCode">Supplier <i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...
-                                </option>
-                                @foreach ($supplier as $item)
-                                <option value="{{ $item->code }}"
-                                    {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
+                    {{-- Time --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom">
+                            {{ __('menu_purchase.time') }}
+                        </label>
+                        <input class="form-control form-control-custom digits" name="time" type="time"
+                            value="{{ $data->time }}">
                     </div>
 
-                    <div class="row mt-4">
-                        <div class="col-md-12">
-                            <label class="form-label" for="name">{{ __('menu_purchase.due_date') }}<i
-                                    class="icofont icofont-warning-alt text-danger"></i></label>
-                            <input class="form-control" name="dueDate" id="datetime-local" type="date" required
-                                value="{{ $data->dueDate }}" placeholder="{{ __('menu_purchase.due_date') }}">
-                        </div>
+                    {{-- Supplier --}}
+                    <div class="col-md-6">
+                        <label class="form-label form-label-custom" for="supplierCode">
+                            Supplier <span class="required-dot"></span>
+                        </label>
+                        <select class="js-example-basic-single" name="supplierCode" id="supplierCode" required>
+                            <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
+                            @foreach ($supplier as $item)
+                            <option value="{{ $item->code }}"
+                                {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
+                            </option>
+                            @endforeach
+                        </select>
                     </div>
 
+                    {{-- Due Date --}}
+                    <div class="col-md-6">
+                        <label class="form-label form-label-custom" for="dueDate">
+                            {{ __('menu_purchase.due_date') }} <span class="required-dot"></span>
+                        </label>
+                        <input class="form-control form-control-custom" name="dueDate" id="dueDate" type="date" required
+                            value="{{ $data->dueDate }}" placeholder="{{ __('menu_purchase.due_date') }}">
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="card">
+        {{-- ===== DETAIL CARD: Items Table ===== --}}
+        <div class="card purchase-card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Detail {{ $title }}</h4>
+                <h4>
+                    <span class="header-icon header-icon-info">
+                        <i class="mdi mdi-format-list-bulleted"></i>
+                    </span>
+                    Detail {{ $title }}
+                </h4>
                 @if ($data->status == 0)
-                <button class="btn btn-primary" type="button" id="save">{{ __('general.add_data') }}</button>
+                <button class="btn-add-item" type="button" id="save">
+                    <span class="plus-icon">+</span>
+                    {{ __('general.add_data') }}
+                </button>
                 @endif
             </div>
-            <div class="card-body col-md-12">
+            <div class="card-body">
                 @include('partials.alert')
-                <table class="table table-sm" id="dt">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Item/Part</th>
-                            <th>Qty</th>
-                            <th>{{ __('menu_purchase.prices') }}</th>
-                            <th>Description</th>
-                            <th>{{ __('menu_purchase.total_prices') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="purchaseDetails">
+                <div class="purchase-table-wrapper">
+                    <table class="table purchase-table" id="purchase-items-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px" class="text-center">#</th>
+                                <th style="width: 35%">Item / Part</th>
+                                <th style="width: 10%" class="text-center">Qty</th>
+                                <th style="width: 15%" class="text-end">{{ __('menu_purchase.prices') }}</th>
+                                <th style="width: 15%">Description</th>
+                                <th style="width: 15%" class="text-end">{{ __('menu_purchase.total_prices') }}</th>
+                                <th style="width: 50px" class="text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseDetails">
 
-                        @foreach ($data->details as $item)
-                        <tr>
-                            {{-- <td class="remove-btn"></td> --}}
-                            <td>
-                                @if ($data->status == 0)
-                                <a href="javascript:deletePurchaseDetail('{{ $item->id }}')"
-                                    class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
-                                    title="Delete">
-                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
-                                </a>
-                                @endif
-                            </td>
-                            <td>
-                                <input type="hidden" name="purchaseDetailCode[]" value="{{ $item->code }}">
+                            @foreach ($data->details as $item)
+                            <tr>
+                                <td class="text-center">
+                                    <span class="row-number">{{ $loop->iteration }}</span>
+                                </td>
+                                <td>
+                                    <input type="hidden" name="purchaseDetailCode[]" value="{{ $item->code }}">
 
-                                <select class="js-example-basic-single" name="itemCode[]"
-                                    id="itemCode_{{ $loop->iteration }}" required
-                                    onchange="loadItemDetails({{ $loop->iteration }})">
-                                    @foreach ($items as $it)
-                                    <option value="{{ $it->code }}" data-name="{{ $it->name }}"
-                                        data-price="{{ $it->price }}"
-                                        {{ $item->itemCode == $it->code ? 'selected' : '' }}>
-                                        {{ $it->code . ' - ' . $it->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </td>
+                                    <select class="js-example-basic-single" name="itemCode[]"
+                                        id="itemCode_{{ $loop->iteration }}" required
+                                        onchange="loadItemDetails({{ $loop->iteration }})">
+                                        @foreach ($items as $it)
+                                        <option value="{{ $it->code }}" data-name="{{ $it->name }}"
+                                            data-price="{{ $it->price }}"
+                                            {{ $item->itemCode == $it->code ? 'selected' : '' }}>
+                                            {{ $it->code . ' - ' . $it->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </td>
 
-                            <td>
-                                <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]"
-                                    id="qty_{{ $loop->iteration }}" value="{{ $item->qty + 0 }}"
-                                    onchange="updateTotalPrice({{ $loop->iteration }})">
-                            </td>
-                            <td>
-                                <input class="form-control" type="text" name="price[]"
-                                    id="price_{{ $loop->iteration }}" oninput="formatAngka(this)" required
-                                    value="{{ number_format($item->price, 0, ',', '.') }}"
-                                    onchange="updateTotalPrice({{ $loop->iteration }})">
-                            </td>
-                            <td>
-                                <input class="form-control" type="text" name="description[]" id="description_{{ $loop->iteration }}" value="{{ $item->description }}" placeholder="Description">
-                            </td>
-                            <td>
-                                <input class="form-control" type="text"
-                                    id="totalPrice_{{ $loop->iteration }}" readonly
-                                    value="{{ number_format($item->price * $item->qty, 0, ',', '.') }}">
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                                <td>
+                                    <input class="form-control text-center" type="number" min="0.5" step="0.5" name="qty[]"
+                                        id="qty_{{ $loop->iteration }}" value="{{ $item->qty + 0 }}"
+                                        oninput="updateTotalPrice({{ $loop->iteration }})" onchange="updateTotalPrice({{ $loop->iteration }})">
+                                </td>
+                                <td>
+                                    <input class="form-control text-end" type="text" name="price[]"
+                                        id="price_{{ $loop->iteration }}" oninput="formatAngka(this); updateTotalPrice({{ $loop->iteration }})" required
+                                        value="{{ number_format($item->price, 0, ',', '.') }}"
+                                        onchange="updateTotalPrice({{ $loop->iteration }})">
+                                </td>
+                                <td>
+                                    <input class="form-control" type="text" name="description[]" id="description_{{ $loop->iteration }}" value="{{ $item->description }}" placeholder="Keterangan...">
+                                </td>
+                                <td>
+                                    <input class="form-control text-end" type="text"
+                                        id="totalPrice_{{ $loop->iteration }}" readonly
+                                        value="{{ number_format($item->price * $item->qty, 0, ',', '.') }}">
+                                </td>
+                                <td class="text-center">
+                                    @if ($data->status == 0)
+                                    <button type="button" class="btn-delete-row" onclick="deletePurchaseDetail('{{ $item->id }}')" title="Hapus item">
+                                        <i class="mdi mdi-delete-outline"></i>
+                                    </button>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-        <div class="card">
-            <div class="col-12">
-                <div class="card-body">
-                    @if ($data->status == 0)
-                    <button class="btn btn-primary" id="submit"
-                        type="submit">{{ __('general.save_changes') }}</button>
-                    @endif
+                {{-- ===== SUMMARY PANEL ===== --}}
+                <div class="summary-panel" id="summaryPanel">
+                    <div class="summary-item">
+                        <div class="summary-label">Total Items</div>
+                        <div class="summary-value" id="summaryTotalItems">{{ $data->details->count() }}</div>
+                    </div>
+                    <div class="summary-divider d-none d-md-block"></div>
+                    <div class="summary-item">
+                        <div class="summary-label">Total Qty</div>
+                        <div class="summary-value" id="summaryTotalQty">{{ $totalQty }}</div>
+                    </div>
+                    <div class="summary-divider d-none d-md-block"></div>
+                    <div class="summary-item grand-total-highlight">
+                        <div class="summary-label">Grand Total</div>
+                        <div class="summary-value" id="summaryGrandTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</div>
+                    </div>
                 </div>
             </div>
         </div>
+
+        {{-- ===== SUBMIT CARD ===== --}}
+        <div class="card purchase-card">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div class="text-muted" style="font-size: 0.85rem;">
+                    <i class="mdi mdi-information-outline me-1"></i>
+                    Pastikan semua item sudah benar sebelum menyimpan.
+                </div>
+                @if ($data->status == 0)
+                <button class="btn-submit-purchase" id="submit" type="submit">
+                    <i class="mdi mdi-check-circle-outline"></i>
+                    {{ __('general.save_changes') }}
+                </button>
+                @endif
+            </div>
+        </div>
+
     </div>
 </form>
 <form id="delete-form" method="post">
@@ -218,15 +589,11 @@
 <script>
     let dataItem;
     let itemsData = @json($items);
+    let rowCounter = {{ $data->details->count() }};
 
     $(document).ready(function() {
-        $('#dt').DataTable();
-
-        // let supplierCode = $('#supplierCode').val();
-
         dataItem = <?php echo json_encode($items); ?>;
-
-        // itemBySupplier(supplierCode)
+        updateGrandTotal();
     });
 
     function deletePurchaseDetail(id) {
@@ -314,14 +681,9 @@
                 $(`#itemCode_${i}`).select2();
             }
 
-            // $('#itemCode_1').html(html);
-            // $('#itemName_1').val("");
-            // $('#qty_1').val(1);
-            // $('#price_1').val(0)
-            // $('#totalPrice_1').val(0)
-
             // Reinitialize select2 for the first row
-            // $('#itemCode_1').select2();
+            $('#itemCode_1').select2();
+            updateGrandTotal();
         });
     }
 
@@ -348,11 +710,57 @@
         totalPrice = new Intl.NumberFormat('id-ID').format(Math.round(totalPrice));
 
         $(`#totalPrice_${row}`).val(totalPrice);
+        updateGrandTotal();
+    }
+
+    // ===== REAL-TIME GRAND TOTAL =====
+    function updateGrandTotal() {
+        let totalItems = 0;
+        let totalQty = 0;
+        let grandTotal = 0;
+
+        $('#purchaseDetails tr').each(function() {
+            totalItems++;
+
+            let qty = parseFloat($(this).find('input[name="qty[]"]').val()) || 0;
+            totalQty += qty;
+
+            let totalPriceStr = $(this).find('input[id^="totalPrice_"]').val() || '0';
+            let totalPriceNum = parseInt(totalPriceStr.replace(/\./g, '')) || 0;
+            grandTotal += totalPriceNum;
+        });
+
+        // Animate the update
+        let $items = $('#summaryTotalItems');
+        let $qty = $('#summaryTotalQty');
+        let $grand = $('#summaryGrandTotal');
+
+        $items.text(totalItems);
+        $qty.text(totalQty % 1 === 0 ? totalItems === 0 ? '0' : totalQty : totalQty.toFixed(1));
+        $grand.text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
+
+        // Pulse animation
+        [$items, $qty, $grand].forEach($el => {
+            $el.addClass('updated');
+            setTimeout(() => $el.removeClass('updated'), 300);
+        });
+
+        // Update row numbers
+        updateRowNumbers();
+    }
+
+    // Update row numbers after add/remove
+    function updateRowNumbers() {
+        $('#purchaseDetails tr').each(function(index) {
+            $(this).find('.row-number').text(index + 1);
+        });
     }
 
 
+    // ===== ADD NEW ROW =====
     $('#save').on('click', function() {
-        let row = $('#purchaseDetails tr').length + 1;
+        rowCounter++;
+        let row = rowCounter;
 
         let options = '<option selected="" disabled="" value="">{{ __("general.choose") }}...</option>';
 
@@ -365,14 +773,9 @@
                     </option>`;
         });
 
-        let newRow = `<tr>
-                            <td class="remove-btn">
-                                  <a href="javascript:removeDetailRow(${row})"
-                                class="btn btn-icon btn-sm bg-danger-subtle"
-                                data-bs-toggle="tooltip" title="Delete">
-                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
-                                </a>
-
+        let newRow = `<tr class="new-row">
+                            <td class="text-center">
+                                <span class="row-number">${$('#purchaseDetails tr').length + 1}</span>
                             </td>
                             <td>
                                 <input type="hidden" name="purchaseDetailCode[]" value="">
@@ -381,37 +784,41 @@
                                 </select>
                             </td>
                             <td>
-                                <input class="form-control" type="number" min="0.5" step="0.5" name="qty[]" id="qty_${row}" value="1" onchange="updateTotalPrice(${row})">
+                                <input class="form-control text-center" type="number" min="0.5" step="0.5" name="qty[]" id="qty_${row}" value="1" oninput="updateTotalPrice(${row})" onchange="updateTotalPrice(${row})">
                             </td>
                             <td>
-                                <input class="form-control" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this)" value="0">
+                                <input class="form-control text-end" type="text" id="price_${row}" name="price[]" onchange="updateTotalPrice(${row})" required oninput="formatAngka(this); updateTotalPrice(${row})" value="0">
                             </td>
                             <td>
-                                <input class="form-control" type="text" name="description[]" id="description_${row}" placeholder="Description">
+                                <input class="form-control" type="text" name="description[]" id="description_${row}" placeholder="Keterangan...">
                             </td>
                             <td>
-                                <input class="form-control" type="text" id="totalPrice_${row}" readonly value="0">
+                                <input class="form-control text-end" type="text" id="totalPrice_${row}" readonly value="0">
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn-delete-row" onclick="removeDetailRow(${row})" title="Hapus item">
+                                    <i class="mdi mdi-delete-outline"></i>
+                                </button>
                             </td>
                           </tr>`;
         $('#purchaseDetails').append(newRow);
-        // itemBySupplier($('#supplierCode').val());
-
-
-        // let html = '<option selected="" disabled="" value="">{{ __('general.choose') }}...</option>';
-
-        // dataItem.forEach(i => {
-        //     html +=
-        //         `<option value="${i.code}" data-name="${i.name}" data-price="${i.price}">${i.code} - ${i.name}</option>`;
-        // });
 
         $(`#itemCode_${row}`).html(options);
         // Reinitialize select2 for newly added select elements
         $(`#itemCode_${row}`).select2();
+
+        // Remove animation class after it completes
+        setTimeout(() => {
+            $(`#itemCode_${row}`).closest('tr').removeClass('new-row');
+        }, 400);
+
+        updateGrandTotal();
     });
 
     // Remove row from purchase detail
     function removeDetailRow(row) {
         $(`#itemCode_${row}`).closest('tr').remove();
+        updateGrandTotal();
     }
 
     // Hide remove button on the first row

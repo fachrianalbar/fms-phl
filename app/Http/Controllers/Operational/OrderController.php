@@ -29,12 +29,12 @@ use App\Services\Master\RouteTypeService;
 use App\Services\Master\UnitService;
 use App\Services\MenuService;
 use App\Services\Operational\OrderService;
+use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
@@ -186,7 +186,7 @@ class OrderController extends Controller
         // dd($request->all());
         $validator = Validator::make($request->all(), [
             'code' => 'required',
-            'shipmentNumber' => ['required', Rule::unique('order', 'shipmentNumber')->whereNull('deleted_at')],
+            'shipmentNumber' => ['required', 'string', 'max:255'],
             // 'salesOrder' => ['required', Rule::unique('order', 'salesOrder')],
             'orderDate' => 'required|date',
             'routeData' => 'required|exists:route,code',
@@ -200,22 +200,22 @@ class OrderController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
-            // dd($request->code);
-
-            $this->service->store($request, $this->title);
-
-            DB::commit();
+            $codes = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title));
+            });
+            $changed = collect($codes)->first(fn ($code) => $code->wasChanged);
 
             return response()->json([
                 'success' => true,
                 'message' => $this->title . ' ' . __('general.data_was_save_successfully'),
                 'redirect' => route($this->view . 'index'),
+                'meta' => [
+                    'code_changed' => (bool) $changed,
+                    'requested_code' => $changed?->requestedCode,
+                    'resolved_code' => $changed?->resolvedCode,
+                ],
             ]);
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return response()->json([
                 'success' => false,
                 'message' => 'Line : ' . $th->getLine() . '<br>' . $th->getMessage(),
@@ -378,7 +378,7 @@ class OrderController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'shipmentNumber' => ['required', Rule::unique('order', 'shipmentNumber')->ignore($data->id)->whereNull('deleted_at')],
+            'shipmentNumber' => ['required', 'string', 'max:255'],
             'routeData' => 'required|exists:route,code',
         ]);
 
@@ -387,16 +387,15 @@ class OrderController extends Controller
         }
 
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $id) {
+                return DB::transaction(fn () => $this->service->update($request, $id, $this->title));
+            });
 
-            $this->service->update($request, $id, $this->title);
+            $redirect = redirect()->route($this->view . 'index')
+                ->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->back()->with('error', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage())->withInput();
         }
     }

@@ -6,6 +6,7 @@ use App\Helpers\GenerateCode;
 use App\Models\Operational\BonUjt;
 use App\Models\Operational\BonUjtDetail;
 use App\Models\Operational\Order;
+use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,7 +20,7 @@ class BonUjtService
 
     protected $bonUjtDetail;
 
-    public function __construct(BonUjt $bonUjt, Order $order, BonUjtDetail $bonUjtDetail)
+    public function __construct(BonUjt $bonUjt, Order $order, BonUjtDetail $bonUjtDetail, private UniqueCodeService $uniqueCode)
     {
         $this->service = $bonUjt;
         $this->order = $order;
@@ -83,8 +84,15 @@ class BonUjtService
 
     public function store($request, $title, $selectedOrders)
     {
+        $code = $this->uniqueCode->resolve(
+            model: BonUjt::class,
+            field: 'code',
+            requestedCode: $request->input('code'),
+        );
+        $bonUjtCode = $code->resolvedCode;
+
         $data = $this->service->create([
-            'code' => $request->code,
+            'code' => $bonUjtCode,
             'bon' => $request->bon,
             'date' => $request->date,
             'time' => $request->time,
@@ -99,7 +107,7 @@ class BonUjtService
             foreach ($selectedOrders as $item) {
                 $detail = $this->bonUjtDetail->create([
                     'code' => GenerateCode::generateCode('TBUD', true),
-                    'bonUjtCode' => $request->code,
+                    'bonUjtCode' => $bonUjtCode,
                     'orderCode' => $item,
                 ]);
 
@@ -112,6 +120,8 @@ class BonUjtService
         }
 
         $this->logActivity($title, $data, 'Create');
+
+        return $code;
     }
 
     public function update($request, $id, $title)

@@ -9,6 +9,7 @@ use App\Models\Finance\Invoice as InvoiceModel;
 use App\Services\Finance\InvoiceService;
 use App\Services\Master\CustomerService;
 use App\Services\MenuService;
+use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -87,16 +88,15 @@ class InvoiceController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
-            DB::beginTransaction();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $selectedOrders) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title, $selectedOrders));
+            });
 
-            $this->service->store($request, $this->title, $selectedOrders);
+            $redirect = redirect()->route($this->view . 'index')
+                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
@@ -680,19 +680,22 @@ class InvoiceController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
-            $this->service->updateInvoiceNumber($id, $request->invoiceNumber);
-
-            DB::commit();
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($id, $request) {
+                return DB::transaction(fn () => $this->service->updateInvoiceNumber($id, $request->invoiceNumber));
+            });
 
             return response()->json([
                 'success' => true,
-                'message' => 'Nomor invoice berhasil diperbarui dan nomor lain yang berkonflik telah disesuaikan.',
+                'message' => $code->wasChanged
+                    ? "Nomor invoice yang dimasukkan sudah pernah digunakan. Sistem otomatis menggunakan {$code->resolvedCode}."
+                    : 'Nomor invoice berhasil diperbarui.',
+                'meta' => [
+                    'code_changed' => $code->wasChanged,
+                    'requested_code' => $code->requestedCode,
+                    'resolved_code' => $code->resolvedCode,
+                ],
             ]);
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $th->getMessage(),

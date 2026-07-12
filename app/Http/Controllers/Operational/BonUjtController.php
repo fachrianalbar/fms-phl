@@ -9,6 +9,7 @@ use App\Models\Data\TonaseBonus;
 use App\Services\Master\FleetTypeService;
 use App\Services\MenuService;
 use App\Services\Operational\BonUjtService;
+use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -73,6 +74,7 @@ class BonUjtController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'code' => 'required|string|max:30',
             'submitDate' => 'required',
             'date' => 'required',
             'time' => 'required',
@@ -87,18 +89,16 @@ class BonUjtController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
             $selectedOrders = json_decode($request->input('selectedOrders'), true);
+            $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $selectedOrders) {
+                return DB::transaction(fn () => $this->service->store($request, $this->title, $selectedOrders));
+            });
 
-            $this->service->store($request, $this->title, $selectedOrders);
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
-            DB::commit();
-
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
+            return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            DB::rollback();
-
             return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
