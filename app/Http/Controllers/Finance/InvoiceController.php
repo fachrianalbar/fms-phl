@@ -252,8 +252,13 @@ class InvoiceController extends Controller
 
                     return number_format($ppnAmount, 0, '.', ',');
                 })
+                ->addColumn('pph', function ($row) {
+                    $pphAmount = (float) ($row->pphAmount ?? 0);
+
+                    return number_format($pphAmount, 0, '.', ',');
+                })
                 ->addColumn('totalBilling', function ($row) {
-                    $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
 
                     return '' . number_format($total, 0, ',', '.');
                 })
@@ -274,7 +279,9 @@ class InvoiceController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
-                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
+                    $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
+                    $remaining = $totalBilling - $totalPaid;
 
                     $btn = '<td>
                             <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
@@ -284,7 +291,7 @@ class InvoiceController extends Controller
                             </a>';
 
                     // Tombol pembayaran hanya muncul jika status bukan Full Payment
-                    if ($status !== InvoiceModel::STATUS_FULL) {
+                    if ($status !== InvoiceModel::STATUS_FULL && $remaining > 0) {
                         $btn .= '
                             <a href="javascript:void(0)" 
                             class="btn btn-icon btn-sm bg-info-subtle me-1 btn-payment"
@@ -292,7 +299,12 @@ class InvoiceController extends Controller
                             data-id="' . $row->id . '"
                             data-invoice-code="' . $row->code . '"
                             data-invoice-number="' . $row->invoiceNumber . '"
-                            data-total="' . $totalBilling . '">
+                            data-subtotal="' . (float) ($row->invoiceAmount ?? 0) . '"
+                            data-ppn="' . (float) ($row->ppnAmount ?? 0) . '"
+                            data-pph="' . (float) ($row->pphAmount ?? 0) . '"
+                            data-total="' . $totalBilling . '"
+                            data-total-paid="' . $totalPaid . '"
+                            data-remaining="' . $remaining . '">
                                 <i class="mdi mdi-cash fs-14 text-info"></i>
                             </a>';
                     }
@@ -578,8 +590,8 @@ class InvoiceController extends Controller
                 ], 404);
             }
 
-            // Hitung total tagihan (invoiceAmount + ppnAmount)
-            $totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0);
+            // Hitung total tagihan (invoiceAmount + ppnAmount - pphAmount)
+            $totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
 
             // Hitung total yang sudah dibayar
             $totalPaid = 0;
@@ -615,6 +627,8 @@ class InvoiceController extends Controller
                 'userBankCode' => $request->userBankCode,
                 'paymentDate' => $request->paymentDate,
                 'amount' => $request->amount,
+                'ppnAmount' => $invoice->ppnAmount ?? 0,
+                'pphAmount' => $invoice->pphAmount ?? 0,
                 'description' => $request->description,
                 'paymentReceipt' => $paymentReceipt,
             ]);
@@ -715,6 +729,75 @@ class InvoiceController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function recalculateAll(Request $request)
+    {
+        if (auth()->user()->roleCode !== 'SPRADMIN') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya System Administrator yang diizinkan untuk melakukan tindakan ini.'
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $invoices = $this->service->findAll();
+            $count = 0;
+
+            foreach ($invoices as $invoice) {
+                // Sync usePpn and usePph to customer defaults for recalculate all
+                $usePpn = $invoice->usePpn || (isset($invoice->customer->ppn) && $invoice->customer->ppn > 0);
+                $usePph = $invoice->usePph || (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
+
+                InvoiceModel::where('id', $invoice->id)->update([
+                    'usePpn' => $usePpn,
+                    'usePph' => $usePph,
+                ]);
+
+                $invoice->usePpn = $usePpn;
+                $invoice->usePph = $usePph;
+
+                $totals = $this->service->calculateInvoiceAmount($invoice);
+                
+                InvoiceModel::where('id', $invoice->id)->update([
+                    'invoiceAmount' => $totals['subtotal'],
+                    'ppnAmount' => $totals['ppn'],
+                    'pphAmount' => $totals['pph'],
+                ]);
+
+                // Update invoice status based on new totals and existing payments
+                $sumPayments = (int) $invoice->payments()->sum('amount');
+                $invoiceTotal = (int) $totals['total'];
+                $nextStatus = InvoiceModel::STATUS_CREATE;
+                if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
+                    $nextStatus = InvoiceModel::STATUS_FULL;
+                } elseif ($sumPayments > 0) {
+                    $nextStatus = InvoiceModel::STATUS_PARTIAL;
+                }
+                
+                InvoiceModel::where('id', $invoice->id)->update([
+                    'status' => $nextStatus
+                ]);
+
+                $count++;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil menghitung ulang {$count} invoice.",
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error di baris ' . $th->getLine() . ': ' . $th->getMessage(),
             ], 500);
         }
     }

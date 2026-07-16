@@ -33,6 +33,7 @@
     use Carbon\Carbon;
     use App\Helpers\TerbilangHelper;
     $totalPrice = 0;
+    $grandTotal = (int) (($data->invoiceAmount ?? 0) + ($data->ppnAmount ?? 0) - ($data->pphAmount ?? 0));
 @endphp
 
 <body style="font-family: Arial, sans-serif; font-size: 14px;">
@@ -190,7 +191,7 @@
         <tr>
             <td style="padding: 10px; border-right: 1px solid black; vertical-align: top;">
                 <strong>Terbilang:</strong>
-                {{ $totalPrice * 0.11 + $totalPrice > 0 ? TerbilangHelper::terbilang($totalPrice * 0.11 + $totalPrice) : 'Nol' }}
+                {{ $grandTotal > 0 ? TerbilangHelper::terbilang($grandTotal) : 'Nol' }}
                 Rupiah
             </td>
             <td style="width: 30%; border-left: 1px solid black; vertical-align: top;">
@@ -203,17 +204,26 @@
                     <tr>
                         <td style="padding: 5px 10px; border: 1px solid black;">Sub Total</td>
                         <td style="padding: 5px 10px; border: 1px solid black; text-align: right; font-weight: bold;">
-                            {{ number_format($totalPrice, 0, '.', ',') }}</td>
+                            {{ number_format($data->invoiceAmount ?? $totalPrice, 0, '.', ',') }}</td>
                     </tr>
+                    @if (($data->ppnAmount ?? 0) > 0)
                     <tr>
-                        <td style="padding: 5px 10px; border: 1px solid black;">PPN 11%</td>
+                        <td style="padding: 5px 10px; border: 1px solid black;">PPN {{ $data->customer->ppn ?? 11 }}%</td>
                         <td style="padding: 5px 10px; border: 1px solid black; text-align: right; font-weight: bold;">
-                            {{ number_format($totalPrice * 0.11, 0, '.', ',') }}</td>
+                            {{ number_format($data->ppnAmount, 0, '.', ',') }}</td>
                     </tr>
+                    @endif
+                    @if (($data->pphAmount ?? 0) > 0)
+                    <tr>
+                        <td style="padding: 5px 10px; border: 1px solid black;">PPh {{ $data->customer->pph ?? 2 }}%</td>
+                        <td style="padding: 5px 10px; border: 1px solid black; text-align: right; font-weight: bold;">
+                            -{{ number_format($data->pphAmount, 0, '.', ',') }}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td style="padding: 5px 10px; border: 1px solid black;">Grand Total</td>
                         <td style="padding: 5px 10px; border: 1px solid black; text-align: right; font-weight: bold;">
-                            {{ number_format($totalPrice * 0.11 + $totalPrice, 0, '.', ',') }}</td>
+                            {{ number_format($grandTotal, 0, '.', ',') }}</td>
                     </tr>
                 </table>
             </td>
@@ -245,17 +255,26 @@
             <tr>
                 <th style="border: 1px solid black; padding: 8px; text-align: left;">Total Tagihan</th>
                 <td style="border: 1px solid black; padding: 8px; text-align: right;">Rp.
-                    {{ number_format($totalPrice, 0, '.', ',') }}</td>
+                    {{ number_format($data->invoiceAmount ?? $totalPrice, 0, '.', ',') }}</td>
             </tr>
+            @if (($data->ppnAmount ?? 0) > 0)
             <tr>
-                <th style="border: 1px solid black; padding: 8px; text-align: left;">PPN 11%</th>
+                <th style="border: 1px solid black; padding: 8px; text-align: left;">PPN {{ $data->customer->ppn ?? 11 }}%</th>
                 <td style="border: 1px solid black; padding: 8px; text-align: right;">Rp.
-                    {{ number_format($totalPrice * 0.11, 0, '.', ',') }}</td>
+                    {{ number_format($data->ppnAmount, 0, '.', ',') }}</td>
             </tr>
+            @endif
+            @if (($data->pphAmount ?? 0) > 0)
+            <tr>
+                <th style="border: 1px solid black; padding: 8px; text-align: left;">PPh {{ $data->customer->pph ?? 2 }}%</th>
+                <td style="border: 1px solid black; padding: 8px; text-align: right;">-Rp.
+                    {{ number_format($data->pphAmount, 0, '.', ',') }}</td>
+            </tr>
+            @endif
             <tr>
                 <th style="border: 1px solid black; padding: 8px; text-align: left;">Jumlah Tagihan</th>
                 <td style="border: 1px solid black; padding: 8px; text-align: right;">Rp.
-                    {{ number_format($totalPrice * 0.11 + $totalPrice, 0, '.', ',') }}</td>
+                    {{ number_format($grandTotal, 0, '.', ',') }}</td>
             </tr>
         </table>
 
@@ -263,7 +282,7 @@
 
         <div style="border: 1px solid black; padding: 10px; width: 100%; text-align: center;">
             <strong>Terbilang:</strong>
-            {{ $totalPrice * 0.11 + $totalPrice > 0 ? TerbilangHelper::terbilang($totalPrice * 0.11 + $totalPrice) : 'Nol' }}
+            {{ $grandTotal > 0 ? TerbilangHelper::terbilang($grandTotal) : 'Nol' }}
             Rupiah
         </div>
 
@@ -276,7 +295,7 @@
         <br>
 
         <h2 style="text-align: center; font-size: 24px;">Rp.
-            {{ number_format($totalPrice * 0.11 + $totalPrice, 0, '.', ',') }}</h2>
+            {{ number_format($grandTotal, 0, '.', ',') }}</h2>
 
         <br>
 

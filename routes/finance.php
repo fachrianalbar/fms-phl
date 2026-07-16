@@ -20,6 +20,7 @@ Route::prefix('finance')->name('finance.')->group(function () {
     Route::post('pdf-vendor-payment-multi', [VendorPaymentController::class, 'pdfVendorPaymentMulti'])->name('vendor-payment.pdf-multi');
     Route::post('pdf-order-payment-multi', [OrderPaymentController::class, 'pdfOrderPaymentMulti'])->name('order-payment.pdf-multi');
     Route::post('invoice/{id}/payment', [InvoiceController::class, 'processPayment'])->name('invoice.process-payment');
+    Route::post('invoice/recalculate-all', [InvoiceController::class, 'recalculateAll'])->name('invoice.recalculate-all');
     Route::post('invoice/{id}/recalculate', [InvoiceController::class, 'recalculate'])->name('invoice.recalculate');
     Route::post('invoice/{id}/update-number', [InvoiceController::class, 'updateInvoiceNumber'])->name('invoice.update-number');
     Route::get('invoice-payment/export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('invoice-payment.export-pdf');

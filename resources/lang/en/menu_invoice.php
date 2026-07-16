@@ -20,6 +20,7 @@ return [
     'billing_address' => 'Billing Address',
     'notes' => 'Notes',
     'use_ppn' => 'Use PPN',
+    'use_pph' => 'Use PPh',
     'data_pic' => 'PIC Data',
     'add' => 'Add',
     'edit' => 'Edit',

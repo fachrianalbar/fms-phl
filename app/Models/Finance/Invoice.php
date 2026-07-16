@@ -32,7 +32,9 @@ class Invoice extends Model
         'notes',
         'invoiceAmount',
         'ppnAmount',
+        'pphAmount',
         'usePpn',
+        'usePph',
         'customerCode',
         'status',
     ];
@@ -40,7 +42,9 @@ class Invoice extends Model
     protected $casts = [
         'invoiceAmount' => 'integer',
         'ppnAmount' => 'integer',
+        'pphAmount' => 'integer',
         'usePpn' => 'boolean',
+        'usePph' => 'boolean',
         'status' => 'integer',
     ];
 

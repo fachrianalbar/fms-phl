@@ -110,6 +110,14 @@ use Carbon\Carbon;
                 <label class="form-check-label" for="usePpn">{{ __('menu_invoice.use_ppn') }}</label>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="form-check form-switch">
+                <input type="hidden" name="usePph" value="0">
+                <input class="form-check-input" type="checkbox" role="switch" id="usePph" name="usePph"
+                    value="1" {{ $data->usePph ? 'checked' : '' }}>
+                <label class="form-check-label" for="usePph">{{ __('menu_invoice.use_pph') }}</label>
+            </div>
+        </div>
     </div>
 
     <div class="row mt-4">

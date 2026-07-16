@@ -174,7 +174,7 @@ class InvoicePaymentController extends Controller
                     return $bank;
                 })
                 ->addColumn('totalBilling', function ($row) {
-                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
 
                     return ''.number_format($totalBilling, 0, ',', '.');
                 })
@@ -208,7 +208,7 @@ class InvoicePaymentController extends Controller
                 })
                 ->addColumn('statusPayment', function ($row) {
                     $status = '';
-                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0);
+                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
                     $totalPaid = 0;
                     foreach ($row->payments as $item) {
                         $totalPaid += $item->amount;

@@ -20,6 +20,7 @@ return [
     'billing_address' => 'Alamat Penagihan',
     'notes' => 'Catatan',
     'use_ppn' => 'Gunakan PPN',
+    'use_pph' => 'Gunakan PPh',
     'data_pic' => 'Data PIC',
     'add' => 'Tambah',
     'edit' => 'Ubah',

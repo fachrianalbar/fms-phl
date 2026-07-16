@@ -3,7 +3,7 @@ use Carbon\Carbon;
 @endphp
 @foreach($data as $index => $invoice)
 @php
-$totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0);
+$totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
 $totalPayment = 0;
 $receivingBank = '';
 

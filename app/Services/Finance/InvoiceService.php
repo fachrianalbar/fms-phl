@@ -33,7 +33,7 @@ class InvoiceService
 
     public function findAll()
     {
-        return $this->service->with(['details'])->orderBy('created_at', 'desc')->get();
+        return $this->service->with(['details', 'payments'])->orderBy('created_at', 'desc')->get();
     }
 
     public function getById($id)
@@ -120,6 +120,7 @@ class InvoiceService
         $this->ensureOrdersBelongToCustomer($orderCodes, $request->customerCode);
 
         $usePpn = (bool) ($request->input('usePpn') ?? false);
+        $usePph = (bool) ($request->input('usePph') ?? false);
         $invoiceNumber = $this->resolveInvoiceNumber(
             $request->invoiceNumber,
             $request->customerCode,
@@ -136,6 +137,7 @@ class InvoiceService
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
             'notes' => $request->notes,
             'usePpn' => $usePpn,
+            'usePph' => $usePph,
             'status' => Invoice::STATUS_CREATE,
         ]);
 
@@ -154,17 +156,18 @@ class InvoiceService
                 $this->logActivity('Invoice Detail', $detail, 'Create');
             }
         }
-        // Update invoiceAmount (subtotal) and ppnAmount after creating invoice details
+        // Update invoiceAmount (subtotal), ppnAmount and pphAmount after creating invoice details
         $totals = $this->calculateInvoiceAmount($data);
         $this->service->where('id', $data->id)->update([
             'invoiceAmount' => $totals['subtotal'],
             'ppnAmount' => $totals['ppn'],
+            'pphAmount' => $totals['pph'],
         ]);
 
         // Update invoice status after recalc
         try {
             $sumPayments = (int) $this->service->find($data->id)->payments()->sum('amount');
-            $invoiceTotal = (int) ($totals['subtotal'] + $totals['ppn']);
+            $invoiceTotal = (int) $totals['total'];
             $nextStatus = Invoice::STATUS_CREATE;
             if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
                 $nextStatus = Invoice::STATUS_FULL;
@@ -174,20 +177,6 @@ class InvoiceService
             $this->service->where('id', $data->id)->update(['status' => $nextStatus]);
         } catch (\Exception $e) {
             logger()->error('Failed to update invoice status after recalculation for invoice ' . $data->code . ': ' . $e->getMessage());
-        }
-        // Update invoice status after recalc
-        try {
-            $sumPayments = (int) $this->service->find($data->id)->payments()->sum('amount');
-            $invoiceTotal = (int) ($totals['subtotal'] + $totals['ppn']);
-            $nextStatus = Invoice::STATUS_CREATE;
-            if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
-                $nextStatus = Invoice::STATUS_FULL;
-            } elseif ($sumPayments > 0) {
-                $nextStatus = Invoice::STATUS_PARTIAL;
-            }
-            $this->service->where('id', $data->id)->update(['status' => $nextStatus]);
-        } catch (\Exception $e) {
-            logger()->error('Failed to update invoice status after recalc for invoice ' . $data->code . ': ' . $e->getMessage());
         }
         $this->logActivity($title, $data, 'Create');
 
@@ -206,6 +195,7 @@ class InvoiceService
             'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
             'notes' => $request->notes,
             'usePpn' => (bool) ($request->input('usePpn') ?? false),
+            'usePph' => (bool) ($request->input('usePph') ?? false),
         ]);
 
         // Recalculate invoice amount after update
@@ -214,6 +204,7 @@ class InvoiceService
         $this->service->where('id', $data->id)->update([
             'invoiceAmount' => $totals['subtotal'],
             'ppnAmount' => $totals['ppn'],
+            'pphAmount' => $totals['pph'],
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
@@ -285,12 +276,13 @@ class InvoiceService
             $this->service->where('id', $invoice->id)->update([
                 'invoiceAmount' => $totals['subtotal'],
                 'ppnAmount' => $totals['ppn'],
+                'pphAmount' => $totals['pph'],
             ]);
 
             // Update invoice status after recalc
             try {
                 $sumPayments = (int) $this->service->find($invoice->id)->payments()->sum('amount');
-                $invoiceTotal = (int) ($totals['subtotal'] + $totals['ppn']);
+                $invoiceTotal = (int) $totals['total'];
                 $nextStatus = Invoice::STATUS_CREATE;
                 if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
                     $nextStatus = Invoice::STATUS_FULL;
@@ -325,12 +317,13 @@ class InvoiceService
             $this->service->where('id', $invoice->id)->update([
                 'invoiceAmount' => $totals['subtotal'],
                 'ppnAmount' => $totals['ppn'],
+                'pphAmount' => $totals['pph'],
             ]);
 
             // Update invoice status after recalc
             try {
                 $sumPayments = (int) $this->service->find($invoice->id)->payments()->sum('amount');
-                $invoiceTotal = (int) ($totals['subtotal'] + $totals['ppn']);
+                $invoiceTotal = (int) $totals['total'];
                 $nextStatus = Invoice::STATUS_CREATE;
                 if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
                     $nextStatus = Invoice::STATUS_FULL;
@@ -389,11 +382,18 @@ class InvoiceService
             $ppn = $subtotal * ($invoice->customer->ppn / 100);
         }
 
-        $total = (int) round($subtotal + $ppn);
+        $pph = 0;
+        $usePph = $invoice->usePph ?? (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
+        if ($usePph && $invoice->customer && isset($invoice->customer->pph)) {
+            $pph = $subtotal * ($invoice->customer->pph / 100);
+        }
+
+        $total = (int) round($subtotal + $ppn - $pph);
 
         return [
             'subtotal' => (int) round($subtotal),
             'ppn' => (int) round($ppn),
+            'pph' => (int) round($pph),
             'total' => $total,
         ];
     }
@@ -442,6 +442,18 @@ class InvoiceService
         // Delete all invoice payments for this invoice
         $invoice->payments()->delete();
 
+        // Sync usePpn and usePph to customer defaults if they are not already set (or always sync to customer if customer has them)
+        $usePpn = $invoice->usePpn || (isset($invoice->customer->ppn) && $invoice->customer->ppn > 0);
+        $usePph = $invoice->usePph || (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
+
+        $this->service->where('id', $invoiceId)->update([
+            'usePpn' => $usePpn,
+            'usePph' => $usePph,
+        ]);
+
+        $invoice->usePpn = $usePpn;
+        $invoice->usePph = $usePph;
+
         // Calculate new amounts
         $totals = $this->calculateInvoiceAmount($invoice);
 
@@ -450,6 +462,7 @@ class InvoiceService
             'status' => Invoice::STATUS_CREATE, // Reset to CREATE status
             'invoiceAmount' => $totals['subtotal'],
             'ppnAmount' => $totals['ppn'],
+            'pphAmount' => $totals['pph'],
         ]);
 
         $this->logActivity('Invoice', $invoice, 'Recalculate Amount and Cancel Payments');
@@ -457,6 +470,7 @@ class InvoiceService
         return [
             'invoiceAmount' => $totals['subtotal'],
             'ppnAmount' => $totals['ppn'],
+            'pphAmount' => $totals['pph'],
             'total' => $totals['total'],
         ];
     }

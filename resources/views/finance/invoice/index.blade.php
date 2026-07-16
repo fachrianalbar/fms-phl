@@ -24,9 +24,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>{{ $title }} Data</h4>
-
-            <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
-
+            <div>
+                @if (Auth::user()->roleCode === 'SPRADMIN')
+                    <button type="button" class="btn btn-warning me-2" id="btn-recalculate-all">
+                        <i class="mdi mdi-sync me-1"></i> Hitung Ulang Semua Invoice
+                    </button>
+                @endif
+                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+            </div>
         </div>
         <div class="card-body">
             @include('partials.alert')
@@ -43,6 +48,7 @@
                             <th>{{ __('menu_invoice.total_order') }}</th>
                             <th>{{ __('menu_invoice.price') }}</th>
                             <th>{{ __('menu_invoice.ppn') }}</th>
+                            <th>PPh</th>
                             <th>{{ __('menu_invoice.total_billing') }}</th>
                             <th>Status</th>
                         </tr>
@@ -59,59 +65,99 @@
 <!-- Modal Pembayaran Invoice -->
 <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 12px; overflow: hidden;">
             <form id="payment-form" method="POST" enctype="multipart/form-data">
                 @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title" id="paymentModalLabel">Proses Pembayaran Invoice</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <div class="modal-header bg-primary-subtle py-3 px-4 border-0">
+                    <h5 class="modal-title fw-bold text-primary" id="paymentModalLabel">
+                        <i class="mdi mdi-cash-register me-2 fs-18"></i>Proses Pembayaran Invoice
+                    </h5>
+                    <button type="button" class="btn-close text-primary" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <input type="hidden" name="invoiceId" id="invoiceId">
                     <input type="hidden" name="invoiceCode" id="invoiceCode">
 
-                    <div class="mb-3">
-                        <label class="form-label">Invoice Number</label>
-                        <input type="text" class="form-control" id="invoiceNumber" readonly>
+                    <!-- Info Invoice Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                        <div>
+                            <span class="text-muted d-block" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Nomor Invoice</span>
+                            <span class="fw-bold fs-15 text-primary" id="invoiceNumberText">-</span>
+                        </div>
+                        <div class="text-end">
+                            <span class="text-muted d-block" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">Tanggal</span>
+                            <span class="fw-semibold text-dark" id="currentDateText">-</span>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Total Tagihan (Invoice Amount + PPN)</label>
-                        <input type="text" class="form-control" id="totalBilling" readonly>
+                    <!-- Summary Perhitungan (Subtotal, PPN, PPh, Grand Total, Terbayar, Sisa) -->
+                    <div class="bg-light rounded p-3 mb-4 border" style="border-radius: 8px;">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Sub Total</span>
+                            <span class="fw-semibold text-dark" id="summarySubtotal">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2" id="summaryPpnRow">
+                            <span class="text-muted" id="labelPpn">PPN</span>
+                            <span class="fw-semibold text-success" id="summaryPpn">+0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2" id="summaryPphRow">
+                            <span class="text-muted" id="labelPph">PPh</span>
+                            <span class="fw-semibold text-danger" id="summaryPph">-0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 pt-2 border-top">
+                            <span class="text-muted">Grand Total</span>
+                            <span class="fw-semibold text-dark" id="summaryGrandTotal">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total Terbayar</span>
+                            <span class="fw-semibold text-success" id="summaryTotalPaid">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between pt-2 border-top">
+                            <span class="fw-bold text-dark">Sisa Tagihan</span>
+                            <span class="fw-bold text-primary fs-16" id="summaryRemaining">0</span>
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="paymentDate">Tanggal Pembayaran <span class="text-danger">*</span></label>
-                        <input type="date" class="form-control" name="paymentDate" id="paymentDate" required>
-                    </div>
+                    <!-- Form Inputs -->
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="paymentDate">Tanggal Pembayaran <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="paymentDate" id="paymentDate" required style="border-radius: 6px;">
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="amount">Jumlah Pembayaran <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" name="amount" id="amount" readonly required>
-                    </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold" for="amount_display">Jumlah Pembayaran <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0" style="border-radius: 6px 0 0 6px;">Rp</span>
+                                <input type="text" class="form-control border-start-0" id="amount_display" required style="border-radius: 0 6px 6px 0;">
+                                <input type="hidden" name="amount" id="amount" min="1">
+                            </div>
+                            <div class="form-text fs-11 text-muted">Maksimal sisa tagihan: <span id="maxAmountText">0</span></div>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="userBankCode">Bank Tujuan <span class="text-danger">*</span></label>
-                        <select class="form-select" name="userBankCode" id="userBankCode" required>
-                            <option value="">Pilih Bank</option>
-                            <option value="" disabled>-- Loading data bank --</option>
-                        </select>
-                        <small class="form-text text-muted">Data bank akan dimuat otomatis</small>
-                    </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="userBankCode">Bank Tujuan <span class="text-danger">*</span></label>
+                            <select class="form-select" name="userBankCode" id="userBankCode" required style="border-radius: 6px;">
+                                <option value="">Pilih Bank</option>
+                                <option value="" disabled>-- Loading data bank --</option>
+                            </select>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="description">Keterangan</label>
-                        <textarea class="form-control" name="description" id="description" rows="3"></textarea>
-                    </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="description">Keterangan / Catatan</label>
+                            <textarea class="form-control" name="description" id="description" rows="2" placeholder="Tulis catatan pembayaran disini (opsional)..." style="border-radius: 6px;"></textarea>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label" for="paymentReceipt">Bukti Pembayaran</label>
-                        <input type="file" class="form-control" name="paymentReceipt" id="paymentReceipt">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold" for="paymentReceipt">Bukti Pembayaran</label>
+                            <input type="file" class="form-control" name="paymentReceipt" id="paymentReceipt" style="border-radius: 6px;">
+                            <div class="form-text fs-12 text-muted">Upload file bukti pembayaran jika ada (Format: jpg, png, pdf).</div>
+                        </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Proses Pembayaran</button>
+                <div class="modal-footer bg-light border-0 py-3 px-4">
+                    <button type="button" class="btn btn-secondary px-3" data-bs-dismiss="modal" style="border-radius: 6px;">Batal</button>
+                    <button type="submit" class="btn btn-primary px-4" style="border-radius: 6px;">Proses Pembayaran</button>
                 </div>
             </form>
         </div>
@@ -176,6 +222,9 @@
                 },
                 {
                     "data": 'ppn'
+                },
+                {
+                    "data": 'pph'
                 },
                 {
                     "data": 'totalBilling'
@@ -253,14 +302,72 @@
         var invoiceId = $(this).data('id');
         var invoiceCode = $(this).data('invoice-code');
         var invoiceNumber = $(this).data('invoice-number');
-        var total = $(this).data('total');
+        var subtotal = parseFloat($(this).data('subtotal') || 0);
+        var ppn = parseFloat($(this).data('ppn') || 0);
+        var pph = parseFloat($(this).data('pph') || 0);
+        var total = parseFloat($(this).data('total') || 0);
+        var totalPaid = parseFloat($(this).data('total-paid') || 0);
+        var remaining = parseFloat($(this).data('remaining') || 0);
 
         $('#invoiceId').val(invoiceId);
         $('#invoiceCode').val(invoiceCode);
-        $('#invoiceNumber').val(invoiceNumber);
-        $('#totalBilling').val(new Intl.NumberFormat('id-ID').format(total));
-        $('#amount').val(total);
-        $('#paymentDate').val(new Date().toISOString().split('T')[0]);
+        $('#invoiceNumberText').text(invoiceNumber);
+        
+        // Formatter angka id-ID (tanpa Rp)
+        let numFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+        
+        $('#summarySubtotal').text(numFormatter.format(subtotal));
+        
+        if (ppn > 0) {
+            $('#summaryPpnRow').show();
+            $('#summaryPpn').text('+' + numFormatter.format(ppn));
+        } else {
+            $('#summaryPpnRow').hide();
+        }
+        
+        if (pph > 0) {
+            $('#summaryPphRow').show();
+            $('#summaryPph').text('-' + numFormatter.format(pph));
+        } else {
+            $('#summaryPphRow').hide();
+        }
+        
+        $('#summaryGrandTotal').text(numFormatter.format(total));
+        $('#summaryTotalPaid').text(numFormatter.format(totalPaid));
+        $('#summaryRemaining').text(numFormatter.format(remaining));
+        
+        // Set default amount to remaining balance
+        $('#amount').val(remaining);
+        $('#amount').attr('max', remaining);
+        $('#amount_display').val(numFormatter.format(remaining));
+        $('#maxAmountText').text(numFormatter.format(remaining));
+        
+        let today = new Date().toISOString().split('T')[0];
+        $('#paymentDate').val(today);
+        
+        // Format display date
+        let dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+        $('#currentDateText').text(new Date().toLocaleDateString('id-ID', dateOptions));
+        
+        // Handle real-time input formatting for payment amount
+        $(document).off('input', '#amount_display').on('input', '#amount_display', function() {
+            let val = $(this).val().replace(/\D/g, '');
+            if (val === '') {
+                $('#amount').val('');
+                $(this).val('');
+                return;
+            }
+            
+            let num = parseInt(val, 10) || 0;
+            let maxVal = parseFloat($('#amount').attr('max') || 0);
+            if (num > maxVal) {
+                num = maxVal;
+            }
+            
+            $('#amount').val(num);
+            $(this).val(new Intl.NumberFormat('id-ID').format(num));
+        });
+        
         $('#description').val('');
         $('#paymentReceipt').val('');
 
@@ -312,7 +419,10 @@
             icon: "warning",
             buttons: {
                 cancel: "Batal",
-                confirm: "Ya, Hitung Ulang"
+                confirm: {
+                    text: "Ya, Hitung Ulang",
+                    closeModal: false
+                }
             },
             dangerMode: true,
         }).then((willRecalculate) => {
@@ -425,5 +535,45 @@
             }
         });
     });
+
+    @if (Auth::user()->roleCode === 'SPRADMIN')
+    $('#btn-recalculate-all').click(function() {
+        swal({
+            title: "Apakah Anda yakin?",
+            text: "Tindakan ini akan menghitung ulang seluruh subtotal, PPN, dan PPh semua invoice berdasarkan data order dan customer terbaru, serta menyesuaikan kembali status pembayaran mereka.",
+            icon: "warning",
+            buttons: {
+                cancel: "Batal",
+                confirm: {
+                    text: "Ya, Hitung Ulang!",
+                    closeModal: false
+                }
+            },
+            dangerMode: true,
+        }).then((willRecalculate) => {
+            if (willRecalculate) {
+                $.ajax({
+                    url: "{{ route('finance.invoice.recalculate-all') }}",
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    success: function(response) {
+                        swal("Berhasil!", response.message, "success").then(() => {
+                            window.location.reload();
+                        });
+                    },
+                    error: function(xhr) {
+                        let msg = "Terjadi kesalahan saat menghitung ulang invoice.";
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            msg = xhr.responseJSON.message;
+                        }
+                        swal("Gagal!", msg, "error");
+                    }
+                });
+            }
+        });
+    });
+    @endif
 </script>
 @endpush

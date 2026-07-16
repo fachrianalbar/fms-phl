@@ -102,6 +102,14 @@
                         <label class="form-check-label" for="usePpn">{{ __('menu_invoice.use_ppn') }}</label>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="form-check form-switch">
+                        <input type="hidden" name="usePph" value="0">
+                        <input class="form-check-input" type="checkbox" role="switch" id="usePph" name="usePph"
+                            value="1">
+                        <label class="form-check-label" for="usePph">{{ __('menu_invoice.use_pph') }}</label>
+                    </div>
+                </div>
             </div>
 
             <div class="row mt-4">
@@ -366,6 +374,11 @@
             $('#picName').val(data.picName)
             $('#picPhone').val(data.phone)
             $('#billingAddress').val(data.billingAddress)
+
+            // Auto-check PPN & PPh checkboxes based on customer settings
+            $('#usePpn').prop('checked', data.ppn > 0);
+            $('#usePph').prop('checked', data.pph > 0);
+
             let invoiceDate = new Date($("input[name='invoiceDate']").val());
 
             if (!isNaN(invoiceDate.getTime())) {

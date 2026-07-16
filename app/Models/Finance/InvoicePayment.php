@@ -23,8 +23,17 @@ class InvoicePayment extends Model
         'nominal',
         'description',
         'amount',
+        'ppnAmount',
+        'pphAmount',
         'paymentReceipt',
         'userBankCode',
+    ];
+
+    protected $casts = [
+        'nominal' => 'integer',
+        'amount' => 'integer',
+        'ppnAmount' => 'integer',
+        'pphAmount' => 'integer',
     ];
 
     public function userBank()

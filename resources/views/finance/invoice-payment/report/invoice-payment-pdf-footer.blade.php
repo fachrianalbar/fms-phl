@@ -4,7 +4,7 @@ $totalPaymentSum = 0;
 @endphp
 @foreach ($data as $invoice)
 @php
-$totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0);
+$totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
 $totalPayment = 0;
 if (count($invoice->payments) > 0) {
 foreach ($invoice->payments as $item) {
