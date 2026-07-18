@@ -396,6 +396,12 @@ class VendorPaymentController extends Controller
         $paymentHistories = collect($vendorPayment?->paymentHistory ?? []);
         $paymentHistoryTotal = $paymentHistories->sum('amount');
 
+        $userBankCode = $vendorPayment?->user_bank_code;
+        $userBank = null;
+        if ($userBankCode) {
+            $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
+        }
+
         // Tentukan template PDF berdasarkan customer company format
         $pdfTemplate = 'finance.vendor-payment.pdf.general-phl'; // Default template
 
@@ -428,6 +434,7 @@ class VendorPaymentController extends Controller
                 ->with('order', $order)
                 ->with('customer', $customer)
                 ->with('company', $company)
+                ->with('userBank', $userBank)
         );
 
         return $mpdf->Output('Nota-Pembayaran-' . $order->code . '.pdf', 'I');
@@ -511,7 +518,15 @@ class VendorPaymentController extends Controller
         $totalGrandTotal = 0;
 
         foreach ($orders as $order) {
-            $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
+            $qty = (float) ($order->qty ?? 0);
+            $unitPrice = (float) ($order->vendorPriceSingle ?? ($qty > 0 ? ($order->vendorPrice ?? 0) / $qty : ($order->vendorPrice ?? 0)));
+            if ($unitPrice <= 0) {
+                $unitPrice = (float) ($order->route->vendorPrice ?? $order->route->personalVendorPrice ?? 0);
+            }
+            $subtotal = (float) ($order->vendorPrice ?? ($qty * $unitPrice));
+            if ($subtotal <= 0 && $qty > 0) {
+                $subtotal = $qty * $unitPrice;
+            }
             $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
             $totalBefore = $subtotal + $additionalCost;
             $pph = $order->fleet->company->pph ?? 0;

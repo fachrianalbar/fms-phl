@@ -103,6 +103,17 @@
             </tr>
         </thead>
         <tbody>
+            @php
+                $qty = (float) ($order->qty ?? 0);
+                $unitPrice = (float) ($order->vendorPriceSingle ?? ($qty > 0 ? ($order->vendorPrice ?? 0) / $qty : ($order->vendorPrice ?? 0)));
+                if ($unitPrice <= 0) {
+                    $unitPrice = (float) ($order->route->vendorPrice ?? $order->route->personalVendorPrice ?? 0);
+                }
+                $subtotal = (float) ($order->vendorPrice ?? ($qty * $unitPrice));
+                if ($subtotal <= 0 && $qty > 0) {
+                    $subtotal = $qty * $unitPrice;
+                }
+            @endphp
             <tr>
                 <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
                 <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
@@ -115,14 +126,13 @@
                 </td>
                 <td>{{ $order->route->originLocation->name ?? '-' }}</td>
                 <td>{{ $order->route->destinationLocation->name ?? '-' }}</td>
-                <td>{{ number_format($order->qty ?? 0, 0, ',', '.') }}</td>
-                <td>{{ number_format($order->route->personalVendorPrice ?? 0, 0, ',', '.') }}</td>
+                <td>{{ number_format($qty, 0, ',', '.') }}</td>
+                <td>{{ number_format($unitPrice, 0, ',', '.') }}</td>
                 <td style="text-align: right;">
-                    {{ number_format(($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0), 0, ',', '.') }}
+                    {{ number_format($subtotal, 0, ',', '.') }}
                 </td>
             </tr>
             @php
-                $subtotal = ($order->qty ?? 0) * ($order->route->personalVendorPrice ?? 0);
                 $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
                 $totalBefore = $subtotal + $additionalCost;
                 $pph = $order->fleet->company->pph ?? 0;
@@ -188,11 +198,26 @@
         </tbody>
     </table>
 
-    <!-- Tanda Tangan -->
-    <div class="mt-60 text-right">
-        <br><br><br>
-        <p class="" style="font-weight: bold; font-size: 11pt;">EVI IRAWATI</p>
-    </div>
+    <!-- Footer Section: Rekening & Tanda Tangan -->
+    <table style="width: 100%; border: none; margin-top: 20px;">
+        <tr>
+            <td style="width: 60%; vertical-align: top; border: none; padding: 0; text-align: left;">
+                @if(isset($userBank) && $userBank)
+                    <div style="font-size: 10pt; line-height: 1.4;">
+                        <strong>Pembayaran ke Rek :</strong><br>
+                        <strong>{{ $userBank->bank->name ?? '' }}</strong><br>
+                        {{ $userBank->accountNumber ?? $userBank->accountNUmber ?? '' }} a.n {{ $userBank->accountName ?? '' }}
+                    </div>
+                @endif
+            </td>
+            <td style="width: 40%; vertical-align: bottom; border: none; text-align: right; padding: 0;">
+                <div style="font-weight: bold; font-size: 11pt;">
+                    <br><br><br>
+                    EVI IRAWATI
+                </div>
+            </td>
+        </tr>
+    </table>
 
 </body>
 

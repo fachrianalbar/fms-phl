@@ -121,14 +121,19 @@
                     $isOrderPaymentPdf = $isOrderPaymentPdf ?? false;
                     $qty = (float) ($order->qty ?? 0);
                     $routeAmount = (float) ($order->routeAmount ?? 0);
-                    $unitPrice = $isOrderPaymentPdf
-                        ? (float) ($order->price ?? ($qty > 0 ? $routeAmount / $qty : $routeAmount))
-                        : (float) ($order->route->personalVendorPrice ?? 0);
-                    $subtotal = $isOrderPaymentPdf ? $routeAmount : $qty * $unitPrice;
-                    
                     if ($isOrderPaymentPdf) {
+                        $unitPrice = (float) ($order->price ?? ($qty > 0 ? $routeAmount / $qty : $routeAmount));
+                        $subtotal = $routeAmount;
                         $additionalCost = $order->cost ? $order->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal') : 0;
                     } else {
+                        $unitPrice = (float) ($order->vendorPriceSingle ?? ($qty > 0 ? ($order->vendorPrice ?? 0) / $qty : ($order->vendorPrice ?? 0)));
+                        if ($unitPrice <= 0) {
+                            $unitPrice = (float) ($order->route->vendorPrice ?? $order->route->personalVendorPrice ?? 0);
+                        }
+                        $subtotal = (float) ($order->vendorPrice ?? ($qty * $unitPrice));
+                        if ($subtotal <= 0 && $qty > 0) {
+                            $subtotal = $qty * $unitPrice;
+                        }
                         $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
                     }
                     
@@ -224,11 +229,26 @@
         </tbody>
     </table>
 
-    <!-- Tanda Tangan -->
-    <div class="mt-60 text-right">
-        <br><br><br>
-        <p class="" style="font-weight: bold; font-size: 11pt;">EVI IRAWATI</p>
-    </div>
+    <!-- Footer Section: Rekening & Tanda Tangan -->
+    <table style="width: 100%; border: none; margin-top: 20px;">
+        <tr>
+            <td style="width: 60%; vertical-align: top; border: none; padding: 0; text-align: left;">
+                @if(isset($userBank) && $userBank)
+                    <div style="font-size: 10pt; line-height: 1.4;">
+                        <strong>Pembayaran ke Rek :</strong><br>
+                        <strong>{{ $userBank->bank->name ?? '' }}</strong><br>
+                        {{ $userBank->accountNumber ?? $userBank->accountNUmber ?? '' }} a.n {{ $userBank->accountName ?? '' }}
+                    </div>
+                @endif
+            </td>
+            <td style="width: 40%; vertical-align: bottom; border: none; text-align: right; padding: 0;">
+                <div style="font-weight: bold; font-size: 11pt;">
+                    <br><br><br>
+                    EVI IRAWATI
+                </div>
+            </td>
+        </tr>
+    </table>
 
 </body>
 
