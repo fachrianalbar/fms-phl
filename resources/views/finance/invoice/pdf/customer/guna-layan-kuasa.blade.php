@@ -130,7 +130,7 @@
                             return $item->materialQty * $item->materialQty2;
                         });
 
-                        $totalPrice += $total * ($detail->order->route->price ?? 0);
+                        $totalPrice += $total * ($detail->order->price ?? 0);
 
                     @endphp
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
@@ -181,10 +181,10 @@
                         {{ number_format($total, 0, ',', '.') }}</td>
                     {{-- Tarif / kgs --}}
                     <td rowspan="{{ $detail->order->orderMaterial->count() }}">
-                        {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
+                        {{ number_format($detail->order->price ?? 0, 0, ',', '.') }}</td>
                     {{-- Ongkos Angkut --}}
                     <td rowspan="{{ $detail->order->orderMaterial->count() }}" class="text-right">
-                        {{ number_format($total * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                        {{ number_format($total * ($detail->order->price ?? 0), 0, ',', '.') }}
                     </td>
                     @if ($detail->order->orderMaterial->count() > 1)
                         @foreach ($detail->order->orderMaterial->skip(1) as $material)

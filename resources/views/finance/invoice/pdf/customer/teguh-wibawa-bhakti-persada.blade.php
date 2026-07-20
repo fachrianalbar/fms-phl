@@ -59,7 +59,7 @@
 
         $totalPrice = 0;
         foreach ($data->details as $detail) {
-            $totalPrice += $detail->order->route->price * $detail->order->qty;
+            $totalPrice += $detail->order->price * $detail->order->qty;
         }
     @endphp
 
@@ -92,7 +92,7 @@
                     Tgl. {{ Carbon::parse($detail->order->orderDate)->format('d-m-Y') }}
                     = {{ $detail->order->fleet->plateNumber ?? '-' }}
                     = {{ $detail->order->qty }} x
-                    {{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }},-
+                    {{ number_format($detail->order->price ?? 0, 0, ',', '.') }},-
                 </td>
             </tr>
         @endforeach

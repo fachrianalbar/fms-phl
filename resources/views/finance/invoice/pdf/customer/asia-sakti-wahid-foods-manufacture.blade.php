@@ -137,11 +137,11 @@
                         @endforeach
                     </td>
                     <td>{{ $detail->order->qty }}</td>
-                    <td>{{ number_format($detail->order->route->price ?? 0, 0, ',', '.') }}</td>
-                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0), 0, ',', '.') }}
+                    <td>{{ number_format($detail->order->price ?? 0, 0, ',', '.') }}</td>
+                    <td>{{ number_format(($detail->order->qty ?? 0) * ($detail->order->price ?? 0), 0, ',', '.') }}
                 </tr>
                 @php
-                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->route->price ?? 0);
+                    $totalPrice += ($detail->order->qty ?? 0) * ($detail->order->price ?? 0);
                 @endphp
 
                 @foreach ($detail->order->onChargeCost as $cost)
