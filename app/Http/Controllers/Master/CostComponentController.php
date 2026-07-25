@@ -60,6 +60,7 @@ class CostComponentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
+            'type' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -114,6 +115,7 @@ class CostComponentController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
+            'type' => 'required',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);

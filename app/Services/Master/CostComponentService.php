@@ -39,7 +39,7 @@ class CostComponentService
     {
         $data = $this->service->create([
             'name' => $request->name,
-            // 'type' => $request->type,
+            'type' => $request->type,
             'price' => $request->price,
             'code' => GenerateCode::generateCode('TCC'),
         ]);
@@ -58,7 +58,7 @@ class CostComponentService
         // Update cost component
         $this->service->where('id', $id)->update([
             'name' => $request->name,
-            // 'type' => $request->type,
+            'type' => $request->type,
             'price' => $newPrice,
         ]);
 
