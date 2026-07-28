@@ -195,6 +195,10 @@
                 {
                     "orderable": false,
                     "targets": [0, 1, 2]
+                },
+                {
+                    "defaultContent": "-",
+                    "targets": "_all"
                 }
             ],
             "order": [

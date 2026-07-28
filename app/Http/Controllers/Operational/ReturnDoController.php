@@ -125,6 +125,16 @@ class ReturnDoController extends Controller
                     return $destination;
                 })
 
+                ->editColumn('driver.name', function ($row) {
+                    $driver = '';
+
+                    if (isset($row->driver->name)) {
+                        $driver = $row->driver->name;
+                    }
+
+                    return $driver;
+                })
+
                 ->editColumn('returnDate', function ($row) {
                     // $returnDate = '';
 
@@ -179,7 +189,7 @@ class ReturnDoController extends Controller
 
                     return $buttons ?: '-';
                 })
-                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
+                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'driver.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
                 ->toJson();
         }
     }
