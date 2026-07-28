@@ -329,44 +329,169 @@
         #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder {
             color: #94a3b8 !important;
         }
-        #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__arrow,
-        #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__arrow {
+        /* ── Main processed table premium styling ── */
+        #dtProcessed {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+        #dtProcessed thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 13px 12px;
+            border-bottom: 2px solid #e2e8f0;
+            border-top: none;
+        }
+        #dtProcessed tbody tr {
+            transition: all 0.15s ease;
+        }
+        #dtProcessed tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+        .avatar-badge-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
+            flex-shrink: 0;
+        }
+        .btn-icon {
+            border-radius: 8px !important;
+            padding: 6px 10px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .btn-icon:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ── Select2 Theme Matching ── */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            height: 38px !important;
+            display: flex !important;
+            align-items: center !important;
+            background-color: #ffffff !important;
+            transition: all 0.2s ease !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #334155 !important;
+            font-size: 13px !important;
+            line-height: normal !important;
+            padding-left: 10px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8 !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 36px !important;
             right: 8px !important;
+        }
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
+        }
+        .select2-dropdown {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden !important;
+        }
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+        .select2-container--default .select2-search--dropdown .select2-search__field {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 6px !important;
+            padding: 6px 10px !important;
         }
     </style>
 @endpush
 
 @section('content')
     <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">{{ $title }} Data</h4>
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="mdi mdi-cash-register text-primary fs-20"></i>
+                        {{ $title }} Data
+                    </h4>
+                    <small class="text-muted">Kelola dan lihat seluruh riwayat proses gaji supir</small>
+                </div>
 
                 <div class="d-flex align-items-center gap-2">
                     <button type="button" class="btn btn-process" data-bs-toggle="modal" data-bs-target="#processSalaryModal">
-                        <i class="mdi mdi-cash-plus me-1"></i> Proses Gaji
+                        <i class="mdi mdi-cash-plus me-1"></i> Proses Gaji Driver
                     </button>
                 </div>
             </div>
 
-            <div class="card-body">
+            <div class="card-body p-4">
                 @include('partials.alert')
+
+                {{-- Filter Bar --}}
+                <div class="card border-0 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    <div class="card-body p-3">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Filter Supir</label>
+                                <select id="filterTableDriver" class="form-select form-select-sm select2-filter" style="width:100%;">
+                                    <option value="">Semua Supir</option>
+                                    @foreach ($driver as $item)
+                                        <option value="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Dari Tanggal</label>
+                                <input type="text" id="filterTableStartDate" class="form-control form-control-sm" placeholder="Pilih Tanggal Mulai" style="border-radius:8px; background:#fff;">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Sampai Tanggal</label>
+                                <input type="text" id="filterTableEndDate" class="form-control form-control-sm" placeholder="Pilih Tanggal Akhir" style="border-radius:8px; background:#fff;">
+                            </div>
+                            <div class="col-md-2 d-flex gap-2">
+                                <button type="button" id="btnFilterTable" class="btn btn-sm btn-primary w-100" style="border-radius:8px; font-weight:600;">
+                                    <i class="mdi mdi-filter me-1"></i> Filter
+                                </button>
+                                <button type="button" id="btnResetTableFilter" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;" title="Reset Filter">
+                                    <i class="mdi mdi-refresh"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 {{-- Main datatable: Processed salaries --}}
                 <div class="table-responsive custom-scrollbar">
-                    <table class="table table-bordered table-striped w-100" id="dtProcessed">
+                    <table class="table align-middle w-100 mb-0" id="dtProcessed">
                         <thead>
                             <tr>
-                                <th style="width: 4%;">No</th>
-                                <th style="width: 11%;">Kode</th>
-                                <th style="width: 17%;">Nama Supir</th>
-                                <th style="width: 10%;">Dari</th>
-                                <th style="width: 10%;">Sampai</th>
-                                <th style="width: 14%;">Total Gaji</th>
-                                <th style="width: 12%;">Penyesuaian</th>
-                                <th style="width: 14%;">Grand Total</th>
-                                <th style="width: 8%;">Aksi</th>
+                                <th style="width: 8%;" class="text-center">Aksi</th>
+                                <th style="width: 4%;" class="text-center">No</th>
+                                <th style="width: 12%;">Kode Gaji</th>
+                                <th style="width: 22%;">Nama Supir</th>
+                                <th style="width: 16%;" class="text-center">Periode Gaji</th>
+                                <th style="width: 13%;" class="text-end">Gaji Order</th>
+                                <th style="width: 11%;" class="text-end">Penyesuaian</th>
+                                <th style="width: 14%;" class="text-end">Grand Total</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -441,7 +566,7 @@
                             </div>
                         </div>
 
-                        {{-- Section 2: Order preview --}}
+                        {{-- Section 2: Order preview & manual adjustment --}}
                         <div id="orderPreviewSection" style="display: none;">
                             <div class="modal-section">
                                 <div class="modal-section-title">
@@ -449,19 +574,29 @@
                                     Daftar Order
                                     <span class="ms-auto badge bg-primary rounded-pill" id="orderCount">0 order</span>
                                 </div>
-                                <div class="table-responsive custom-scrollbar" style="max-height: 280px;">
-                                    <table class="table table-bordered table-sm mb-0" id="orderPreviewTable">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 5%;">No</th>
-                                                <th style="width: 12%;">Tanggal</th>
-                                                <th style="width: 14%;">No. Polisi</th>
-                                                <th style="width: 45%;">Rute</th>
-                                                <th style="width: 16%;" class="text-end">Gaji</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
+                                <div id="orderTableContainer">
+                                    <div class="table-responsive custom-scrollbar" style="max-height: 280px;">
+                                        <table class="table table-bordered table-sm mb-0" id="orderPreviewTable">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 5%;">No</th>
+                                                    <th style="width: 22%;">No. Shipment / Order</th>
+                                                    <th style="width: 11%;">Tanggal</th>
+                                                    <th style="width: 12%;">No. Polisi</th>
+                                                    <th style="width: 35%;">Rute</th>
+                                                    <th style="width: 15%;" class="text-end">Gaji</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="noOrderAlert" class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                    <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
+                                    <div>
+                                        <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
+                                        <div class="small mt-1 text-opacity-75">Anda tetap dapat memproses gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -510,16 +645,6 @@
                             <div class="modal-section" style="margin-bottom: 0;">
                                 <label class="form-label fw-semibold">Catatan <span class="text-muted fw-normal">(Opsional)</span></label>
                                 <textarea class="form-control" name="notes" rows="2" placeholder="Catatan tambahan..." style="border-radius:8px;"></textarea>
-                            </div>
-                        </div>
-
-                        {{-- No data message --}}
-                        <div id="noOrderMessage" style="display: none;">
-                            <div class="modal-section">
-                                <div class="empty-state">
-                                    <i class="mdi mdi-truck-remove-outline"></i>
-                                    <p>Tidak ada order dengan komponen gaji untuk driver dan periode yang dipilih.</p>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -602,7 +727,7 @@
                             </div>
                         </div>
 
-                        {{-- Section 2: Order preview --}}
+                        {{-- Section 2: Order preview & manual adjustment --}}
                         <div id="editOrderPreviewSection" style="display: none;">
                             <div class="modal-section">
                                 <div class="modal-section-title">
@@ -610,19 +735,29 @@
                                     Daftar Order
                                     <span class="ms-auto badge bg-primary rounded-pill" id="editOrderCount">0 order</span>
                                 </div>
-                                <div class="table-responsive custom-scrollbar" style="max-height: 280px;">
-                                    <table class="table table-bordered table-sm mb-0" id="editOrderPreviewTable">
-                                        <thead>
-                                            <tr>
-                                                <th style="width: 5%;">No</th>
-                                                <th style="width: 12%;">Tanggal</th>
-                                                <th style="width: 14%;">No. Polisi</th>
-                                                <th style="width: 45%;">Rute</th>
-                                                <th style="width: 16%;" class="text-end">Gaji</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody></tbody>
-                                    </table>
+                                <div id="editOrderTableContainer">
+                                    <div class="table-responsive custom-scrollbar" style="max-height: 280px;">
+                                        <table class="table table-bordered table-sm mb-0" id="editOrderPreviewTable">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width: 5%;">No</th>
+                                                    <th style="width: 22%;">No. Shipment / Order</th>
+                                                    <th style="width: 11%;">Tanggal</th>
+                                                    <th style="width: 12%;">No. Polisi</th>
+                                                    <th style="width: 35%;">Rute</th>
+                                                    <th style="width: 15%;" class="text-end">Gaji</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div id="editNoOrderAlert" class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                    <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
+                                    <div>
+                                        <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
+                                        <div class="small mt-1 text-opacity-75">Anda tetap dapat menyimpan perubahan gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -673,16 +808,6 @@
                                 <textarea class="form-control" name="notes" id="editNotes" rows="2" placeholder="Catatan tambahan..." style="border-radius:8px;"></textarea>
                             </div>
                         </div>
-
-                        {{-- No data message --}}
-                        <div id="editNoOrderMessage" style="display: none;">
-                            <div class="modal-section">
-                                <div class="empty-state">
-                                    <i class="mdi mdi-truck-remove-outline"></i>
-                                    <p>Tidak ada order dengan komponen gaji untuk driver dan periode yang dipilih.</p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     <div class="modal-footer">
@@ -723,11 +848,34 @@
     <script>
         let totalSalaryFromOrders = 0;
         let startPicker, endPicker;
+        let filterTableStartPicker, filterTableEndPicker;
         
         let editTotalSalaryFromOrders = 0;
         let editStartPicker, editEndPicker;
 
         $(document).ready(function() {
+
+            // Initialize Filter Bar inputs
+            $('#filterTableDriver').select2({
+                placeholder: 'Semua Supir',
+                allowClear: true
+            });
+
+            filterTableStartPicker = flatpickr('#filterTableStartDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    if (filterTableEndPicker) filterTableEndPicker.set('minDate', dateStr);
+                }
+            });
+
+            filterTableEndPicker = flatpickr('#filterTableEndDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    if (filterTableStartPicker) filterTableStartPicker.set('maxDate', dateStr);
+                }
+            });
 
             // ============================================================
             // Initialize flatpickr & select2 inside modal
@@ -782,7 +930,8 @@
             $('#processSalaryModal').on('hidden.bs.modal', function () {
                 totalSalaryFromOrders = 0;
                 $('#orderPreviewSection').hide();
-                $('#noOrderMessage').hide();
+                $('#noOrderAlert').hide();
+                $('#orderTableContainer').show();
                 $('#btnSubmitSalary').hide();
                 $('#orderPreviewTable tbody').html('');
                 $('#adjustmentsContainer').html(
@@ -804,7 +953,8 @@
             $('#editSalaryModal').on('hidden.bs.modal', function () {
                 editTotalSalaryFromOrders = 0;
                 $('#editOrderPreviewSection').hide();
-                $('#editNoOrderMessage').hide();
+                $('#editNoOrderAlert').hide();
+                $('#editOrderTableContainer').show();
                 $('#btnUpdateSalary').hide();
                 $('#editOrderPreviewTable tbody').html('');
                 $('#editAdjustmentsContainer').html(
@@ -831,23 +981,50 @@
                 "destroy": true,
                 "pageLength": 25,
                 "ajax": {
-                    "url": "{{ route('dt.driver-salary-processed') }}"
+                    "url": "{{ route('dt.driver-salary-processed') }}",
+                    "data": function(d) {
+                        d.filterDriverCode = $('#filterTableDriver').val();
+                        d.filterStartDate = $('#filterTableStartDate').val();
+                        d.filterEndDate = $('#filterTableEndDate').val();
+                    }
                 },
                 "columns": [
-                    { "data": "DT_RowIndex", "className": "text-center" },
-                    { "data": "code" },
-                    { "data": "driverName" },
-                    { "data": "startDate" },
-                    { "data": "endDate" },
-                    { "data": "totalSalaryFormatted", "className": "text-end" },
-                    { "data": "totalAdjustmentFormatted", "className": "text-end" },
-                    { "data": "grandTotalFormatted", "className": "text-end fw-bold" },
-                    { "data": "action", "className": "text-center" },
+                    { "data": "action", "className": "text-center align-middle" },
+                    { "data": "DT_RowIndex", "className": "text-center align-middle" },
+                    { "data": "code", "className": "align-middle" },
+                    { "data": "driverName", "className": "align-middle" },
+                    { "data": "periode", "className": "align-middle text-center" },
+                    { "data": "totalSalaryFormatted", "className": "text-end align-middle" },
+                    { "data": "totalAdjustmentFormatted", "className": "text-end align-middle" },
+                    { "data": "grandTotalFormatted", "className": "text-end align-middle" },
                 ],
                 "columnDefs": [
-                    { "searchable": false, "targets": [0, 3, 4, 5, 6, 7, 8] },
-                    { "orderable": false, "targets": [0, 8] }
-                ]
+                    { "searchable": false, "targets": [0, 1, 4, 5, 6, 7] },
+                    { "orderable": false, "targets": [0, 1] }
+                ],
+                "language": {
+                    "search": "Cari (Nama Supir / Kode):",
+                    "lengthMenu": "Tampilkan _MENU_ data",
+                    "info": "Menampilkan _START_ - _END_ dari _TOTAL_ data gaji supir",
+                    "infoEmpty": "Tidak ada data gaji supir",
+                    "zeroRecords": "Data gaji supir tidak ditemukan",
+                    "processing": '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat data...'
+                }
+            });
+
+            $('#filterTableDriver').on('change', function() {
+                processedTable.ajax.reload();
+            });
+
+            $('#btnFilterTable').on('click', function() {
+                processedTable.ajax.reload();
+            });
+
+            $('#btnResetTableFilter').on('click', function() {
+                $('#filterTableDriver').val('').trigger('change');
+                if (filterTableStartPicker) filterTableStartPicker.clear();
+                if (filterTableEndPicker) filterTableEndPicker.clear();
+                processedTable.ajax.reload();
             });
 
             // ============================================================
@@ -870,37 +1047,53 @@
                     url: "{{ route('ajax.driver-salary-orders') }}",
                     data: { driverCode, startDate, endDate },
                     success: function(response) {
+                        $('#orderPreviewSection').show();
+                        $('#btnSubmitSalary').show();
+
                         if (response.orders.length === 0) {
-                            $('#orderPreviewSection').hide();
-                            $('#noOrderMessage').show();
-                            $('#btnSubmitSalary').hide();
+                            $('#orderTableContainer').hide();
+                            $('#noOrderAlert').show();
+                            $('#orderCount').text('0 order');
                             totalSalaryFromOrders = 0;
-                            return;
+
+                            // Automatically add 1 adjustment row if none exist
+                            if ($('.adjustment-row').length === 0) {
+                                $('#noAdjustmentHint').hide();
+                                addAdjustmentRow(startDate, '', 'addition', '');
+                            }
+                        } else {
+                            totalSalaryFromOrders = response.totalSalary;
+                            $('#noOrderAlert').hide();
+                            $('#orderTableContainer').show();
+
+                            // Populate table
+                            let tbody = '';
+                            response.orders.forEach(function(order, idx) {
+                                let orderNumDisplay = (order.shipmentNumber && order.shipmentNumber !== '-') 
+                                    ? order.shipmentNumber 
+                                    : order.orderCode;
+                                let subCode = (order.shipmentNumber && order.shipmentNumber !== '-' && order.orderCode) 
+                                    ? '<br><small class="text-muted">' + order.orderCode + '</small>' 
+                                    : '';
+
+                                tbody += '<tr>' +
+                                    '<td class="text-center">' + (idx + 1) + '</td>' +
+                                    '<td class="fw-semibold text-primary">' + orderNumDisplay + subCode + '</td>' +
+                                    '<td>' + order.orderDate + '</td>' +
+                                    '<td>' + order.plateNumber + '</td>' +
+                                    '<td>' + order.routeName + '</td>' +
+                                    '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                                    '</tr>';
+                            });
+                            tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+                                '<td colspan="5" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
+                                '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
+                                '</tr>';
+
+                            $('#orderPreviewTable tbody').html(tbody);
+                            $('#orderCount').text(response.orders.length + ' order');
                         }
 
-                        totalSalaryFromOrders = response.totalSalary;
-
-                        // Populate table
-                        let tbody = '';
-                        response.orders.forEach(function(order, idx) {
-                            tbody += '<tr>' +
-                                '<td class="text-center">' + (idx + 1) + '</td>' +
-                                '<td>' + order.orderDate + '</td>' +
-                                '<td>' + order.plateNumber + '</td>' +
-                                '<td>' + order.routeName + '</td>' +
-                                '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
-                                '</tr>';
-                        });
-                        tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                            '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                            '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
-                            '</tr>';
-
-                        $('#orderPreviewTable tbody').html(tbody);
-                        $('#orderCount').text(response.orders.length + ' order');
-                        $('#orderPreviewSection').show();
-                        $('#noOrderMessage').hide();
-                        $('#btnSubmitSalary').show();
                         recalcSummary();
                     },
                     error: function(xhr) {
@@ -971,9 +1164,10 @@
             // Submit validation
             // ============================================================
             $('#processSalaryForm').on('submit', function(e) {
-                if (totalSalaryFromOrders <= 0) {
+                const adjCount = $('.adjustment-row').length;
+                if (totalSalaryFromOrders <= 0 && adjCount === 0) {
                     e.preventDefault();
-                    swal('Peringatan', 'Cari order terlebih dahulu sebelum memproses gaji.', 'warning');
+                    swal('Peringatan', 'Tidak ada order dan belum ada item penambah/pengurang yang dimasukkan. Silakan tambahkan item penambah/pengurang manual terlebih dahulu.', 'warning');
                     return;
                 }
 
@@ -1005,37 +1199,52 @@
                     url: "{{ route('ajax.driver-salary-orders') }}",
                     data: { driverCode, startDate, endDate },
                     success: function(response) {
+                        $('#editOrderPreviewSection').show();
+                        $('#btnUpdateSalary').show();
+
                         if (response.orders.length === 0) {
-                            $('#editOrderPreviewSection').hide();
-                            $('#editNoOrderMessage').show();
-                            $('#btnUpdateSalary').hide();
+                            $('#editOrderTableContainer').hide();
+                            $('#editNoOrderAlert').show();
+                            $('#editOrderCount').text('0 order');
                             editTotalSalaryFromOrders = 0;
-                            return;
+
+                            if ($('.edit-adj-type').length === 0) {
+                                $('#editNoAdjustmentHint').hide();
+                                addEditAdjustmentRow(startDate, '', 'addition', '');
+                            }
+                        } else {
+                            editTotalSalaryFromOrders = response.totalSalary;
+                            $('#editNoOrderAlert').hide();
+                            $('#editOrderTableContainer').show();
+
+                            // Populate table
+                            let tbody = '';
+                            response.orders.forEach(function(order, idx) {
+                                let orderNumDisplay = (order.shipmentNumber && order.shipmentNumber !== '-') 
+                                    ? order.shipmentNumber 
+                                    : order.orderCode;
+                                let subCode = (order.shipmentNumber && order.shipmentNumber !== '-' && order.orderCode) 
+                                    ? '<br><small class="text-muted">' + order.orderCode + '</small>' 
+                                    : '';
+
+                                tbody += '<tr>' +
+                                    '<td class="text-center">' + (idx + 1) + '</td>' +
+                                    '<td class="fw-semibold text-primary">' + orderNumDisplay + subCode + '</td>' +
+                                    '<td>' + order.orderDate + '</td>' +
+                                    '<td>' + order.plateNumber + '</td>' +
+                                    '<td>' + order.routeName + '</td>' +
+                                    '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                                    '</tr>';
+                            });
+                            tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+                                '<td colspan="5" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
+                                '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
+                                '</tr>';
+
+                            $('#editOrderPreviewTable tbody').html(tbody);
+                            $('#editOrderCount').text(response.orders.length + ' order');
                         }
 
-                        editTotalSalaryFromOrders = response.totalSalary;
-
-                        // Populate table
-                        let tbody = '';
-                        response.orders.forEach(function(order, idx) {
-                            tbody += '<tr>' +
-                                '<td class="text-center">' + (idx + 1) + '</td>' +
-                                '<td>' + order.orderDate + '</td>' +
-                                '<td>' + order.plateNumber + '</td>' +
-                                '<td>' + order.routeName + '</td>' +
-                                '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
-                                '</tr>';
-                        });
-                        tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                            '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                            '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
-                            '</tr>';
-
-                        $('#editOrderPreviewTable tbody').html(tbody);
-                        $('#editOrderCount').text(response.orders.length + ' order');
-                        $('#editOrderPreviewSection').show();
-                        $('#editNoOrderMessage').hide();
-                        $('#btnUpdateSalary').show();
                         recalcEditSummary();
                     },
                     error: function(xhr) {
@@ -1061,8 +1270,9 @@
             $('#editSalaryForm').on('submit', function(e) {
                 e.preventDefault();
 
-                if (editTotalSalaryFromOrders <= 0) {
-                    swal('Peringatan', 'Cari order terlebih dahulu sebelum memproses gaji.', 'warning');
+                const adjCount = $('.edit-adj-type').length;
+                if (editTotalSalaryFromOrders <= 0 && adjCount === 0) {
+                    swal('Peringatan', 'Tidak ada order dan belum ada item penambah/pengurang yang dimasukkan. Silakan tambahkan item penambah/pengurang manual terlebih dahulu.', 'warning');
                     return;
                 }
 
@@ -1153,23 +1363,35 @@
                     
                     // Set orders preview
                     editTotalSalaryFromOrders = parseFloat(response.salary.totalSalary) || 0;
-                    let tbody = '';
-                    response.orders.forEach(function(order, idx) {
-                        tbody += '<tr>' +
-                            '<td class="text-center">' + (idx + 1) + '</td>' +
-                            '<td>' + order.orderDate + '</td>' +
-                            '<td>' + order.plateNumber + '</td>' +
-                            '<td>' + order.routeName + '</td>' +
-                            '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                    $('#editOrderPreviewSection').show();
+                    $('#btnUpdateSalary').show();
+
+                    if (response.orders.length > 0) {
+                        $('#editNoOrderAlert').hide();
+                        $('#editOrderTableContainer').show();
+
+                        let tbody = '';
+                        response.orders.forEach(function(order, idx) {
+                            tbody += '<tr>' +
+                                '<td class="text-center">' + (idx + 1) + '</td>' +
+                                '<td>' + order.orderDate + '</td>' +
+                                '<td>' + order.plateNumber + '</td>' +
+                                '<td>' + order.routeName + '</td>' +
+                                '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                                '</tr>';
+                        });
+                        tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
+                            '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
+                            '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders) + '</td>' +
                             '</tr>';
-                    });
-                    tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                        '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                        '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders) + '</td>' +
-                        '</tr>';
-                    
-                    $('#editOrderPreviewTable tbody').html(tbody);
-                    $('#editOrderCount').text(response.orders.length + ' order');
+                        
+                        $('#editOrderPreviewTable tbody').html(tbody);
+                        $('#editOrderCount').text(response.orders.length + ' order');
+                    } else {
+                        $('#editOrderTableContainer').hide();
+                        $('#editNoOrderAlert').show();
+                        $('#editOrderCount').text('0 order');
+                    }
                     
                     // Set adjustments
                     $('#editAdjustmentsContainer').html('');
@@ -1188,11 +1410,6 @@
                             '</div>'
                         );
                     }
-                    
-                    // Show sections
-                    $('#editOrderPreviewSection').show();
-                    $('#editNoOrderMessage').hide();
-                    $('#btnUpdateSalary').show();
                     
                     recalcEditSummary();
                     

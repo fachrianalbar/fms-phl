@@ -437,41 +437,76 @@ class DriverSalaryController extends Controller
     public function datatableProcessed(Request $request)
     {
         if ($request->ajax()) {
-            $query = DriverSalary::with('driver')->orderBy('created_at', 'desc');
+            $query = DriverSalary::with('driver');
+
+            if ($request->filled('filterDriverCode')) {
+                $query->where('driverCode', $request->filterDriverCode);
+            }
+
+            if ($request->filled('filterStartDate')) {
+                $query->whereDate('startDate', '>=', $request->filterStartDate);
+            }
+
+            if ($request->filled('filterEndDate')) {
+                $query->whereDate('endDate', '<=', $request->filterEndDate);
+            }
+
+            $query->orderBy('created_at', 'desc');
 
             return DataTables::of($query)
                 ->addIndexColumn()
+                ->editColumn('code', function ($row) {
+                    return '<span class="badge bg-light text-primary border fw-bold" style="font-family:monospace; font-size:12px; padding:6px 10px; border-radius:6px;">' . e($row->code) . '</span>';
+                })
                 ->addColumn('driverName', function ($row) {
-                    return $row->driver->name ?? '-';
+                    $name = e($row->driver->name ?? '-');
+                    $initials = strtoupper(substr($name, 0, 2));
+                    return '<div class="d-flex align-items-center gap-2">
+                                <div class="avatar-badge-sm">' . $initials . '</div>
+                                <div class="fw-bold text-dark" style="font-size:13.5px;">' . $name . '</div>
+                            </div>';
                 })
-                ->editColumn('startDate', function ($row) {
-                    return Carbon::parse($row->startDate)->format('d-m-Y');
+                ->filterColumn('driverName', function ($query, $keyword) {
+                    $query->where(function($q) use ($keyword) {
+                        $q->whereHas('driver', function ($q2) use ($keyword) {
+                            $q2->where('name', 'like', "%{$keyword}%");
+                        })->orWhere('driverCode', 'like', "%{$keyword}%")
+                          ->orWhere('code', 'like', "%{$keyword}%");
+                    });
                 })
-                ->editColumn('endDate', function ($row) {
-                    return Carbon::parse($row->endDate)->format('d-m-Y');
+                ->addColumn('periode', function ($row) {
+                    $start = Carbon::parse($row->startDate)->format('d/m/Y');
+                    $end = Carbon::parse($row->endDate)->format('d/m/Y');
+                    return '<span class="badge bg-light text-dark border fw-normal" style="font-size:11.5px; padding:5px 10px; border-radius:6px;">
+                                <i class="mdi mdi-calendar-range text-primary me-1"></i> ' . $start . ' &ndash; ' . $end . '
+                            </span>';
                 })
                 ->addColumn('totalSalaryFormatted', function ($row) {
-                    return number_format($row->totalSalary, 0, ',', '.');
+                    return '<span class="fw-semibold text-secondary" style="font-size:13.5px;">Rp ' . number_format($row->totalSalary, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('totalAdjustmentFormatted', function ($row) {
-                    $prefix = $row->totalAdjustment >= 0 ? '+' : '';
-                    return $prefix . number_format($row->totalAdjustment, 0, ',', '.');
+                    if ($row->totalAdjustment > 0) {
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1" style="font-size:11.5px;">+Rp ' . number_format($row->totalAdjustment, 0, ',', '.') . '</span>';
+                    } elseif ($row->totalAdjustment < 0) {
+                        return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1" style="font-size:11.5px;">-Rp ' . number_format(abs($row->totalAdjustment), 0, ',', '.') . '</span>';
+                    }
+                    return '<span class="text-muted" style="font-size:12px;">Rp 0</span>';
                 })
                 ->addColumn('grandTotalFormatted', function ($row) {
-                    return number_format($row->grandTotal, 0, ',', '.');
+                    return '<span class="fw-bold text-indigo" style="color:#4f46e5; font-size:14px;">Rp ' . number_format($row->grandTotal, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $showUrl = route('report.driver-salary.show', $row->id);
                     $pdfUrl = route('report.driver-salary.pdf-processed', $row->id);
-                    $buttons = '<div class="btn-group" role="group">';
-                    $buttons .= '<a href="' . $showUrl . '" class="btn btn-sm btn-outline-primary" title="Detail"><i class="mdi mdi-eye fs-14"></i></a>';
-                    $buttons .= '<a href="' . $pdfUrl . '" target="_blank" class="btn btn-sm btn-outline-danger" title="PDF"><i class="mdi mdi-file-pdf-box fs-14"></i></a>';
-                    $buttons .= '<button type="button" onclick="editSalary(\'' . $row->id . '\')" class="btn btn-sm btn-outline-success" title="Edit"><i class="mdi mdi-pencil fs-14"></i></button>';
-                    $buttons .= '<button type="button" onclick="deleteSalary(\'' . $row->id . '\')" class="btn btn-sm btn-outline-warning" title="Hapus"><i class="mdi mdi-delete fs-14"></i></button>';
+                    $buttons = '<div class="btn-group btn-group-sm" role="group">';
+                    $buttons .= '<a href="' . $showUrl . '" class="btn btn-outline-primary btn-icon" title="Lihat Detail"><i class="mdi mdi-eye"></i></a>';
+                    $buttons .= '<a href="' . $pdfUrl . '" target="_blank" class="btn btn-outline-danger btn-icon" title="Cetak Slip PDF"><i class="mdi mdi-file-pdf-box"></i></a>';
+                    $buttons .= '<button type="button" onclick="editSalary(\'' . $row->id . '\')" class="btn btn-outline-success btn-icon" title="Edit Gaji"><i class="mdi mdi-pencil"></i></button>';
+                    $buttons .= '<button type="button" onclick="deleteSalary(\'' . $row->id . '\')" class="btn btn-outline-warning btn-icon" title="Hapus Gaji"><i class="mdi mdi-delete"></i></button>';
                     $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['code', 'driverName', 'periode', 'totalSalaryFormatted', 'totalAdjustmentFormatted', 'grandTotalFormatted', 'action'])
                 ->toJson();
         }
     }
@@ -518,6 +553,7 @@ class DriverSalaryController extends Controller
 
             $result[] = [
                 'orderCode' => $order->code,
+                'shipmentNumber' => $order->shipmentNumber ?? '-',
                 'orderDate' => Carbon::parse($order->orderDate)->format('d-m-Y'),
                 'plateNumber' => $order->fleet->plateNumber ?? '-',
                 'routeName' => $routeName,
@@ -575,10 +611,12 @@ class DriverSalaryController extends Controller
                 }
 
                 $rows[] = [
-                    'no'        => $index + 1,
-                    'date'      => Carbon::parse($order->orderDate)->format('d-m-Y'),
-                    'route'     => $routeName,
-                    'salary'    => $salaryTotal,
+                    'no'             => $index + 1,
+                    'orderCode'      => $order->code,
+                    'shipmentNumber' => $order->shipmentNumber ?? '-',
+                    'date'           => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                    'route'          => $routeName,
+                    'salary'         => $salaryTotal,
                 ];
             }
 
@@ -658,10 +696,12 @@ class DriverSalaryController extends Controller
             }
 
             $rows[] = [
-                'no'     => $index + 1,
-                'date'   => Carbon::parse($order->orderDate)->format('d-m-Y'),
-                'route'  => $routeName,
-                'salary' => $salaryTotal,
+                'no'             => $index + 1,
+                'orderCode'      => $order->code,
+                'shipmentNumber' => $order->shipmentNumber ?? '-',
+                'date'           => Carbon::parse($order->orderDate)->format('d-m-Y'),
+                'route'          => $routeName,
+                'salary'         => $salaryTotal,
             ];
         }
 

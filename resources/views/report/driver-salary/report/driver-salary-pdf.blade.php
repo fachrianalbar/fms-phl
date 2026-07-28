@@ -191,6 +191,7 @@
                 <thead>
                     <tr>
                         <th>No.RIT</th>
+                        <th>No. Order / Shipment</th>
                         <th>Tanggal</th>
                         <th>Rute</th>
                         <th>Jumlah Gaji</th>
@@ -200,6 +201,7 @@
                     @foreach ($driver['rows'] as $row)
                         <tr>
                             <td class="col-no">{{ $row['no'] }}</td>
+                            <td style="font-weight: bold;">{{ !empty($row['shipmentNumber']) && $row['shipmentNumber'] !== '-' ? $row['shipmentNumber'] : ($row['orderCode'] ?? '-') }}</td>
                             <td class="col-date">{{ $row['date'] }}</td>
                             <td class="col-route">{{ $row['route'] }}</td>
                             <td class="col-salary">Rp. {{ number_format($row['salary'], 0, ',', '.') }}</td>
@@ -210,6 +212,7 @@
                     @for ($i = count($driver['rows']); $i < 8; $i++)
                         <tr>
                             <td class="col-no">{{ $i + 1 }}</td>
+                            <td>&nbsp;</td>
                             <td class="col-date">&nbsp;</td>
                             <td class="col-route">&nbsp;</td>
                             <td class="col-salary">&nbsp;</td>
@@ -218,7 +221,7 @@
 
                     {{-- Total row --}}
                     <tr class="total-row">
-                        <td colspan="3" style="text-align: left;">Total Gaji</td>
+                        <td colspan="4" style="text-align: left;">Total Gaji</td>
                         <td class="col-salary">Rp. {{ number_format($driver['totalSalary'] ?? $driver['grandTotal'], 0, ',', '.') }}</td>
                     </tr>
                 </tbody>

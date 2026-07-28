@@ -343,20 +343,25 @@
                         <thead>
                             <tr>
                                 <th style="width: 6%;" class="text-center">No</th>
-                                <th style="width: 15%;">Kode Order</th>
-                                <th style="width: 14%;">Tanggal Order</th>
-                                <th style="width: 15%;">No. Polisi</th>
-                                <th style="width: 35%;">Rute Perjalanan</th>
+                                <th style="width: 22%;">No. Shipment / Order</th>
+                                <th style="width: 12%;">Tanggal Order</th>
+                                <th style="width: 13%;">No. Polisi</th>
+                                <th style="width: 32%;">Rute Perjalanan</th>
                                 <th style="width: 15%;" class="text-end">Gaji Order</th>
                             </tr>
                         </thead>
                         <tbody>
                             @php $orderTotal = 0; @endphp
-                            @foreach($orders as $index => $order)
+                            @forelse($orders as $index => $order)
                                 @php $orderTotal += $order->salaryAmount; @endphp
                                 <tr>
                                     <td class="text-center fw-semibold text-muted">{{ $index + 1 }}</td>
-                                    <td class="fw-bold text-primary">{{ $order->code }}</td>
+                                    <td class="fw-bold text-primary">
+                                        {{ $order->shipmentNumber && $order->shipmentNumber !== '-' ? $order->shipmentNumber : $order->code }}
+                                        @if($order->shipmentNumber && $order->shipmentNumber !== '-' && $order->code)
+                                            <br><small class="text-muted">{{ $order->code }}</small>
+                                        @endif
+                                    </td>
                                     <td>{{ \Carbon\Carbon::parse($order->orderDate)->format('d-m-Y') }}</td>
                                     <td>
                                         <span class="badge bg-light text-dark border fw-semibold" style="font-size: 11.5px; border-radius: 6px; padding: 4px 8px;">
@@ -376,7 +381,13 @@
                                     </td>
                                     <td class="text-end fw-bold text-dark">Rp {{ number_format($order->salaryAmount, 0, ',', '.') }}</td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="mdi mdi-information-outline me-1"></i> Tidak ada order dengan komponen gaji pada periode ini. Gaji diproses dari penyesuaian manual.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                         <tfoot>
                             <tr style="background-color: #f8fafc; border-top: 2px solid #e2e8f0;">
