@@ -28,5 +28,5 @@ return [
     'success' => 'Sukses',
     'must_filled' => 'harus diisi',
     'no_data' => 'Belum ada data',
-
+    'cancel' => 'Batal',
 ];

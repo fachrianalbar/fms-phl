@@ -91,13 +91,48 @@ class NotReturnDoService
         $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
 
-        // Calculate routeAmount: qty x price dari route
-        $routeAmount = (int) (($route->price ?? 0) * $request->qty);
+        // Check whether user requested to update prices from master
+        $isUpdateMasterPrice = (string) $request->input('update_master_price', '0') === '1';
+        $qty = (float) $request->qty;
 
-        // Handle personalVendorPrice untuk external fleet
-        $personalVendorPrice = 0;
-        if ($isExternalFleet) {
-            $personalVendorPrice = (int) (($route->personalVendorPrice ?? 0) * $request->qty);
+        if ($isUpdateMasterPrice || $order->routeCode !== $request->routeData) {
+            // Update to latest master route prices
+            $priceSingle = (float) ($route->price ?? 0);
+            $routeAmount = (float) ($priceSingle * $qty);
+
+            if ($isExternalFleet) {
+                $routePriceExt = \App\Models\Data\RoutePriceExternal::where('route_id', $route->id)
+                    ->where('fleet_company_id', $fleet->company->id)
+                    ->first();
+                $vendorPriceSingle = (float) ($routePriceExt ? $routePriceExt->amount : 0);
+                $vendorPrice = (float) ($vendorPriceSingle * $qty);
+                $personalVendorPriceSingle = 0.0;
+                $personalVendorPrice = 0.0;
+            } else {
+                $vendorPriceSingle = 0.0;
+                $vendorPrice = 0.0;
+                $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
+                $personalVendorPrice = (float) ($personalVendorPriceSingle * $qty);
+            }
+        } else {
+            // Retain existing unit prices from order, calculate totals based on (possibly updated) qty
+            $existingPriceSingle = (float) ($order->price ?? ($order->qty > 0 ? $order->routeAmount / $order->qty : 0));
+            $priceSingle = $existingPriceSingle > 0 ? $existingPriceSingle : (float) ($route->price ?? 0);
+            $routeAmount = (float) ($priceSingle * $qty);
+
+            if ($isExternalFleet) {
+                $existingVendorPriceSingle = (float) ($order->vendorPriceSingle ?? ($order->qty > 0 ? $order->vendorPrice / $order->qty : 0));
+                $vendorPriceSingle = $existingVendorPriceSingle > 0 ? $existingVendorPriceSingle : 0.0;
+                $vendorPrice = (float) ($vendorPriceSingle * $qty);
+                $personalVendorPriceSingle = 0.0;
+                $personalVendorPrice = 0.0;
+            } else {
+                $vendorPriceSingle = 0.0;
+                $vendorPrice = 0.0;
+                $existingPersonalVendorPriceSingle = (float) ($order->personalVendorPriceSingle ?? ($order->qty > 0 ? $order->personalVendorPrice / $order->qty : 0));
+                $personalVendorPriceSingle = $existingPersonalVendorPriceSingle > 0 ? $existingPersonalVendorPriceSingle : (float) ($route->personalVendorPrice ?? 0);
+                $personalVendorPrice = (float) ($personalVendorPriceSingle * $qty);
+            }
         }
 
         // Prepare update data
@@ -106,8 +141,12 @@ class NotReturnDoService
             'fleetCode' => $request->fleetCode,
             'driverCode' => $request->driverCode,
             'routeCode' => $request->routeData,
-            'qty' => $request->qty,
+            'qty' => $qty,
+            'price' => $priceSingle,
             'routeAmount' => $routeAmount,
+            'vendorPriceSingle' => $vendorPriceSingle,
+            'vendorPrice' => $vendorPrice,
+            'personalVendorPriceSingle' => $personalVendorPriceSingle,
             'personalVendorPrice' => $personalVendorPrice,
             'notes' => $request->notes,
             'orderTypeCode' => $request->orderTypeCode,

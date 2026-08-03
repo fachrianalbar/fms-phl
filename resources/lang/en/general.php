@@ -28,4 +28,5 @@ return [
     'success' => 'Success',
     'must_filled' => 'must be filled',
     'no_data' => 'No data',
+    'cancel' => 'Cancel',
 ];
