@@ -1010,6 +1010,7 @@
 
         // Store original order price values from server
         const originalRouteCode = "{{ $data->routeCode }}";
+        const originalCustomerCode = "{{ $data->customerCode }}";
         const originalOrderPrice = {{ (float)($data->price ?? ($data->qty > 0 ? $data->routeAmount / $data->qty : 0)) }};
         const originalPersonalVendorPriceSingle = {{ (float)($data->personalVendorPriceSingle ?? ($data->qty > 0 ? $data->personalVendorPrice / $data->qty : 0)) }};
         const originalVendorPriceSingle = {{ (float)($data->vendorPriceSingle ?? ($data->qty > 0 ? $data->vendorPrice / $data->qty : 0)) }};
@@ -1018,6 +1019,7 @@
         function updatePriceInfo() {
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
+            const customerCode = $('#customerCode').val();
             const qty = parseFloat($('#qty').val()) || 1;
             const isUpdateMaster = $('#updateMasterPrice').is(':checked');
 
@@ -1043,7 +1045,8 @@
 
                         const isExternal = response.isExternal === true;
                         const isRouteChanged = (routeCode !== originalRouteCode);
-                        const useMaster = isUpdateMaster || isRouteChanged;
+                        const isCustomerChanged = (customerCode && customerCode !== originalCustomerCode);
+                        const useMaster = isUpdateMaster || isRouteChanged || isCustomerChanged;
 
                         let unitPrice = 0;
                         let routeAmount = 0;
@@ -1126,7 +1129,7 @@
         }
 
         // Attach event listeners for real-time updates
-        $('#fleetCode, #routeData, #qty, #updateMasterPrice').on('change keyup', function() {
+        $('#fleetCode, #routeData, #qty, #updateMasterPrice, #customerCode').on('change keyup', function() {
             updatePriceInfo();
         });
 
@@ -1137,6 +1140,11 @@
 
         // Update when fleet is selected
         $('#fleetCode').on('select2:select', function() {
+            updatePriceInfo();
+        });
+
+        // Update when customer is selected
+        $('#customerCode').on('select2:select', function() {
             updatePriceInfo();
         });
 

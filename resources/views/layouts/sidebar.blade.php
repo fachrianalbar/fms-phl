@@ -23,14 +23,22 @@
         @php
             $children = $menus->where('parentCode', $parent->code);
             $hasSubMenu = $children->isNotEmpty();
+            $hasActiveChild = $children->contains(function ($child) {
+                $childUrl = trim($child->url, '/');
+                return request()->is($childUrl) || request()->is($childUrl . '/*') || request()->is($childUrl . '-edit/*');
+            });
+            $parentUrl = trim($parent->url, '/');
+            $isParentActive = ($parentUrl !== '' && (request()->is($parentUrl) || request()->is($parentUrl . '/*') || request()->is($parentUrl . '-edit/*'))) || $hasActiveChild;
         @endphp
 
-        <li>
+        <li class="{{ $isParentActive ? 'menuitem-active' : '' }}">
             <a
                 @if ($hasSubMenu) href="#menu-{{ $parent->code }}" 
                     data-bs-toggle="collapse"
+                    aria-expanded="{{ $hasActiveChild ? 'true' : 'false' }}"
                 @else
-                    href="{{ url('/' . $parent->url) }}" @endif>
+                    href="{{ url('/' . $parent->url) }}" @endif
+                class="{{ $isParentActive && !$hasSubMenu ? 'active' : '' }}">
                 <i data-feather="{{ $parent->icon }}"></i>
                 <span>{{ auth()->user()->languange == 'id' ? $parent->nama : $parent->name }}</span>
                 @if ($hasSubMenu)
@@ -39,11 +47,15 @@
             </a>
 
             @if ($hasSubMenu)
-                <div class="collapse" id="menu-{{ $parent->code }}">
+                <div class="collapse {{ $hasActiveChild ? 'show' : '' }}" id="menu-{{ $parent->code }}">
                     <ul class="nav-second-level">
                         @foreach ($children as $child)
-                            <li>
-                                <a href="{{ url('/' . $child->url) }}" class="tp-link"> <span class="h4">- </span>
+                            @php
+                                $childUrl = trim($child->url, '/');
+                                $isChildActive = request()->is($childUrl) || request()->is($childUrl . '/*') || request()->is($childUrl . '-edit/*');
+                            @endphp
+                            <li class="{{ $isChildActive ? 'menuitem-active' : '' }}">
+                                <a href="{{ url('/' . $child->url) }}" class="tp-link {{ $isChildActive ? 'active' : '' }}"> <span class="h4">- </span>
                                     {{ auth()->user()->languange == 'id' ? $child->nama : $child->name }}</a>
                             </li>
                         @endforeach

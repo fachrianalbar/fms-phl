@@ -421,6 +421,7 @@
                                 <th>Route Name</th>
                                 <th>{{ __('menu_order.driver') }}</th>
                                 <th>Order Type</th>
+                                <th>{{ __('menu_order.order_code') }}</th>
                                 <th>{{ __('menu_order.shipment_no') }}</th>
                                 <th>{{ __('menu_order.customer') }}</th>
                                 <th>{{ __('menu_order.origin') }}</th>
@@ -754,6 +755,9 @@
                         data: 'orderType'
                     },
                     {
+                        data: 'code'
+                    },
+                    {
                         data: "shipmentNumber"
                     },
                     {
@@ -781,7 +785,7 @@
                     },
                     {
                         orderable: false,
-                        targets: [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+                        targets: [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
                     },
                 ],
                 order: [

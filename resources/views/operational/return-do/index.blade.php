@@ -41,6 +41,7 @@
                             <th>{{ __('menu_return_do.action') }}</th>
                             <th>{{ __('menu_return_do.no') }}</th>
                             <th>{{ __('menu_return_do.order_date') }}</th>
+                            <th>{{ __('menu_order.order_code') }}</th>
                             <th>{{ __('menu_return_do.shipment_no') }}</th>
                             <th>{{ __('menu_return_do.customer_name') }}</th>
                             <th>{{ __('menu_return_do.origin') }}</th>
@@ -165,6 +166,9 @@
                 },
                 {
                     "data": 'orderDate'
+                },
+                {
+                    "data": 'code'
                 },
                 {
                     "data": 'shipmentNumber'

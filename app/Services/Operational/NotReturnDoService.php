@@ -91,11 +91,13 @@ class NotReturnDoService
         $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
 
-        // Check whether user requested to update prices from master
+        // Check whether user requested to update prices from master or customer changed
         $isUpdateMasterPrice = (string) $request->input('update_master_price', '0') === '1';
         $qty = (float) $request->qty;
 
-        if ($isUpdateMasterPrice || $order->routeCode !== $request->routeData) {
+        $isCustomerChanged = ($request->has('customerCode') && ! empty($request->customerCode) && $order->customerCode !== $request->customerCode);
+
+        if ($isUpdateMasterPrice || $order->routeCode !== $request->routeData || $isCustomerChanged) {
             // Update to latest master route prices
             $priceSingle = (float) ($route->price ?? 0);
             $routeAmount = (float) ($priceSingle * $qty);
@@ -137,6 +139,7 @@ class NotReturnDoService
 
         // Prepare update data
         $updateData = [
+            'customerCode' => $request->customerCode ?? $order->customerCode,
             'orderDate' => $request->orderDate,
             'fleetCode' => $request->fleetCode,
             'driverCode' => $request->driverCode,

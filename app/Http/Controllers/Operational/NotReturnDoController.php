@@ -467,6 +467,7 @@ class NotReturnDoController extends Controller
         $isAjaxRequest = $request->ajax() || $request->wantsJson();
 
         $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'customerCode' => 'required',
             'fleetCode' => 'required',
             'orderDate' => 'required|date',
             'routeData' => 'required',
