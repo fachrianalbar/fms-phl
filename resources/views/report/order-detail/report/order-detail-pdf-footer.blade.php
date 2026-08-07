@@ -1,27 +1,34 @@
             @php
             $grandTotalSales = 0;
+            $grandTotalIncome = 0;
             $grandTotalCost = 0;
             $grandTotalProfit = 0;
             foreach ($data as $item) {
-                // `routeAmount` stored as total for the order
                 $sales = $item->routeAmount;
-            $grandTotalSales += $sales;
+                $grandTotalSales += $sales;
 
-            $totalCost = 0;
-            if ($item->cost) {
-            foreach ($item->cost as $cost) {
-            $totalCost += $cost->nominal;
-            }
-            }
-            $grandTotalCost += $totalCost;
+                $incomeTotal = 0;
+                $totalCost = 0;
+                if ($item->cost) {
+                    foreach ($item->cost as $cost) {
+                        if (strtolower($cost->type) === 'on charge') {
+                            $incomeTotal += $cost->nominal;
+                        } else {
+                            $totalCost += $cost->nominal;
+                        }
+                    }
+                }
+                $grandTotalIncome += $incomeTotal;
+                $grandTotalCost += $totalCost;
 
-            $profit = $sales - $totalCost;
-            $grandTotalProfit += $profit;
+                $profit = $sales + $incomeTotal - $totalCost;
+                $grandTotalProfit += $profit;
             }
             @endphp
             <tr>
                 <th colspan="8" class="text-right">TOTAL</th>
                 <th class="text-right">{{ number_format($grandTotalSales, 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format($grandTotalIncome, 0, ',', '.') }}</th>
                 <th></th>
                 <th class="text-right">{{ number_format($grandTotalCost, 0, ',', '.') }}</th>
                 <th class="text-right">{{ number_format($grandTotalProfit, 0, ',', '.') }}</th>

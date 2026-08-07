@@ -108,35 +108,39 @@ class OrderDetailController extends Controller
                 ->editColumn('route.destinationLocation.name', function ($row) {
                     return $row->route->destinationLocation->name ?? '';
                 })
+                ->editColumn('shipmentNumber', function ($row) {
+                    return '<strong class="text-primary font-weight-bold">' . e(mb_strtoupper($row->shipmentNumber ?? '')) . '</strong>';
+                })
+                ->editColumn('fleet.plateNumber', function ($row) {
+                    $plate = e(strtoupper($row->fleet->plateNumber ?? ''));
+                    return $plate ? '<span class="badge bg-light text-dark border font-weight-bold px-2 py-1">' . $plate . '</span>' : '';
+                })
                 ->addColumn('sales', function ($row) {
-                    // `routeAmount` now stored as total for the order (unit price * qty)
-                    $sales = $row->routeAmount;
-
-                    return number_format($sales, 0, ',', '.');
+                    $sales = $row->routeAmount ?? 0;
+                    return '<span class="font-weight-bold text-dark">Rp ' . number_format($sales, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('income', function ($row) {
-                    // Income = On Charge cost components (show breakdown)
                     $incomeDetails = [];
                     $incomeTotal = 0;
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
                             if (strtolower($cost->type) === 'on charge') {
                                 $costName = $cost->costComponent->name ?? 'N/A';
-                                $incomeDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                                $incomeDetails[] = e($costName) . ': Rp ' . number_format($cost->nominal, 0, ',', '.');
                                 $incomeTotal += $cost->nominal;
                             }
                         }
                     }
 
                     if (empty($incomeDetails)) {
-                        return '<span class="text-muted">-</span>';
+                        return '<span class="text-muted small">-</span>';
                     }
 
                     $html = '<div class="cost-detail-list" style="font-size: 12px;">';
                     foreach ($incomeDetails as $key => $detail) {
-                        $html .= '<div class="cost-detail-item">'.($key + 1).'. '.$detail.'</div>';
+                        $html .= '<div class="cost-detail-item text-muted"><span class="badge bg-success bg-opacity-10 text-success me-1">' . ($key + 1) . '</span>' . $detail . '</div>';
                     }
-                    $html .= '<div class="cost-detail-item" style="border-top:1px solid #ccc; font-weight:bold; margin-top:2px; padding-top:2px;">Total: '.number_format($incomeTotal, 0, ',', '.').'</div>';
+                    $html .= '<div class="cost-detail-item text-success font-weight-bold mt-1 pt-1 border-top border-dashed">Total: Rp ' . number_format($incomeTotal, 0, ',', '.') . '</div>';
                     $html .= '</div>';
 
                     return $html;
@@ -145,22 +149,20 @@ class OrderDetailController extends Controller
                     $costDetails = [];
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
-                            // Only show Off Charge costs in detail
                             if (strtolower($cost->type) !== 'on charge') {
                                 $costName = $cost->costComponent->name ?? 'N/A';
-                                $costDetails[] = $costName.': '.number_format($cost->nominal, 0, ',', '.');
+                                $costDetails[] = e($costName) . ': Rp ' . number_format($cost->nominal, 0, ',', '.');
                             }
                         }
                     }
 
                     if (empty($costDetails)) {
-                        return '<span class="text-muted">-</span>';
+                        return '<span class="text-muted small">-</span>';
                     }
 
-                    // Render cost details as vertical list in detail cell
                     $html = '<div class="cost-detail-list" style="font-size: 12px;">';
                     foreach ($costDetails as $key => $detail) {
-                        $html .= '<div class="cost-detail-item">'.($key + 1).'. '.$detail.'</div>';
+                        $html .= '<div class="cost-detail-item text-muted"><span class="badge bg-warning bg-opacity-10 text-warning me-1">' . ($key + 1) . '</span>' . $detail . '</div>';
                     }
                     $html .= '</div>';
 
@@ -170,18 +172,16 @@ class OrderDetailController extends Controller
                     $totalCost = 0;
                     if ($row->cost) {
                         foreach ($row->cost as $cost) {
-                            // Only sum Off Charge costs
                             if (strtolower($cost->type) !== 'on charge') {
                                 $totalCost += $cost->nominal;
                             }
                         }
                     }
 
-                    return number_format($totalCost, 0, ',', '.');
+                    return '<span class="font-weight-bold text-danger">Rp ' . number_format($totalCost, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('profit', function ($row) {
-                    // `routeAmount` is total for the order
-                    $sales = $row->routeAmount;
+                    $sales = $row->routeAmount ?? 0;
                     $income = 0;
                     $totalCost = 0;
                     if ($row->cost) {
@@ -193,19 +193,22 @@ class OrderDetailController extends Controller
                             }
                         }
                     }
-                    // Profit = Sales + Income (On Charge) - Total Cost (Off Charge)
                     $profit = $sales + $income - $totalCost;
 
-                    return number_format($profit, 0, ',', '.');
+                    if ($profit >= 0) {
+                        return '<span class="badge bg-success bg-opacity-10 text-success font-weight-bold px-2.5 py-1.5 fs-12">Rp ' . number_format($profit, 0, ',', '.') . '</span>';
+                    } else {
+                        return '<span class="badge bg-danger bg-opacity-10 text-danger font-weight-bold px-2.5 py-1.5 fs-12">Rp ' . number_format($profit, 0, ',', '.') . '</span>';
+                    }
                 })
-                ->rawColumns(['cost_detail', 'income'])
+                ->rawColumns(['shipmentNumber', 'fleet.plateNumber', 'sales', 'income', 'cost_detail', 'total_cost', 'profit'])
                 ->toJson();
         }
     }
 
     private function getFilteredOrdersQuery(Request $request)
     {
-        $query = Order::with([
+        $query = Order::whereIn('status', [4, 5])->with([
             'fleet',
             'fleet.type',
             'driver',

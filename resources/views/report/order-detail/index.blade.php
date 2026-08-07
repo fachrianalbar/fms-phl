@@ -1,208 +1,368 @@
 @extends('layouts.main', [
-'title' => $title,
-'pageTitle' => $title,
-'firstSegment' => 'Report',
-'secondSegment' => $title,
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => 'Report',
+    'secondSegment' => $title,
 ])
 
 @push('style')
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
-<style>
-    /* Override DataTables responsive plugin to prevent horizontal scroll */
-    .dataTables_wrapper {
-        width: 100% !important;
-        overflow: visible !important;
-    }
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 
-    .table-responsive {
-        overflow-x: visible !important;
-        overflow-y: auto !important;
-        max-height: 70vh !important;
-    }
-
-    /* Disable DataTables responsive (hide child rows) */
-    table.dt-responsive tbody>tr>td.child {
-        display: none !important;
-    }
-
-    /* Force table cells to not wrap based on responsive plugin */
-    table.table-order {
-        width: 100% !important;
-        table-layout: auto !important;
-    }
-
-    /* Allow table cells to wrap and adjust height automatically */
-    table.table-order td,
-    table.table-order th {
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-        white-space: normal !important;
-        max-width: none !important;
-    }
-
-    /* Cost detail: display as multiline vertical list */
-    table.table-order td .cost-detail-list {
-        display: block !important;
-        line-height: 1.6 !important;
-    }
-
-    table.table-order td .cost-detail-item {
-        display: block !important;
-        margin-bottom: 4px !important;
-    }
-</style>
+    <style>
+        .hero-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #2563eb 100%);
+            border-radius: 16px;
+            padding: 1.75rem 2rem;
+            color: #ffffff;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.15);
+            margin-bottom: 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .card-custom {
+            border: 1px solid rgba(226, 232, 240, 0.9) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.03) !important;
+            transition: all 0.25s ease;
+            margin-bottom: 1.5rem;
+            background: #ffffff;
+        }
+        .card-custom:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06) !important;
+        }
+        .card-custom .card-header {
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            padding: 1.25rem 1.5rem;
+            border-top-left-radius: 16px !important;
+            border-top-right-radius: 16px !important;
+        }
+        .card-custom .card-body {
+            padding: 1.5rem;
+        }
+        .btn-export-excel {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.55rem 1.25rem;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-export-excel:hover {
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+        }
+        .btn-export-pdf {
+            background: linear-gradient(135deg, #e11d48 0%, #f43f5e 100%);
+            border: none;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.55rem 1.25rem;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.3);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-export-pdf:hover {
+            background: linear-gradient(135deg, #be123c 0%, #e11d48 100%);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(244, 63, 94, 0.4);
+        }
+        .btn-filter-toggle {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 0.55rem 1rem;
+            backdrop-filter: blur(8px);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-filter-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+        }
+        .form-label-custom {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .form-control-custom {
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.88rem;
+            transition: all 0.2s ease;
+            background-color: #ffffff;
+        }
+        .form-control-custom:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+        .dataTables_wrapper {
+            width: 100% !important;
+            overflow: visible !important;
+        }
+        .table-responsive {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            max-height: none !important;
+            border-radius: 12px;
+        }
+        table.table-order {
+            width: 100% !important;
+            table-layout: auto !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+        }
+        table.table-order thead th {
+            background: #f8fafc !important;
+            color: #475569 !important;
+            font-size: 0.78rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            padding: 0.85rem 1rem !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+        table.table-order td {
+            padding: 0.85rem 1rem !important;
+            vertical-align: middle !important;
+            font-size: 0.875rem !important;
+            color: #1e293b !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+        table.table-order tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+        table.table-order th:nth-child(9),
+        table.table-order td:nth-child(9) {
+            min-width: 160px !important;
+            width: 170px !important;
+            white-space: nowrap !important;
+        }
+        table.table-order td .cost-detail-list {
+            display: block !important;
+            line-height: 1.5 !important;
+        }
+        table.table-order td .cost-detail-item {
+            display: block !important;
+            margin-bottom: 3px !important;
+            font-size: 0.8rem;
+            color: #475569;
+        }
+    </style>
 @endpush
 
 @section('content')
 <div class="col-sm-12">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>{{ __('menu_order_detail.order_detail_report') }}</h4>
 
-            <div class="d-flex align-items-center gap-3">
-                <div class="accordion-item ">
-                    <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
-                        data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                        <i class="mdi mdi-magnify fs-14 text-dark"></i>
-                    </a>
-                </div>
-
-                <a href="{{ route($view . 'excel-order-detail') }}" target="_blank" id="export-excel"
-                    class="btn btn-sm btn-success">
-                    <i class="mdi mdi-file-excel"></i> Export Excel
-                </a>
-
-                <a href="{{ route($view . 'pdf-order-detail') }}" target="_blank" id="export-pdf"
-                    class="btn btn-sm btn-danger">
-                    <i class="mdi mdi-file-pdf"></i> Export PDF
-                </a>
+    <!-- Hero Header Banner -->
+    <div class="hero-banner d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge bg-white bg-opacity-25 text-white px-3 py-1 rounded-pill font-weight-bold">
+                    <i class="mdi mdi-chart-box-outline me-1"></i> Executive Report
+                </span>
+                <span class="badge bg-success text-white px-3 py-1 rounded-pill">
+                    <i class="mdi mdi-check-circle-outline me-1"></i> Status: Surat Jalan Kembali
+                </span>
             </div>
+            <h3 class="text-white mb-0 font-weight-bold">
+                <i class="mdi mdi-file-document-multiple me-2"></i> {{ __('menu_order_detail.order_detail_report') }}
+            </h3>
+            <p class="text-white-50 mb-0 small mt-1">Laporan komprehensif detail pendapatan, biaya ditagihkan, biaya operasional, dan profitabilitas order.</p>
         </div>
 
-        <div class="card-header">
-            <div class="accordion-collapse collapse" id="collapseTwo" aria-labelledby="headingTwo"
-                data-bs-parent="#simpleaccordion">
-                <div class="accordion-body col-md-12">
-                    <form id="filterForm" class=" g-3">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.plate_number') }}</label>
-                                <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($fleet as $item)
-                                    <option value="{{ $item->plateNumber }}">
-                                        {{ $item->plateNumber }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button class="btn-filter-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFilter" aria-expanded="false">
+                <i class="mdi mdi-filter-variant fs-16"></i> Filter Data
+            </button>
 
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.driver') }}</label>
-                                <select class="js-example-basic-single" name="driverName" id="driverName">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($driver as $item)
+            <a href="{{ route($view . 'excel-order-detail') }}" target="_blank" id="export-excel" class="btn-export-excel">
+                <i class="mdi mdi-file-excel fs-16"></i> Excel
+            </a>
+
+            <a href="{{ route($view . 'pdf-order-detail') }}" target="_blank" id="export-pdf" class="btn-export-pdf">
+                <i class="mdi mdi-file-pdf fs-16"></i> PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Card Collapse -->
+    <div class="collapse mb-4" id="collapseFilter">
+        <div class="card card-custom">
+            <div class="card-header d-flex align-items-center">
+                <span class="p-2 bg-primary bg-opacity-10 text-primary rounded-3 me-2">
+                    <i class="mdi mdi-filter-variant fs-18"></i>
+                </span>
+                <h5 class="mb-0 font-weight-bold text-dark">Filter Pencarian Laporan</h5>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="g-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="plateNumber">
+                                <i class="mdi mdi-truck-outline text-primary"></i> {{ __('menu_order.plate_number') }}
+                            </label>
+                            <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($fleet as $item)
+                                    <option value="{{ $item->plateNumber }}">{{ $item->plateNumber }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="driverName">
+                                <i class="mdi mdi-account-tie-outline text-primary"></i> {{ __('menu_order.driver') }}
+                            </label>
+                            <select class="js-example-basic-single" name="driverName" id="driverName">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($driver as $item)
                                     <option value="{{ $item->name }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.customer') }}</label>
-                                <select class="js-example-basic-single" name="customerName" id="customerName">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($customer as $item)
-                                    <option value="{{ $item->name }}">{{ $item->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.fleet_type') }}</label>
-                                <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($fleetType as $item)
-                                    <option value="{{ $item->name }}">{{ $item->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="customerName">
+                                <i class="mdi mdi-domain text-primary"></i> {{ __('menu_order.customer') }}
+                            </label>
+                            <select class="js-example-basic-single" name="customerName" id="customerName">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($customer as $item)
+                                    <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.shipment_no') }}</label>
-                                <input class="form-control" name="shipmentNumber" type="text"
-                                    placeholder="{{ __('menu_order.shipment_no') }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
-                                <input class="form-control" name="startDate" id="datetime-local" type="date"
-                                    placeholder="{{ __('menu_order_detail.start_date') }}">
-                            </div>
-
-                            <div class="col-md-3">
-                                <label class="form-label" for="name"></label>
-                                <input class="form-control" name="endDate" id="datetime-local" type="date"
-                                    placeholder="{{ __('menu_order_detail.end_date') }}">
-                            </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="fleetTypeName">
+                                <i class="mdi mdi-format-list-bulleted-type text-primary"></i> {{ __('menu_order.fleet_type') }}
+                            </label>
+                            <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($fleetType as $item)
+                                    <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
 
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.origin') }}</label>
-                                <select class="js-example-basic-single" name="origin" id="origin">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($location as $item)
-                                    <option value="{{ $item->name }}">{{ $item->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label" for="name">{{ __('menu_order.destination') }}</label>
-                                <select class="js-example-basic-single" name="destination" id="destination">
-                                    <option selected="" value="">{{ __('general.choose') }}...</option>
-                                    @foreach ($location as $item)
-                                    <option value="{{ $item->name }}">{{ $item->name }}
-                                    </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 mt-3">
-                            <button class="btn btn-primary" type="submit">{{ __('menu_order_detail.filter') }}</button>
-                            <button type="button" id="resetFilter" class="btn btn-secondary">{{ __('general.reset') }}</button>
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="shipmentNumber">
+                                <i class="mdi mdi-barcode text-primary"></i> {{ __('menu_order.shipment_no') }}
+                            </label>
+                            <input class="form-control form-control-custom" name="shipmentNumber" id="shipmentNumber" type="text" placeholder="{{ __('menu_order.shipment_no') }}">
                         </div>
 
-                    </form>
-                    </form>
-                </div>
+                        <div class="col-md-3">
+                            <label class="form-label-custom" for="startDate">
+                                <i class="mdi mdi-calendar-start text-primary"></i> {{ __('menu_order_detail.start_date') }}
+                            </label>
+                            <input class="form-control form-control-custom" name="startDate" id="startDate" type="date">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label-custom" for="endDate">
+                                <i class="mdi mdi-calendar-end text-primary"></i> {{ __('menu_order_detail.end_date') }}
+                            </label>
+                            <input class="form-control form-control-custom" name="endDate" id="endDate" type="date">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="origin">
+                                <i class="mdi mdi-map-marker-outline text-primary"></i> {{ __('menu_order.origin') }}
+                            </label>
+                            <select class="js-example-basic-single" name="origin" id="origin">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($location as $item)
+                                    <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="destination">
+                                <i class="mdi mdi-map-marker-check-outline text-primary"></i> {{ __('menu_order.destination') }}
+                            </label>
+                            <select class="js-example-basic-single" name="destination" id="destination">
+                                <option selected="" value="">{{ __('general.choose') }}...</option>
+                                @foreach ($location as $item)
+                                    <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-primary px-4 rounded-pill font-weight-bold" type="submit">
+                            <i class="mdi mdi-magnify me-1"></i> {{ __('menu_order_detail.filter') }}
+                        </button>
+                        <button type="button" id="resetFilter" class="btn btn-light px-4 rounded-pill border">
+                            <i class="mdi mdi-refresh me-1"></i> {{ __('general.reset') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Data Table Card -->
+    <div class="card card-custom">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <span class="p-2 bg-primary bg-opacity-10 text-primary rounded-3 me-2">
+                    <i class="mdi mdi-table-large fs-18"></i>
+                </span>
+                <h5 class="mb-0 font-weight-bold text-dark">Data Detail Order</h5>
             </div>
         </div>
 
         <div class="card-body">
             @include('partials.alert')
-            <div class="table-responsive ">
-                <table class="table table-order table-bordered nowrap" id="dt">
+            <div class="table-responsive">
+                <table class="table table-order table-hover align-middle nowrap" id="dt">
                     <thead>
                         <tr>
                             <th>{{ __('menu_order_detail.no') }}</th>
@@ -214,17 +374,16 @@
                             <th>{{ __('menu_order.plate_number') }}</th>
                             <th>{{ __('menu_order.driver') }}</th>
                             <th>{{ __('menu_order_detail.sales') }}</th>
-                            <th>{{ __('menu_order_detail.income') }}</th>
-                            <th>{{ __('menu_order_detail.cost_detail') }}</th>
-                            <th>{{ __('menu_order_detail.total_cost') }}</th>
+                            <th>Biaya Ditagihkan</th>
+                            <th>Detail Biaya (Tidak Ditagihkan)</th>
+                            <th>Total Biaya (Tidak Ditagihkan)</th>
                             <th>{{ __('menu_order_detail.profit') }}</th>
                         </tr>
                     </thead>
-                    <tbody>
-
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
+        </div>
     </div>
     
     {{-- Elegant Fullscreen Loader for Export --}}
@@ -334,6 +493,10 @@
                 {
                     "orderable": false,
                     "targets": [0]
+                },
+                {
+                    "width": "170px",
+                    "targets": 8
                 }
             ],
             "order": [

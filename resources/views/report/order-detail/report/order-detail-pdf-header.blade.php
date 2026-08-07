@@ -65,9 +65,9 @@
                 <th>Plate Number</th>
                 <th>Driver</th>
                 <th>Sales</th>
-                <th>Pendapatan</th>
-                <th>Cost Detail</th>
-                <th>Total Cost</th>
+                <th>Biaya Ditagihkan</th>
+                <th>Detail Biaya (Tidak Ditagihkan)</th>
+                <th>Total Biaya (Tidak Ditagihkan)</th>
                 <th>Profit</th>
             </tr>
         </thead>

@@ -304,8 +304,22 @@ class ReturnDoController extends Controller
             // Reuse the NotReturnDoService updateOrder logic (handles costs, fleet, route amount etc.)
             $notReturnDoSvc->updateOrder($request, $data->id, $this->title);
 
-            // Keep the order as Return DO (status = 4) — do NOT change status
-            // The order is already confirmed return, we just update its data
+            // Update return info
+            $returnDate = $request->returnDate ? $request->returnDate : $data->returnDate;
+            $returnDescription = $request->returnDescription ?? $data->returnDescription;
+
+            Order::where('code', $code)->update([
+                'status' => 4,
+                'returnDate' => $returnDate,
+                'returnDescription' => $returnDescription,
+            ]);
+
+            // Handle surat jalan file upload if files exist
+            if ($request->hasFile('suratJalanFiles')) {
+                $uploadRequest = new Request();
+                $uploadRequest->files->set('files', $request->file('suratJalanFiles'));
+                $notReturnDoSvc->uploadSuratJalan($uploadRequest, $code);
+            }
 
             DB::commit();
 

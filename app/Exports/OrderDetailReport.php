@@ -19,7 +19,7 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
     public function __construct($ordersOrRequest)
     {
         if ($ordersOrRequest instanceof \Illuminate\Http\Request) {
-            $query = Order::with([
+            $query = Order::whereIn('status', [4, 5])->with([
                 'fleet',
                 'fleet.type',
                 'driver',

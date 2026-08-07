@@ -25,12 +25,12 @@
                 <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Plate Number</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Driver</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Sales</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nama Komponen (Pendapatan)</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nominal Pendapatan</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Total Pendapatan</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nama Komponen (Biaya)</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nominal Biaya</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Total Biaya</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nama Komponen (Biaya Ditagihkan)</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nominal Biaya Ditagihkan</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Total Biaya Ditagihkan</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nama Komponen (Biaya Tidak Ditagihkan)</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Nominal Biaya Tidak Ditagihkan</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Total Biaya Tidak Ditagihkan</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center; border: 1px solid black; background-color: #f2f2f2;">Profit</th>
             </tr>
         </thead>
