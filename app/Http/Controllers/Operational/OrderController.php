@@ -918,6 +918,7 @@ class OrderController extends Controller
             $orderCost = new OrderCost;
             $orderCost->code = GenerateCode::generateCode('OCT');
             $orderCost->orderCode = $request->orderCode;
+            $orderCost->driverCode = $request->driverCode ?? null;
             $orderCost->componentType = $request->componentType; // Simpan component code dari select
             $orderCost->nominal = (int) str_replace('.', '', $request->nominal);
             $orderCost->type = 'On Charge';

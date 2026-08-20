@@ -304,6 +304,7 @@ class OrderService
         $nominals = $request->input('nominal', []);
         $descriptions = $request->input('description', []);
         $types = $request->input('type', []);
+        $drivers = $request->input('componentDriver', $request->input('internalCostDriver', []));
 
         if (! is_array($componentNames)) {
             $componentNames = [];
@@ -319,6 +320,10 @@ class OrderService
 
         if (! is_array($types)) {
             $types = [];
+        }
+
+        if (! is_array($drivers)) {
+            $drivers = [];
         }
 
         $maxRows = max(count($componentNames), count($nominals));
@@ -339,9 +344,10 @@ class OrderService
 
             $rows[] = [
                 'componentType' => $componentType,
-                'nominal' => $nominal,
-                'description' => $descriptions[$i] ?? '',
-                'type' => $types[$i] ?? null,
+                'driverCode'    => ! empty($drivers[$i]) ? $drivers[$i] : null,
+                'nominal'       => $nominal,
+                'description'   => $descriptions[$i] ?? '',
+                'type'          => $types[$i] ?? null,
             ];
         }
 
@@ -452,6 +458,7 @@ class OrderService
                 'code' => GenerateCode::generateCode('TOC', true),
                 'componentType' => $componentType,
                 'orderCode' => $orderCode,
+                'driverCode' => $row['driverCode'] ?? null,
                 'nominal' => $nominal,
                 'description' => $row['description'] ?? '',
                 'type' => $this->resolveCostTypeValue($row['type'] ?? null),

@@ -211,6 +211,11 @@ class NotReturnDoService
                 $internalCostDeletesRaw = [$internalCostDeletesRaw];
             }
 
+            $internalCostDriversRaw = $request->internalCostDriver ?? [];
+            if (! is_array($internalCostDriversRaw)) {
+                $internalCostDriversRaw = [$internalCostDriversRaw];
+            }
+
             $internalCostComponents = array_filter($internalCostComponentsRaw, fn ($c) => ! empty($c));
 
             // First, delete costs that are marked for deletion
@@ -251,6 +256,7 @@ class NotReturnDoService
                 $existingId = $internalCostIdsRaw[$index] ?? null;
                 $isRoute = $internalCostIsRouteRaw[$index] ?? 0;
                 $isDeleted = $internalCostDeletesRaw[$index] ?? '0';
+                $driverCode = ! empty($internalCostDriversRaw[$index]) ? $internalCostDriversRaw[$index] : null;
 
                 // Skip if this cost is marked for deletion
                 if ($isDeleted == '1') {
@@ -261,20 +267,22 @@ class NotReturnDoService
                 if (! empty($existingId)) {
                     $this->orderCost->where('id', $existingId)->update([
                         'componentType' => $componentCode,
-                        'nominal' => $nominal,
-                        'type' => $type,
-                        'description' => $description,
+                        'driverCode'    => $driverCode,
+                        'nominal'       => $nominal,
+                        'type'          => $type,
+                        'description'   => $description,
                     ]);
                 } else {
                     // Create new cost
                     $this->orderCost->create([
-                        'code' => GenerateCode::generateCode('OCT'),
-                        'orderCode' => $order->code,
+                        'code'          => GenerateCode::generateCode('OCT'),
+                        'orderCode'     => $order->code,
+                        'driverCode'    => $driverCode,
                         'componentType' => $componentCode,
-                        'nominal' => $nominal,
-                        'type' => $type,
-                        'description' => $description,
-                        'is_route' => (int) $isRoute,
+                        'nominal'       => $nominal,
+                        'type'          => $type,
+                        'description'   => $description,
+                        'is_route'      => (int) $isRoute,
                     ]);
                 }
             }

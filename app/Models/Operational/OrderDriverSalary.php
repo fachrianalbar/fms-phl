@@ -24,6 +24,7 @@ class OrderDriverSalary extends Model
         'driver_id',
         'driver_salary_id',
         'cost_component_id',
+        'order_cost_id',
         'amount',
         'status',
     ];
@@ -51,5 +52,10 @@ class OrderDriverSalary extends Model
     public function costComponent()
     {
         return $this->belongsTo(CostComponent::class, 'cost_component_id', 'id');
+    }
+
+    public function orderCost()
+    {
+        return $this->belongsTo(OrderCost::class, 'order_cost_id', 'id');
     }
 }

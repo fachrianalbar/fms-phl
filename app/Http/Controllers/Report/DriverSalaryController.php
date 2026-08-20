@@ -596,7 +596,12 @@ class DriverSalaryController extends Controller
         $driverId = $employee?->id;
 
         // Auto-sync any existing orders in this range on-the-fly
-        $ordersToSync = Order::where('driverCode', $driverCode)
+        $ordersToSync = Order::where(function ($q) use ($driverCode) {
+                $q->where('driverCode', $driverCode)
+                  ->orWhereHas('cost', function ($q2) use ($driverCode) {
+                      $q2->where('driverCode', $driverCode);
+                  });
+            })
             ->whereDate('orderDate', '>=', $startDate)
             ->whereDate('orderDate', '<=', $endDate)
             ->whereNull('deleted_at')

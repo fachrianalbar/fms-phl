@@ -25,19 +25,10 @@ class OrderDriverSalaryService
             return;
         }
 
-        // Always resolve driver ID from order
-        $driverId = $order->driver?->id;
-        if (! $driverId && $order->driverCode) {
-            $driverId = Employee::where('code', $order->driverCode)->value('id');
-        }
-
-        // If driver does not exist, remove any unprocessed (status = '0') records and exit
-        if (! $driverId) {
-            OrderDriverSalary::where('order_id', $order->id)
-                ->where('status', '0')
-                ->delete();
-
-            return;
+        // Resolve order primary driver ID
+        $primaryDriverId = $order->driver?->id;
+        if (! $primaryDriverId && $order->driverCode) {
+            $primaryDriverId = Employee::where('code', $order->driverCode)->value('id');
         }
 
         // Fetch all order costs with their cost components
@@ -53,29 +44,61 @@ class OrderDriverSalaryService
             );
         });
 
-        $activeCostComponentIds = [];
+        $activeSalaryCostIds = [];
+        $syncedSalaryRowIds = [];
 
         foreach ($salaryCosts as $cost) {
             $costComponentId = $cost->costComponent->id;
-            $activeCostComponentIds[] = $costComponentId;
+            $activeSalaryCostIds[] = $cost->id;
 
-            // Upsert into order_driver_salary
-            OrderDriverSalary::updateOrCreate(
-                [
-                    'order_id'          => $order->id,
+            // Determine driver for this cost: specific driver on cost, or fallback to order primary driver
+            $rowDriverId = null;
+            if (! empty($cost->driverCode)) {
+                $rowDriverId = Employee::where('code', $cost->driverCode)->value('id');
+            }
+            if (! $rowDriverId) {
+                $rowDriverId = $primaryDriverId;
+            }
+
+            if (! $rowDriverId) {
+                continue;
+            }
+
+            // Find existing record by order_cost_id first, or by order_id + cost_component_id + driver_id
+            $existing = OrderDriverSalary::where('order_cost_id', $cost->id)->first();
+            if (! $existing) {
+                $existing = OrderDriverSalary::where('order_id', $order->id)
+                    ->where('cost_component_id', $costComponentId)
+                    ->where('driver_id', $rowDriverId)
+                    ->whereNull('order_cost_id')
+                    ->first();
+            }
+
+            if ($existing) {
+                $existing->update([
+                    'order_cost_id'     => $cost->id,
                     'cost_component_id' => $costComponentId,
-                ],
-                [
-                    'driver_id' => $driverId,
-                    'amount'    => $cost->nominal ?? 0,
-                ]
-            );
+                    'driver_id'         => $rowDriverId,
+                    'amount'            => $cost->nominal ?? 0,
+                ]);
+                $syncedSalaryRowIds[] = $existing->id;
+            } else {
+                $created = OrderDriverSalary::create([
+                    'order_id'          => $order->id,
+                    'order_cost_id'     => $cost->id,
+                    'cost_component_id' => $costComponentId,
+                    'driver_id'         => $rowDriverId,
+                    'amount'            => $cost->nominal ?? 0,
+                    'status'            => '0',
+                ]);
+                $syncedSalaryRowIds[] = $created->id;
+            }
         }
 
         // Clean up any unprocessed (status = '0') salary components that were removed from the order
         OrderDriverSalary::where('order_id', $order->id)
             ->where('status', '0')
-            ->whereNotIn('cost_component_id', $activeCostComponentIds)
+            ->whereNotIn('id', $syncedSalaryRowIds)
             ->delete();
     }
 }

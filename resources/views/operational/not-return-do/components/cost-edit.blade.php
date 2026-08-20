@@ -71,7 +71,6 @@
         right: 8px !important;
     }
     
-    .modern-cost-table .select2-container--default.select2-container--open .select2-selection--single,
     .modern-cost-table .select2-container--default .select2-selection--single:focus {
         border-color: #a5b4fc !important;
         background-color: #ffffff !important;
@@ -150,14 +149,19 @@
                     <tr>
                         <th class="text-center" style="width: 5%">#</th>
                         <th style="width: 25%">{{ __('menu_order.component_name') }}</th>
-                        <th style="width: 18%">Tipe</th>
-                        <th style="width: 20%">{{ __('menu_order.nominal') ?? 'Nominal' }}</th>
+                        <th style="width: 22%">Supir / Driver</th>
+                        <th style="width: 14%">Tipe</th>
+                        <th style="width: 16%">{{ __('menu_order.nominal') ?? 'Nominal' }}</th>
                         <th>{{ __('menu_order.description') }}</th>
                     </tr>
                 </thead>
                 <tbody id="internalCostForm">
                     @if ($allCosts->count() > 0)
                         @foreach ($allCosts as $item)
+                        @php
+                            $isSalary = $item->costComponent && ($item->costComponent->type === 'salary' || stripos($item->costComponent->name, 'gaji') !== false);
+                            $selectedDriverCode = $item->driverCode ?: $data->driverCode;
+                        @endphp
                         <tr class="cost-row" style="transition: all 0.3s ease;">
                             <td class="text-center align-middle">
                                 <a href="#" class="btn btn-icon btn-sm bg-danger-subtle remove-internal-cost-btn" 
@@ -171,11 +175,29 @@
                                     <option selected disabled value="">{{ __('general.choose') }}...</option>
                                     @foreach ($component as $comp)
                                         <option value="{{ $comp->code }}" 
+                                            data-type="{{ $comp->type }}"
+                                            data-is-salary="{{ ($comp->type === 'salary' || stripos($comp->name, 'gaji') !== false) ? '1' : '0' }}"
                                             {{ $item->componentType == $comp->code ? 'selected' : '' }}>
                                             {{ $comp->name }}
                                         </option>
                                     @endforeach
                                 </select>
+                            </td>
+                            <td class="align-middle internal-driver-cell">
+                                <div class="internal-driver-wrapper" style="{{ $isSalary ? '' : 'display:none;' }}">
+                                    <select class="form-control js-example-basic-single internal-cost-driver-select w-100" style="width:100%" 
+                                        name="internalCostDriver[]" id="internalCostDriver_edit_{{ $loop->iteration }}">
+                                        <option value="">-- Pilih Supir --</option>
+                                        @foreach ($driver as $drv)
+                                            <option value="{{ $drv->code }}" {{ $selectedDriverCode == $drv->code ? 'selected' : '' }}>
+                                                {{ $drv->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="internal-driver-placeholder text-center" style="{{ $isSalary ? 'display:none;' : '' }}">
+                                    <span class="badge bg-light text-muted border">-</span>
+                                </div>
                             </td>
                             <td class="align-middle">
                                 <select class="form-control js-example-basic-single internal-cost-type-select w-100" style="width:100%" 
@@ -201,7 +223,7 @@
                         @endforeach
                     @else
                         <tr id="internal-empty-row">
-                            <td colspan="5" class="text-center text-muted py-4">
+                            <td colspan="6" class="text-center text-muted py-4">
                                 <i class="mdi mdi-information-outline me-1"></i>
                                 Belum ada biaya komponen. Klik tombol <strong>"{{ __('general.add_data') }}"</strong> untuk menambah.
                             </td>
@@ -211,7 +233,7 @@
                 @if ($allCosts->count() > 0)
                 <tfoot>
                     <tr class="table-light">
-                        <td colspan="3" class="text-end fw-bold">Total:</td>
+                        <td colspan="4" class="text-end fw-bold">Total:</td>
                         <td class="text-end fw-bold" id="internalCostTotal">
                             Rp {{ number_format($totalCost, 0, ',', '.') }}
                         </td>
@@ -256,18 +278,48 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Handle Component selection change (toggle driver select for salary type)
+    if (typeof $ !== 'undefined') {
+        $(document).on('change', '.internal-cost-component-select', function() {
+            const row = $(this).closest('tr');
+            const selectedOpt = $(this).find('option:selected');
+            const isSalary = selectedOpt.data('is-salary') == '1' || selectedOpt.data('type') === 'salary' || (selectedOpt.text() || '').toLowerCase().includes('gaji');
+            const driverWrapper = row.find('.internal-driver-wrapper');
+            const driverPlaceholder = row.find('.internal-driver-placeholder');
+            const driverSelect = row.find('.internal-cost-driver-select');
+
+            if (isSalary) {
+                driverPlaceholder.hide();
+                driverWrapper.show();
+                // Default to header driver if not selected yet
+                if (!driverSelect.val()) {
+                    const headerDriver = $('#driverCode').val() || '{{ $data->driverCode ?? "" }}';
+                    if (headerDriver) {
+                        driverSelect.val(headerDriver).trigger('change.select2');
+                    }
+                }
+            } else {
+                driverWrapper.hide();
+                driverPlaceholder.show();
+                driverSelect.val('').trigger('change.select2');
+            }
+        });
+    }
+
     // Initial total calculation
     calculateInternalCostTotal();
 });
 
 function initializeInternalCostSelect2() {
-    const selects = document.querySelectorAll('.internal-cost-component-select, .internal-cost-type-select');
+    const selects = document.querySelectorAll('.internal-cost-component-select, .internal-cost-type-select, .internal-cost-driver-select');
     if (typeof $ !== 'undefined' && $.fn.select2) {
         selects.forEach(select => {
             if (!$(select).hasClass('select2-hidden-accessible')) {
+                const isComponent = $(select).hasClass('internal-cost-component-select');
+                const isDriver = $(select).hasClass('internal-cost-driver-select');
                 $(select).select2({
-                    placeholder: $(select).hasClass('internal-cost-component-select') ? "{{ __('general.choose') }}..." : undefined,
-                    allowClear: $(select).hasClass('internal-cost-component-select'),
+                    placeholder: isComponent ? "{{ __('general.choose') }}..." : (isDriver ? "-- Pilih Supir --" : undefined),
+                    allowClear: isComponent || isDriver,
                     width: '100%'
                 });
             }
@@ -287,8 +339,8 @@ function addInternalCostRow() {
     // Ensure tfoot exists
     ensureInternalCostTfoot();
 
-    const rowCount = tbody.querySelectorAll('tr.cost-row').length + 1;
     const uniqueId = Date.now(); // Use timestamp for unique IDs
+    const headerDriverCode = (typeof $ !== 'undefined' && $('#driverCode').length) ? ($('#driverCode').val() || '{{ $data->driverCode ?? "" }}') : '{{ $data->driverCode ?? "" }}';
     
     const newRow = document.createElement('tr');
     newRow.className = 'cost-row';
@@ -308,9 +360,29 @@ function addInternalCostRow() {
                 name="internalCostComponent[]" id="internalCostComponent_${uniqueId}" required>
                 <option selected disabled value="">{{ __('general.choose') }}...</option>
                 @foreach ($component as $item)
-                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                    <option value="{{ $item->code }}"
+                        data-type="{{ $item->type }}"
+                        data-is-salary="{{ ($item->type === 'salary' || stripos($item->name, 'gaji') !== false) ? '1' : '0' }}">
+                        {{ $item->name }}
+                    </option>
                 @endforeach
             </select>
+        </td>
+        <td class="align-middle internal-driver-cell">
+            <div class="internal-driver-wrapper" style="display:none;">
+                <select class="form-control js-example-basic-single internal-cost-driver-select w-100" style="width:100%" 
+                    name="internalCostDriver[]" id="internalCostDriver_${uniqueId}">
+                    <option value="">-- Pilih Supir --</option>
+                    @foreach ($driver as $drv)
+                        <option value="{{ $drv->code }}" ${headerDriverCode === '{{ $drv->code }}' ? 'selected' : ''}>
+                            {{ $drv->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="internal-driver-placeholder text-center">
+                <span class="badge bg-light text-muted border">-</span>
+            </div>
         </td>
         <td class="align-middle">
             <select class="form-control js-example-basic-single internal-cost-type-select w-100" style="width:100%" 
@@ -342,10 +414,16 @@ function addInternalCostRow() {
     
     // Initialize Select2 for the new select elements
     const newComponentSelect = newRow.querySelector(`#internalCostComponent_${uniqueId}`);
+    const newDriverSelect = newRow.querySelector(`#internalCostDriver_${uniqueId}`);
     const newTypeSelect = newRow.querySelector(`#internalCostType_${uniqueId}`);
     if (typeof $ !== 'undefined' && $.fn.select2) {
         $(newComponentSelect).select2({
             placeholder: "{{ __('general.choose') }}...",
+            allowClear: true,
+            width: '100%'
+        });
+        $(newDriverSelect).select2({
+            placeholder: "-- Pilih Supir --",
             allowClear: true,
             width: '100%'
         });
@@ -402,7 +480,7 @@ function removeInternalCost(button) {
                 const newEmptyRow = document.createElement('tr');
                 newEmptyRow.id = 'internal-empty-row';
                 newEmptyRow.innerHTML = `
-                    <td colspan="5" class="text-center text-muted py-4">
+                    <td colspan="6" class="text-center text-muted py-4">
                         <i class="mdi mdi-information-outline me-1"></i>
                         Belum ada biaya komponen. Klik tombol <strong>"{{ __('general.add_data') }}"</strong> untuk menambah.
                     </td>
@@ -463,7 +541,7 @@ function ensureInternalCostTfoot() {
         tfoot = document.createElement('tfoot');
         tfoot.innerHTML = `
             <tr class="table-light">
-                <td colspan="3" class="text-end fw-bold">Total:</td>
+                <td colspan="4" class="text-end fw-bold">Total:</td>
                 <td class="text-end fw-bold" id="internalCostTotal">Rp 0</td>
                 <td></td>
             </tr>

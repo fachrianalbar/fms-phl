@@ -19,6 +19,7 @@ class OrderCost extends Model
         'code',
         'componentType',
         'orderCode',
+        'driverCode',
         'nominal',
         'type',
         'description',
@@ -33,5 +34,15 @@ class OrderCost extends Model
     public function costComponent()
     {
         return $this->belongsTo(CostComponent::class, 'componentType', 'code');
+    }
+
+    public function driver()
+    {
+        return $this->belongsTo(\App\Models\Master\Employee::class, 'driverCode', 'code');
+    }
+
+    public function orderDriverSalary()
+    {
+        return $this->hasOne(OrderDriverSalary::class, 'order_cost_id', 'id');
     }
 }
