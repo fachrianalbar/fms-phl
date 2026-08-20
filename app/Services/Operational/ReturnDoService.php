@@ -30,6 +30,8 @@ class ReturnDoService
                 'route.routeDetail',
                 'fleet',
                 'fleet.type',
+                'fleet.company',
+                'orderType',
             ])
             ->get();
     }
@@ -48,6 +50,8 @@ class ReturnDoService
                 'route.routeDetail',
                 'fleet',
                 'fleet.type',
+                'fleet.company',
+                'orderType',
                 'onChargeCost.costComponent',
             ])->orderBy('order.created_at', 'desc');
     }

@@ -51,6 +51,7 @@
                             <th>{{ __('menu_return_do.destination') }}</th>
                             <th>{{ __('menu_return_do.fleet') }}</th>
                             <th>{{ __('menu_return_do.driver') }}</th>
+                            <th>{{ __('menu_return_do.order_type') }}</th>
                             <th>{{ __('menu_return_do.return_date') }}</th>
                         </tr>
                     </thead>
@@ -190,6 +191,9 @@
                 },
                 {
                     "data": 'driver.name'
+                },
+                {
+                    "data": 'orderType'
                 },
                 {
                     "data": 'returnDate'

@@ -29,6 +29,7 @@ return [
     'destination' => 'Destination',
     'fleet' => 'Fleet',
     'driver' => 'Driver',
+    'order_type' => 'Order Type',
     'confirm' => 'Confirm',
 
     // UI Strings

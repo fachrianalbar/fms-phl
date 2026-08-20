@@ -29,6 +29,7 @@ return [
     'destination' => 'Tujuan',
     'fleet' => 'Armada',
     'driver' => 'Sopir',
+    'order_type' => 'Tipe Order',
     'confirm' => 'Konfirmasi',
 
     // UI Strings

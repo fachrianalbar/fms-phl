@@ -148,6 +148,22 @@ class ReturnDoController extends Controller
                     return $row->returnDate;
                 })
 
+                ->addColumn('orderType', function ($row) {
+                    // Determine order type from fleet's company.type
+                    $type = '';
+
+                    if (isset($row->fleet->company->type)) {
+                        $isExternal = strtolower($row->fleet->company->type) === 'external';
+                        $type = $isExternal ? 'External' : 'Internal';
+                    } elseif (isset($row->orderType->name)) {
+                        $type = $row->orderType->name;
+                    } elseif ($row->orderTypeCode) {
+                        $type = $row->orderTypeCode == 'Ext' ? 'External' : ($row->orderTypeCode == 'Int' ? 'Internal' : $row->orderTypeCode);
+                    }
+
+                    return $type;
+                })
+
                 ->addColumn('action', function ($row) {
                     $editBtn = '<a href="' . route('operational.return-do.edit-order', $row->code) . '" class="btn btn-sm btn-primary me-1" title="Edit"><i class="mdi mdi-pencil"></i></a>';
                     $rollbackBtn = '<button type="button" class="btn btn-sm btn-warning rollback-btn" title="Rollback Status" data-id="' . $row->id . '" data-shipment="' . $row->shipmentNumber . '"><i class="mdi mdi-undo"></i></button>';
@@ -192,7 +208,7 @@ class ReturnDoController extends Controller
 
                     return $buttons ?: '-';
                 })
-                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'driver.name', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
+                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'driver.name', 'orderType', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
                 ->toJson();
         }
     }
