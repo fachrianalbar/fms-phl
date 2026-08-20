@@ -15,6 +15,7 @@ use App\Models\Master\Fleet;
 use App\Models\Master\Location;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\CompanySettingService;
 use App\Services\Data\FleetDriverService;
 use App\Services\Master\CostComponentService;
@@ -924,6 +925,9 @@ class OrderController extends Controller
             $orderCost->is_route = 0; // Custom/tambahan user, bukan dari route
             $orderCost->save();
 
+            // Auto upsert salary cost components to order_driver_salary
+            OrderDriverSalaryService::syncForOrder($request->orderCode);
+
             DB::commit();
 
             if ($request->ajax()) {
@@ -960,7 +964,11 @@ class OrderController extends Controller
                 ]);
             }
 
+            $orderCode = $cost->orderCode;
             $cost->delete();
+
+            // Auto sync salary cost components
+            OrderDriverSalaryService::syncForOrder($orderCode);
 
             return response()->json([
                 'success' => true,

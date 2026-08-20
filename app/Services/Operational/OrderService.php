@@ -11,6 +11,7 @@ use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\Operational\OrderMaterial;
+use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
@@ -136,6 +137,9 @@ class OrderService
             $this->storeOrderMaterial($request);
         }
 
+        // Auto upsert salary cost components to order_driver_salary
+        OrderDriverSalaryService::syncForOrder($data);
+
         $this->logActivity($title, $data, 'Create');
 
         return [
@@ -229,6 +233,9 @@ class OrderService
             $this->storeOrderMaterial($request);
         }
 
+        // Auto upsert salary cost components to order_driver_salary
+        OrderDriverSalaryService::syncForOrder($data);
+
         $this->logActivity($title, $this->getById($id), 'After Update');
 
         return $shipmentNumber;
@@ -245,6 +252,8 @@ class OrderService
         $this->orderCost->where('orderCode', $data->code)->delete();
 
         $this->orderMaterial->where('orderCode', $data->code)->delete();
+
+        \App\Models\Operational\OrderDriverSalary::where('order_id', $data->id)->where('status', '0')->delete();
 
         $this->service->where('id', $id)->delete();
     }

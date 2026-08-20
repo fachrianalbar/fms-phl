@@ -437,6 +437,11 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                    @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
+                        <button type="button" class="btn btn-outline-success" id="btn-sync-existing-status" style="border-radius: 10px; font-weight: 600; padding: 9px 16px;">
+                            <i class="mdi mdi-sync me-1"></i> Sinkron Status Gaji (Selesai)
+                        </button>
+                    @endif
                     <button type="button" class="btn btn-process" data-bs-toggle="modal" data-bs-target="#processSalaryModal">
                         <i class="mdi mdi-cash-plus me-1"></i> Proses Gaji Driver
                     </button>
@@ -591,11 +596,13 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div id="noOrderAlert" class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
-                                    <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
-                                    <div>
-                                        <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
-                                        <div class="small mt-1 text-opacity-75">Anda tetap dapat memproses gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                <div id="noOrderAlert" class="alert alert-info border-0 shadow-sm mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
+                                        <div>
+                                            <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
+                                            <div class="small mt-1 text-opacity-75">Anda tetap dapat memproses gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -752,11 +759,13 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div id="editNoOrderAlert" class="alert alert-info border-0 shadow-sm d-flex align-items-center mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
-                                    <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
-                                    <div>
-                                        <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
-                                        <div class="small mt-1 text-opacity-75">Anda tetap dapat menyimpan perubahan gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                <div id="editNoOrderAlert" class="alert alert-info border-0 shadow-sm mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                    <div class="d-flex align-items-center">
+                                        <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
+                                        <div>
+                                            <strong style="font-size:14px;">Tidak ada order dengan komponen gaji pada periode ini.</strong>
+                                            <div class="small mt-1 text-opacity-75">Anda tetap dapat menyimpan perubahan gaji supir ini dengan memasukkan item Penambah / Pengurang secara manual di bawah.</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1028,6 +1037,53 @@
             });
 
             // ============================================================
+            // Modal: Adjustment rows
+            // ============================================================
+            let adjIndex = 0;
+
+            function addAdjustmentRow(date = '', description = '', type = 'addition', nominal = '') {
+                $('#noAdjustmentHint').hide();
+                const formattedDate = date ? date.substring(0, 10) : '';
+                const html = `
+                    <div class="adjustment-row" data-index="${adjIndex}">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-2">
+                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tanggal</label>
+                                <input type="date" class="form-control form-control-sm" name="adjustments[${adjIndex}][date]" value="${formattedDate}" required style="border-radius:6px;">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Deskripsi</label>
+                                <input type="text" class="form-control form-control-sm" name="adjustments[${adjIndex}][description]" value="${description}" placeholder="Contoh: Potong utang, Bonus, dll" required style="border-radius:6px;">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tipe</label>
+                                <select class="form-select form-select-sm adj-type" name="adjustments[${adjIndex}][type]" required style="border-radius:6px;">
+                                    <option value="addition" ${type === 'addition' ? 'selected' : ''}>➕ Penambah</option>
+                                    <option value="deduction" ${type === 'deduction' ? 'selected' : ''}>➖ Pengurang</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Nominal (Rp)</label>
+                                <input type="text" class="form-control form-control-sm adj-nominal" name="adjustments[${adjIndex}][nominal]" value="${nominal}" placeholder="0" oninput="formatAngka(this)" required style="border-radius:6px;">
+                            </div>
+                            <div class="col-md-1 d-flex justify-content-center">
+                                <button type="button" class="btn btn-sm btn-remove-adj" title="Hapus">
+                                    <i class="mdi mdi-close"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                $('#adjustmentsContainer').append(html);
+                adjIndex++;
+                recalcSummary();
+            }
+
+            $('#btnAddAdjustment').on('click', function() {
+                addAdjustmentRow();
+            });
+
+            // ============================================================
             // Modal: Search orders
             // ============================================================
             $('#btnSearchOrders').on('click', function() {
@@ -1050,7 +1106,7 @@
                         $('#orderPreviewSection').show();
                         $('#btnSubmitSalary').show();
 
-                        if (response.orders.length === 0) {
+                        if (!response.orders || response.orders.length === 0) {
                             $('#orderTableContainer').hide();
                             $('#noOrderAlert').show();
                             $('#orderCount').text('0 order');
@@ -1103,47 +1159,6 @@
                         btn.prop('disabled', false).html('<i class="mdi mdi-magnify me-1"></i> Cari');
                     }
                 });
-            });
-
-            // ============================================================
-            // Modal: Adjustment rows
-            // ============================================================
-            let adjIndex = 0;
-
-            $('#btnAddAdjustment').on('click', function() {
-                $('#noAdjustmentHint').hide();
-                const html = `
-                    <div class="adjustment-row" data-index="${adjIndex}">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-2">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tanggal</label>
-                                <input type="date" class="form-control form-control-sm" name="adjustments[${adjIndex}][date]" required style="border-radius:6px;">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Deskripsi</label>
-                                <input type="text" class="form-control form-control-sm" name="adjustments[${adjIndex}][description]" placeholder="Contoh: Potong utang, Bonus, dll" required style="border-radius:6px;">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tipe</label>
-                                <select class="form-select form-select-sm adj-type" name="adjustments[${adjIndex}][type]" required style="border-radius:6px;">
-                                    <option value="addition">➕ Penambah</option>
-                                    <option value="deduction">➖ Pengurang</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Nominal (Rp)</label>
-                                <input type="text" class="form-control form-control-sm adj-nominal" name="adjustments[${adjIndex}][nominal]" placeholder="0" oninput="formatAngka(this)" required style="border-radius:6px;">
-                            </div>
-                            <div class="col-md-1 d-flex justify-content-center">
-                                <button type="button" class="btn btn-sm btn-remove-adj" title="Hapus">
-                                    <i class="mdi mdi-close"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                $('#adjustmentsContainer').append(html);
-                adjIndex++;
             });
 
             // Remove adjustment row
@@ -1202,7 +1217,7 @@
                         $('#editOrderPreviewSection').show();
                         $('#btnUpdateSalary').show();
 
-                        if (response.orders.length === 0) {
+                        if (!response.orders || response.orders.length === 0) {
                             $('#editOrderTableContainer').hide();
                             $('#editNoOrderAlert').show();
                             $('#editOrderCount').text('0 order');
@@ -1494,5 +1509,47 @@
                 }
             });
         }
+
+        @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
+        $('#btn-sync-existing-status').click(function(e) {
+            e.preventDefault();
+            swal({
+                title: "Sinkronisasi Status Gaji?",
+                text: "Sistem akan mencocokkan seluruh rekap gaji supir yang sudah tersimpan dengan data komponen gaji order, lalu memperbarui statusnya menjadi '1' (Selesai/Sudah Digaji).",
+                icon: "info",
+                buttons: {
+                    cancel: "Batal",
+                    confirm: {
+                        text: "Ya, Sinkronkan!",
+                        closeModal: false
+                    }
+                },
+            }).then((willSync) => {
+                if (willSync) {
+                    $.ajax({
+                        url: "{{ route('report.driver-salary.sync-existing-status') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            swal("Berhasil!", response.message, "success").then(() => {
+                                if ($.fn.DataTable.isDataTable('#dtProcessed')) {
+                                    $('#dtProcessed').DataTable().ajax.reload(null, false);
+                                }
+                            });
+                        },
+                        error: function(xhr) {
+                            let msg = "Terjadi kesalahan saat sinkronisasi status gaji.";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            swal("Gagal!", msg, "error");
+                        }
+                    });
+                }
+            });
+        });
+        @endif
     </script>
 @endpush

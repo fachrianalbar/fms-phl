@@ -16,6 +16,7 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::resource('profit-loss', ProfitLossController::class);
     Route::get('excel-profit-loss', [ProfitLossController::class, 'excelProfitLoss'])->name('profit-loss.excel-profit-loss');
     Route::resource('driver-salary', DriverSalaryController::class);
+    Route::post('driver-salary/sync-existing-status', [DriverSalaryController::class, 'syncExistingStatus'])->name('driver-salary.sync-existing-status');
     Route::get('pdf-driver-salary', [DriverSalaryController::class, 'pdfDriverSalary'])->name('driver-salary.pdf-driver-salary');
     Route::get('pdf-driver-salary-processed/{id}', [DriverSalaryController::class, 'pdfDriverSalaryProcessed'])->name('driver-salary.pdf-processed');
     Route::resource('driver-tonase', DriverTonaseController::class);

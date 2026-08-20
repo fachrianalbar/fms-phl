@@ -156,4 +156,9 @@ class Order extends Model
     {
         return $this->hasMany(VendorPayment::class, 'orderCode', 'code');
     }
+
+    public function orderDriverSalaries()
+    {
+        return $this->hasMany(OrderDriverSalary::class, 'order_id', 'id');
+    }
 }

@@ -71,4 +71,9 @@ class Employee extends Model
     {
         return $this->belongsTo(\App\Models\Bank\BankAccount::class, 'bankCode', 'code');
     }
+
+    public function orderDriverSalaries()
+    {
+        return $this->hasMany(\App\Models\Operational\OrderDriverSalary::class, 'driver_id', 'id');
+    }
 }

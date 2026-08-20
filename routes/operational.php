@@ -16,6 +16,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('down-payment-detail', DownPaymentDetailController::class);
     Route::resource('monitoring-order', OrderMonitoringController::class);
     Route::resource('return-do', ReturnDoController::class);
+    Route::post('return-do/sync-driver-salary', [ReturnDoController::class, 'syncDriverSalary'])->name('return-do.sync-driver-salary');
     Route::get('return-do/{orderId}/files', [ReturnDoController::class, 'getOrderFiles'])->name('return-do.get-files');
     Route::resource('not-return-do', NotReturnDoController::class)->except(['update']);
     Route::resource('order-tax', OrderTaxController::class);

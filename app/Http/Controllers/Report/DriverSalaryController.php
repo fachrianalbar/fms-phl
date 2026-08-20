@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Report;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Employee;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Operational\OrderDriverSalary;
 use App\Models\Report\DriverSalary;
 use App\Models\Report\DriverSalaryDetail;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
+use App\Services\Operational\OrderDriverSalaryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
@@ -54,16 +58,14 @@ class DriverSalaryController extends Controller
     }
 
     /**
-     * Build the base query for driver salary report.
-     * Returns orders that have at least one OrderCost whose CostComponent.type = 'salary'.
+     * Build the base query for unpaid driver salary report.
+     * Returns orders that have at least one OrderDriverSalary with status = '0'.
      */
     private function buildSalaryQuery(Request $request)
     {
         $query = Order::with(['fleet', 'driver', 'route.originLocation', 'route.destinationLocation'])
-            ->whereHas('cost', function ($q) {
-                $q->whereHas('costComponent', function ($q2) {
-                    $q2->where('type', 'salary');
-                });
+            ->whereHas('orderDriverSalaries', function ($q) {
+                $q->where('status', '0');
             })
             ->whereNull('order.deleted_at');
 
@@ -86,15 +88,15 @@ class DriverSalaryController extends Controller
     }
 
     /**
-     * Get salary total for a single order (sum of OrderCost where costComponent.type = 'salary').
+     * Get unpaid salary total for a single order from order_driver_salary.
      */
     private function getSalaryTotal($orderCode)
     {
-        return OrderCost::where('orderCode', $orderCode)
-            ->whereHas('costComponent', function ($q) {
-                $q->where('type', 'salary');
+        return OrderDriverSalary::where('status', '0')
+            ->whereHas('order', function ($q) use ($orderCode) {
+                $q->where('code', $orderCode);
             })
-            ->sum('nominal');
+            ->sum('amount');
     }
 
     /**
@@ -162,22 +164,31 @@ class DriverSalaryController extends Controller
         try {
             DB::beginTransaction();
 
-            // Calculate total salary from orders
-            $orders = Order::whereHas('cost', function ($q) {
-                    $q->whereHas('costComponent', function ($q2) {
-                        $q2->where('type', 'salary');
-                    });
+            $startDate = Carbon::parse($request->startDate)->format('Y-m-d');
+            $endDate = Carbon::parse($request->endDate)->format('Y-m-d');
+            $employee = Employee::where('code', $request->driverCode)->first();
+            $driverId = $employee?->id;
+
+            // Calculate total salary directly from order_driver_salary (status = 0)
+            $orderDriverSalaries = OrderDriverSalary::with('order')
+                ->where('status', '0')
+                ->where(function ($q) use ($driverId, $request) {
+                    if ($driverId) {
+                        $q->where('driver_id', $driverId);
+                    } else {
+                        $q->whereHas('driver', function ($q2) use ($request) {
+                            $q2->where('code', $request->driverCode);
+                        });
+                    }
                 })
-                ->where('driverCode', $request->driverCode)
-                ->whereDate('orderDate', '>=', $request->startDate)
-                ->whereDate('orderDate', '<=', $request->endDate)
-                ->whereNull('deleted_at')
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                    $q->whereDate('orderDate', '>=', $startDate)
+                      ->whereDate('orderDate', '<=', $endDate)
+                      ->whereNull('deleted_at');
+                })
                 ->get();
 
-            $totalSalary = 0;
-            foreach ($orders as $order) {
-                $totalSalary += $this->getSalaryTotal($order->code);
-            }
+            $totalSalary = $orderDriverSalaries->sum('amount');
 
             // Calculate total adjustment
             $totalAdjustment = 0;
@@ -216,6 +227,12 @@ class DriverSalaryController extends Controller
                 ]);
             }
 
+            // Update order_driver_salary: set status = '1' and link driver_salary_id
+            OrderDriverSalary::whereIn('id', $orderDriverSalaries->pluck('id'))->update([
+                'status' => '1',
+                'driver_salary_id' => $driverSalary->id,
+            ]);
+
             DB::commit();
 
             return redirect()->route('report.driver-salary.index')
@@ -235,23 +252,32 @@ class DriverSalaryController extends Controller
     {
         $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
 
-        // Get orders for this driver and period
-        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
-            ->whereHas('cost', function ($q) {
-                $q->whereHas('costComponent', function ($q2) {
-                    $q2->where('type', 'salary');
-                });
-            })
-            ->where('driverCode', $salary->driverCode)
-            ->whereDate('orderDate', '>=', $salary->startDate)
-            ->whereDate('orderDate', '<=', $salary->endDate)
-            ->whereNull('deleted_at')
-            ->orderBy('orderDate', 'asc')
+        // Get all order_driver_salary linked to this salary slip
+        $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation', 'costComponent'])
+            ->where('driver_salary_id', $salary->id)
             ->get();
 
-        // Attach salary total to each order
-        foreach ($orders as $order) {
-            $order->salaryAmount = $this->getSalaryTotal($order->code);
+        // Fallback for legacy records
+        if ($orderDriverSalaries->isEmpty()) {
+            $employee = Employee::where('code', $salary->driverCode)->first();
+            $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation', 'costComponent'])
+                ->where('driver_id', $employee?->id)
+                ->whereHas('order', function ($q) use ($salary) {
+                    $q->whereDate('orderDate', '>=', $salary->startDate)
+                      ->whereDate('orderDate', '<=', $salary->endDate)
+                      ->whereNull('deleted_at');
+                })
+                ->get();
+        }
+
+        $groupedOrders = $orderDriverSalaries->groupBy('order_id');
+        $orders = collect([]);
+        foreach ($groupedOrders as $orderId => $items) {
+            $order = $items->first()->order;
+            if ($order) {
+                $order->salaryAmount = $items->sum('amount');
+                $orders->push($order);
+            }
         }
 
         return view($this->view . 'show')
@@ -269,6 +295,13 @@ class DriverSalaryController extends Controller
             DB::beginTransaction();
 
             $salary = DriverSalary::findOrFail($id);
+
+            // Revert linked order_driver_salary status back to 0
+            OrderDriverSalary::where('driver_salary_id', $salary->id)->update([
+                'status' => '0',
+                'driver_salary_id' => null,
+            ]);
+
             // Delete details first
             DriverSalaryDetail::where('driverSalaryCode', $salary->code)->delete();
             $salary->delete();
@@ -291,24 +324,32 @@ class DriverSalaryController extends Controller
     public function edit($id)
     {
         $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
-        
-        // Also fetch orders for this driver and period to populate the modal's order list
-        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
-            ->whereHas('cost', function ($q) {
-                $q->whereHas('costComponent', function ($q2) {
-                    $q2->where('type', 'salary');
-                });
-            })
-            ->where('driverCode', $salary->driverCode)
-            ->whereDate('orderDate', '>=', $salary->startDate)
-            ->whereDate('orderDate', '<=', $salary->endDate)
-            ->whereNull('deleted_at')
-            ->orderBy('orderDate', 'asc')
+
+        // Fetch order_driver_salary records linked to this salary slip
+        $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation'])
+            ->where('driver_salary_id', $salary->id)
             ->get();
 
+        // Fallback for legacy
+        if ($orderDriverSalaries->isEmpty()) {
+            $employee = Employee::where('code', $salary->driverCode)->first();
+            $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation'])
+                ->where('driver_id', $employee?->id)
+                ->whereHas('order', function ($q) use ($salary) {
+                    $q->whereDate('orderDate', '>=', $salary->startDate)
+                      ->whereDate('orderDate', '<=', $salary->endDate)
+                      ->whereNull('deleted_at');
+                })
+                ->get();
+        }
+
+        $groupedOrders = $orderDriverSalaries->groupBy('order_id');
         $orderList = [];
-        foreach ($orders as $order) {
-            $salaryAmount = $this->getSalaryTotal($order->code);
+        foreach ($groupedOrders as $orderId => $items) {
+            $order = $items->first()->order;
+            if (! $order) continue;
+
+            $salaryAmount = $items->sum('amount');
             $routeName = '-';
             if ($order->route) {
                 $origin = $order->route->originLocation->name ?? '';
@@ -358,24 +399,36 @@ class DriverSalaryController extends Controller
         try {
             DB::beginTransaction();
 
+            $startDate = Carbon::parse($request->startDate)->format('Y-m-d');
+            $endDate = Carbon::parse($request->endDate)->format('Y-m-d');
             $driverSalary = DriverSalary::findOrFail($id);
+            $employee = Employee::where('code', $request->driverCode)->first();
+            $driverId = $employee?->id;
 
-            // Calculate total salary from orders for new driver/period
-            $orders = Order::whereHas('cost', function ($q) {
-                    $q->whereHas('costComponent', function ($q2) {
-                        $q2->where('type', 'salary');
-                    });
+            // 1. Release previous order_driver_salary records
+            OrderDriverSalary::where('driver_salary_id', $driverSalary->id)->update([
+                'status' => '0',
+                'driver_salary_id' => null,
+            ]);
+
+            // 2. Fetch order_driver_salary records for new driver/period
+            $orderDriverSalaries = OrderDriverSalary::where(function ($q) use ($driverId, $request) {
+                    if ($driverId) {
+                        $q->where('driver_id', $driverId);
+                    } else {
+                        $q->whereHas('driver', function ($q2) use ($request) {
+                            $q2->where('code', $request->driverCode);
+                        });
+                    }
                 })
-                ->where('driverCode', $request->driverCode)
-                ->whereDate('orderDate', '>=', $request->startDate)
-                ->whereDate('orderDate', '<=', $request->endDate)
-                ->whereNull('deleted_at')
+                ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                    $q->whereDate('orderDate', '>=', $startDate)
+                      ->whereDate('orderDate', '<=', $endDate)
+                      ->whereNull('deleted_at');
+                })
                 ->get();
 
-            $totalSalary = 0;
-            foreach ($orders as $order) {
-                $totalSalary += $this->getSalaryTotal($order->code);
-            }
+            $totalSalary = $orderDriverSalaries->sum('amount');
 
             // Calculate total adjustment
             $totalAdjustment = 0;
@@ -393,8 +446,8 @@ class DriverSalaryController extends Controller
             // Update main record
             $driverSalary->update([
                 'driverCode' => $request->driverCode,
-                'startDate' => $request->startDate,
-                'endDate' => $request->endDate,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
                 'totalSalary' => $totalSalary,
                 'totalAdjustment' => $totalAdjustment,
                 'grandTotal' => $grandTotal,
@@ -415,18 +468,24 @@ class DriverSalaryController extends Controller
                 ]);
             }
 
+            // 3. Mark new order_driver_salary records as status = 1 and link driver_salary_id
+            OrderDriverSalary::whereIn('id', $orderDriverSalaries->pluck('id'))->update([
+                'status' => '1',
+                'driver_salary_id' => $driverSalary->id,
+            ]);
+
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Gaji driver berhasil diperbarui.'
+                'message' => 'Gaji driver berhasil diperbarui. Kode: ' . $driverSalary->code
             ]);
         } catch (\Throwable $th) {
             DB::rollback();
 
             return response()->json([
                 'success' => false,
-                'message' => $th->getMessage()
+                'message' => 'Gagal memperbarui: ' . $th->getMessage()
             ], 500);
         }
     }
@@ -513,35 +572,70 @@ class DriverSalaryController extends Controller
 
     /**
      * AJAX - Get order salary data for preview before processing.
+     * Reads directly from order_driver_salary where status = '0' (unpaid).
      */
     public function getOrderSalary(Request $request)
     {
         $driverCode = $request->driverCode;
-        $startDate = $request->startDate;
-        $endDate = $request->endDate;
+        $rawStart = $request->startDate;
+        $rawEnd = $request->endDate;
 
-        if (!$driverCode || !$startDate || !$endDate) {
+        if (!$driverCode || !$rawStart || !$rawEnd) {
             return response()->json(['error' => 'Parameter tidak lengkap'], 422);
         }
 
-        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
-            ->whereHas('cost', function ($q) {
-                $q->whereHas('costComponent', function ($q2) {
-                    $q2->where('type', 'salary');
-                });
-            })
-            ->where('driverCode', $driverCode)
+        try {
+            $startDate = Carbon::parse($rawStart)->format('Y-m-d');
+            $endDate = Carbon::parse($rawEnd)->format('Y-m-d');
+        } catch (\Exception $e) {
+            $startDate = $rawStart;
+            $endDate = $rawEnd;
+        }
+
+        $employee = Employee::where('code', $driverCode)->first();
+        $driverId = $employee?->id;
+
+        // Auto-sync any existing orders in this range on-the-fly
+        $ordersToSync = Order::where('driverCode', $driverCode)
             ->whereDate('orderDate', '>=', $startDate)
             ->whereDate('orderDate', '<=', $endDate)
             ->whereNull('deleted_at')
-            ->orderBy('orderDate', 'asc')
             ->get();
 
+        foreach ($ordersToSync as $o) {
+            OrderDriverSalaryService::syncForOrder($o);
+        }
+
+        // Fetch unpaid salary components from order_driver_salary
+        $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation', 'costComponent'])
+            ->where('status', '0')
+            ->where(function ($q) use ($driverId, $driverCode) {
+                if ($driverId) {
+                    $q->where('driver_id', $driverId);
+                } else {
+                    $q->whereHas('driver', function ($q2) use ($driverCode) {
+                        $q2->where('code', $driverCode);
+                    });
+                }
+            })
+            ->whereHas('order', function ($q) use ($startDate, $endDate) {
+                $q->whereDate('orderDate', '>=', $startDate)
+                  ->whereDate('orderDate', '<=', $endDate)
+                  ->whereNull('deleted_at');
+            })
+            ->get();
+
+        $groupedByOrder = $orderDriverSalaries->groupBy('order_id');
         $result = [];
         $totalSalary = 0;
 
-        foreach ($orders as $order) {
-            $salary = $this->getSalaryTotal($order->code);
+        foreach ($groupedByOrder as $orderId => $items) {
+            $order = $items->first()->order;
+            if (! $order) {
+                continue;
+            }
+
+            $salary = $items->sum('amount');
             $totalSalary += $salary;
 
             $routeName = '-';
@@ -662,26 +756,35 @@ class DriverSalaryController extends Controller
     {
         $salary = DriverSalary::with(['driver', 'details'])->findOrFail($id);
 
-        // Get orders for this driver and period
-        $orders = Order::with(['fleet', 'route.originLocation', 'route.destinationLocation'])
-            ->whereHas('cost', function ($q) {
-                $q->whereHas('costComponent', function ($q2) {
-                    $q2->where('type', 'salary');
-                });
-            })
-            ->where('driverCode', $salary->driverCode)
-            ->whereDate('orderDate', '>=', $salary->startDate)
-            ->whereDate('orderDate', '<=', $salary->endDate)
-            ->whereNull('deleted_at')
-            ->orderBy('orderDate', 'asc')
+        // Get order_driver_salary records linked to this salary slip
+        $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation'])
+            ->where('driver_salary_id', $salary->id)
             ->get();
 
+        // Fallback for legacy data
+        if ($orderDriverSalaries->isEmpty()) {
+            $employee = Employee::where('code', $salary->driverCode)->first();
+            $orderDriverSalaries = OrderDriverSalary::with(['order.fleet', 'order.route.originLocation', 'order.route.destinationLocation'])
+                ->where('driver_id', $employee?->id)
+                ->whereHas('order', function ($q) use ($salary) {
+                    $q->whereDate('orderDate', '>=', $salary->startDate)
+                      ->whereDate('orderDate', '<=', $salary->endDate)
+                      ->whereNull('deleted_at');
+                })
+                ->get();
+        }
+
+        $groupedOrders = $orderDriverSalaries->groupBy('order_id');
         $rows = [];
         $grandTotal = 0;
         $fleet = null;
+        $index = 1;
 
-        foreach ($orders as $index => $order) {
-            $salaryTotal = $this->getSalaryTotal($order->code);
+        foreach ($groupedOrders as $orderId => $items) {
+            $order = $items->first()->order;
+            if (! $order) continue;
+
+            $salaryTotal = $items->sum('amount');
             $grandTotal += $salaryTotal;
 
             if (!$fleet && $order->fleet) {
@@ -696,7 +799,7 @@ class DriverSalaryController extends Controller
             }
 
             $rows[] = [
-                'no'             => $index + 1,
+                'no'             => $index++,
                 'orderCode'      => $order->code,
                 'shipmentNumber' => $order->shipmentNumber ?? '-',
                 'date'           => Carbon::parse($order->orderDate)->format('d-m-Y'),
@@ -744,5 +847,78 @@ class DriverSalaryController extends Controller
         $mpdf->WriteHTML($html);
 
         return $mpdf->Output('Slip_Gaji_' . ($salary->driver->name ?? 'Driver') . '.pdf', 'I');
+    }
+
+    /**
+     * Sync existing processed driver salary data into order_driver_salary with status = '1' and driver_salary_id.
+     */
+    public function syncExistingStatus(Request $request)
+    {
+        if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action. Hanya Super Admin yang diizinkan.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $salaries = DriverSalary::all();
+            $totalUpdated = 0;
+            $totalOrders = 0;
+
+            foreach ($salaries as $ds) {
+                $orders = Order::where('driverCode', $ds->driverCode)
+                    ->whereDate('orderDate', '>=', $ds->startDate)
+                    ->whereDate('orderDate', '<=', $ds->endDate)
+                    ->whereNull('deleted_at')
+                    ->get();
+
+                foreach ($orders as $order) {
+                    OrderDriverSalaryService::syncForOrder($order);
+                }
+
+                $orderIds = $orders->pluck('id');
+                $updated = OrderDriverSalary::whereIn('order_id', $orderIds)
+                    ->update([
+                        'status'           => '1',
+                        'driver_salary_id' => $ds->id,
+                    ]);
+
+                $totalUpdated += $updated;
+                $totalOrders += $orders->count();
+            }
+
+            DB::commit();
+
+            $message = "Berhasil mensinkronisasi status '1' pada {$totalUpdated} data komponen gaji supir dari {$salaries->count()} data rekap gaji supir ({$totalOrders} order terkait).";
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success'       => true,
+                    'message'       => $message,
+                    'total_slips'   => $salaries->count(),
+                    'total_updated' => $totalUpdated,
+                    'total_orders'  => $totalOrders,
+                ]);
+            }
+
+            return redirect()->route('report.driver-salary.index')->with('success', $message);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal sinkronisasi: ' . $th->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('report.driver-salary.index')->with('fail', 'Gagal sinkronisasi: ' . $th->getMessage());
+        }
     }
 }

@@ -26,10 +26,13 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>{{ $title }} Data</h4>
 
-            {{-- <button type="submit" class="btn btn-primary" id="saveOrder">
-                    {{ __('menu_return_do.cancel_return') }}
-            </button> --}}
-
+            <div>
+                @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
+                    <button type="button" class="btn btn-success" id="btn-sync-driver-salary">
+                        <i class="mdi mdi-sync me-1"></i> Sinkron Gaji Supir
+                    </button>
+                @endif
+            </div>
         </div>
         <div class="card-body">
             @include('partials.alert')
@@ -382,6 +385,47 @@
                 }
             });
         });
+
+        // ========== SYNC DRIVER SALARY FUNCTIONALITY ==========
+        @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
+        $('#btn-sync-driver-salary').click(function(e) {
+            e.preventDefault();
+            swal({
+                title: "Sinkronisasi Gaji Supir?",
+                text: "Sistem akan membaca semua order di Return DO dan memasukkan komponen biaya bertipe gaji ke tabel gaji supir.",
+                icon: "info",
+                buttons: {
+                    cancel: "Batal",
+                    confirm: {
+                        text: "Ya, Sinkronkan!",
+                        closeModal: false
+                    }
+                },
+            }).then((willSync) => {
+                if (willSync) {
+                    $.ajax({
+                        url: "{{ route('operational.return-do.sync-driver-salary') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            swal("Berhasil!", response.message, "success").then(() => {
+                                $('#dt').DataTable().ajax.reload(null, false);
+                            });
+                        },
+                        error: function(xhr) {
+                            let msg = "Terjadi kesalahan saat sinkronisasi gaji supir.";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            swal("Gagal!", msg, "error");
+                        }
+                    });
+                }
+            });
+        });
+        @endif
 
     });
 </script>

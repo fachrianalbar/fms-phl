@@ -44,4 +44,9 @@ class DriverSalary extends Model
     {
         return $this->hasMany(DriverSalaryDetail::class, 'driverSalaryCode', 'code');
     }
+
+    public function orderDriverSalaries()
+    {
+        return $this->hasMany(\App\Models\Operational\OrderDriverSalary::class, 'driver_salary_id', 'id');
+    }
 }

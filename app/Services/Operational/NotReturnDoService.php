@@ -8,6 +8,7 @@ use App\Models\Master\Fleet;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\OrderDetail;
+use App\Services\Operational\OrderDriverSalaryService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -317,6 +318,9 @@ class NotReturnDoService
         }
 
         // Log after update
+        // Auto upsert salary cost components to order_driver_salary
+        OrderDriverSalaryService::syncForOrder($order);
+
         $this->logActivity($title, $this->service->where('id', $id)->firstOrFail(), 'After Update');
     }
 

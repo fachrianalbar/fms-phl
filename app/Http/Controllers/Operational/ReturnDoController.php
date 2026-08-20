@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Operational;
 use App\Http\Controllers\Controller;
 use App\Models\Data\Route;
 use App\Models\Master\CostComponent;
+use App\Models\Master\Employee;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Operational\OrderDriverSalary;
+use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\Master\CustomerService;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetService;
@@ -363,5 +366,81 @@ class ReturnDoController extends Controller
         $this->service->rollbackStatus($id);
 
         return redirect()->route('operational.return-do.index')->with('success', 'Status berhasil di-rollback ke Not Return DO');
+    }
+
+    /**
+     * Sync driver salary data from all Return DO orders to order_driver_salary table.
+     * Only accessible by Super Admin (SPRADMIN, SPRUSER).
+     */
+    public function syncDriverSalary(Request $request)
+    {
+        if (! in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER'])) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized action. Hanya Super Admin yang diizinkan.',
+                ], 403);
+            }
+            abort(403, 'Unauthorized action.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $orders = Order::whereIn('status', [4, 5])
+                ->with(['driver', 'cost.costComponent'])
+                ->get();
+
+            $orderCount = 0;
+
+            foreach ($orders as $order) {
+                $driverId = $order->driver?->id;
+                if (! $driverId && $order->driverCode) {
+                    $driverId = Employee::where('code', $order->driverCode)->value('id');
+                }
+
+                if (! $driverId) {
+                    continue;
+                }
+
+                $hasSalaryCosts = $order->cost->contains(function ($c) {
+                    return $c->costComponent && ($c->costComponent->type === 'salary' || stripos($c->costComponent->name, 'gaji') !== false);
+                });
+
+                if ($hasSalaryCosts) {
+                    $orderCount++;
+                }
+
+                OrderDriverSalaryService::syncForOrder($order);
+            }
+
+            $syncedCount = OrderDriverSalary::count();
+
+            DB::commit();
+
+            $message = "Berhasil mensinkronisasi {$syncedCount} komponen gaji supir dari {$orderCount} order.";
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success'      => true,
+                    'message'      => $message,
+                    'synced_count' => $syncedCount,
+                    'order_count'  => $orderCount,
+                ]);
+            }
+
+            return redirect()->route('operational.return-do.index')->with('success', $message);
+        } catch (\Throwable $th) {
+            DB::rollback();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal sinkronisasi data: ' . $th->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->route('operational.return-do.index')->with('fail', 'Gagal sinkronisasi data: ' . $th->getMessage());
+        }
     }
 }
