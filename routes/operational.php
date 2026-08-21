@@ -44,6 +44,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('bon-ujt', BonUjtController::class);
     Route::put('bon-ujt-detail/{id}', [BonUjtController::class, 'storeBonUjtDetail'])->name('bon-ujt-detail.store');
     Route::delete('bon-ujt-detail/{id}', [BonUjtController::class, 'destroyBonUjtDetail'])->name('bon-ujt-detail.destroy');
+    Route::post('order/recalculate-vendor-prices', [OrderController::class, 'recalculateVendorPrices'])->name('order.recalculate-vendor-prices');
     Route::resource('order', OrderController::class);
     Route::post('store-order-tax', [OrderController::class, 'storeOrderTax'])->name('order.store-order-tax');
     Route::get('/order/{id}/detail', [OrderController::class, 'showOrder'])->name('order.show-order');

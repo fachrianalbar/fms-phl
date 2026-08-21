@@ -56,6 +56,12 @@
                 <h4>{{ $title }} Data</h4>
 
                 <div class="d-flex align-items-center gap-3">
+                    @if (Auth::user()->roleCode === 'SPRADMIN' || Auth::user()->role?->name === 'System Administrator')
+                        <button type="button" class="btn btn-warning" id="btn-recalculate-vendor-price">
+                            <i class="mdi mdi-calculator me-1"></i> Hitung Ulang Harga Vendor
+                        </button>
+                    @endif
+
                     <div class="accordion-item ">
 
                         <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
@@ -1142,5 +1148,46 @@
                 }
             });
         });
+
+        @if (Auth::user()->roleCode === 'SPRADMIN' || Auth::user()->role?->name === 'System Administrator')
+        $('#btn-recalculate-vendor-price').click(function(e) {
+            e.preventDefault();
+            swal({
+                title: "Apakah Anda yakin?",
+                text: "Tindakan ini akan menghitung ulang seluruh Harga Vendor Pribadi dan Harga Vendor berdasarkan Satuan x Qty yang ada pada tabel Order saat ini.",
+                icon: "warning",
+                buttons: {
+                    cancel: "Batal",
+                    confirm: {
+                        text: "Ya, Hitung Ulang!",
+                        closeModal: false
+                    }
+                },
+                dangerMode: true,
+            }).then((willRecalculate) => {
+                if (willRecalculate) {
+                    $.ajax({
+                        url: "{{ route('operational.order.recalculate-vendor-prices') }}",
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}"
+                        },
+                        success: function(response) {
+                            swal("Berhasil!", response.message, "success").then(() => {
+                                $('#dt').DataTable().ajax.reload(null, false);
+                            });
+                        },
+                        error: function(xhr) {
+                            let msg = "Terjadi kesalahan saat menghitung ulang harga vendor.";
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            swal("Gagal!", msg, "error");
+                        }
+                    });
+                }
+            });
+        });
+        @endif
     </script>
 @endpush

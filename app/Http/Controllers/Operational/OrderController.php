@@ -1191,4 +1191,57 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Recalculate vendorPrice and personalVendorPrice based on unit price (satuan) x qty in the order table.
+     * Only accessible by System Administrator.
+     */
+    public function recalculateVendorPrices(Request $request)
+    {
+        if (auth()->user()->roleCode !== 'SPRADMIN' && auth()->user()->role?->name !== 'System Administrator') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya System Administrator yang diizinkan untuk melakukan tindakan ini.'
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $orders = Order::select('id', 'qty', 'vendorPriceSingle', 'personalVendorPriceSingle', 'vendorPrice', 'personalVendorPrice')->get();
+            $updatedCount = 0;
+
+            foreach ($orders as $order) {
+                $qty = (float) ($order->qty ?? 0);
+                $vendorPriceSingle = (float) ($order->vendorPriceSingle ?? 0);
+                $personalVendorPriceSingle = (float) ($order->personalVendorPriceSingle ?? 0);
+
+                $vendorPrice = round($vendorPriceSingle * $qty, 2);
+                $personalVendorPrice = round($personalVendorPriceSingle * $qty, 2);
+
+                if (abs((float) $order->vendorPrice - $vendorPrice) > 0.001 ||
+                    abs((float) $order->personalVendorPrice - $personalVendorPrice) > 0.001) {
+                    Order::where('id', $order->id)->update([
+                        'vendorPrice' => $vendorPrice,
+                        'personalVendorPrice' => $personalVendorPrice,
+                    ]);
+                    $updatedCount++;
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil menghitung ulang harga vendor. Total {$updatedCount} order diperbarui dari " . $orders->count() . " order.",
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+            ], 500);
+        }
+    }
 }
