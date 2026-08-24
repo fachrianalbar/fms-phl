@@ -664,7 +664,7 @@
     </form>
     <form id="delete-form" method="post">
         @csrf
-        @method('PUT')
+        @method('DELETE')
     </form>
 
     <!-- Preloader -->
