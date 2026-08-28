@@ -30,7 +30,6 @@ class GenerateCode
             requestedCode: $requestedCode,
             prefix: $base,
             digits: 5,
-            scope: fn ($query) => $query->whereDate($dateColumn, $carbonDate->toDateString()),
         )->resolvedCode;
     }
 }

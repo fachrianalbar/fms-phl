@@ -96,6 +96,13 @@ class UniqueCodeService
 
     private function splitCode(string $code, string $prefix, string $separator, int $digits): array
     {
+        if ($prefix !== '' && str_starts_with($code, $prefix)) {
+            $suffix = substr($code, strlen($prefix));
+            if (preg_match('/^(\d+)$/', $suffix, $matches)) {
+                return [$prefix, (int) $matches[1], strlen($matches[1])];
+            }
+        }
+
         if (preg_match('/^(.*?)(\d+)$/', $code, $matches)) {
             return [$matches[1], (int) $matches[2], strlen($matches[2])];
         }

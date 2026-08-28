@@ -13,6 +13,7 @@ use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 
@@ -60,11 +61,14 @@ class MaintenanceService
     {
         $warehouseCode = $request->warehouseCode ?? Warehouse::query()->first()->code;
 
+        $carbonDate = Carbon::parse($request->date);
+        $base = 'MNT-'.$carbonDate->format('ymd');
         $code = $this->uniqueCode->resolve(
             model: Maintenance::class,
             field: 'code',
             requestedCode: $request->input('code'),
-            scope: fn ($query) => $query->whereDate('date', $request->date),
+            prefix: $base,
+            digits: 5,
         );
 
         // 1. Simpan data maintenance utama
@@ -165,6 +169,8 @@ class MaintenanceService
                 ]);
             }
         }
+
+        $data->updateGrandTotal();
 
         // 8. Log aktivitas pencatatan
         $this->logActivity($title, $data, 'Create');
@@ -316,6 +322,8 @@ class MaintenanceService
                 );
             }
         }
+
+        $this->getById($id)?->updateGrandTotal();
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
