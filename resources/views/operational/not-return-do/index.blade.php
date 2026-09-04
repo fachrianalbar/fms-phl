@@ -440,7 +440,7 @@
 
         <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
             aria-hidden="true">
-            <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-dialog modal-md mt-4">
                 <div class="modal-content">
                     <!-- Header -->
                     <div class="modal-header">

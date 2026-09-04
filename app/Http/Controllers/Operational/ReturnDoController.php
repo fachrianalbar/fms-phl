@@ -83,10 +83,27 @@ class ReturnDoController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
+            $data = $this->service->datatable($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->addColumn('invoiceNumber', function ($row) {
+                    $invoice = $row->invoiceDetail->invoice ?? null;
+                    if ($invoice && ! empty($invoice->invoiceNumber)) {
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace"><i class="mdi mdi-receipt me-1"></i>' . e($invoice->invoiceNumber) . '</span>';
+                    }
+
+                    return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="mdi mdi-alert-circle-outline me-1"></i>Belum Ada Invoice</span>';
+                })
+                ->filterColumn('invoiceNumber', function ($query, $keyword) {
+                    if (stripos('belum ada invoice', $keyword) !== false || stripos('belum', $keyword) !== false) {
+                        $query->whereDoesntHave('invoiceDetail.invoice');
+                    } else {
+                        $query->whereHas('invoiceDetail.invoice', function ($q) use ($keyword) {
+                            $q->where('invoiceNumber', 'like', "%{$keyword}%");
+                        });
+                    }
+                })
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
@@ -208,7 +225,7 @@ class ReturnDoController extends Controller
 
                     return $buttons ?: '-';
                 })
-                ->rawColumns(['action', 'detail', 'route.originLocation.name', 'customer.name', 'driver.name', 'orderType', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
+                ->rawColumns(['action', 'detail', 'invoiceNumber', 'route.originLocation.name', 'customer.name', 'driver.name', 'orderType', 'returnDate', 'route.destinationLocation.name', 'orderDate',  'fleet.plateNumber'])
                 ->toJson();
         }
     }

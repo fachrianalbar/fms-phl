@@ -26,7 +26,18 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4>{{ $title }} Data</h4>
 
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                <div class="input-group input-group-sm" style="width: 240px;">
+                    <span class="input-group-text bg-light text-muted">
+                        <i class="mdi mdi-filter-variant"></i>
+                    </span>
+                    <select class="form-select form-select-sm" id="filterInvoiceStatus">
+                        <option value="">Semua Status Faktur</option>
+                        <option value="uninvoiced">Belum Ada Faktur</option>
+                        <option value="invoiced">Sudah Ada Faktur</option>
+                    </select>
+                </div>
+
                 @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
                     <button type="button" class="btn btn-success" id="btn-sync-driver-salary">
                         <i class="mdi mdi-sync me-1"></i> Sinkron Gaji Supir
@@ -46,6 +57,7 @@
                             <th>{{ __('menu_return_do.order_date') }}</th>
                             <th>{{ __('menu_order.order_code') }}</th>
                             <th>{{ __('menu_return_do.shipment_no') }}</th>
+                            <th>No. Faktur</th>
                             <th>{{ __('menu_return_do.customer_name') }}</th>
                             <th>{{ __('menu_return_do.origin') }}</th>
                             <th>{{ __('menu_return_do.destination') }}</th>
@@ -152,12 +164,15 @@
 
 <script>
     $(document).ready(function() {
-        $('#dt').DataTable({
+        const table = $('#dt').DataTable({
             "processing": true,
             "serverSide": true,
             "destroy": true,
             "ajax": {
                 "url": "{{ route('dt.return-do') }}",
+                "data": function(d) {
+                    d.invoiceStatus = $('#filterInvoiceStatus').val();
+                }
             },
             "columns": [{
                     "data": 'detail'
@@ -176,6 +191,9 @@
                 },
                 {
                     "data": 'shipmentNumber'
+                },
+                {
+                    "data": 'invoiceNumber'
                 },
                 {
                     "data": 'customer.name'
@@ -215,7 +233,11 @@
             "order": [
                 [3, 'asc']
             ]
-        })
+        });
+
+        $('#filterInvoiceStatus').on('change', function() {
+            table.ajax.reload();
+        });
     });
     let selectedOrders = [];
 

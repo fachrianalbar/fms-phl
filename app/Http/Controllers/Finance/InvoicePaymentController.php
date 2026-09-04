@@ -42,7 +42,7 @@ class InvoicePaymentController extends Controller
     {
         $this->service = $invoicePaymentSvc;
         $this->title = 'Invoice Payment';
-        $this->view = 'finance.invoice-payment.';
+        $this->view = 'invoice.payment.';
         $this->customerSvc = $customerSvc;
         $this->invoiceSvc = $invoiceSvc;
         $this->userBankSvc = $userBankSvc;
@@ -55,9 +55,18 @@ class InvoicePaymentController extends Controller
      */
     public function index()
     {
+        $paymentCount = DB::table('invoice_payment')->whereNull('deleted_at')->count();
+        $paymentSum = (float) DB::table('invoice_payment')->whereNull('deleted_at')->sum('amount');
+
+        $stats = [
+            'paymentCount' => $paymentCount,
+            'paymentSum' => $paymentSum,
+        ];
+
         return view($this->view.'index')
             ->with('view', $this->view)
-            ->with('title', $this->title);
+            ->with('title', $this->title)
+            ->with('stats', $stats);
     }
 
     /**
@@ -68,7 +77,7 @@ class InvoicePaymentController extends Controller
         $data = $this->invoiceSvc->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+            return redirect()->route('invoice.payment.index')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -127,7 +136,7 @@ class InvoicePaymentController extends Controller
             'userBankCode.required' => 'User bank field is required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route('invoice.payment.index')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -136,11 +145,11 @@ class InvoicePaymentController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route('invoice.payment.index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route('invoice.payment.index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -154,20 +163,32 @@ class InvoicePaymentController extends Controller
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->editColumn('DT_RowIndex', function ($row) {
+                    return '<span class="text-muted fw-semibold fs-12">' . ($row->DT_RowIndex ?? '') . '</span>';
+                })
+                ->editColumn('invoiceNumber', function ($row) {
+                    $number = htmlspecialchars($row->invoiceNumber ?? '-');
+                    return '<span class="font-monospace fw-bold text-primary fs-13 text-nowrap">' . $number . '</span>';
+                })
                 ->editColumn('customer.name', function ($row) {
-                    $customer = '';
-                    if (isset($row->customer->name)) {
-                        $customer = $row->customer->name;
+                    $customer = isset($row->customer->name) ? $row->customer->name : '-';
+                    $code = $row->customerCode ? '<div class="text-muted font-monospace fs-11"><i class="mdi mdi-account-outline me-1"></i>' . htmlspecialchars($row->customerCode) . '</div>' : '';
+                    return '<div class="text-start"><span class="fw-semibold text-dark fs-13 d-block text-truncate" style="max-width: 220px;" title="' . htmlspecialchars($customer) . '">' . htmlspecialchars($customer) . '</span>' . $code . '</div>';
+                })
+                ->editColumn('invoiceDate', function ($row) {
+                    if (! $row->invoiceDate) {
+                        return '<span class="text-muted">-</span>';
                     }
-
-                    return $customer;
+                    return '<span class="fw-medium text-dark fs-12 text-nowrap">' . \Carbon\Carbon::parse($row->invoiceDate)->format('d M Y') . '</span>';
                 })
                 ->addColumn('receivingBank', function ($row) {
-                    $bank = '';
+                    $bank = '<span class="text-muted">-</span>';
                     if (count($row->payments) > 0) {
                         $lastPayment = $row->payments->last();
                         if ($lastPayment && $lastPayment->userBank) {
-                            $bank = $lastPayment->userBank->bank->name.' - '.$lastPayment->userBank->accountNumber;
+                            $bankName = $lastPayment->userBank->bank->name ?? 'Bank';
+                            $acc = $lastPayment->userBank->accountNumber ?? '';
+                            $bank = '<div class="text-start"><span class="badge bg-light text-dark border font-monospace fs-12"><i class="mdi mdi-bank me-1 text-primary"></i>' . htmlspecialchars($bankName) . '</span><div class="text-muted fs-11 font-monospace mt-1">' . htmlspecialchars($acc) . '</div></div>';
                         }
                     }
 
@@ -176,19 +197,18 @@ class InvoicePaymentController extends Controller
                 ->addColumn('totalBilling', function ($row) {
                     $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
 
-                    return ''.number_format($totalBilling, 0, ',', '.');
+                    return '<div class="text-end fw-bold text-dark fs-13">Rp ' . number_format($totalBilling, 0, ',', '.') . '</div>';
                 })
                 ->addColumn('paymentDetails', function ($row) {
                     $details = '';
                     if (count($row->payments) > 0) {
                         foreach ($row->payments as $payment) {
-                            $paymentDate = \Carbon\Carbon::parse($payment->paymentDate)->format('d-M-Y');
+                            $paymentDate = \Carbon\Carbon::parse($payment->paymentDate)->format('d M Y');
                             $amount = number_format($payment->amount, 0, ',', '.');
-                            $details .= '<div class="mb-1">';
-                            $details .= '<small><strong>Tgl:</strong> '.$paymentDate.' | ';
-                            $details .= '<strong>Jumlah:</strong> Rp '.$amount.'</small>';
+                            $details .= '<div class="mb-1 py-1 px-2 rounded bg-light border border-light-subtle d-inline-block me-1 text-start" style="font-size: 11.5px;">';
+                            $details .= '<span class="text-muted"><i class="mdi mdi-calendar-blank me-1"></i>' . $paymentDate . '</span>: <strong class="text-success font-monospace">Rp ' . $amount . '</strong>';
                             if ($payment->description) {
-                                $details .= '<br><small class="text-muted">Ket: '.$payment->description.'</small>';
+                                $details .= ' <span class="text-secondary opacity-75">(' . htmlspecialchars($payment->description) . ')</span>';
                             }
                             $details .= '</div>';
                         }
@@ -204,28 +224,24 @@ class InvoicePaymentController extends Controller
                         }
                     }
 
-                    return number_format($totalPayment, 0, ',', '.');
+                    return '<div class="text-end fw-bold text-success fs-13 font-monospace">Rp ' . number_format($totalPayment, 0, ',', '.') . '</div>';
                 })
                 ->addColumn('statusPayment', function ($row) {
-                    $status = '';
                     $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
                     $totalPaid = 0;
                     foreach ($row->payments as $item) {
                         $totalPaid += $item->amount;
                     }
                     if ($totalPaid < $totalBilling && $totalPaid > 0) {
-                        $status = '<span class="badge bg-warning">Partial Payment</span>';
+                        return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-clock-check-outline me-1"></i>Sebagian</span>';
                     }
                     if ($totalPaid >= $totalBilling && $totalPaid > 0) {
-                        $status = '<span class="badge bg-success">Full Payment</span>';
-                    }
-                    if (count($row->payments) == 0) {
-                        $status = '<span class="badge bg-secondary">No Payment</span>';
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-check-circle me-1"></i>Lunas</span>';
                     }
 
-                    return $status;
+                    return '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-file-document-outline me-1"></i>Belum Bayar</span>';
                 })
-                ->rawColumns(['customer.name', 'totalBilling', 'paymentDetails', 'totalPayment', 'statusPayment', 'receivingBank'])
+                ->rawColumns(['DT_RowIndex', 'invoiceNumber', 'customer.name', 'invoiceDate', 'totalBilling', 'paymentDetails', 'totalPayment', 'statusPayment', 'receivingBank'])
                 ->toJson();
         }
     }

@@ -33,7 +33,47 @@ class InvoiceService
 
     public function findAll()
     {
-        return $this->service->with(['details', 'payments'])->orderBy('created_at', 'desc')->get();
+        return $this->service->with([
+            'customer',
+            'payments',
+            'details.order.cost.costComponent',
+            'details.order.route.originLocation',
+            'details.order.route.destinationLocation',
+            'details.order.fleet',
+        ])->orderBy('created_at', 'desc')->get();
+    }
+
+    public function findUnpaid()
+    {
+        return $this->service->with([
+            'customer',
+            'payments',
+            'details.order.cost.costComponent',
+            'details.order.route.originLocation',
+            'details.order.route.destinationLocation',
+            'details.order.fleet',
+        ])
+            ->where(function ($q) {
+                $q->whereNull('status')
+                    ->orWhere('status', '!=', Invoice::STATUS_FULL);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
+
+    public function findPaid()
+    {
+        return $this->service->with([
+            'customer',
+            'payments',
+            'details.order.cost.costComponent',
+            'details.order.route.originLocation',
+            'details.order.route.destinationLocation',
+            'details.order.fleet',
+        ])
+            ->where('status', Invoice::STATUS_FULL)
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     public function getById($id)
@@ -41,7 +81,7 @@ class InvoiceService
         return $this->service->where('id', $id)->with([
             'details.order.orderMaterial.material',
             'details.order.orderMaterial.unit',
-            'details.order.cost',
+            'details.order.cost.costComponent',
             'details.order.customer',
             'details.order.fleet',
             'details.order.driver',
@@ -77,6 +117,7 @@ class InvoiceService
                 'route.destinationLocation',
                 'orderType',
                 'route.routeDetail',
+                'cost.costComponent',
             ])
             ->orderBy('created_at', 'desc');
     }
@@ -192,7 +233,7 @@ class InvoiceService
             'receiptNumber' => $request->receiptNumber,
             'poNumber' => $request->poNumber,
             'invoiceDate' => $request->invoiceDate,
-            'overdueDate' => Carbon::parse($request->invoiceDate)->addDays(2)->toDateString(),
+            'overdueDate' => $request->overdueDate ? Carbon::parse($request->overdueDate)->toDateString() : Carbon::parse($request->invoiceDate)->addDays(30)->toDateString(),
             'notes' => $request->notes,
             'usePpn' => (bool) ($request->input('usePpn') ?? false),
             'usePph' => (bool) ($request->input('usePph') ?? false),
@@ -242,9 +283,9 @@ class InvoiceService
             'customer',
             'route.originLocation',
             'route.destinationLocation',
-            'route.originLocation',
             'orderType',
             'route.routeDetail',
+            'cost.costComponent',
         ])->orderBy('created_at', 'desc')->get();
     }
 

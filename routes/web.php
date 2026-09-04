@@ -21,6 +21,7 @@ Route::middleware(['auth'])->group(function () {
     require __DIR__.'/warehouse.php';
     require __DIR__.'/report.php';
     require __DIR__.'/bank.php';
+    require __DIR__.'/invoice.php';
     require __DIR__.'/finance.php';
     require __DIR__.'/dashboard.php';
     require __DIR__.'/general.php';

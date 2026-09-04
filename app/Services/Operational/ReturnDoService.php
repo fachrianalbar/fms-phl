@@ -36,9 +36,9 @@ class ReturnDoService
             ->get();
     }
 
-    public function datatable()
+    public function datatable($request = null)
     {
-        return $this->service
+        $query = $this->service
             ->whereIn('status', [4, 5])
             ->with([
                 'fleetDriver.fleet',
@@ -53,7 +53,18 @@ class ReturnDoService
                 'fleet.company',
                 'orderType',
                 'onChargeCost.costComponent',
-            ])->orderBy('order.created_at', 'desc');
+                'invoiceDetail.invoice',
+            ]);
+
+        if ($request && $request->filled('invoiceStatus')) {
+            if ($request->invoiceStatus === 'uninvoiced') {
+                $query->whereDoesntHave('invoiceDetail.invoice');
+            } elseif ($request->invoiceStatus === 'invoiced') {
+                $query->whereHas('invoiceDetail.invoice');
+            }
+        }
+
+        return $query->orderBy('order.created_at', 'desc');
     }
 
     public function getById($id)

@@ -38,7 +38,7 @@ class InvoiceController extends Controller
     {
         $this->service = $invoiceSvc;
         $this->title = 'Invoice';
-        $this->view = 'finance.invoice.';
+        $this->view = 'invoice.';
         $this->customerSvc = $customerSvc;
         $this->totalPrice = 0;
         $this->totalPriceInvoice = 0;
@@ -49,9 +49,81 @@ class InvoiceController extends Controller
      */
     public function index()
     {
-        return view($this->view . 'index')
-            ->with('view', $this->view)
-            ->with('title', $this->title);
+        return redirect()->route('invoice.unpaid');
+    }
+
+    /**
+     * Display listing of unpaid invoices.
+     */
+    public function indexUnpaid()
+    {
+        $unpaidQuery = InvoiceModel::where(function ($q) {
+            $q->whereNull('status')->orWhere('status', '!=', InvoiceModel::STATUS_FULL);
+        });
+
+        $totalCount = (clone $unpaidQuery)->count();
+        $createdCount = (clone $unpaidQuery)->where(function ($q) {
+            $q->whereNull('status')->orWhere('status', InvoiceModel::STATUS_CREATE);
+        })->count();
+        $partialCount = (clone $unpaidQuery)->where('status', InvoiceModel::STATUS_PARTIAL)->count();
+
+        $totals = (clone $unpaidQuery)->selectRaw('
+            COALESCE(SUM(invoiceAmount), 0) as sum_invoice,
+            COALESCE(SUM(ppnAmount), 0) as sum_ppn,
+            COALESCE(SUM(pphAmount), 0) as sum_pph
+        ')->first();
+
+        $totalBilling = (float) $totals->sum_invoice + (float) $totals->sum_ppn - (float) $totals->sum_pph;
+
+        $totalPaid = (float) DB::table('invoice_payment')
+            ->join('invoice', 'invoice_payment.invoiceCode', '=', 'invoice.code')
+            ->whereNull('invoice.deleted_at')
+            ->whereNull('invoice_payment.deleted_at')
+            ->where(function ($q) {
+                $q->whereNull('invoice.status')->orWhere('invoice.status', '!=', InvoiceModel::STATUS_FULL);
+            })
+            ->sum('invoice_payment.amount');
+
+        $totalRemaining = $totalBilling - $totalPaid;
+
+        $stats = [
+            'totalCount' => $totalCount,
+            'totalBilling' => $totalBilling,
+            'totalPaid' => $totalPaid,
+            'totalRemaining' => $totalRemaining,
+            'partialCount' => $partialCount,
+            'createdCount' => $createdCount,
+        ];
+
+        return view('invoice.unpaid')
+            ->with('view', 'invoice.')
+            ->with('title', 'Unpaid Invoice')
+            ->with('stats', $stats);
+    }
+
+    /**
+     * Display listing of paid invoices.
+     */
+    public function indexPaid()
+    {
+        $paidQuery = InvoiceModel::where('status', InvoiceModel::STATUS_FULL);
+        $totalCount = (clone $paidQuery)->count();
+        $totals = (clone $paidQuery)->selectRaw('
+            COALESCE(SUM(invoiceAmount), 0) as sum_invoice,
+            COALESCE(SUM(ppnAmount), 0) as sum_ppn,
+            COALESCE(SUM(pphAmount), 0) as sum_pph
+        ')->first();
+        $totalBilling = (float) $totals->sum_invoice + (float) $totals->sum_ppn - (float) $totals->sum_pph;
+
+        $stats = [
+            'totalCount' => $totalCount,
+            'totalBilling' => $totalBilling,
+        ];
+
+        return view('invoice.paid')
+            ->with('view', 'invoice.')
+            ->with('title', 'Paid Invoice')
+            ->with('stats', $stats);
     }
 
     /**
@@ -61,10 +133,10 @@ class InvoiceController extends Controller
     {
         $customer = $this->customerSvc->findAll();
 
-        return view($this->view . 'create')
-            ->with('view', $this->view)
+        return view('invoice.create')
+            ->with('view', 'invoice.')
             ->with('customer', $customer)
-            ->with('title', $this->title);
+            ->with('title', 'Create Invoice');
     }
 
     /**
@@ -85,19 +157,19 @@ class InvoiceController extends Controller
             'selectedOrders' => 'required|array|min:1',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route('invoice.create')->with('fail', $validator->errors()->all()[0]);
         }
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $selectedOrders) {
                 return DB::transaction(fn () => $this->service->store($request, $this->title, $selectedOrders));
             });
 
-            $redirect = redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            $redirect = redirect()->route('invoice.unpaid')
+                ->with('success', 'Faktur ' . __('general.data_was_save_successfully'));
 
             return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route('invoice.create')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -117,7 +189,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route('invoice.unpaid')->with('fail', 'Data not found');
         }
 
         $customer = $this->customerSvc->findAll();
@@ -131,9 +203,9 @@ class InvoiceController extends Controller
         // invoiceStatus is the numeric status for invoice
         $invoiceStatus = (int) ($data->status ?? 1);
 
-        return view($this->view . 'edit')
-            ->with('view', $this->view)
-            ->with('title', $this->title)
+        return view('invoice.edit')
+            ->with('view', 'invoice.')
+            ->with('title', 'Edit Invoice')
             ->with('customer', $customer)
             ->with('order', $order)
             ->with('customerData', $customerData)
@@ -152,7 +224,7 @@ class InvoiceController extends Controller
             'invoiceNumber' => 'required',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route('invoice.edit', $id)->with('fail', $validator->errors()->all()[0]);
         }
         try {
             DB::beginTransaction();
@@ -161,11 +233,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route('invoice.unpaid')->with('success', 'Faktur ' . __('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route('invoice.edit', $id)->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
         }
     }
 
@@ -176,7 +248,7 @@ class InvoiceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route('invoice.unpaid')->with('success', 'Delete Data Success');
     }
 
     /**
@@ -205,7 +277,7 @@ class InvoiceController extends Controller
             // Jika request dari form (dari edit page), redirect dengan message
             $message = 'Invoice amount recalculated successfully. Invoice Amount: Rp ' . number_format($result['invoiceAmount'], 0, ',', '.') . ', PPN: Rp ' . number_format($result['ppnAmount'], 0, ',', '.') . '. <br><br><strong>Semua pembayaran untuk invoice ini telah dibatalkan.</strong> Silakan input ulang pembayaran invoice.';
 
-            return redirect()->route($this->view . 'edit', $id)->with('success', $message);
+            return redirect()->route('invoice.edit', $id)->with('success', $message);
         } catch (\Throwable $th) {
             DB::rollback();
 
@@ -221,138 +293,259 @@ class InvoiceController extends Controller
         }
     }
 
+    public function datatableUnpaid(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $this->service->findUnpaid();
+
+            return $this->formatInvoiceDatatable($data, false);
+        }
+    }
+
+    public function datatablePaid(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $this->service->findPaid();
+
+            return $this->formatInvoiceDatatable($data, true);
+        }
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
             $data = $this->service->findAll();
 
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('orderCount', function ($row) {
-                    return $row->details->count();
-                })
-                ->editColumn('customer.name', function ($row) {
-                    $customer = '';
+            return $this->formatInvoiceDatatable($data, false);
+        }
+    }
 
-                    if (isset($row->customer->name)) {
-                        $customer = $row->customer->name;
+    private function formatInvoiceDatatable($data, bool $isPaidOnly)
+    {
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('orderCount', function ($row) {
+                $count = $row->details ? $row->details->count() : 0;
+                return '<span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-truck-fast me-1"></i>' . $count . ' SJ</span>';
+            })
+            ->editColumn('DT_RowIndex', function ($row) {
+                return '<span class="text-muted fw-semibold fs-12">' . ($row->DT_RowIndex ?? '') . '</span>';
+            })
+            ->editColumn('invoiceNumber', function ($row) {
+                $number = htmlspecialchars($row->invoiceNumber ?? '-');
+                return '<span class="font-monospace fw-bold text-primary fs-13 text-nowrap">' . $number . '</span>';
+            })
+            ->editColumn('customer.name', function ($row) {
+                $customer = isset($row->customer->name) ? $row->customer->name : '-';
+                $code = $row->customerCode ? '<div class="text-muted font-monospace fs-11"><i class="mdi mdi-account-outline me-1"></i>' . htmlspecialchars($row->customerCode) . '</div>' : '';
+                return '<div class="text-start"><span class="fw-semibold text-dark fs-13 d-block text-truncate" style="max-width: 220px;" title="' . htmlspecialchars($customer) . '">' . htmlspecialchars($customer) . '</span>' . $code . '</div>';
+            })
+            ->editColumn('invoiceDate', function ($row) {
+                if (! $row->invoiceDate) {
+                    return '<span class="text-muted">-</span>';
+                }
+                $formatted = Carbon::parse($row->invoiceDate)->format('d M Y');
+                $dueInfo = '';
+                if ($row->overdueDate) {
+                    $dueInfo = '<div class="text-muted fs-11"><i class="mdi mdi-calendar-clock me-1 text-warning"></i>Jth: ' . Carbon::parse($row->overdueDate)->format('d M Y') . '</div>';
+                }
+                return '<div class="text-start text-nowrap"><span class="fw-medium text-dark fs-12">' . $formatted . '</span>' . $dueInfo . '</div>';
+            })
+            ->addColumn('price', function ($row) {
+                $subtotal = (float) ($row->invoiceAmount ?? 0);
+                $totalRoute = 0;
+                $totalOnCharge = 0;
+                $onChargeSummary = [];
+                $ordersList = [];
+
+                if (isset($row->details)) {
+                    foreach ($row->details as $detail) {
+                        $order = $detail->order;
+                        if ($order) {
+                            $routeAmt = (float) ($order->routeAmount ?? $order->price ?? 0);
+                            $totalRoute += $routeAmt;
+                            $orderOnCharge = 0;
+                            $orderCosts = [];
+                            if (isset($order->cost)) {
+                                foreach ($order->cost as $c) {
+                                    if (isset($c->type) && strtolower($c->type) === 'on charge') {
+                                        $nom = (float) $c->nominal;
+                                        $orderOnCharge += $nom;
+                                        $cName = $c->costComponent->name ?? ($c->description ?? 'Biaya Tambahan');
+                                        $onChargeSummary[$cName] = ($onChargeSummary[$cName] ?? 0) + $nom;
+                                        $orderCosts[] = [
+                                            'component' => $cName,
+                                            'nominal' => $nom,
+                                            'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                        ];
+                                    }
+                                }
+                            }
+                            $totalOnCharge += $orderOnCharge;
+                            $ordersList[] = [
+                                'code' => $order->code,
+                                'shipment' => $order->shipmentNumber ?? $order->code,
+                                'route' => ($order->route && $order->route->originLocation ? $order->route->originLocation->name : '-') . ' ➔ ' . ($order->route && $order->route->destinationLocation ? $order->route->destinationLocation->name : '-'),
+                                'plate' => $order->fleet->plateNumber ?? '-',
+                                'basePrice' => $routeAmt,
+                                'basePriceFormatted' => 'Rp ' . number_format($routeAmt, 0, ',', '.'),
+                                'onCharge' => $orderOnCharge,
+                                'onChargeFormatted' => 'Rp ' . number_format($orderOnCharge, 0, ',', '.'),
+                                'costs' => $orderCosts,
+                                'total' => $routeAmt + $orderOnCharge,
+                                'totalFormatted' => 'Rp ' . number_format($routeAmt + $orderOnCharge, 0, ',', '.'),
+                            ];
+                        }
                     }
+                }
 
-                    return $customer;
-                })
+                $html = '<div class="text-end">';
+                $html .= '<span class="fw-bold text-dark fs-13">Rp ' . number_format($subtotal, 0, ',', '.') . '</span>';
 
-                ->addColumn('price', function ($row) {
-                    // invoiceAmount stores subtotal (without PPN)
-                    $subtotal = (float) ($row->invoiceAmount ?? 0);
+                if ($totalOnCharge > 0) {
+                    $breakdownData = [
+                        'invoiceNumber' => $row->invoiceNumber ?? '-',
+                        'customerName' => $row->customer->name ?? '-',
+                        'invoiceDate' => $row->invoiceDate ? Carbon::parse($row->invoiceDate)->format('d-M-Y') : '-',
+                        'totalRoute' => $totalRoute,
+                        'totalRouteFormatted' => 'Rp ' . number_format($totalRoute, 0, ',', '.'),
+                        'totalOnCharge' => $totalOnCharge,
+                        'totalOnChargeFormatted' => 'Rp ' . number_format($totalOnCharge, 0, ',', '.'),
+                        'subtotal' => $subtotal,
+                        'subtotalFormatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+                        'ppn' => (float) ($row->ppnAmount ?? 0),
+                        'ppnFormatted' => 'Rp ' . number_format((float) ($row->ppnAmount ?? 0), 0, ',', '.'),
+                        'pph' => (float) ($row->pphAmount ?? 0),
+                        'pphFormatted' => 'Rp ' . number_format((float) ($row->pphAmount ?? 0), 0, ',', '.'),
+                        'grandTotal' => $subtotal + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0),
+                        'grandTotalFormatted' => 'Rp ' . number_format($subtotal + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0), 0, ',', '.'),
+                        'components' => $onChargeSummary,
+                        'orders' => $ordersList,
+                    ];
+                    $jsonAttr = htmlspecialchars(json_encode($breakdownData), ENT_QUOTES, 'UTF-8');
 
-                    return '' . number_format($subtotal, 0, ',', '.');
-                })
-                ->addColumn('ppn', function ($row) {
-                    $ppnAmount = (float) ($row->ppnAmount ?? 0);
+                    $html .= '<br><button type="button" class="btn btn-xs btn-outline-warning border-warning-subtle py-0 px-2 mt-1 rounded-pill btn-view-invoice-breakdown" data-breakdown=\'' . $jsonAttr . '\' title="Klik untuk rincian biaya On Charge">';
+                    $html .= '<i class="mdi mdi-cash-multiple me-1"></i>+ On Charge: Rp ' . number_format($totalOnCharge, 0, ',', '.');
+                    $html .= '</button>';
+                }
 
-                    return number_format($ppnAmount, 0, '.', ',');
-                })
-                ->addColumn('pph', function ($row) {
-                    $pphAmount = (float) ($row->pphAmount ?? 0);
+                $html .= '</div>';
+                return $html;
+            })
+            ->addColumn('ppn', function ($row) {
+                $ppnAmount = (float) ($row->ppnAmount ?? 0);
+                if ($ppnAmount > 0) {
+                    return '<div class="text-end font-monospace fs-12 text-dark fw-medium">Rp ' . number_format($ppnAmount, 0, ',', '.') . '</div>';
+                }
+                return '<div class="text-end text-muted font-monospace fs-12 opacity-50">-</div>';
+            })
+            ->addColumn('pph', function ($row) {
+                $pphAmount = (float) ($row->pphAmount ?? 0);
+                if ($pphAmount > 0) {
+                    return '<div class="text-end font-monospace fs-12 text-danger fw-medium">- Rp ' . number_format($pphAmount, 0, ',', '.') . '</div>';
+                }
+                return '<div class="text-end text-muted font-monospace fs-12 opacity-50">-</div>';
+            })
+            ->addColumn('totalBilling', function ($row) {
+                $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
+                $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
+                $remaining = $total - $totalPaid;
 
-                    return number_format($pphAmount, 0, '.', ',');
-                })
-                ->addColumn('totalBilling', function ($row) {
-                    $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
+                $html = '<div class="text-end">';
+                $html .= '<span class="fw-bold text-dark fs-13">Rp ' . number_format($total, 0, ',', '.') . '</span>';
+                if ($totalPaid > 0 && $remaining > 0) {
+                    $html .= '<div class="text-danger fs-11 fw-semibold mt-0" title="Sisa Belum Dibayar"><i class="mdi mdi-alert-circle-outline me-1"></i>Sisa: Rp ' . number_format($remaining, 0, ',', '.') . '</div>';
+                }
+                $html .= '</div>';
+                return $html;
+            })
+            ->addColumn('status', function ($row) {
+                $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
+                if ($status === InvoiceModel::STATUS_FULL) {
+                    return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-check-circle me-1"></i>Lunas</span>';
+                } elseif ($status === InvoiceModel::STATUS_PARTIAL) {
+                    return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-clock-check-outline me-1"></i>Sebagian</span>';
+                } else {
+                    return '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-file-document-outline me-1"></i>Belum Bayar</span>';
+                }
+            })
+            ->addColumn('action', function ($row) use ($isPaidOnly) {
+                $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
+                $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
+                $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
+                $remaining = $totalBilling - $totalPaid;
 
-                    return '' . number_format($total, 0, ',', '.');
-                })
+                $btn = '<div class="d-inline-flex align-items-center gap-1">
+                        <a target="_blank" href="' . route('invoice.pdf', $row->id) . '"
+                        class="btn btn-icon btn-sm bg-success-subtle text-success border border-success-subtle hover-scale"
+                        data-bs-toggle="tooltip" title="Cetak PDF">
+                            <i class="mdi mdi-printer-outline fs-14"></i>
+                        </a>';
 
-                ->addColumn('status', function ($row) {
-                    $statusText = '';
-                    $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
-
-                    if ($status === InvoiceModel::STATUS_FULL) {
-                        $statusText = '<span class="badge bg-success">Full Payment</span>';
-                    } elseif ($status === InvoiceModel::STATUS_PARTIAL) {
-                        $statusText = '<span class="badge bg-warning">Partial Payment</span>';
-                    } else {
-                        $statusText = '<span class="badge bg-secondary">Invoice Created</span>';
-                    }
-
-                    return $statusText;
-                })
-                ->addColumn('action', function ($row) {
-                    $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
-                    $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
-                    $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
-                    $remaining = $totalBilling - $totalPaid;
-
-                    $btn = '<td>
-                            <a target="_blank" href="' . route($this->view . 'pdf-invoice', $row->id) . '"
-                            class="btn btn-icon btn-sm bg-success-subtle me-1"
-                            data-bs-toggle="tooltip" title="Print PDF">
-                                <i class="mdi mdi-file fs-14 text-success"></i>
-                            </a>';
-
+                if (! $isPaidOnly) {
                     // Tombol pembayaran hanya muncul jika status bukan Full Payment
                     if ($status !== InvoiceModel::STATUS_FULL && $remaining > 0) {
                         $btn .= '
                             <a href="javascript:void(0)" 
-                            class="btn btn-icon btn-sm bg-info-subtle me-1 btn-payment"
-                            data-bs-toggle="tooltip" title="Payment"
+                            class="btn btn-icon btn-sm bg-info-subtle text-info border border-info-subtle hover-scale btn-payment"
+                            data-bs-toggle="tooltip" title="Input Pembayaran"
                             data-id="' . $row->id . '"
                             data-invoice-code="' . $row->code . '"
-                            data-invoice-number="' . $row->invoiceNumber . '"
+                            data-invoice-number="' . htmlspecialchars($row->invoiceNumber) . '"
                             data-subtotal="' . (float) ($row->invoiceAmount ?? 0) . '"
                             data-ppn="' . (float) ($row->ppnAmount ?? 0) . '"
                             data-pph="' . (float) ($row->pphAmount ?? 0) . '"
                             data-total="' . $totalBilling . '"
                             data-total-paid="' . $totalPaid . '"
                             data-remaining="' . $remaining . '">
-                                <i class="mdi mdi-cash fs-14 text-info"></i>
+                                <i class="mdi mdi-cash-multiple fs-14"></i>
                             </a>';
                     }
 
                     // Tombol edit hanya muncul jika belum full payment
                     if ($status !== InvoiceModel::STATUS_FULL) {
                         $btn .= '
-                            <a href="' . route($this->view . 'edit', $row->id) . '"
-                            class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                            data-bs-toggle="tooltip" title="Edit">
-                                <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                            <a href="' . route('invoice.edit', $row->id) . '"
+                            class="btn btn-icon btn-sm bg-primary-subtle text-primary border border-primary-subtle hover-scale"
+                            data-bs-toggle="tooltip" title="Edit Faktur">
+                                <i class="mdi mdi-pencil-outline fs-14"></i>
                             </a>';
 
                         $btn .= '
                             <a href="javascript:void(0)" 
-                            class="btn btn-icon btn-sm bg-secondary-subtle me-1 btn-suggest-number"
+                            class="btn btn-icon btn-sm bg-secondary-subtle text-secondary border border-secondary-subtle hover-scale btn-suggest-number"
                             data-bs-toggle="tooltip" title="Saran Nomor Baru"
                             data-id="' . $row->id . '"
                             data-invoice-number="' . htmlspecialchars($row->invoiceNumber) . '">
-                                <i class="mdi mdi-auto-fix fs-14 text-secondary"></i>
+                                <i class="mdi mdi-auto-fix fs-14"></i>
                             </a>';
                     }
+                }
 
-                    // Tombol recalculate
+                // Tombol recalculate
+                $btn .= '
+                    <a href="javascript:recalculateInvoice(\'' . $row->id . '\')"
+                    class="btn btn-icon btn-sm bg-warning-subtle text-warning-emphasis border border-warning-subtle hover-scale"
+                    data-bs-toggle="tooltip" title="Hitung Ulang Nilai Faktur">
+                        <i class="mdi mdi-calculator fs-14"></i>
+                    </a>';
+
+                // Tombol delete hanya muncul jika belum ada pembayaran dan belum lunas
+                if (! $isPaidOnly && count($row->payments) == 0) {
                     $btn .= '
-                        <a href="javascript:recalculateInvoice(\'' . $row->id . '\')"
-                        class="btn btn-icon btn-sm bg-warning-subtle me-1"
-                        data-bs-toggle="tooltip" title="Recalculate">
-                            <i class="mdi mdi-calculator fs-14 text-warning"></i>
+                        <a href="javascript:deleteData(\'' . $row->id . '\')"
+                        class="btn btn-icon btn-sm bg-danger-subtle text-danger border border-danger-subtle hover-scale"
+                        data-bs-toggle="tooltip" title="Hapus Faktur">
+                            <i class="mdi mdi-trash-can-outline fs-14"></i>
                         </a>';
+                }
 
-                    // Tombol delete hanya muncul jika belum ada pembayaran
-                    if (count($row->payments) == 0) {
-                        $btn .= '
-                            <a href="javascript:deleteData(\'' . $row->id . '\')"
-                            class="btn btn-icon btn-sm bg-danger-subtle"
-                            data-bs-toggle="tooltip" title="Delete">
-                                <i class="mdi mdi-delete fs-14 text-danger"></i>
-                            </a>';
-                    }
+                $btn .= '</div>';
 
-                    $btn .= '</td>';
-
-                    return $btn;
-                })
-                ->rawColumns(['action', 'orderCount', 'customer.name', 'price', 'status'])
-                ->toJson();
-        }
+                return $btn;
+            })
+            ->rawColumns(['action', 'DT_RowIndex', 'invoiceNumber', 'orderCount', 'customer.name', 'invoiceDate', 'price', 'ppn', 'pph', 'totalBilling', 'status'])
+            ->toJson();
     }
 
     public function datatableOrder(Request $request)
@@ -408,29 +601,101 @@ class InvoiceController extends Controller
 
                     return $destination;
                 })
+                ->addColumn('basePrice', function ($row) {
+                    $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
+                    return '<span class="text-dark fw-medium">Rp ' . number_format($basePrice, 0, ',', '.') . '</span>';
+                })
                 ->addColumn('addCost', function ($row) {
-                    $cost = 0;
+                    $onChargeCost = 0;
+                    $onChargeItems = [];
                     if (isset($row->cost)) {
                         foreach ($row->cost as $item) {
-                            $cost += $item->nominal;
+                            if (isset($item->type) && strtolower($item->type) === 'on charge') {
+                                $nom = (float) $item->nominal;
+                                $onChargeCost += $nom;
+                                $onChargeItems[] = [
+                                    'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
+                                    'nominal' => $nom,
+                                    'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                    'description' => $item->description ?? '',
+                                ];
+                            }
                         }
                     }
-                    $this->totalPrice = $cost;
 
-                    return '' . number_format($cost, 0, ',', '.');
+                    if ($onChargeCost > 0) {
+                        $jsonCosts = htmlspecialchars(json_encode($onChargeItems), ENT_QUOTES, 'UTF-8');
+                        $shipment = $row->shipmentNumber ?? $row->code;
+                        $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
+
+                        $html = '<div class="d-flex flex-column align-items-end">';
+                        $html .= '<span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold mb-1">+ Rp ' . number_format($onChargeCost, 0, ',', '.') . '</span>';
+                        $html .= '<button type="button" class="btn btn-xs btn-outline-info py-0 px-2 btn-order-cost-detail" '
+                            . 'data-code="' . $row->code . '" '
+                            . 'data-shipment="' . $shipment . '" '
+                            . 'data-base-price="' . number_format($basePrice, 0, ',', '.') . '" '
+                            . 'data-on-charge="' . number_format($onChargeCost, 0, ',', '.') . '" '
+                            . 'data-total="' . number_format($basePrice + $onChargeCost, 0, ',', '.') . '" '
+                            . 'data-costs=\'' . $jsonCosts . '\' title="Lihat Rincian Biaya On Charge">';
+                        $html .= '<i class="mdi mdi-receipt-text-outline me-1"></i>' . count($onChargeItems) . ' Rincian';
+                        $html .= '</button>';
+                        $html .= '</div>';
+                        return $html;
+                    }
+
+                    return '<span class="text-muted fs-12">-</span>';
                 })
-                ->addColumn('totalPrice', function () {
-                    return '' . number_format($this->totalPrice, 0, ',', '.');
+                ->addColumn('totalPrice', function ($row) {
+                    $onChargeCost = 0;
+                    if (isset($row->cost)) {
+                        foreach ($row->cost as $item) {
+                            if (isset($item->type) && strtolower($item->type) === 'on charge') {
+                                $onChargeCost += (float) $item->nominal;
+                            }
+                        }
+                    }
+                    $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
+                    $orderPrice = $basePrice + $onChargeCost;
+
+                    return '<span class="fw-bold text-primary fs-13">Rp ' . number_format($orderPrice, 0, ',', '.') . '</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
+                    $onChargeCost = 0;
+                    $onChargeItems = [];
+                    if (isset($row->cost)) {
+                        foreach ($row->cost as $item) {
+                            if (isset($item->type) && strtolower($item->type) === 'on charge') {
+                                $nom = (float) $item->nominal;
+                                $onChargeCost += $nom;
+                                $onChargeItems[] = [
+                                    'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
+                                    'nominal' => $nom,
+                                    'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                    'description' => $item->description ?? '',
+                                ];
+                            }
+                        }
+                    }
+                    $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
+                    $orderPrice = $basePrice + $onChargeCost;
+                    $costsJson = htmlspecialchars(json_encode($onChargeItems), ENT_QUOTES, 'UTF-8');
+
+                    $btn = '<input class="order-checkbox form-check-input" type="checkbox" name="order[]" '
+                        . 'data-id="' . $row->code . '" '
+                        . 'data-price="' . $orderPrice . '" '
+                        . 'data-base-price="' . $basePrice . '" '
+                        . 'data-on-charge="' . $onChargeCost . '" '
+                        . 'data-costs=\'' . $costsJson . '\' '
+                        . 'data-shipment="' . ($row->shipmentNumber ?? $row->code) . '" '
+                        . 'data-plate="' . ($row->fleet->plateNumber ?? '-') . '" '
+                        . 'value="' . $row->code . '">';
 
                     return $btn;
                 })
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-M-Y');
                 })
-                ->rawColumns(['action', 'orderDate', 'fleet.plateNumber', 'route.originLocation.name', 'route.destinationLocation.name', 'orderType.name', 'addCost', 'totalPrice'])
+                ->rawColumns(['action', 'orderDate', 'fleet.plateNumber', 'route.originLocation.name', 'route.destinationLocation.name', 'orderType.name', 'basePrice', 'addCost', 'totalPrice'])
                 ->toJson();
         }
     }
@@ -476,7 +741,7 @@ class InvoiceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route('invoice.unpaid')->with('fail', 'Data not found');
         }
 
         $company = CompanySetting::first();

@@ -1,0 +1,256 @@
+/* Hallmark · component: sidebar-nav · genre: modern-minimal (inherited from Hando template)
+ * theme: brand-preserve (paper #ffffff · ink #2f384f · accent #7669D3)
+ * states: default · hover · focus-visible · current · expanded · collapsed · disabled
+ * contrast: --phl-sb-accent-strong #6558C8 on #fff = 5.5:1 (AA normal) · ink on tints ≥ 7:1
+ */
+
+:root {
+    --phl-sb-accent: #7669D3;
+    --phl-sb-accent-strong: #6558C8;
+    --phl-sb-accent-tint: rgba(118, 105, 211, 0.09);
+    --phl-sb-accent-tint-strong: rgba(118, 105, 211, 0.18);
+    --phl-sb-ink: #2f384f;
+    --phl-sb-ink-muted: #7b8398;
+    --phl-sb-ink-faint: #aab0c1;
+    --phl-sb-surface: #f3f4f9;
+    --phl-sb-line: #eaecf3;
+    --phl-sb-radius: 10px;
+    --phl-sb-radius-sm: 8px;
+    --phl-sb-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --phl-sb-dur: 160ms;
+}
+
+/* Dark sidebar variant — token swap only */
+body[data-menu-color="dark"] .app-sidebar-menu {
+    --phl-sb-accent: #8b7fe0;
+    --phl-sb-accent-strong: #a99ff0;
+    --phl-sb-accent-tint: rgba(139, 127, 224, 0.16);
+    --phl-sb-accent-tint-strong: rgba(139, 127, 224, 0.26);
+    --phl-sb-ink: #e8eaf2;
+    --phl-sb-ink-muted: #a7acbd;
+    --phl-sb-ink-faint: #787d8f;
+    --phl-sb-surface: rgba(255, 255, 255, 0.05);
+    --phl-sb-line: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Section label ---------- */
+
+#sidebar-menu .menu-title {
+    margin: 16px 8px 6px;
+    padding: 0;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--phl-sb-ink-faint);
+}
+
+/* ---------- Parent items ---------- */
+
+#sidebar-menu #side-menu > li > a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 2px 0;
+    padding: 8px 10px;
+    border-radius: var(--phl-sb-radius);
+    color: var(--phl-sb-ink);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
+    transition: background-color var(--phl-sb-dur) var(--phl-sb-ease),
+        color var(--phl-sb-dur) var(--phl-sb-ease);
+}
+
+#sidebar-menu #side-menu > li > a:hover,
+#sidebar-menu #side-menu > li > a:focus {
+    background: var(--phl-sb-surface);
+    color: var(--phl-sb-ink);
+    text-decoration: none;
+}
+
+#sidebar-menu #side-menu > li > a:focus {
+    outline: none;
+}
+
+#sidebar-menu #side-menu > li > a:focus-visible {
+    outline: 2px solid var(--phl-sb-accent);
+    outline-offset: 2px;
+}
+
+/* Icon tile */
+#sidebar-menu .phl-tile {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--phl-sb-radius-sm);
+    color: var(--phl-sb-ink-muted);
+    transition: background-color var(--phl-sb-dur) var(--phl-sb-ease),
+        color var(--phl-sb-dur) var(--phl-sb-ease);
+}
+
+#sidebar-menu .phl-tile i {
+    width: 16px;
+    font-size: 16px;
+    line-height: 1;
+    margin: 0;
+}
+
+#sidebar-menu .phl-tile svg {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    fill: none;
+    stroke: currentColor;
+}
+
+#sidebar-menu #side-menu > li > a:hover .phl-tile {
+    background: var(--phl-sb-accent-tint);
+    color: var(--phl-sb-accent-strong);
+}
+
+/* Current parent (submenu open with active child, or parent link itself) */
+#sidebar-menu #side-menu > li.menuitem-active > a,
+#sidebar-menu #side-menu > li > a.active {
+    background: var(--phl-sb-accent-tint);
+    color: var(--phl-sb-accent-strong);
+    font-weight: 600;
+}
+
+#sidebar-menu #side-menu > li.menuitem-active > a .phl-tile,
+#sidebar-menu #side-menu > li > a.active .phl-tile {
+    background: var(--phl-sb-accent-tint-strong);
+    color: var(--phl-sb-accent-strong);
+}
+
+/* Chevron */
+#sidebar-menu .menu-arrow {
+    position: static;
+    margin-left: auto;
+    flex: none;
+    font-size: 1rem;
+    line-height: 1;
+    color: var(--phl-sb-ink-faint);
+    transition: transform 200ms var(--phl-sb-ease);
+}
+
+/* ---------- Submenu ---------- */
+
+#sidebar-menu .nav-second-level {
+    margin: 2px 0 6px 24px;
+    padding: 0 0 0 12px;
+    border-left: 2px solid var(--phl-sb-line);
+    list-style: none;
+}
+
+#sidebar-menu .nav-second-level li {
+    margin: 1px 0;
+}
+
+#sidebar-menu .nav-second-level li a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+    margin: 0;
+    padding: 6px 10px;
+    border-radius: var(--phl-sb-radius-sm);
+    color: var(--phl-sb-ink-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.45;
+    transition: background-color var(--phl-sb-dur) var(--phl-sb-ease),
+        color var(--phl-sb-dur) var(--phl-sb-ease);
+}
+
+#sidebar-menu .nav-second-level li a:hover,
+#sidebar-menu .nav-second-level li a:focus {
+    background: var(--phl-sb-surface);
+    color: var(--phl-sb-ink);
+    text-decoration: none;
+}
+
+#sidebar-menu .nav-second-level li a:focus {
+    outline: none;
+}
+
+#sidebar-menu .nav-second-level li a:focus-visible {
+    outline: 2px solid var(--phl-sb-accent);
+    outline-offset: 1px;
+}
+
+#sidebar-menu .phl-sub-icon {
+    flex: none;
+    width: 17px;
+    font-size: 17px;
+    line-height: 1;
+    margin: 0;
+    color: var(--phl-sb-ink-faint);
+    transition: color var(--phl-sb-dur) var(--phl-sb-ease);
+}
+
+#sidebar-menu .nav-second-level li a:hover .phl-sub-icon {
+    color: var(--phl-sb-accent-strong);
+}
+
+/* Current page */
+#sidebar-menu .nav-second-level li a.tp-link.active,
+#sidebar-menu .nav-second-level li.menuitem-active > a {
+    background: var(--phl-sb-accent-tint);
+    color: var(--phl-sb-accent-strong);
+    font-weight: 600;
+}
+
+#sidebar-menu .nav-second-level li a.tp-link.active .phl-sub-icon {
+    color: var(--phl-sb-accent-strong);
+}
+
+/* Labels truncate instead of wrapping inside narrow sidebar */
+#sidebar-menu .phl-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------- Disabled ---------- */
+
+#sidebar-menu a.is-disabled,
+#sidebar-menu a[aria-disabled="true"] {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* ---------- Scrollbar ---------- */
+
+.app-sidebar-menu .simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
+    width: 4px;
+    background: #d7dae5;
+    border-radius: 4px;
+}
+
+body[data-menu-color="dark"] .app-sidebar-menu .simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+/* ---------- Mobile overlay tweak ---------- */
+
+@media (max-width: 991.98px) {
+    #sidebar-menu {
+        padding-top: 8px;
+    }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+    #sidebar-menu a,
+    #sidebar-menu .phl-tile,
+    #sidebar-menu .phl-sub-icon,
+    #sidebar-menu .menu-arrow {
+        transition-duration: 1ms !important;
+    }
+}

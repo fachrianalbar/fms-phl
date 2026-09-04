@@ -17,6 +17,8 @@
 
     <!-- App css -->
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-style" />
+    <!-- Sidebar custom style -->
+    <link href="{{ asset('assets/css/sidebar-custom.css') }}" rel="stylesheet" type="text/css" />
 
     <!-- Icons -->
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />
@@ -28,6 +30,18 @@
 
     <script src="{{ asset('assets/js/head.js') }}"></script>
 
+
+    <style>
+        /* Global: Posisi semua modal di atas (bukan di tengah layar) */
+        .modal:not(.modal-fullscreen) .modal-dialog:not(.modal-fullscreen) {
+            margin-top: 2rem !important;
+            margin-bottom: 2rem !important;
+        }
+        .modal-dialog-centered {
+            align-items: flex-start !important;
+            min-height: auto !important;
+        }
+    </style>
 
     @stack('style')
 

@@ -192,7 +192,7 @@
 </div>
 
 <div class="modal fade" id="syncProgressModal" tabindex="-1" aria-labelledby="syncProgressModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog mt-4">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="syncProgressModalLabel">Proses Sinkronisasi Stock</h5>

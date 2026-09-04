@@ -105,7 +105,7 @@
     <!-- Loading Preloader Modal -->
     <div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
         aria-labelledby="loadingModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog mt-4">
             <div class="modal-content border-0">
                 <div class="modal-body text-center p-5">
                     <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
