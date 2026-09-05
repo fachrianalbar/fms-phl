@@ -439,6 +439,7 @@ class NotReturnDoController extends Controller
         $fleetDetail = $this->fleetSvc->getById($data->fleetCode);
         $component = CostComponent::get();
         $unit = $this->unitSvc->findAll();
+        $customerDetailOrder = $this->orderSvc->getCustomerDetailOrder($data->code);
 
         return view($this->view . 'edit-order')
             ->with('view', $this->view)
@@ -455,6 +456,7 @@ class NotReturnDoController extends Controller
             ->with('fleet', $fleetDetail)
             ->with('fleets', $fleet)
             ->with('unit', $unit)
+            ->with('customerDetailOrder', $customerDetailOrder)
             ->with('data', $data);
     }
 

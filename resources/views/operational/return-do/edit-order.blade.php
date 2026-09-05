@@ -562,6 +562,34 @@
                 </div>
             </div>
 
+            <!-- Customer Detail Card -->
+            <div class="card card-custom {{ (isset($customerDetailOrder) && $customerDetailOrder->count() > 0) ? '' : 'd-none' }}" id="card-customer-detail">
+                <div class="card-header d-flex align-items-center">
+                    <span class="section-icon-title bg-primary bg-opacity-10 text-primary">
+                        <i class="mdi mdi-card-account-details-outline"></i>
+                    </span>
+                    <h4 class="mb-0 font-weight-bold text-dark">{{ __('menu_order.customer_detail_data') }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="customerDetailContainer">
+                        @if (isset($customerDetailOrder) && $customerDetailOrder->count() > 0)
+                            @foreach ($customerDetailOrder as $item)
+                                <div class="col-md-6 customer-detail-item">
+                                    <input type="hidden" name="customerDetailCode[]" value="{{ $item->customerDetailCode }}">
+                                    <label class="form-label-custom" for="cust_detail_{{ $loop->iteration }}">
+                                        <i class="mdi mdi-information-outline text-primary"></i> {{ $item->customerDetail?->name ?? 'Detail' }}
+                                    </label>
+                                    <input type="text" class="form-control form-control-custom"
+                                        id="cust_detail_{{ $loop->iteration }}"
+                                        placeholder="{{ $item->customerDetail?->name }}" name="value[]"
+                                        value="{{ $item->value }}">
+                                </div>
+                            @endforeach
+                        @endif
+                    </div>
+                </div>
+            </div>
+
             <!-- Biaya Komponen Card -->
             <div class="card card-custom">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -901,6 +929,63 @@
         // Trigger origin location when both customer and route type are selected
         $('#customerCode, #routeTypeCode').on('change', function() {
             checkAndLoadRouteOrder();
+        });
+
+        let currentCustomerCode = "{{ $data->customerCode }}";
+
+        @if (isset($customerDetailOrder) && $customerDetailOrder->count() > 0)
+            $('#notes').prop('disabled', true);
+        @endif
+
+        $('#customerCode').on('change', function() {
+            let customerCode = $(this).val();
+            let customerId = $('#customerCode option:selected').data('id');
+
+            if (customerCode === currentCustomerCode) {
+                return;
+            }
+            currentCustomerCode = customerCode;
+
+            if (customerId) {
+                $.get("{{ url('ajax/order-shipment-format') }}/" + customerId, function(data) {
+                    if (data) {
+                        $('#shipmentNumber').val(String(data).toUpperCase());
+                    }
+                });
+
+                $.get("{{ url('ajax/customer-detail') }}/" + customerId, function(data) {
+                    const $detailCard = $('#card-customer-detail');
+                    const $container = $('#customerDetailContainer');
+                    $container.empty();
+
+                    if (data && data.length > 0) {
+                        $detailCard.removeClass('d-none');
+                        $('#notes').prop('disabled', true);
+
+                        data.forEach((item, index) => {
+                            let html = `
+                                <div class="col-md-6 customer-detail-item">
+                                    <input type="hidden" name="customerDetailCode[]" value="${item.code}">
+                                    <label class="form-label-custom" for="cust_detail_${index}">
+                                        <i class="mdi mdi-information-outline text-primary"></i> ${item.name} <i class="mdi mdi-information text-danger"></i>
+                                    </label>
+                                    <input type="text" class="form-control form-control-custom"
+                                        id="cust_detail_${index}"
+                                        name="value[]" placeholder="${item.name}">
+                                </div>`;
+                            $container.append(html);
+                        });
+                    } else {
+                        $detailCard.addClass('d-none');
+                        $container.empty();
+                        $('#notes').prop('disabled', false);
+                    }
+                });
+            } else {
+                $('#card-customer-detail').addClass('d-none');
+                $('#customerDetailContainer').empty();
+                $('#notes').prop('disabled', false);
+            }
         });
 
         $('#add-material').on('click', function() {

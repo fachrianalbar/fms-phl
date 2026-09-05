@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Operational;
 use App\Http\Controllers\Controller;
 use App\Models\Data\Route;
 use App\Models\Master\CostComponent;
-use App\Models\Master\Employee;
+use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\Operational\OrderDriverSalary;
@@ -288,6 +288,7 @@ class ReturnDoController extends Controller
         $cost      = OrderCost::where('orderCode', $data->code)->get();
         $component = CostComponent::get();
         $unit      = $unitSvc->findAll();
+        $customerDetailOrder = CustomerDetailOrder::where('orderCode', $data->code)->with(['customerDetail'])->get();
 
         return view('operational.return-do.edit-order')
             ->with('view', $this->view)
@@ -303,6 +304,7 @@ class ReturnDoController extends Controller
             ->with('route', $route)
             ->with('cost', $cost)
             ->with('component', $component)
+            ->with('customerDetailOrder', $customerDetailOrder)
             ->with('unit', $unit);
     }
 

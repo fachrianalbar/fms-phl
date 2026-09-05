@@ -5,11 +5,13 @@ namespace App\Services\Operational;
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
 use App\Models\Master\Fleet;
+use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\OrderDetail;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Traits\LogActivity;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -159,6 +161,11 @@ class NotReturnDoService
         // Handle returnDate (optional)
         if (! is_null($request->returnDate)) {
             $updateData['returnDate'] = $request->returnDate;
+        }
+
+        // Handle shipmentNumber if provided
+        if ($request->filled('shipmentNumber')) {
+            $updateData['shipmentNumber'] = mb_strtoupper(trim($request->shipmentNumber));
         }
 
         // Perform update
@@ -323,6 +330,30 @@ class NotReturnDoService
 
                 $this->logActivity('Order Material', $orderMaterial, 'Create');
             }
+        }
+
+        // Update Customer Detail Order if provided in the request or if customer changed
+        if (isset($request->customerDetailCode)) {
+            CustomerDetailOrder::where('orderCode', $order->code)->delete();
+            $customerDetailCodes = $request->customerDetailCode;
+            $values = $request->value ?? [];
+
+            for ($i = 0; $i < count($customerDetailCodes); $i++) {
+                if (! empty($customerDetailCodes[$i])) {
+                    usleep(1000);
+
+                    $customerDetailOrder = CustomerDetailOrder::create([
+                        'code' => GenerateCode::generateCode('FCDO', true),
+                        'customerDetailCode' => $customerDetailCodes[$i],
+                        'value' => $values[$i] ?? null,
+                        'orderCode' => $order->code,
+                    ]);
+
+                    $this->logActivity('Customer Detail Order', $customerDetailOrder, 'Create');
+                }
+            }
+        } elseif ($isCustomerChanged) {
+            CustomerDetailOrder::where('orderCode', $order->code)->delete();
         }
 
         // Log after update
