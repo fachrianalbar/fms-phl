@@ -13,15 +13,15 @@
 <table class="bordered">
     <thead>
         <tr>
-            <th style="width: 5%;">No</th>
-            <th style="width: 12%;">Invoice Code</th>
-            <th style="width: 12%;">Invoice No</th>
-            <th style="width: 20%;">Customer Name</th>
-            <th style="width: 10%;">Invoice Date</th>
-            <th style="width: 20%;">Receiving Bank</th>
-            <th style="width: 10%;">Total Billing</th>
-            <th style="width: 10%;">Total Payment</th>
-            <th style="width: 10%;">Status</th>
+            <th style="width: 4%;">No</th>
+            <th style="width: 13%;">Transaction Code</th>
+            <th style="width: 13%;">Invoice No</th>
+            <th style="width: 16%;">Customer Name</th>
+            <th style="width: 9%;">Payment Date</th>
+            <th style="width: 15%;">Receiving Bank</th>
+            <th style="width: 9%;">Type</th>
+            <th style="width: 10%;">Amount</th>
+            <th style="width: 11%;">Description</th>
         </tr>
     </thead>
     <tbody>

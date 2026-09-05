@@ -12,20 +12,19 @@
     <table style="width: 100%; border-collapse: collapse; border: 1px solid black;">
         <thead>
             <tr>
-                <th colspan="10" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
+                <th colspan="9" style="font-weight: bold; font-size: 20px; text-align: center; padding: 10px;">
                     Invoice Payment Report Data</th>
             </tr>
             <tr>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">No</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Invoice Code</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Transaction Code</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Invoice No</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Customer Name</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Invoice Date</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Payment Date</th>
                 <th style="font-size: 14px; font-weight: bold; text-align: center">Receiving Bank</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Total Billing</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Total Payment</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Last Payment Date</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Status</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Type</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Amount</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center">Description</th>
             </tr>
         </thead>
         <tbody>
@@ -33,45 +32,25 @@
             use Carbon\Carbon;
             $no = 1;
             @endphp
-            @foreach ($data as $invoice)
+            @foreach ($data as $payment)
             @php
-            $totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
-            $totalPayment = 0;
-            $receivingBank = '';
-            $lastPaymentDate = '';
-
-            if (count($invoice->payments) > 0) {
-            foreach ($invoice->payments as $item) {
-            $totalPayment += $item->amount;
+            $invoice = $payment->invoice;
+            $bank = '-';
+            if ($payment->userBank) {
+                $bank = ($payment->userBank->bank->name ?? 'Bank') . ' - ' . ($payment->userBank->accountNumber ?? '');
             }
-            $lastPayment = $invoice->payments->last();
-            if ($lastPayment && $lastPayment->userBank) {
-            $receivingBank = $lastPayment->userBank->bank->name . ' - ' . $lastPayment->userBank->accountNumber;
-            $lastPaymentDate = Carbon::parse($lastPayment->paymentDate)->format('d-M-Y');
-            }
-            }
-
-            $totalPaid = $totalPayment;
-            if ($totalPaid < $totalBilling && $totalPaid> 0) {
-                $status = 'Partial Payment';
-                } elseif ($totalPaid >= $totalBilling && $totalPaid > 0) {
-                $status = 'Full Payment';
-                } else {
-                $status = 'No Payment';
-                }
-                @endphp
+            @endphp
 
                 <tr>
                     <td style="text-align: center">{{ $no++ }}</td>
-                    <td style="text-align: center">{{ $invoice->code }}</td>
-                    <td style="text-align: center">{{ $invoice->invoiceNumber }}</td>
+                    <td style="text-align: center">{{ $payment->transactionCode ?: $payment->code }}</td>
+                    <td style="text-align: center">{{ $invoice ? ($invoice->invoiceNumber ?: $invoice->code) : '-' }}</td>
                     <td style="text-align: center">{{ $invoice->customer->name ?? '' }}</td>
-                    <td style="text-align: center">{{ Carbon::parse($invoice->invoiceDate)->format('d-M-Y') }}</td>
-                    <td style="text-align: center">{{ $receivingBank }}</td>
-                    <td style="text-align: center">{{ number_format($totalBilling, 0, ',', '.') }}</td>
-                    <td style="text-align: center">{{ number_format($totalPayment, 0, ',', '.') }}</td>
-                    <td style="text-align: center">{{ $lastPaymentDate }}</td>
-                    <td style="text-align: center">{{ $status }}</td>
+                    <td style="text-align: center">{{ $payment->paymentDate ? Carbon::parse($payment->paymentDate)->format('d-M-Y') : '-' }}</td>
+                    <td style="text-align: center">{{ $bank }}</td>
+                    <td style="text-align: center">{{ $labels[$payment->id] ?? 'Pembayaran' }}</td>
+                    <td style="text-align: center">{{ number_format((float) $payment->amount, 0, ',', '.') }}</td>
+                    <td style="text-align: center">{{ $payment->description ?: '-' }}</td>
                 </tr>
                 @endforeach
         </tbody>

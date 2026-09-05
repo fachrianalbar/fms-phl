@@ -237,6 +237,8 @@
 </form>
 
 @include('invoice.partials.breakdown-modal')
+
+@include('invoice.partials.payment-history-modal')
 @endsection
 
 @push('script')

@@ -21,6 +21,7 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
     Route::put('{id}', [InvoiceController::class, 'update'])->name('update');
     Route::delete('{id}', [InvoiceController::class, 'destroy'])->name('destroy');
     Route::get('pdf/{id}', [InvoiceController::class, 'pdfInvoice'])->name('pdf');
+    Route::get('{id}/payment-history', [InvoiceController::class, 'paymentHistory'])->name('payment-history');
     // Route proses pembayaran (POST {id}/payment) dihapus — pembayaran kini lewat
     // menu Transaksi Pembayaran (invoice/payment-transaction)
     Route::post('recalculate-all', [InvoiceController::class, 'recalculateAll'])->name('recalculate-all');
@@ -29,11 +30,10 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
     Route::put('detail/{id}', [InvoiceController::class, 'storeInvoiceDetail'])->name('detail.store');
     Route::delete('detail/{id}', [InvoiceController::class, 'destroyInvoiceDetail'])->name('detail.destroy');
 
-    // 4. Invoice Payment
+    // 4. Invoice Payment — daftar seluruh pembayaran faktur (1 baris = 1 pembayaran).
+    //    Input pembayaran hanya lewat menu Transaksi Pembayaran (payment-transaction).
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', [InvoicePaymentController::class, 'index'])->name('index');
-        Route::get('{id}/edit', [InvoicePaymentController::class, 'edit'])->name('edit');
-        Route::put('{id}', [InvoicePaymentController::class, 'update'])->name('update');
         Route::get('export/pdf', [InvoicePaymentController::class, 'exportPdf'])->name('export-pdf');
         Route::get('export/excel', [InvoicePaymentController::class, 'exportExcel'])->name('export-excel');
     });

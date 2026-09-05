@@ -1,40 +1,23 @@
 @php
 use Carbon\Carbon;
 @endphp
-@foreach($data as $index => $invoice)
+@foreach($data as $payment)
 @php
-$totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
-$totalPayment = 0;
-$receivingBank = '';
-
-if (count($invoice->payments) > 0) {
-foreach ($invoice->payments as $item) {
-$totalPayment += $item->amount;
+$invoice = $payment->invoice;
+$bank = '-';
+if ($payment->userBank) {
+    $bank = ($payment->userBank->bank->name ?? 'Bank') . ' - ' . ($payment->userBank->accountNumber ?? '');
 }
-$lastPayment = $invoice->payments->last();
-if ($lastPayment && $lastPayment->userBank) {
-$receivingBank = $lastPayment->userBank->bank->name . ' - ' . $lastPayment->userBank->accountNumber;
-}
-}
-
-$totalPaid = $totalPayment;
-if ($totalPaid < $totalBilling && $totalPaid> 0) {
-    $status = 'Partial Payment';
-    } elseif ($totalPaid >= $totalBilling && $totalPaid > 0) {
-    $status = 'Full Payment';
-    } else {
-    $status = 'No Payment';
-    }
-    @endphp
+@endphp
     <tr>
         <td class="text-center">{{ $start + $loop->iteration }}</td>
-        <td>{{ $invoice->code }}</td>
-        <td>{{ $invoice->invoiceNumber }}</td>
+        <td>{{ $payment->transactionCode ?: $payment->code }}</td>
+        <td>{{ $invoice ? ($invoice->invoiceNumber ?: $invoice->code) : '-' }}</td>
         <td>{{ $invoice->customer->name ?? '-' }}</td>
-        <td class="text-center">{{ Carbon::parse($invoice->invoiceDate)->format('d-M-Y') }}</td>
-        <td>{{ $receivingBank }}</td>
-        <td class="text-right">Rp {{ number_format($totalBilling, 0, ',', '.') }}</td>
-        <td class="text-right">Rp {{ number_format($totalPayment, 0, ',', '.') }}</td>
-        <td class="text-center">{{ $status }}</td>
+        <td class="text-center">{{ $payment->paymentDate ? Carbon::parse($payment->paymentDate)->format('d-M-Y') : '-' }}</td>
+        <td>{{ $bank }}</td>
+        <td class="text-center">{{ $labels[$payment->id] ?? 'Pembayaran' }}</td>
+        <td class="text-right">Rp {{ number_format((float) $payment->amount, 0, ',', '.') }}</td>
+        <td>{{ $payment->description ?: '-' }}</td>
     </tr>
     @endforeach

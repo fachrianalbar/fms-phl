@@ -13,6 +13,7 @@ use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
@@ -493,6 +494,18 @@ class InvoiceController extends Controller
                             <i class="mdi mdi-printer-outline fs-14"></i>
                         </a>';
 
+                // Riwayat pembayaran (DP/cicilan/claim) — hanya jika pernah ada pembayaran/claim
+                if (count($row->payments) > 0 || count($row->claims) > 0) {
+                    $btn .= '
+                        <a href="javascript:void(0)"
+                        class="btn btn-icon btn-sm bg-info-subtle text-info border border-info-subtle hover-scale btn-payment-history"
+                        data-bs-toggle="tooltip" title="Riwayat Pembayaran (DP/Cicilan)"
+                        data-id="' . $row->id . '"
+                        data-invoice-number="' . htmlspecialchars($row->invoiceNumber ?? '-') . '">
+                            <i class="mdi mdi-cash-clock fs-14"></i>
+                        </a>';
+                }
+
                 if (! $isPaidOnly) {
                     // Tombol edit hanya muncul jika belum full payment
                     if ($status !== InvoiceModel::STATUS_FULL) {
@@ -823,6 +836,84 @@ class InvoiceController extends Controller
     // Catatan: proses pembayaran invoice (method processPayment + route
     // invoice/{id}/payment) telah dihapus. Pembayaran kini dilakukan lewat menu
     // "Transaksi Pembayaran" (multi invoice + claim dalam satu transaksi).
+
+    /**
+     * Riwayat pembayaran satu faktur (DP / cicilan / pelunasan / claim) — JSON
+     * untuk modal riwayat di halaman unpaid & paid.
+     */
+    public function paymentHistory($id)
+    {
+        $invoice = InvoiceModel::with([
+            'customer',
+            'payments' => function ($q) {
+                $q->orderBy('paymentDate', 'asc')->orderBy('created_at', 'asc');
+            },
+            'payments.userBank.bank',
+            'payments.transaction',
+            'claims' => function ($q) {
+                $q->orderBy('created_at', 'asc');
+            },
+            'claims.transaction',
+        ])->whereNull('deleted_at')->find($id);
+
+        if (! $invoice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Faktur tidak ditemukan',
+            ], 404);
+        }
+
+        $billing = (float) (($invoice->invoiceAmount ?? 0) + ($invoice->ppnAmount ?? 0) - ($invoice->pphAmount ?? 0));
+        $totalPaid = (float) $invoice->payments->sum('amount');
+        $totalClaim = (float) $invoice->claims->sum('amount');
+
+        $payments = $invoice->payments->values()->map(function ($payment, $i) {
+            $transaction = $payment->transaction;
+            $bank = '-';
+            if ($payment->userBank) {
+                $bank = ($payment->userBank->bank->name ?? 'Bank').' • '.($payment->userBank->accountNumber ?? '-');
+            }
+
+            return [
+                'seq' => $i + 1,
+                'date' => $payment->paymentDate ? Carbon::parse($payment->paymentDate)->format('d M Y') : '-',
+                'amount' => (float) $payment->amount,
+                'bank' => $bank,
+                'description' => $payment->description,
+                'transactionCode' => $transaction->code ?? null,
+                'transactionUrl' => $transaction ? route('invoice.payment-transaction.show', $transaction->id) : null,
+                'receiptUrl' => $payment->paymentReceipt ? Storage::disk('public')->url('invoice-payment/'.$payment->paymentReceipt) : null,
+            ];
+        });
+
+        $claims = $invoice->claims->values()->map(function ($claim) {
+            $trxDate = $claim->transaction->paymentDate ?? null;
+
+            return [
+                'date' => $trxDate
+                    ? Carbon::parse($trxDate)->format('d M Y')
+                    : ($claim->created_at ? Carbon::parse($claim->created_at)->format('d M Y') : '-'),
+                'amount' => (float) $claim->amount,
+                'description' => $claim->description,
+                'transactionCode' => $claim->transaction->code ?? null,
+                'transactionUrl' => $claim->transaction ? route('invoice.payment-transaction.show', $claim->transaction->id) : null,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'invoiceNumber' => $invoice->invoiceNumber ?: $invoice->code,
+            'customerName' => $invoice->customer->name ?? ($invoice->customerCode ?? '-'),
+            'invoiceDate' => $invoice->invoiceDate ? Carbon::parse($invoice->invoiceDate)->format('d M Y') : '-',
+            'status' => (int) ($invoice->status ?? InvoiceModel::STATUS_CREATE),
+            'billing' => $billing,
+            'totalPaid' => $totalPaid,
+            'totalClaim' => $totalClaim,
+            'remaining' => max($billing - $totalPaid - $totalClaim, 0),
+            'payments' => $payments,
+            'claims' => $claims,
+        ]);
+    }
 
     public function updateInvoiceNumber(Request $request, $id)
     {

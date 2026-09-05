@@ -3,6 +3,8 @@
 namespace App\Exports;
 
 use App\Helpers\FilterHelper;
+use App\Models\Finance\InvoicePayment;
+use App\Services\Finance\InvoicePaymentService;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
@@ -27,23 +29,29 @@ class InvoicePaymentExport implements FromView, ShouldAutoSize
         ];
 
         $relations = [
-            'customer_name' => 'customer.name',
+            'invoiceNumber' => 'invoice.invoiceNumber',
+            'customer_name' => 'invoice.customer.name',
         ];
 
         $dateFilters = [
-            'invoiceDate' => [
+            'paymentDate' => [
                 'start' => $this->request->startDate ?? null,
                 'end' => $this->request->endDate ?? null,
             ],
         ];
 
-        $query = \App\Models\Finance\Invoice::with(['details', 'payments.userBank.bank', 'customer'])
-            ->whereHas('payments')
-            ->orderBy('invoiceDate', 'desc');
+        $query = InvoicePayment::with(['invoice.customer', 'userBank.bank'])
+            ->orderBy('paymentDate', 'desc')
+            ->orderBy('created_at', 'desc');
 
         $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters)->get();
 
+        // Label dihitung dari seluruh pembayaran agar urutan DP/cicilan tetap benar
+        $service = app(InvoicePaymentService::class);
+        $labels = $service->paymentLabels($service->datatable());
+
         return view('finance.invoice-payment.report.invoice-payment-excel')
-            ->with('data', $data);
+            ->with('data', $data)
+            ->with('labels', $labels);
     }
 }
