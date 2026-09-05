@@ -168,7 +168,7 @@
                     <td style="text-align: right;">{{ number_format($subtotal, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
-            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || ($isOrderPaymentPdf && isset($totalPpnAmount) && $totalPpnAmount > 0) || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
+            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || (isset($totalPpnAmount) && $totalPpnAmount > 0) || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -182,7 +182,7 @@
                         {{ number_format($totalAdditionalCost, 0, ',', '.') }}</td>
                 </tr>
             @endif
-            @if ($isOrderPaymentPdf && isset($totalPpnAmount) && $totalPpnAmount > 0)
+            @if (isset($totalPpnAmount) && $totalPpnAmount > 0)
                 <tr>
                     <td colspan="7" style="text-align: center;">PPN</td>
                     <td style="text-align: right;">

@@ -137,11 +137,16 @@
                 $totalBefore = $subtotal + $additionalCost;
                 $pph = $order->fleet->company->pph ?? 0;
                 $pphAmount = ($totalBefore * $pph) / 100;
-                $grandTotal = $totalBefore - $pphAmount;
+
+                // PPN & PPh manual dari nota (input saat generate nota)
+                $notaPpnAmount = (float) ($vendorPayment->ppn_amount ?? 0);
+                $notaPphAmount = (float) ($vendorPayment->pph_amount ?? 0);
+
+                $grandTotal = $totalBefore + $notaPpnAmount - $pphAmount - $notaPphAmount;
                 $remainingTotal = $grandTotal - ($paymentHistoryTotal ?? 0);
             @endphp
 
-            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
+            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || $notaPpnAmount > 0 || $notaPphAmount > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -163,6 +168,20 @@
                     <td colspan="7" style="text-align: center;">PPH {{ number_format($pph, 2, ',', '.') }}%</td>
                     <td style="text-align: right;">
                         {{ number_format($pphAmount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($notaPpnAmount > 0)
+                <tr>
+                    <td colspan="7" style="text-align: center;">PPN</td>
+                    <td style="text-align: right;">
+                        {{ number_format($notaPpnAmount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($notaPphAmount > 0)
+                <tr>
+                    <td colspan="7" style="text-align: center;">PPh (Pajak Penghasilan)</td>
+                    <td style="text-align: right;">
+                        {{ number_format($notaPphAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
 

@@ -44,6 +44,202 @@ class VendorPaymentService
             ->get();
     }
 
+    /**
+     * Order fleet external yang belum punya nota (menunggu dibuat invoice/nota).
+     * Termasuk order yang punya vendor_payment lama tanpa nota_number.
+     */
+    public function findWaitingOrders()
+    {
+        return $this->order->whereHas('fleet.company', function ($q) {
+            $q->whereRaw('LOWER(type) = ?', ['external']);
+        })
+            ->with(['fleet', 'fleet.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus', 'vendorPayments'])
+            ->where(function ($q) {
+                $q->doesntHave('vendorPayments')
+                    ->orWhereHas('vendorPayments', function ($q2) {
+                        $q2->whereNull('nota_number');
+                    });
+            })
+            ->orderBy('orderDate', 'asc')
+            ->get();
+    }
+
+    /**
+     * Grup vendor_payment per nomor nota (1 nota = 1 invoice ke vendor).
+     * Return koleksi objek nota dengan agregat tagihan/terbayar/sisa & status.
+     */
+    public function findNotaGroups()
+    {
+        $vendorPayments = $this->service->with([
+            'order.fleet',
+            'order.fleet.company',
+            'order.customer',
+            'order.customer.company',
+            'order.driver',
+            'order.route',
+            'order.route.originLocation',
+            'order.route.destinationLocation',
+        ])
+            ->whereNotNull('nota_number')
+            ->get();
+
+        return $vendorPayments->groupBy('nota_number')->map(function ($group, $notaNumber) {
+            $orders = $group->pluck('order')->filter();
+            $firstPayment = $group->first();
+            $firstOrder = $orders->first();
+
+            $totalAmount = (float) $group->sum('amount');
+            $totalPaid = (float) $group->sum('paid_amount');
+            $totalRemaining = (float) $group->sum('remaining_amount');
+
+            // PPN/PPh disimpan di semua baris nota dengan nilai sama →
+            // ambil MAX agar tidak terhitung ganda saat agregasi
+            $notaPpn = (float) $group->max('ppn_amount');
+            $notaPph = (float) $group->max('pph_amount');
+
+            $status = 'pending';
+            if ($group->every(fn ($vp) => $vp->payment_status === 'paid')) {
+                $status = 'paid';
+            } elseif ($totalPaid > 0) {
+                $status = 'partial';
+            }
+
+            return (object) [
+                'nota_number' => $notaNumber,
+                'fleet_company_name' => $firstOrder?->fleet?->company?->name,
+                'fleetCompanyCode' => $firstOrder?->fleet?->fleetCompanyCode,
+                'order_format' => strtoupper(trim((string) ($firstOrder?->customer?->company?->format ?? ''))),
+                'order_count' => $group->count(),
+                'orders' => $orders,
+                'order_codes' => $group->pluck('orderCode')->values(),
+                'plate_numbers' => $orders->map(fn ($o) => $o?->fleet?->plateNumber)->filter()->values(),
+                'nota_date' => $group->min('created_at'),
+                'date' => $firstPayment?->date,
+                'amount' => $totalAmount,
+                'paid_amount' => $totalPaid,
+                'remaining_amount' => $totalRemaining,
+                'ppn_amount' => $notaPpn,
+                'pph_amount' => $notaPph,
+                'payment_status' => $status,
+                'user_bank_code' => $firstPayment?->user_bank_code,
+            ];
+        })->values();
+    }
+
+    /**
+     * Nota yang belum lunas (pending / partial).
+     */
+    public function findUnpaidNotas()
+    {
+        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status !== 'paid')->values();
+    }
+
+    /**
+     * Nota yang sudah lunas (semua order di dalamnya paid).
+     */
+    public function findPaidNotas()
+    {
+        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'paid')->values();
+    }
+
+    /**
+     * Daftar seluruh transaksi pembayaran vendor (1 baris = 1 pembayaran/DP/cicilan).
+     */
+    public function findPayments()
+    {
+        return $this->paymentHistory->with([
+            'userBank.bank',
+            'vendorPayment.order.fleet.company',
+            'vendorPayment.order.driver',
+            'vendorPayment.order.customer',
+        ])
+            ->orderByDesc('payment_date')
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    /**
+     * Statistik untuk halaman Invoice Belum Lunas.
+     */
+    /**
+     * Statistik untuk halaman Order Menunggu Nota (order belum punya nota).
+     */
+    public function statsWaiting()
+    {
+        $waiting = $this->findWaitingOrders();
+
+        $totalBilling = (float) $waiting->sum(function ($order) {
+            $vp = $order->vendorPayments->first();
+
+            return $vp ? (float) $vp->amount : (float) ($order->vendorPrice ?? 0);
+        });
+
+        $vendorCount = $waiting->map(function ($order) {
+            return $order->fleet->fleetCompanyCode ?? null;
+        })->filter()->unique()->count();
+
+        return [
+            'waitingCount' => $waiting->count(),
+            'totalBilling' => $totalBilling,
+            'vendorCount' => $vendorCount,
+        ];
+    }
+
+    /**
+     * Statistik untuk halaman Invoice Belum Lunas (nota pending/partial).
+     */
+    public function statsUnpaid()
+    {
+        $unpaidNotas = $this->findUnpaidNotas();
+
+        $notaBilling = (float) $unpaidNotas->sum('amount');
+        $notaPaid = (float) $unpaidNotas->sum('paid_amount');
+        $notaRemaining = (float) $unpaidNotas->sum('remaining_amount');
+
+        $partialCount = $unpaidNotas->where('payment_status', 'partial')->count();
+        $pendingCount = $unpaidNotas->where('payment_status', 'pending')->count();
+
+        return [
+            'notaCount' => $unpaidNotas->count(),
+            'orderCount' => (int) $unpaidNotas->sum('order_count'),
+            'totalCount' => $unpaidNotas->count(),
+            'partialCount' => $partialCount,
+            'pendingCount' => $pendingCount,
+            'totalBilling' => $notaBilling,
+            'totalPaid' => $notaPaid,
+            'totalRemaining' => $notaRemaining,
+        ];
+    }
+
+    /**
+     * Statistik untuk halaman Invoice Lunas.
+     */
+    public function statsPaid()
+    {
+        $paidNotas = $this->findPaidNotas();
+
+        return [
+            'notaCount' => $paidNotas->count(),
+            'orderCount' => (int) $paidNotas->sum('order_count'),
+            'totalPaid' => (float) $paidNotas->sum('paid_amount'),
+        ];
+    }
+
+    /**
+     * Statistik untuk halaman Daftar Pembayaran.
+     */
+    public function statsPayments()
+    {
+        $payments = $this->findPayments();
+
+        return [
+            'paymentCount' => $payments->count(),
+            'paymentSum' => (float) $payments->sum('amount'),
+            'notaCount' => $payments->pluck('vendorPayment.nota_number')->filter()->unique()->count(),
+            'vendorCount' => $payments->pluck('vendorPayment.order.fleet.company.name')->filter()->unique()->count(),
+        ];
+    }
+
     public function store($request, $title)
     {
         $orderCodes = collect($request->orderCodes ?? [])->filter()->unique()->values();
@@ -176,6 +372,7 @@ class VendorPaymentService
             // Simpan payment history
             $this->paymentHistory->create([
                 'vendor_payment_id' => $vendorPayment->id,
+                'batch_code' => $batchCode,
                 'amount' => $paymentAmount,
                 'payment_date' => $request->date,
                 'user_bank_code' => $request->userBankCode,
@@ -264,8 +461,11 @@ class VendorPaymentService
                     $liveMutation->save();
                 }
 
-                // Hapus Mutation record (hard delete)
-                \App\Models\Mutation::where('transactionCode', $payment->code)
+                // Hapus Mutation record (hard delete).
+                // Gunakan batch_code dari history agar mutasi batch yang tepat yang dihapus
+                // (satu nota bisa dibayar beberapa kali: DP lalu pelunasan).
+                $mutationBatchCode = $history->batch_code ?: $payment->code;
+                \App\Models\Mutation::where('transactionCode', $mutationBatchCode)
                     ->where('userBankCode', $bankCode)
                     ->where('description', 'like', '%' . $currentOrderCode . '%')
                     ->forceDelete();
@@ -337,19 +537,30 @@ class VendorPaymentService
     /**
      * Assign nomor nota ke beberapa order sekaligus.
      *
+     * PPN & PPh diinput manual (nominal rupiah, level nota) dan
+didistribusikan
+     * proporsional ke `amount` tiap order sehingga total nota = DPP + PPN −
+PPh
+     * dan seluruh alur pembayaran (sisa, validasi, alokasi) tetap konsisten.
+     *
      * @param array $orderCodes
      * @param string $userBankCode
      * @param string $title
+     * @param float|int $ppnAmount Nominal PPN manual (>= 0)
+     * @param float|int $pphAmount Nominal PPh manual (>= 0)
      * @return string Nomor nota yang dihasilkan
      * @throws \Exception
      */
-    public function assignNota(array $orderCodes, $userBankCode, $title)
+    public function assignNota(array $orderCodes, $userBankCode, $title, $ppnAmount = 0, $pphAmount = 0)
     {
         $orderCodes = array_values(array_unique(array_filter($orderCodes)));
 
         if (empty($orderCodes)) {
             throw new \Exception('Pilih minimal satu order untuk di-nota-kan.');
         }
+
+        $ppnAmount = max(0, (float) $ppnAmount);
+        $pphAmount = max(0, (float) $pphAmount);
 
         // Ambil semua order terpilih dengan relasi customer, company, dan fleet
         $orders = $this->order->with(['customer.company', 'fleet.company'])->whereIn('code', $orderCodes)->get();
@@ -399,29 +610,62 @@ class VendorPaymentService
 
         $notaNumber = $this->generateNotaNumber($prefix);
 
+        // DPP tiap order = tagihan saat ini (vendorPrice / amount lama, dipakai sebagai basis distribusi pajak)
+        $dppByOrder = [];
+        $totalDpp = 0.0;
+        foreach ($orderCodes as $orderCode) {
+            $order = $orders->firstWhere('code', $orderCode);
+            $vendorPayment = $vendorPayments->firstWhere('orderCode', $orderCode);
+            $dpp = (float) ($vendorPayment->amount ?? $order->vendorPrice ?? 0);
+
+            $dppByOrder[$orderCode] = $dpp;
+            $totalDpp += $dpp;
+        }
+
+        // Validasi: total bayar (DPP + PPN − PPh) tidak boleh negatif
+        $grandTotal = $totalDpp + $ppnAmount - $pphAmount;
+        if ($grandTotal < 0) {
+            throw new \Exception('Total bayar (DPP + PPN − PPh) tidak boleh negatif. Periksa kembali nominal PPh yang diinput.');
+        }
+
+        // Distribusi PPN & PPh proporsional ke tiap order (largest remainder, hasil bulat rupiah agar total persis sama dengan input manual)
+        $ppnShares = $this->distributeProportionally($ppnAmount, $dppByOrder, $totalDpp);
+        $pphShares = $this->distributeProportionally($pphAmount, $dppByOrder, $totalDpp);
+
         $logPayment = null;
 
         foreach ($orderCodes as $orderCode) {
             $order = $orders->firstWhere('code', $orderCode);
             $vendorPayment = $vendorPayments->firstWhere('orderCode', $orderCode);
 
+            // Amount baru = DPP + porsi PPN − porsi PPh (integer rupiah)
+            $newAmount = (int) round($dppByOrder[$orderCode] + $ppnShares[$orderCode] - $pphShares[$orderCode]);
+
             if ($vendorPayment) {
-                // Update yang sudah ada
+                // Update yang sudah ada (pertahankan riwayat pembayaran)
+                $paidAmount = (float) ($vendorPayment->paid_amount ?? 0);
+
                 $vendorPayment->update([
                     'nota_number' => $notaNumber,
                     'user_bank_code' => $userBankCode,
+                    'amount' => $newAmount,
+                    'remaining_amount' => max(0, $newAmount - $paidAmount),
+                    'ppn_amount' => $ppnAmount,
+                    'pph_amount' => $pphAmount,
                 ]);
             } else {
                 // Buat baru jika belum ada
                 $vendorPayment = $this->service->create([
                     'date' => now()->format('Y-m-d'),
-                    'amount' => $order->vendorPrice ?? 0,
+                    'amount' => $newAmount,
                     'paid_amount' => 0,
-                    'remaining_amount' => $order->vendorPrice ?? 0,
+                    'remaining_amount' => $newAmount,
                     'payment_status' => 'pending',
                     'orderCode' => $orderCode,
                     'nota_number' => $notaNumber,
                     'user_bank_code' => $userBankCode,
+                    'ppn_amount' => $ppnAmount,
+                    'pph_amount' => $pphAmount,
                 ]);
             }
 
@@ -436,6 +680,69 @@ class VendorPaymentService
         }
 
         return $notaNumber;
+    }
+
+    /**
+     * Distribusi nominal pajak proporsional terhadap DPP tiap order.
+     * Menggunakan metode largest remainder agar jumlah seluruh porsi
+     * PERSIS sama dengan nominal pajak yang diinput (tanpa selisih pembulatan).
+     *
+     * @param float|int $amount Nominal yang akan didistribusikan
+     * @param array $weights Basis pembobotan per orderCode
+     * @param float|int $totalWeight Total bobot
+     * @return array Porsi (integer rupiah) per orderCode
+     */
+    private function distributeProportionally($amount, array $weights, $totalWeight): array
+    {
+        $amount = max(0, (int) round((float) $amount));
+        $shares = [];
+
+        if ($amount <= 0) {
+            foreach (array_keys($weights) as $orderCode) {
+                $shares[$orderCode] = 0;
+            }
+
+            return $shares;
+        }
+
+        // Fallback: bila total bobot 0 (semua DPP nol), bagi rata ke semua order
+        // agar nominal pajak tidak hilang.
+        $effectiveTotal = ((float) $totalWeight) > 0 ? (float) $totalWeight : (float) max(1, count($weights));
+
+        $floors = [];
+        $remainders = [];
+        $sumFloors = 0;
+
+        foreach ($weights as $orderCode => $weight) {
+            $effectiveWeight = ((float) $totalWeight) > 0 ? (float) $weight : 1.0;
+            $exact = $amount * $effectiveWeight / $effectiveTotal;
+            $floor = (int) floor($exact);
+
+            $floors[$orderCode] = $floor;
+            $remainders[$orderCode] = $exact - $floor;
+            $sumFloors += $floor;
+        }
+
+        // Sisa rupiah akibat pembulatan ke bawah dibagikan ke order
+        // dengan sisa pecahan terbesar (largest remainder)
+        $leftover = $amount - $sumFloors;
+        if ($leftover > 0) {
+            arsort($remainders);
+            foreach (array_keys($remainders) as $orderCode) {
+                if ($leftover <= 0) {
+                    break;
+                }
+
+                $floors[$orderCode] += 1;
+                $leftover -= 1;
+            }
+        }
+
+        foreach ($floors as $orderCode => $share) {
+            $shares[$orderCode] = max(0, $share);
+        }
+
+        return $shares;
     }
 
     public function cancelNota($orderCode, $title)

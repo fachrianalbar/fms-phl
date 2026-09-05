@@ -41,8 +41,13 @@
         'invoice/payment' => 'mdi-credit-card-outline',
         'invoice/payment-transaction' => 'mdi-receipt-text-check-outline',
 
+        // Vendor
+        'vendor/order/waiting' => 'mdi-tray-full',
+        'vendor/invoice/unpaid' => 'mdi-cash-remove',
+        'vendor/invoice/paid' => 'mdi-cash-check',
+        'vendor/payment' => 'mdi-credit-card-outline',
+
         // Finance
-        'finance/vendor-payment' => 'mdi-hand-coin-outline',
         'finance/order-payment' => 'mdi-cash-multiple',
 
         // Inventory

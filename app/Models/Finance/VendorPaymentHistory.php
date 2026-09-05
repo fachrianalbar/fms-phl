@@ -17,6 +17,7 @@ class VendorPaymentHistory extends Model
 
     protected $fillable = [
         'vendor_payment_id',
+        'batch_code',
         'amount',
         'payment_date',
         'user_bank_code',
