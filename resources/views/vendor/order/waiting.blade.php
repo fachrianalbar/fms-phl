@@ -17,6 +17,8 @@
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
 @include('vendor.invoice.partials.table-style')
 @endpush
@@ -157,6 +159,7 @@
 <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
 <script>
     let waitingTable;
@@ -224,12 +227,12 @@
                 } else {
                     options += '<option value="" disabled>Tidak ada data bank</option>';
                 }
-                $('#notaUserBankCode').html(options);
+                $('#notaUserBankCode').html(options).trigger('change');
             },
             error: function(xhr) {
                 let options = '<option value="">Pilih Bank</option>';
                 options += '<option value="" disabled>Error memuat data</option>';
-                $('#notaUserBankCode').html(options);
+                $('#notaUserBankCode').html(options).trigger('change');
             }
         });
     }
@@ -355,6 +358,12 @@
             }
         });
 
+        // Select2 untuk pilihan bank di modal nota (serasi dengan halaman Pembayaran)
+        $('#notaUserBankCode').select2({
+            dropdownParent: $('#nota-modal'),
+            width: '100%',
+        });
+
         // Load bank data saat halaman dimuat
         loadBankData();
 
@@ -454,7 +463,7 @@
             notaModalState.subtotal = totals.billing;
             updateNotaTaxCalculation();
 
-            $('#notaUserBankCode').val(''); // Reset bank selection
+            $('#notaUserBankCode').val('').trigger('change'); // Reset bank selection
 
             // Populate hidden inputs
             const container = $('#notaOrderCodesContainer');

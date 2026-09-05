@@ -79,7 +79,7 @@
                             <div class="col-md-12">
                                 <label class="form-label" for="userBankCode">Sumber Dana (Bank) <span
                                         class="text-danger">*</span></label>
-                                <select class="form-select" name="userBankCode" id="userBankCode" required>
+                                <select class="js-example-basic form-select" name="userBankCode" id="userBankCode" required>
                                     <option value="">Pilih Bank</option>
                                     <option value="" disabled>-- Loading data bank --</option>
                                 </select>
@@ -353,7 +353,7 @@ PPh diinput manual</span>
                                     class="mdi mdi-bank-outline"></i></span>
                             Akun Bank Pembayaran <span class="text-danger">*</span>
                         </div>
-                        <select class="form-select" name="userBankCode" id="notaUserBankCode" required>
+                        <select class="js-example-basic form-select" name="userBankCode" id="notaUserBankCode" required>
                             <option value="">Pilih Bank</option>
                             <option value="" disabled>-- Loading data bank --</option>
                         </select>

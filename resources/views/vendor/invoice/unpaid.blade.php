@@ -17,6 +17,8 @@
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
 @include('vendor.invoice.partials.table-style')
 @endpush
@@ -178,6 +180,7 @@
 <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
 <script>
     let vendorPaymentTable;
@@ -275,14 +278,14 @@
                 } else {
                     options += '<option value="" disabled>Tidak ada data bank</option>';
                 }
-                $('#userBankCode').html(options);
-                $('#notaUserBankCode').html(options);
+                $('#userBankCode').html(options).trigger('change');
+                $('#notaUserBankCode').html(options).trigger('change');
             },
             error: function(xhr) {
                 let options = '<option value="">Pilih Bank</option>';
                 options += '<option value="" disabled>Error memuat data</option>';
-                $('#userBankCode').html(options);
-                $('#notaUserBankCode').html(options);
+                $('#userBankCode').html(options).trigger('change');
+                $('#notaUserBankCode').html(options).trigger('change');
             }
         });
     }
@@ -494,6 +497,16 @@
             }
         });
 
+        // Select2 untuk pilihan bank di modal pembayaran & modal nota (serasi dengan halaman Pembayaran)
+        $('#userBankCode').select2({
+            dropdownParent: $('#payment-modal'),
+            width: '100%',
+        });
+        $('#notaUserBankCode').select2({
+            dropdownParent: $('#nota-modal'),
+            width: '100%',
+        });
+
         // Load bank data saat halaman dimuat
         loadBankData();
 
@@ -597,7 +610,7 @@
 
             $('#date').val(new Date().toISOString().split('T')[0]);
             $('#description').val('');
-            $('#userBankCode').val('');
+            $('#userBankCode').val('').trigger('change');
 
             $('#payment-modal').modal('show');
         });
