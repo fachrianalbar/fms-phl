@@ -20,6 +20,7 @@ class InvoicePayment extends Model
         'code',
         'paymentDate',
         'invoiceCode',
+        'transactionCode',
         'nominal',
         'description',
         'amount',
@@ -39,5 +40,15 @@ class InvoicePayment extends Model
     public function userBank()
     {
         return $this->belongsTo(UserBank::class, 'userBankCode', 'code');
+    }
+
+    public function invoice()
+    {
+        return $this->belongsTo(Invoice::class, 'invoiceCode', 'code');
+    }
+
+    public function transaction()
+    {
+        return $this->belongsTo(InvoicePaymentTransaction::class, 'transactionCode', 'code');
     }
 }

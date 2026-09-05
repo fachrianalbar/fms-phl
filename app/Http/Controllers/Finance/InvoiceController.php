@@ -13,7 +13,6 @@ use App\Services\UniqueCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
@@ -84,12 +83,22 @@ class InvoiceController extends Controller
             })
             ->sum('invoice_payment.amount');
 
-        $totalRemaining = $totalBilling - $totalPaid;
+        $totalClaim = (float) DB::table('invoice_payment_claim')
+            ->join('invoice', 'invoice_payment_claim.invoiceCode', '=', 'invoice.code')
+            ->whereNull('invoice.deleted_at')
+            ->whereNull('invoice_payment_claim.deleted_at')
+            ->where(function ($q) {
+                $q->whereNull('invoice.status')->orWhere('invoice.status', '!=', InvoiceModel::STATUS_FULL);
+            })
+            ->sum('invoice_payment_claim.amount');
+
+        $totalRemaining = $totalBilling - $totalPaid - $totalClaim;
 
         $stats = [
             'totalCount' => $totalCount,
             'totalBilling' => $totalBilling,
             'totalPaid' => $totalPaid,
+            'totalClaim' => $totalClaim,
             'totalRemaining' => $totalRemaining,
             'partialCount' => $partialCount,
             'createdCount' => $createdCount,
@@ -449,11 +458,12 @@ class InvoiceController extends Controller
             ->addColumn('totalBilling', function ($row) {
                 $total = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
                 $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
-                $remaining = $total - $totalPaid;
+                $totalClaim = (float) ($row->claims->sum('amount') ?? 0);
+                $remaining = $total - $totalPaid - $totalClaim;
 
                 $html = '<div class="text-end">';
                 $html .= '<span class="fw-bold text-dark fs-13">Rp ' . number_format($total, 0, ',', '.') . '</span>';
-                if ($totalPaid > 0 && $remaining > 0) {
+                if ($remaining > 0 && ($totalPaid > 0 || $totalClaim > 0)) {
                     $html .= '<div class="text-danger fs-11 fw-semibold mt-0" title="Sisa Belum Dibayar"><i class="mdi mdi-alert-circle-outline me-1"></i>Sisa: Rp ' . number_format($remaining, 0, ',', '.') . '</div>';
                 }
                 $html .= '</div>';
@@ -473,7 +483,8 @@ class InvoiceController extends Controller
                 $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
                 $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
                 $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
-                $remaining = $totalBilling - $totalPaid;
+                $totalClaim = (float) ($row->claims->sum('amount') ?? 0);
+                $remaining = $totalBilling - $totalPaid - $totalClaim;
 
                 $btn = '<div class="d-inline-flex align-items-center gap-1">
                         <a target="_blank" href="' . route('invoice.pdf', $row->id) . '"
@@ -483,25 +494,6 @@ class InvoiceController extends Controller
                         </a>';
 
                 if (! $isPaidOnly) {
-                    // Tombol pembayaran hanya muncul jika status bukan Full Payment
-                    if ($status !== InvoiceModel::STATUS_FULL && $remaining > 0) {
-                        $btn .= '
-                            <a href="javascript:void(0)" 
-                            class="btn btn-icon btn-sm bg-info-subtle text-info border border-info-subtle hover-scale btn-payment"
-                            data-bs-toggle="tooltip" title="Input Pembayaran"
-                            data-id="' . $row->id . '"
-                            data-invoice-code="' . $row->code . '"
-                            data-invoice-number="' . htmlspecialchars($row->invoiceNumber) . '"
-                            data-subtotal="' . (float) ($row->invoiceAmount ?? 0) . '"
-                            data-ppn="' . (float) ($row->ppnAmount ?? 0) . '"
-                            data-pph="' . (float) ($row->pphAmount ?? 0) . '"
-                            data-total="' . $totalBilling . '"
-                            data-total-paid="' . $totalPaid . '"
-                            data-remaining="' . $remaining . '">
-                                <i class="mdi mdi-cash-multiple fs-14"></i>
-                            </a>';
-                    }
-
                     // Tombol edit hanya muncul jika belum full payment
                     if ($status !== InvoiceModel::STATUS_FULL) {
                         $btn .= '
@@ -828,122 +820,9 @@ class InvoiceController extends Controller
         return $data;
     }
 
-    public function processPayment(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'paymentDate' => 'required|date',
-            'amount' => 'required|numeric|min:0',
-            'userBankCode' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()->first(),
-            ], 422);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $invoice = $this->service->getById($id);
-
-            if (! $invoice) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invoice tidak ditemukan',
-                ], 404);
-            }
-
-            // Hitung total tagihan (invoiceAmount + ppnAmount - pphAmount)
-            $totalBilling = (float) ($invoice->invoiceAmount ?? 0) + (float) ($invoice->ppnAmount ?? 0) - (float) ($invoice->pphAmount ?? 0);
-
-            // Hitung total yang sudah dibayar
-            $totalPaid = 0;
-            foreach ($invoice->payments as $payment) {
-                $totalPaid += $payment->amount;
-            }
-
-            // Hitung sisa tagihan
-            $remaining = $totalBilling - $totalPaid;
-
-            // Validasi jumlah pembayaran tidak melebihi sisa tagihan
-            if ($request->amount > $remaining) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Jumlah pembayaran melebihi sisa tagihan',
-                ], 422);
-            }
-
-            // Proses upload bukti pembayaran jika ada
-            $paymentReceipt = null;
-            if ($request->hasFile('paymentReceipt')) {
-                $file = $request->file('paymentReceipt');
-                $paymentReceipt = time() . '_' . $file->getClientOriginalName();
-                $paymentReceipt = str_replace(' ', '_', $paymentReceipt);
-                $path = 'public/invoice-payment';
-                Storage::putFileAs($path, $file, $paymentReceipt);
-            }
-
-            // Buat payment record
-            $payment = \App\Models\Finance\InvoicePayment::create([
-                'code' => \App\Helpers\GenerateCode::generateCode('INVP'),
-                'invoiceCode' => $invoice->code,
-                'userBankCode' => $request->userBankCode,
-                'paymentDate' => $request->paymentDate,
-                'amount' => $request->amount,
-                'ppnAmount' => $invoice->ppnAmount ?? 0,
-                'pphAmount' => $invoice->pphAmount ?? 0,
-                'description' => $request->description,
-                'paymentReceipt' => $paymentReceipt,
-            ]);
-
-            // Update live mutation
-            \App\Helpers\LiveMutationHelper::updateLiveMutation(
-                $request->userBankCode,
-                (int) $request->amount,
-                'debit'
-            );
-
-            // Create mutation record
-            \App\Models\Mutation::create([
-                'code' => \App\Helpers\GenerateCode::generateCode('FMT'),
-                'userBankCode' => $request->userBankCode,
-                'nominal' => $request->amount,
-                'type' => 'In',
-                'date' => \Carbon\Carbon::now(),
-                'description' => 'Invoice Payment ' . $invoice->invoiceNumber . ' with amount ' . number_format((int) $request->amount, 0, '.', ','),
-                'transactionTypeCode' => 'FTT250306114138',
-            ]);
-
-            // Hitung ulang total yang sudah dibayar setelah payment baru
-            $newTotalPaid = $totalPaid + $request->amount;
-
-            // Update status invoice
-            $newStatus = InvoiceModel::STATUS_CREATE;
-            if ($newTotalPaid >= $totalBilling) {
-                $newStatus = InvoiceModel::STATUS_FULL; // Full Payment
-            } elseif ($newTotalPaid > 0) {
-                $newStatus = InvoiceModel::STATUS_PARTIAL; // Partial Payment
-            }
-
-            InvoiceModel::where('id', $id)->update(['status' => $newStatus]);
-
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pembayaran berhasil diproses',
-            ]);
-        } catch (\Throwable $th) {
-            DB::rollback();
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
-            ], 500);
-        }
-    }
+    // Catatan: proses pembayaran invoice (method processPayment + route
+    // invoice/{id}/payment) telah dihapus. Pembayaran kini dilakukan lewat menu
+    // "Transaksi Pembayaran" (multi invoice + claim dalam satu transaksi).
 
     public function updateInvoiceNumber(Request $request, $id)
     {

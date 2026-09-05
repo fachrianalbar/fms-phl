@@ -5,6 +5,7 @@ namespace App\Services\Finance;
 use App\Helpers\GenerateCode;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\InvoiceDetail;
+use App\Models\Finance\InvoicePaymentClaim;
 use App\Models\Master\Customer;
 use App\Models\Operational\Order;
 use App\Services\UniqueCodeService;
@@ -23,7 +24,7 @@ class InvoiceService
 
     protected $customer;
 
-    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer, private UniqueCodeService $uniqueCode)
+    public function __construct(Invoice $invoice, Order $order, InvoiceDetail $invoiceDetail, Customer $customer, private UniqueCodeService $uniqueCode, protected InvoicePaymentClaim $claim)
     {
         $this->service = $invoice;
         $this->order = $order;
@@ -36,6 +37,7 @@ class InvoiceService
         return $this->service->with([
             'customer',
             'payments',
+            'claims',
             'details.order.cost.costComponent',
             'details.order.route.originLocation',
             'details.order.route.destinationLocation',
@@ -48,6 +50,7 @@ class InvoiceService
         return $this->service->with([
             'customer',
             'payments',
+            'claims',
             'details.order.cost.costComponent',
             'details.order.route.originLocation',
             'details.order.route.destinationLocation',
@@ -66,6 +69,7 @@ class InvoiceService
         return $this->service->with([
             'customer',
             'payments',
+            'claims',
             'details.order.cost.costComponent',
             'details.order.route.originLocation',
             'details.order.route.destinationLocation',
@@ -89,6 +93,7 @@ class InvoiceService
             'details.order.route.destinationLocation',
             'customer',
             'payments',
+            'claims',
             'customer.pic',
         ])->first();
     }
@@ -322,12 +327,15 @@ class InvoiceService
 
             // Update invoice status after recalc
             try {
-                $sumPayments = (int) $this->service->find($invoice->id)->payments()->sum('amount');
+                $invoiceModel = $this->service->find($invoice->id);
+                $sumPayments = (int) $invoiceModel->payments()->sum('amount');
+                $sumClaims = (int) $this->claim->where('invoiceCode', $invoice->code)->whereNull('deleted_at')->sum('amount');
+                $settled = $sumPayments + $sumClaims;
                 $invoiceTotal = (int) $totals['total'];
                 $nextStatus = Invoice::STATUS_CREATE;
-                if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
+                if ($invoiceTotal > 0 && $settled >= $invoiceTotal) {
                     $nextStatus = Invoice::STATUS_FULL;
-                } elseif ($sumPayments > 0) {
+                } elseif ($settled > 0) {
                     $nextStatus = Invoice::STATUS_PARTIAL;
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
@@ -363,12 +371,15 @@ class InvoiceService
 
             // Update invoice status after recalc
             try {
-                $sumPayments = (int) $this->service->find($invoice->id)->payments()->sum('amount');
+                $invoiceModel = $this->service->find($invoice->id);
+                $sumPayments = (int) $invoiceModel->payments()->sum('amount');
+                $sumClaims = (int) $this->claim->where('invoiceCode', $invoice->code)->whereNull('deleted_at')->sum('amount');
+                $settled = $sumPayments + $sumClaims;
                 $invoiceTotal = (int) $totals['total'];
                 $nextStatus = Invoice::STATUS_CREATE;
-                if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
+                if ($invoiceTotal > 0 && $settled >= $invoiceTotal) {
                     $nextStatus = Invoice::STATUS_FULL;
-                } elseif ($sumPayments > 0) {
+                } elseif ($settled > 0) {
                     $nextStatus = Invoice::STATUS_PARTIAL;
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
@@ -482,6 +493,9 @@ class InvoiceService
 
         // Delete all invoice payments for this invoice
         $invoice->payments()->delete();
+
+        // Hapus juga claim pengurang tagihan agar status invoice konsisten
+        $invoice->claims()->delete();
 
         // Sync usePpn and usePph to customer defaults if they are not already set (or always sync to customer if customer has them)
         $usePpn = $invoice->usePpn || (isset($invoice->customer->ppn) && $invoice->customer->ppn > 0);

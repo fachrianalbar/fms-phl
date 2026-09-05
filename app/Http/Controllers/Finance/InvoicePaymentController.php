@@ -95,6 +95,10 @@ class InvoicePaymentController extends Controller
             }
         }
 
+        // Kurangi total claim (pengurang tagihan)
+        $totalClaim = (float) ($data->claims->sum('amount') ?? 0);
+        $totalPrice -= $totalClaim;
+
         $status = 0;
         if ($totalPrice == 0) {
             // Full Payment
@@ -125,7 +129,8 @@ class InvoicePaymentController extends Controller
         foreach ($invoice->payments as $p) {
             $totalPaid += $p->amount;
         }
-        $remaining = (int) ($invoiceAmount - $totalPaid);
+        $totalClaim = (float) ($invoice->claims->sum('amount') ?? 0);
+        $remaining = (int) ($invoiceAmount - $totalPaid - $totalClaim);
 
         $validator = Validator::make($request->all(), [
             'amount' => ['required', 'numeric', 'max:'.$remaining],
@@ -203,7 +208,7 @@ class InvoicePaymentController extends Controller
                     $details = '';
                     if (count($row->payments) > 0) {
                         foreach ($row->payments as $payment) {
-                            $paymentDate = \Carbon\Carbon::parse($payment->paymentDate)->format('d M Y');
+                            $paymentDate = $payment->paymentDate ? \Carbon\Carbon::parse($payment->paymentDate)->format('d M Y') : '-';
                             $amount = number_format($payment->amount, 0, ',', '.');
                             $details .= '<div class="mb-1 py-1 px-2 rounded bg-light border border-light-subtle d-inline-block me-1 text-start" style="font-size: 11.5px;">';
                             $details .= '<span class="text-muted"><i class="mdi mdi-calendar-blank me-1"></i>' . $paymentDate . '</span>: <strong class="text-success font-monospace">Rp ' . $amount . '</strong>';
@@ -232,10 +237,12 @@ class InvoicePaymentController extends Controller
                     foreach ($row->payments as $item) {
                         $totalPaid += $item->amount;
                     }
-                    if ($totalPaid < $totalBilling && $totalPaid > 0) {
+                    $totalClaim = (float) ($row->claims->sum('amount') ?? 0);
+                    $settled = $totalPaid + $totalClaim;
+                    if ($settled < $totalBilling && $settled > 0) {
                         return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-clock-check-outline me-1"></i>Sebagian</span>';
                     }
-                    if ($totalPaid >= $totalBilling && $totalPaid > 0) {
+                    if ($settled >= $totalBilling && $settled > 0) {
                         return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-check-circle me-1"></i>Lunas</span>';
                     }
 

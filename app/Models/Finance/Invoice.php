@@ -62,4 +62,12 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoicePayment::class, 'invoiceCode', 'code');
     }
+
+    /**
+     * Claim (biaya lain-lain) yang mengurangi tagihan invoice ini.
+     */
+    public function claims()
+    {
+        return $this->hasMany(InvoicePaymentClaim::class, 'invoiceCode', 'code');
+    }
 }

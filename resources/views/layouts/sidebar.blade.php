@@ -39,6 +39,7 @@
         'invoice/unpaid' => 'mdi-cash-remove',
         'invoice/paid' => 'mdi-cash-check',
         'invoice/payment' => 'mdi-credit-card-outline',
+        'invoice/payment-transaction' => 'mdi-receipt-text-check-outline',
 
         // Finance
         'finance/vendor-payment' => 'mdi-hand-coin-outline',
