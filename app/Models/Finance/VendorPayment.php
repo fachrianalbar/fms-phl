@@ -29,6 +29,7 @@ class VendorPayment extends Model
         'ppn_rate',
         'pph_amount',
         'pph_rate',
+        'claim_amount',
         'description',
         'date',
     ];

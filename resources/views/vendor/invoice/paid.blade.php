@@ -348,6 +348,7 @@
                     setDetailField('#detail-billing-amount', formatCurrency(data.total_billing || data.amount || 0));
                     setDetailField('#detail-ppn-amount', formatCurrency(data.nota_ppn || 0) + ' (' + Number(data.nota_ppn_rate || 0).toLocaleString('id-ID', { maximumFractionDigits: 4 }) + '%)');
                     setDetailField('#detail-pph-amount', formatCurrency(data.nota_pph || 0) + ' (' + Number(data.nota_pph_rate || 0).toLocaleString('id-ID', { maximumFractionDigits: 4 }) + '%)');
+                    setDetailField('#detail-claim-amount', formatCurrency(data.nota_claim || 0));
                     setDetailField('#detail-paid-amount', formatCurrency(data.total_paid || data.paid_amount || 0));
                     setDetailField('#detail-remaining-amount', formatCurrency(data.total_remaining || data.remaining_amount || 0));
 

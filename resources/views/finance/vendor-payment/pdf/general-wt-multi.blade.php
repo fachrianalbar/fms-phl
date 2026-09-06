@@ -170,7 +170,7 @@
                     <td style="text-align: right;">{{ number_format($subtotal, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
-            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || (isset($totalPpnAmount) && $totalPpnAmount > 0) || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
+            @if ($totalAdditionalCost > 0 || $totalPphAmount > 0 || (isset($totalPpnAmount) && $totalPpnAmount > 0) || (isset($totalClaim) && $totalClaim > 0) || (!empty($paymentHistories) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -196,6 +196,13 @@
                     <td colspan="7" style="text-align: center;">PPh {{ rtrim(rtrim(number_format($totalPphRate ?? 0, 4, ',', '.'), '0'), ',') }}%</td>
                     <td style="text-align: right;">
                         {{ number_format($totalPphAmount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if (isset($totalClaim) && $totalClaim > 0)
+                <tr>
+                    <td colspan="7" style="text-align: center;">Biaya Claim</td>
+                    <td style="text-align: right;">
+                        {{ number_format($totalClaim, 0, ',', '.') }}</td>
                 </tr>
             @endif
             @if (!empty($paymentHistories) && $paymentHistories->isNotEmpty())

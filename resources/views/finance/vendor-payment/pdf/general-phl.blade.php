@@ -145,12 +145,13 @@
                 $notaPphRate = (float) ($vendorPayment->pph_rate ?? 0);
                 $notaPpnAmount = (float) ($vendorPayment->ppn_amount ?? 0);
                 $notaPphAmount = (float) ($vendorPayment->pph_amount ?? 0);
+                $notaClaimAmount = (float) ($vendorPayment->claim_amount ?? 0);
 
-                $grandTotal = $totalBefore + $notaPpnAmount - $pphAmount - $notaPphAmount;
+                $grandTotal = $totalBefore + $notaPpnAmount - $pphAmount - $notaPphAmount - $notaClaimAmount;
                 $remainingTotal = $grandTotal - ($paymentHistoryTotal ?? 0);
             @endphp
 
-            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || $notaPpnAmount > 0 || $notaPphAmount > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
+            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || $notaPpnAmount > 0 || $notaPphAmount > 0 || $notaClaimAmount > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -186,6 +187,13 @@
                     <td colspan="7" style="text-align: center;">PPh {{ rtrim(rtrim(number_format($notaPphRate, 4, ',', '.'), '0'), ',') }}% (Pajak Penghasilan)</td>
                     <td style="text-align: right;">
                         {{ number_format($notaPphAmount, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($notaClaimAmount > 0)
+                <tr>
+                    <td colspan="7" style="text-align: center;">Biaya Claim</td>
+                    <td style="text-align: right;">
+                        {{ number_format($notaClaimAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
 

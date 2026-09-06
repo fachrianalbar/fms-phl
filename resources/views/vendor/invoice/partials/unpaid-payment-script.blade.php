@@ -503,9 +503,11 @@
                 const remainingAmount = data.total_remaining || data.remaining_amount || 0;
                 const ppnAmount = data.nota_ppn || 0;
                 const pphAmount = data.nota_pph || 0;
+                const claimAmount = data.nota_claim || 0;
                 $('#detail-billing-amount').val(formatCurrency(billingAmount));
                 $('#detail-ppn-amount').val(formatRate(data.nota_ppn_rate || 0) + '% → ' + formatCurrency(ppnAmount));
                 $('#detail-pph-amount').val(formatRate(data.nota_pph_rate || 0) + '% → ' + formatCurrency(pphAmount));
+                $('#detail-claim-amount').val(formatCurrency(claimAmount));
                 $('#detail-paid-amount').val(formatCurrency(paidAmount));
                 $('#detail-remaining-amount').val(formatCurrency(remainingAmount));
                 $('#detail-payment-status').val(paymentStatusLabel(data.payment_status));
@@ -618,6 +620,7 @@
                 { data: 'amount', className: 'text-end', responsivePriority: 8 },
                 { data: 'ppn_amount', className: 'text-end', responsivePriority: 12 },
                 { data: 'pph_amount', className: 'text-end', responsivePriority: 12 },
+                { data: 'claim_amount', className: 'text-end', responsivePriority: 12 },
                 { data: 'paid_amount', className: 'text-end', responsivePriority: 7 },
                 { data: 'remaining_amount', className: 'text-end fw-semibold', responsivePriority: 2 },
                 { data: 'payment_status', className: 'text-center', responsivePriority: 3 },

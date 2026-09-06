@@ -213,6 +213,12 @@
         background: oklch(96.5% 0.02 25);
     }
 
+    .detail-amount-tile[data-role='claim'] {
+        --tile-acc: oklch(70% 0.17 80);
+        --tile-ink: oklch(50% 0.15 75);
+        background: oklch(97% 0.02 85);
+    }
+
     .detail-amount-tile[data-role='remaining'] {
         --tile-acc: oklch(64% 0.15 60);
         --tile-ink: oklch(50% 0.16 45);
@@ -622,6 +628,10 @@
                         <span class="detail-tile-label"><i class="mdi mdi-percent" aria-hidden="true"></i>PPh</span>
                         <input class="detail-tile-value" id="detail-pph-amount" type="text" value="-" readonly tabindex="-1">
                     </div>
+                    <div class="detail-amount-tile" data-role="claim" id="tile-claim">
+                        <span class="detail-tile-label"><i class="mdi mdi-credit-card-off-outline" aria-hidden="true"></i>Claim</span>
+                        <input class="detail-tile-value" id="detail-claim-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
                     <div class="detail-amount-tile" data-role="paid" id="tile-paid">
                         <span class="detail-tile-label"><i class="mdi mdi-check-decagram-outline" aria-hidden="true"></i>Terbayar</span>
                         <input class="detail-tile-value" id="detail-paid-amount" type="text" value="-" readonly tabindex="-1">
@@ -845,11 +855,25 @@
                             <small class="form-text text-muted">Masukkan rate PPh; nominal yang dipotong: <strong id="notaPphAmountPreview">Rp 0</strong></small>
                         </div>
 
+                        {{-- Biaya Claim berdasarkan nominal --}}
+                        <div class="nota-calc-row">
+                            <div class="nota-calc-label mb-2"><label class="form-label nota-field-label mb-0"
+                                    for="notaClaimAmount"><i class="mdi mdi-credit-card-off-outline me-2 text-warning"></i>Biaya Claim (dipotong)</label></div>
+                            <div class="input-group nota-tax-input-group">
+                                <span class="input-group-text">Rp</span>
+                                <input type="text" class="form-control nota-tax-input text-end" id="notaClaimAmount"
+                                    name="claimAmount" value="0" inputmode="numeric" autocomplete="off"
+                                    placeholder="0">
+                                <span class="input-group-text nota-tax-preview" id="notaClaimPreview">Rp 0</span>
+                            </div>
+                            <small class="form-text text-muted">Nominal potongan yang mengurangi total bayar nota</small>
+                        </div>
+
                         {{-- Grand total --}}
                         <div class="nota-grand-total">
                             <div class="nota-grand-total-label">
                                 <i class="mdi mdi-cash-check me-2"></i>TOTAL BAYAR
-                                <small class="d-block fw-normal">Subtotal + PPN &minus; PPh</small>
+                                <small class="d-block fw-normal">Subtotal + PPN &minus; PPh &minus; Claim</small>
                             </div>
                             <div class="nota-grand-total-value" id="notaGrandTotal">Rp 0</div>
                         </div>

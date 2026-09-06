@@ -341,6 +341,7 @@
                             <th class="text-end">Tagihan</th>
                             <th class="text-end">PPN</th>
                             <th class="text-end">PPh</th>
+                            <th class="text-end">Claim</th>
                             <th class="text-end">Terbayar</th>
                             <th class="text-end">Sisa</th>
                             <th class="text-center">Status Bayar</th>

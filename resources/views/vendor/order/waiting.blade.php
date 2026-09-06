@@ -519,6 +519,7 @@
             // Reset rate PPN/PPh + subtotal
             $('#notaPpnRate').val('0');
             $('#notaPphRate').val('0');
+            $('#notaClaimAmount').val('0');
             notaModalState.subtotal = totals.billing;
             updateNotaTaxCalculation();
 
@@ -553,6 +554,14 @@
             return Number.isFinite(rate) ? Math.min(100, Math.max(0, rate)) : 0;
         }
 
+        function parseNotaClaimInput(el) {
+            // Hapus pemisah ribuan (titik) lalu normalisasi koma jadi desimal.
+            let value = String($(el).val() || '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '');
+            const amount = parseFloat(value);
+
+            return Number.isFinite(amount) ? Math.max(0, Math.round(amount)) : 0;
+        }
+
         function formatNotaRate(value) {
             return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(Number(value) || 0);
         }
@@ -566,12 +575,14 @@
         function updateNotaTaxCalculation() {
             const ppnRate = parseNotaRateInput($('#notaPpnRate'));
             const pphRate = parseNotaRateInput($('#notaPphRate'));
+            const claim = parseNotaClaimInput($('#notaClaimAmount'));
             const ppn = Math.round(notaModalState.subtotal * ppnRate / 100);
             const pph = Math.round(notaModalState.subtotal * pphRate / 100);
-            const grandTotal = notaModalState.subtotal + ppn - pph;
+            const grandTotal = notaModalState.subtotal + ppn - pph - claim;
 
             $('#notaPpnPreview, #notaPpnAmountPreview').text('Rp ' + formatNotaNumber(ppn));
             $('#notaPphPreview, #notaPphAmountPreview').text('Rp ' + formatNotaNumber(pph));
+            $('#notaClaimPreview').text('Rp ' + formatNotaNumber(claim));
             $('#notaSubtotal').text('Rp ' + formatNotaNumber(notaModalState.subtotal));
 
             const grandTotalEl = $('#notaGrandTotal');
@@ -583,6 +594,7 @@
                 pphRate: pphRate,
                 ppn: ppn,
                 pph: pph,
+                claim: claim,
                 grandTotal: grandTotal,
             };
         }
@@ -590,7 +602,7 @@
         // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
         // keystroke. Memformat langsung akan menghapus tanda desimal sementara
         // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
-        $('#notaPpnRate, #notaPphRate').on('input', function() {
+        $('#notaPpnRate, #notaPphRate, #notaClaimAmount').on('input', function() {
             updateNotaTaxCalculation();
         });
 
@@ -599,7 +611,16 @@
             updateNotaTaxCalculation();
         });
 
+        $('#notaClaimAmount').on('blur', function() {
+            $(this).val(formatNotaNumber(parseNotaClaimInput(this)));
+            updateNotaTaxCalculation();
+        });
+
         $('#notaPpnRate, #notaPphRate').on('focus', function() {
+            $(this).select();
+        });
+
+        $('#notaClaimAmount').on('focus', function() {
             $(this).select();
         });
 
@@ -626,21 +647,27 @@
             }
 
             if (tax.grandTotal < 0) {
-                swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh) tidak boleh minus. Periksa kembali persentase PPh yang diinput.', 'warning');
+                swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.', 'warning');
 
                 return false;
             }
 
-            // Kirim rate sebagai angka bersih tanpa pemisah ribuan.
+            // Kirim rate & nominal sebagai angka bersih tanpa pemisah ribuan.
             $('#notaPpnRate').val(String(tax.ppnRate).replace(',', '.'));
             $('#notaPphRate').val(String(tax.pphRate).replace(',', '.'));
+            $('#notaClaimAmount').val(String(tax.claim));
 
-            const taxText = (tax.ppnRate > 0 || tax.pphRate > 0)
-                ? '\nSubtotal (DPP): ' + formatCurrency(notaModalState.subtotal) +
-                  '\nPPN (' + formatNotaRate(tax.ppnRate) + '%): ' + formatCurrency(tax.ppn) +
-                  '\nPPh (' + formatNotaRate(tax.pphRate) + '%): ' + formatCurrency(tax.pph) +
-                  '\nTotal Bayar: ' + formatCurrency(tax.grandTotal)
-                : '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
+            const hasClaim = tax.claim > 0;
+            const hasTax = tax.ppnRate > 0 || tax.pphRate > 0 || hasClaim;
+            let taxText = '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
+
+            if (hasTax) {
+                taxText = '\nSubtotal (DPP): ' + formatCurrency(notaModalState.subtotal) +
+                    (tax.ppnRate > 0 ? '\nPPN (' + formatNotaRate(tax.ppnRate) + '%): ' + formatCurrency(tax.ppn) : '') +
+                    (tax.pphRate > 0 ? '\nPPh (' + formatNotaRate(tax.pphRate) + '%): ' + formatCurrency(tax.pph) : '') +
+                    (hasClaim ? '\nBiaya Claim: ' + formatCurrency(tax.claim) : '') +
+                    '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
+            }
 
             swal({
                 title: "Generate Nota Pembayaran?",
@@ -697,9 +724,10 @@
                         }
                     });
                 } else {
-                    // Kembalikan format rate setelah konfirmasi dibatalkan.
+                    // Kembalikan format rate & claim setelah konfirmasi dibatalkan.
                     $('#notaPpnRate').val(formatNotaRate(tax.ppnRate));
                     $('#notaPphRate').val(formatNotaRate(tax.pphRate));
+                    $('#notaClaimAmount').val(formatNotaNumber(tax.claim));
                     updateNotaTaxCalculation();
                 }
             });

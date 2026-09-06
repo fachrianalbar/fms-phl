@@ -127,6 +127,7 @@ class VendorPaymentService
             // ambil MAX agar tidak terhitung ganda saat agregasi
             $notaPpn = (float) $group->max('ppn_amount');
             $notaPph = (float) $group->max('pph_amount');
+            $notaClaim = (float) $group->max('claim_amount');
             $notaPpnRate = (float) $group->max('ppn_rate');
             $notaPphRate = (float) $group->max('pph_rate');
             $latestBatchCode = $group
@@ -161,6 +162,7 @@ class VendorPaymentService
                 'remaining_amount' => $totalRemaining,
                 'ppn_amount' => $notaPpn,
                 'pph_amount' => $notaPph,
+                'claim_amount' => $notaClaim,
                 'ppn_rate' => $notaPpnRate,
                 'pph_rate' => $notaPphRate,
                 'payment_status' => $status,
@@ -933,19 +935,21 @@ class VendorPaymentService
     /**
      * Assign nomor nota ke beberapa order sekaligus.
      *
-     * PPN & PPh diinput sebagai persentase pada level nota. Nominal pajak
-     * dihitung dari total DPP, lalu didistribusikan proporsional ke tiap order
-     * agar seluruh alur pembayaran tetap konsisten.
+     * PPN & PPh diinput sebagai persentase pada level nota, sedangkan Biaya
+     * Claim diinput sebagai nominal. Nominal pajak & claim dihitung dari total
+     * DPP, lalu didistribusikan proporsional ke tiap order agar seluruh alur
+     * pembayaran tetap konsisten.
      *
      * @param array $orderCodes
      * @param string $userBankCode
      * @param string $title
      * @param float|int $ppnRate Persentase PPN (>= 0)
      * @param float|int $pphRate Persentase PPh (>= 0)
+     * @param float|int $claimAmount Biaya Claim (nominal Rupiah, >= 0)
      * @return string Nomor nota yang dihasilkan
      * @throws \Exception
      */
-    public function assignNota(array $orderCodes, $userBankCode, $title, $ppnRate = 0, $pphRate = 0)
+    public function assignNota(array $orderCodes, $userBankCode, $title, $ppnRate = 0, $pphRate = 0, $claimAmount = 0)
     {
         $orderCodes = array_values(array_unique(array_filter($orderCodes)));
 
@@ -955,6 +959,7 @@ class VendorPaymentService
 
         $ppnRate = max(0, (float) $ppnRate);
         $pphRate = max(0, (float) $pphRate);
+        $claimAmount = max(0, (int) round((float) $claimAmount));
         $userBank = $this->userBank->where('code', $userBankCode)->first();
 
         if (! $userBank || (int) $userBank->type !== 2) {
@@ -1044,15 +1049,16 @@ class VendorPaymentService
         $ppnAmount = (int) round($totalDpp * $ppnRate / 100);
         $pphAmount = (int) round($totalDpp * $pphRate / 100);
 
-        // Validasi: total bayar (DPP + PPN − PPh) tidak boleh negatif
-        $grandTotal = $totalDpp + $ppnAmount - $pphAmount;
+        // Validasi: total bayar (DPP + PPN − PPh − Claim) tidak boleh negatif
+        $grandTotal = $totalDpp + $ppnAmount - $pphAmount - $claimAmount;
         if ($grandTotal < 0) {
-            throw new \DomainException('Total bayar (DPP + PPN − PPh) tidak boleh negatif. Periksa kembali persentase PPh yang diinput.', 422);
+            throw new \DomainException('Total bayar (DPP + PPN − PPh − Claim) tidak boleh negatif. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.', 422);
         }
 
-        // Distribusi nominal pajak proporsional ke tiap order (largest remainder).
+        // Distribusi nominal pajak & claim proporsional ke tiap order (largest remainder).
         $ppnShares = $this->distributeProportionally($ppnAmount, $dppByOrder, $totalDpp);
         $pphShares = $this->distributeProportionally($pphAmount, $dppByOrder, $totalDpp);
+        $claimShares = $this->distributeProportionally($claimAmount, $dppByOrder, $totalDpp);
 
         $logPayment = null;
 
@@ -1060,8 +1066,8 @@ class VendorPaymentService
             $order = $orders->firstWhere('code', $orderCode);
             $vendorPayment = $vendorPayments->firstWhere('orderCode', $orderCode);
 
-            // Amount baru = DPP + porsi PPN − porsi PPh (integer rupiah)
-            $newAmount = $dppByOrder[$orderCode] + $ppnShares[$orderCode] - $pphShares[$orderCode];
+            // Amount baru = DPP + porsi PPN − porsi PPh − porsi Claim (integer rupiah)
+            $newAmount = $dppByOrder[$orderCode] + $ppnShares[$orderCode] - $pphShares[$orderCode] - $claimShares[$orderCode];
 
             if ($newAmount < 0 || $newAmount > 2147483647) {
                 throw new \DomainException('Total nota berada di luar batas nominal yang didukung.', 422);
@@ -1088,6 +1094,7 @@ class VendorPaymentService
                     'ppn_rate' => $ppnRate,
                     'pph_amount' => $pphAmount,
                     'pph_rate' => $pphRate,
+                    'claim_amount' => $claimAmount,
                 ]);
 
                 if ($newStatus === 'paid') {
@@ -1108,6 +1115,7 @@ class VendorPaymentService
                     'ppn_rate' => $ppnRate,
                     'pph_amount' => $pphAmount,
                     'pph_rate' => $pphRate,
+                    'claim_amount' => $claimAmount,
                 ]);
             }
 
