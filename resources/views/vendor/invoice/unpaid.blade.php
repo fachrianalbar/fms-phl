@@ -187,8 +187,6 @@
     .payment-facts dt { color: var(--vp-muted, oklch(52% 0.025 255)); font-weight: 400; }
     .payment-facts dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
     .payment-bank-status { min-height: 18px; margin-top: 5px; color: var(--vp-muted, oklch(52% 0.025 255)); font-size: 11px; }
-    .payment-bank-balance { display: flex; justify-content: space-between; padding: 10px 12px; background: var(--vp-paper, oklch(100% 0 0)); border: 1px solid var(--vp-rule, oklch(90% 0.018 250)); border-radius: 8px; font-size: 12px; }
-    .payment-bank-balance strong { font-variant-numeric: tabular-nums; }
     .payment-review-footer { position: sticky; bottom: 0; background: var(--vp-paper, oklch(100% 0 0)); border-top: 1px solid var(--vp-rule, oklch(90% 0.018 250)); }
 
     .vendor-payment-workbench .invoice-table-scroll {

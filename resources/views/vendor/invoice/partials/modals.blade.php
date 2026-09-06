@@ -5,6 +5,453 @@
 
 @include('vendor.invoice.partials.nota-modal-style')
 
+{{-- Styling Modal Detail Pembayaran (unpaid & paid). Semua #detail-* tetap <input>/<textarea>
+    agar .val() dari unpaid-payment-script & paid.blade.php tidak berubah. --}}
+<style>
+    /* Hallmark · component: payment-detail-modal · genre: modern-minimal · tone: technical
+     * states: readonly display (no interactive states needed) · contrast: pass
+     */
+    .detail-modal {
+        --dt-paper: oklch(100% 0 0);
+        --dt-paper-soft: oklch(97% 0.008 250);
+        --dt-canvas: oklch(96% 0.012 250);
+        --dt-ink: oklch(25% 0.025 255);
+        --dt-muted: oklch(52% 0.025 255);
+        --dt-rule: oklch(90% 0.018 250);
+        --dt-accent: oklch(55% 0.18 255);
+        --dt-success: oklch(55% 0.14 155);
+        --dt-danger: oklch(54% 0.2 25);
+        --dt-warning: oklch(64% 0.14 70);
+    }
+
+    .detail-modal .modal-content {
+        border: 0;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 30px 70px oklch(22% 0.03 255 / 0.28);
+    }
+
+    /* ===== Hero ===== */
+    .detail-modal-hero {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 14px 18px;
+        padding: 20px 24px;
+        color: #fff;
+        background:
+            radial-gradient(120% 170% at 100% -40%, oklch(70% 0.15 255 / 0.5), transparent 55%),
+            linear-gradient(120deg, oklch(31% 0.08 265) 0%, oklch(44% 0.12 263) 55%, oklch(54% 0.16 258) 100%);
+    }
+
+    .detail-hero-icon {
+        flex: 0 0 auto;
+        width: 52px;
+        height: 52px;
+        display: grid;
+        place-items: center;
+        font-size: 26px;
+        border-radius: 14px;
+        background: oklch(100% 0 0 / 0.14);
+        border: 1px solid oklch(100% 0 0 / 0.28);
+    }
+
+    .detail-hero-copy {
+        min-width: 0;
+        flex: 1 1 280px;
+    }
+
+    .detail-hero-eyebrow {
+        display: block;
+        font-size: 10.5px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: oklch(92% 0.03 250 / 0.9);
+    }
+
+    .detail-hero-title {
+        margin: 2px 0 0;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+    }
+
+    .detail-hero-sub {
+        display: block;
+        font-size: 12px;
+        color: oklch(100% 0 0 / 0.72);
+    }
+
+    .detail-hero-close {
+        align-self: flex-start;
+        filter: brightness(0) invert(1);
+        opacity: 0.85;
+        margin: 2px 0 0 auto;
+    }
+
+    .detail-hero-close:hover { opacity: 1; }
+
+    /* Status pill */
+    .detail-status-pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 5px 14px;
+        border-radius: 999px;
+        background: oklch(100% 0 0 / 0.12);
+        border: 1px solid oklch(100% 0 0 / 0.3);
+        backdrop-filter: blur(3px);
+    }
+
+    .detail-status-input {
+        width: auto;
+        min-width: 92px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        color: #fff;
+        font-size: 13px;
+        font-weight: 800;
+        text-align: center;
+        letter-spacing: 0.01em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .detail-status-input:focus { box-shadow: none; }
+
+    .detail-status-pill[data-tone='paid'] {
+        background: oklch(78% 0.13 155 / 0.24);
+        border-color: oklch(88% 0.11 155 / 0.6);
+    }
+
+    .detail-status-pill[data-tone='partial'] {
+        background: oklch(85% 0.11 85 / 0.24);
+        border-color: oklch(90% 0.1 85 / 0.6);
+    }
+
+    .detail-status-pill[data-tone='pending'] {
+        background: oklch(70% 0.17 25 / 0.3);
+        border-color: oklch(82% 0.13 25 / 0.55);
+    }
+
+    /* ===== Body & amount tiles ===== */
+    .detail-modal-body {
+        background: var(--dt-canvas);
+        padding: 18px 20px 22px;
+    }
+
+    .detail-amount-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .detail-amount-tile {
+        --tile-bg: var(--dt-paper);
+        --tile-ink: var(--dt-ink);
+        --tile-acc: var(--dt-muted);
+        min-width: 0;
+        padding: 12px 14px;
+        background: var(--tile-bg);
+        border: 1px solid var(--dt-rule);
+        border-top: 3px solid var(--tile-acc);
+        border-radius: 13px;
+    }
+
+    .detail-tile-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 6px;
+        color: var(--dt-muted);
+        font-size: 10px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+    }
+
+    .detail-tile-label i { font-size: 14px; }
+
+    .detail-tile-value {
+        display: block;
+        width: 100%;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        color: var(--tile-ink);
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.005em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .detail-tile-value:focus { box-shadow: none; }
+
+    .detail-amount-tile[data-role='billing'] {
+        --tile-bg: linear-gradient(135deg, oklch(33% 0.07 265), oklch(23% 0.03 262));
+        --tile-ink: oklch(100% 0 0);
+        --tile-acc: oklch(72% 0.16 255);
+        border-color: transparent;
+    }
+
+    .detail-amount-tile[data-role='billing'] .detail-tile-label { color: oklch(90% 0.03 250 / 0.8); }
+
+    .detail-amount-tile[data-role='ppn'] {
+        --tile-acc: var(--dt-accent);
+        --tile-ink: oklch(45% 0.16 260);
+        background: oklch(96% 0.02 250);
+    }
+
+    .detail-amount-tile[data-role='pph'] {
+        --tile-acc: var(--dt-danger);
+        --tile-ink: oklch(50% 0.18 25);
+        background: oklch(96.5% 0.02 25);
+    }
+
+    .detail-amount-tile[data-role='remaining'] {
+        --tile-acc: oklch(64% 0.15 60);
+        --tile-ink: oklch(50% 0.16 45);
+        background: oklch(97% 0.025 85);
+    }
+
+    .detail-amount-tile[data-role='paid'][data-tone='positive'] {
+        --tile-acc: var(--dt-success);
+        --tile-ink: oklch(46% 0.12 155);
+        background: oklch(97% 0.025 155);
+    }
+
+    .detail-amount-tile[data-role='remaining'][data-tone='settled'] {
+        --tile-acc: var(--dt-success);
+        --tile-ink: oklch(46% 0.12 155);
+        background: oklch(97% 0.025 155);
+    }
+
+    /* ===== Section cards & fields ===== */
+    .detail-body-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+        gap: 14px;
+        margin-bottom: 14px;
+    }
+
+    .detail-section-card {
+        min-width: 0;
+        padding: 15px 16px;
+        background: var(--dt-paper);
+        border: 1px solid var(--dt-rule);
+        border-radius: 14px;
+    }
+
+    .detail-section-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 13px;
+        color: var(--dt-ink);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .detail-section-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--dt-rule);
+    }
+
+    .detail-section-icon {
+        flex: 0 0 auto;
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: 8px;
+        background: oklch(95% 0.02 250);
+        color: var(--dt-accent);
+        font-size: 15px;
+    }
+
+    .detail-field-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 14px;
+    }
+
+    .detail-sidebar-grid {
+        display: grid;
+        gap: 14px;
+    }
+
+    .detail-main-stack {
+        display: grid;
+        gap: 14px;
+    }
+
+    .detail-field-label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 5px;
+        color: var(--dt-muted);
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+
+    .detail-field-label i { font-size: 13px; }
+
+    .detail-field-value {
+        width: 100%;
+        padding: 9px 11px;
+        background: var(--dt-paper-soft);
+        border: 1px solid var(--dt-rule);
+        border-radius: 9px;
+        color: var(--dt-ink);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .detail-field-value:focus {
+        border-color: var(--dt-accent);
+        box-shadow: 0 0 0 3px oklch(55% 0.18 255 / 0.15);
+    }
+
+    .detail-bank-value {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 12px;
+        background: oklch(96.5% 0.02 250);
+        border: 1px solid var(--dt-rule);
+        border-radius: 10px;
+    }
+
+    .detail-bank-value i {
+        flex: 0 0 auto;
+        font-size: 19px;
+        color: var(--dt-accent);
+    }
+
+    .detail-bank-value .detail-field-value {
+        padding: 0;
+        background: transparent;
+        border: 0;
+    }
+
+    .detail-bank-value .detail-field-value:focus { box-shadow: none; }
+
+    /* ===== History table ===== */
+    .detail-history-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: var(--dt-ink);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .detail-history-title::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--dt-rule);
+    }
+
+    .detail-history-table {
+        margin: 0;
+        --bs-table-bg: transparent;
+        border: 1px solid var(--dt-rule);
+        border-radius: 12px;
+        overflow: hidden;
+        width: 100%;
+    }
+
+    .detail-history-table thead th {
+        padding: 9px 12px;
+        background: var(--dt-paper-soft);
+        border: 0;
+        color: var(--dt-muted);
+        font-size: 10.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        white-space: nowrap;
+    }
+
+    .detail-history-table tbody td {
+        padding: 10px 12px;
+        border-color: var(--dt-rule);
+        color: var(--dt-ink);
+        font-size: 12.5px;
+        vertical-align: middle;
+    }
+
+    .detail-history-table tbody tr:hover { background: oklch(97.5% 0.008 250); }
+
+    .detail-history-table .payment-money { font-weight: 700; }
+
+    @media (max-width: 991.98px) {
+        .detail-body-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (max-width: 767.98px) {
+        .detail-modal-hero { padding: 16px 18px; }
+        .detail-modal-body { padding: 14px; }
+        .detail-amount-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .detail-field-grid { grid-template-columns: minmax(0, 1fr); }
+        .detail-status-pill { margin-left: auto; }
+    }
+</style>
+
+<script>
+    /* Dibagi oleh unpaid-payment-script & paid.blade.php untuk mewarnai status + tile uang
+       sesuai nilai yang sudah diisi lewat .val() / setDetailField(). */
+    function detailNumberValue(selector) {
+        var el = $(selector);
+
+        if (!el.length) {
+            return 0;
+        }
+
+        return Number(String(el.val() || '0').replace(/[^\d]/g, '')) || 0;
+    }
+
+    function paintDetailTones() {
+        if (!$('#detail-status-pill').length) {
+            return;
+        }
+
+        var statusText = String($('#detail-payment-status').val() || '').toLowerCase();
+        var tone = 'neutral';
+
+        if (statusText.indexOf('lunas') !== -1 || statusText === 'paid') {
+            tone = 'paid';
+        } else if (statusText.indexOf('sebagian') !== -1 || statusText === 'partial') {
+            tone = 'partial';
+        } else if (statusText !== '' && statusText !== '-') {
+            tone = 'pending';
+        }
+
+        $('#detail-status-pill').attr('data-tone', tone);
+
+        $('#tile-paid').attr('data-tone', detailNumberValue('#detail-paid-amount') > 0 ? 'positive' : 'zero');
+        $('#tile-remaining').attr('data-tone', detailNumberValue('#detail-remaining-amount') > 0 ? 'open' : 'settled');
+    }
+</script>
+
 {{-- Form & Modal: review pembayaran multi-nota (lunas / DP / cicilan per nota) --}}
 <form method="post" action="{{ route('vendor.invoice.payment.store') }}" id="batch-payment-form" novalidate>
     @csrf
@@ -111,11 +558,6 @@
                                 <div class="invalid-feedback">Pilih rekening sumber dana.</div>
                             </div>
 
-                            <div class="payment-bank-balance mb-3 d-none" id="selectedBankBalancePanel">
-                                <span>Saldo tersedia</span>
-                                <strong id="selectedBankBalance">Rp 0</strong>
-                            </div>
-
                             <div>
                                 <label class="form-label fw-semibold" for="description">Keterangan</label>
                                 <textarea class="form-control" name="description" id="description" rows="3" maxlength="255"
@@ -144,115 +586,145 @@
 </form>
 
 {{-- Modal: detail pembayaran vendor per nota --}}
-<div class="modal fade bd-example-modal-lg" id="detail-modal" tabindex="-1" role="dialog"
+<div class="modal fade detail-modal" id="detail-modal" tabindex="-1" role="dialog"
     aria-labelledby="detailModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 class="modal-title" id="detailModalLabel">{{ __('menu_vendor_payment.payment_detail') }}</h4>
-                <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+        <div class="modal-content detail-modal-card">
+            {{-- Hero --}}
+            <div class="detail-modal-hero">
+                <div class="detail-hero-icon" aria-hidden="true">
+                    <i class="mdi mdi-receipt-text-outline"></i>
+                </div>
+                <div class="detail-hero-copy">
+                    <span class="detail-hero-eyebrow">Vendor Invoice</span>
+                    <h4 class="detail-hero-title" id="detailModalLabel">{{ __('menu_vendor_payment.payment_detail') }}</h4>
+                    <span class="detail-hero-sub">Rincian tagihan nota, status, dan riwayat pembayaran vendor.</span>
+                </div>
+                <div class="detail-status-pill" id="detail-status-pill" data-tone="neutral" role="status">
+                    <input class="detail-status-input" id="detail-payment-status" type="text" value="-" readonly tabindex="-1">
+                </div>
+                <button class="btn-close detail-hero-close" type="button" data-bs-dismiss="modal"
+                    aria-label="Tutup"></button>
             </div>
-            <div class="card">
-                <div class="card-body col-md-12">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">{{ __('menu_vendor_payment.payment_code') }}</label>
-                            <input class="form-control" id="detail-code" type="text" readonly>
-                        </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Status Pembayaran</label>
-                            <input class="form-control" id="detail-payment-status" type="text" readonly>
-                        </div>
+            <div class="modal-body detail-modal-body">
+                {{-- Ringkasan nominal --}}
+                <div class="detail-amount-grid">
+                    <div class="detail-amount-tile" data-role="billing">
+                        <span class="detail-tile-label"><i class="mdi mdi-cash-multiple" aria-hidden="true"></i>Tagihan</span>
+                        <input class="detail-tile-value" id="detail-billing-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
+                    <div class="detail-amount-tile" data-role="ppn">
+                        <span class="detail-tile-label"><i class="mdi mdi-percent-outline" aria-hidden="true"></i>PPN</span>
+                        <input class="detail-tile-value" id="detail-ppn-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
+                    <div class="detail-amount-tile" data-role="pph">
+                        <span class="detail-tile-label"><i class="mdi mdi-percent" aria-hidden="true"></i>PPh</span>
+                        <input class="detail-tile-value" id="detail-pph-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
+                    <div class="detail-amount-tile" data-role="paid" id="tile-paid">
+                        <span class="detail-tile-label"><i class="mdi mdi-check-decagram-outline" aria-hidden="true"></i>Terbayar</span>
+                        <input class="detail-tile-value" id="detail-paid-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
+                    <div class="detail-amount-tile" data-role="remaining" id="tile-remaining">
+                        <span class="detail-tile-label"><i class="mdi mdi-alert-circle-outline" aria-hidden="true"></i>Sisa</span>
+                        <input class="detail-tile-value" id="detail-remaining-amount" type="text" value="-" readonly tabindex="-1">
+                    </div>
+                </div>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Nomor Nota Kalender</label>
-                            <input class="form-control" id="detail-nota-number" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('menu_vendor_payment.order_code') }}</label>
-                            <input class="form-control" id="detail-order-code" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Shipment Number / No Pengiriman</label>
-                            <input class="form-control" id="detail-shipment-number" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('menu_vendor_payment.plate_number') }}</label>
-                            <input class="form-control" id="detail-plate-number" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">Perusahaan Kendaraan</label>
-                            <input class="form-control" id="detail-fleet-company" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('menu_vendor_payment.driver') }}</label>
-                            <input class="form-control" id="detail-driver" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label">{{ __('menu_vendor_payment.customer') }}</label>
-                            <input class="form-control" id="detail-customer" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Tagihan</label>
-                            <input class="form-control" id="detail-billing-amount" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label text-primary">PPN (rate → nominal)</label>
-                            <input class="form-control text-primary fw-semibold" id="detail-ppn-amount" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label text-danger">PPh (rate → nominal, dipotong)</label>
-                            <input class="form-control text-danger fw-semibold" id="detail-pph-amount" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Terbayar</label>
-                            <input class="form-control" id="detail-paid-amount" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label">Sisa</label>
-                            <input class="form-control" id="detail-remaining-amount" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-12">
-                            <label class="form-label">{{ __('menu_vendor_payment.bank_source') }}</label>
-                            <input class="form-control" id="detail-bank" type="text" readonly>
-                        </div>
-
-                        <div class="col-md-12">
-                            <label class="form-label">{{ __('menu_vendor_payment.description') }}</label>
-                            <textarea class="form-control" id="detail-description" rows="2" readonly></textarea>
-                        </div>
-
-                        <div class="col-md-12">
-                            <label class="form-label">Riwayat Pembayaran</label>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-bordered" id="payment-history-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Tanggal</th>
-                                            <th>Jumlah</th>
-                                            <th>Bank</th>
-                                            <th>Keterangan</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="payment-history-body">
-                                    </tbody>
-                                </table>
+                <div class="detail-body-grid">
+                    <div class="detail-main-stack">
+                        <div class="detail-section-card">
+                            <div class="detail-section-title">
+                                <span class="detail-section-icon"><i class="mdi mdi-file-document-outline" aria-hidden="true"></i></span>
+                                Informasi Nota
+                            </div>
+                            <div class="detail-field-grid">
+                                <div class="detail-field">
+                                    <label class="detail-field-label">{{ __('menu_vendor_payment.payment_code') }}</label>
+                                    <input class="detail-field-value" id="detail-code" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">Nomor Nota Kalender</label>
+                                    <input class="detail-field-value" id="detail-nota-number" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">{{ __('menu_vendor_payment.order_code') }}</label>
+                                    <input class="detail-field-value" id="detail-order-code" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">Shipment Number / No Pengiriman</label>
+                                    <input class="detail-field-value" id="detail-shipment-number" type="text" value="-" readonly tabindex="-1">
+                                </div>
                             </div>
                         </div>
+
+                        <div class="detail-section-card">
+                            <div class="detail-section-title">
+                                <span class="detail-section-icon"><i class="mdi mdi-truck-outline" aria-hidden="true"></i></span>
+                                Kendaraan &amp; Pihak Terkait
+                            </div>
+                            <div class="detail-field-grid">
+                                <div class="detail-field">
+                                    <label class="detail-field-label">{{ __('menu_vendor_payment.plate_number') }}</label>
+                                    <input class="detail-field-value" id="detail-plate-number" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">Perusahaan Kendaraan</label>
+                                    <input class="detail-field-value" id="detail-fleet-company" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">{{ __('menu_vendor_payment.driver') }}</label>
+                                    <input class="detail-field-value" id="detail-driver" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                                <div class="detail-field">
+                                    <label class="detail-field-label">{{ __('menu_vendor_payment.customer') }}</label>
+                                    <input class="detail-field-value" id="detail-customer" type="text" value="-" readonly tabindex="-1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-sidebar-grid">
+                        <div class="detail-section-card">
+                            <div class="detail-section-title">
+                                <span class="detail-section-icon"><i class="mdi mdi-bank-outline" aria-hidden="true"></i></span>
+                                {{ __('menu_vendor_payment.bank_source') }}
+                            </div>
+                            <div class="detail-bank-value">
+                                <i class="mdi mdi-account-cash-outline" aria-hidden="true"></i>
+                                <input class="detail-field-value" id="detail-bank" type="text" value="-" readonly tabindex="-1">
+                            </div>
+                        </div>
+
+                        <div class="detail-section-card">
+                            <div class="detail-section-title">
+                                <span class="detail-section-icon"><i class="mdi mdi-note-text-outline" aria-hidden="true"></i></span>
+                                {{ __('menu_vendor_payment.description') }}
+                            </div>
+                            <textarea class="detail-field-value" id="detail-description" rows="2" readonly tabindex="-1">-</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Riwayat pembayaran --}}
+                <div class="detail-section-card">
+                    <div class="detail-history-title">
+                        <span class="detail-section-icon"><i class="mdi mdi-history" aria-hidden="true"></i></span>
+                        Riwayat Pembayaran
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table align-middle detail-history-table" id="payment-history-table">
+                            <thead>
+                                <tr>
+                                    <th class="text-nowrap">Tanggal</th>
+                                    <th class="text-end">Jumlah</th>
+                                    <th>Bank</th>
+                                    <th>Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="payment-history-body"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>

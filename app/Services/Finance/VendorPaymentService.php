@@ -159,19 +159,104 @@ class VendorPaymentService
     }
 
     /**
-     * Daftar seluruh transaksi pembayaran vendor (1 baris = 1 pembayaran/DP/cicilan).
+     * Daftar pembayaran vendor per transaksi.
+     *
+     * Satu transaksi baru disimpan dengan satu batch_code, meski dialokasikan
+     * ke beberapa order dalam satu atau beberapa nota. Riwayat lama yang belum
+     * memiliki batch_code tetap ditampilkan per alokasi agar tidak hilang.
      */
     public function findPayments()
     {
-        return $this->paymentHistory->with([
+        $histories = $this->paymentHistory->with($this->paymentHistoryRelations())
+            ->orderByDesc('payment_date')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return $this->mapPaymentTransactions($histories);
+    }
+
+    /** Ambil satu transaksi beserta rincian nota dan order-nya. */
+    public function findPaymentDetail(string $transactionKey)
+    {
+        $query = $this->paymentHistory->with($this->paymentHistoryRelations());
+
+        if (str_starts_with($transactionKey, 'batch:')) {
+            $query->where('batch_code', substr($transactionKey, 6));
+        } elseif (str_starts_with($transactionKey, 'legacy:')) {
+            $query->whereKey(substr($transactionKey, 7));
+        } else {
+            return null;
+        }
+
+        return $this->mapPaymentTransactions(
+            $query->orderByDesc('payment_date')->orderByDesc('created_at')->get()
+        )->first();
+    }
+
+    private function paymentHistoryRelations(): array
+    {
+        return [
             'userBank.bank',
             'vendorPayment.order.fleet.company',
             'vendorPayment.order.driver',
             'vendorPayment.order.customer',
-        ])
-            ->orderByDesc('payment_date')
-            ->orderByDesc('created_at')
-            ->get();
+        ];
+    }
+
+    private function mapPaymentTransactions($histories)
+    {
+        return $histories
+            ->groupBy(fn ($history) => $history->batch_code
+                ? 'batch:' . $history->batch_code
+                : 'legacy:' . $history->id)
+            ->map(function ($transaction, $transactionKey) {
+                $firstHistory = $transaction->first();
+                $isLegacy = empty($firstHistory->batch_code);
+
+                $notas = $transaction
+                    ->groupBy(fn ($history) => (string) ($history->vendorPayment?->nota_number ?: '-'))
+                    ->map(function ($notaHistories, $notaNumber) {
+                        $orders = $notaHistories->map(function ($history) {
+                            $payment = $history->vendorPayment;
+                            $order = $payment?->order;
+
+                            return (object) [
+                                'code' => $order?->code ?: ($payment?->orderCode ?: '-'),
+                                'shipment_number' => $order?->shipmentNumber,
+                                'vendor_name' => $order?->fleet?->company?->name,
+                                'amount' => (float) $history->amount,
+                            ];
+                        })->sortBy('code')->values();
+
+                        return (object) [
+                            'number' => $notaNumber,
+                            'amount' => (float) $notaHistories->sum('amount'),
+                            'orders' => $orders,
+                        ];
+                    })
+                    ->sortBy('number')
+                    ->values();
+
+                return (object) [
+                    'transaction_key' => $transactionKey,
+                    'payment_date' => $firstHistory->payment_date,
+                    'batch_code' => $firstHistory->batch_code,
+                    'legacy_code' => $firstHistory->vendorPayment?->code,
+                    'is_legacy' => $isLegacy,
+                    'amount' => (float) $transaction->sum('amount'),
+                    'userBank' => $firstHistory->userBank,
+                    'description' => $transaction->pluck('description')->filter()->first(),
+                    'notas' => $notas,
+                    'vendors' => $notas
+                        ->flatMap(fn ($nota) => $nota->orders->pluck('vendor_name'))
+                        ->filter()
+                        ->unique()
+                        ->sort()
+                        ->values(),
+                    'order_count' => (int) $notas->sum(fn ($nota) => $nota->orders->count()),
+                ];
+            })
+            ->values();
     }
 
     /**
@@ -251,8 +336,15 @@ class VendorPaymentService
         return [
             'paymentCount' => $payments->count(),
             'paymentSum' => (float) $payments->sum('amount'),
-            'notaCount' => $payments->pluck('vendorPayment.nota_number')->filter()->unique()->count(),
-            'vendorCount' => $payments->pluck('vendorPayment.order.fleet.company.name')->filter()->unique()->count(),
+            'notaCount' => $payments
+                ->flatMap(fn ($payment) => $payment->notas->pluck('number'))
+                ->filter(fn ($nota) => $nota !== '-')
+                ->unique()
+                ->count(),
+            'vendorCount' => $payments
+                ->flatMap(fn ($payment) => $payment->vendors)
+                ->unique()
+                ->count(),
         ];
     }
 
@@ -316,11 +408,6 @@ class VendorPaymentService
 
         if ($existingBatch) {
             return $this->resolveExistingBatch($existingBatch, $payloadHash);
-        }
-
-        $currentBalance = (int) round((float) $liveMutation->balance);
-        if ($currentBalance < $totalPaymentAmount) {
-            throw new \DomainException('Saldo sumber dana tidak mencukupi untuk pembayaran ini.', 422);
         }
 
         $vendorPayments = $this->service->newQuery()

@@ -264,6 +264,7 @@
         detailFields.forEach(function(selector) {
             setDetailField(selector, '-');
         });
+        paintDetailTones();
         $('#payment-history-body').html('<tr><td colspan="4" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat riwayat pembayaran...</td></tr>');
         $('#detail-modal').modal('show');
 
@@ -371,6 +372,7 @@
 
                     // Description
                     setDetailField('#detail-description', data.description || '-');
+                    paintDetailTones();
 
                     // Payment history rows
                     const historyBody = $('#payment-history-body');

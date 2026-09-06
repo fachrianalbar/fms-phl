@@ -36,6 +36,7 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
     // 3. Daftar Pembayaran
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', [VendorPaymentListController::class, 'index'])->name('index');
+        Route::get('detail/{transactionKey}', [VendorPaymentListController::class, 'detail'])->name('detail');
     });
 });
 

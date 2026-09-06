@@ -228,7 +228,6 @@
         bankSelect.prop('disabled', true).empty().append(new Option('Memuat rekening...', ''));
         bankSelect.trigger('change');
         setBankLoadingState('Memuat rekening perusahaan...', false);
-        $('#selectedBankBalancePanel').addClass('d-none');
         updatePaymentSummary();
 
         $.ajax({
@@ -246,7 +245,6 @@
                     response.forEach(function(bank) {
                         const label = (bank.bank_name || 'Bank') + ' · ' + (bank.account_number || '-') + ' · ' + (bank.account_name || '-');
                         const option = new Option(label, bank.code || '', false, false);
-                        $(option).attr('data-balance', Math.round(Number(bank.balance) || 0));
                         bankSelect.append(option);
                     });
                     paymentBanksLoaded = true;
@@ -342,12 +340,6 @@
         return '';
     }
 
-    function selectedBankBalance() {
-        const option = $('#userBankCode option:selected');
-
-        return Math.round(Number(option.attr('data-balance')) || 0);
-    }
-
     function updatePaymentSummary() {
         const items = selectedPaymentItems();
         let totalPayment = 0;
@@ -382,10 +374,8 @@
             return item.fleetCompanyCode || item.vendorName;
         })).size;
         const bankSelected = $('#userBankCode').val() !== '';
-        const balance = selectedBankBalance();
-        const insufficientBalance = bankSelected && totalPayment > balance;
         const dateValid = $('#date').val() !== '';
-        const ready = items.length > 0 && !firstError && totalPayment > 0 && paymentBanksLoaded && bankSelected && !insufficientBalance && dateValid && !paymentSubmissionInFlight;
+        const ready = items.length > 0 && !firstError && totalPayment > 0 && paymentBanksLoaded && bankSelected && dateValid && !paymentSubmissionInFlight;
 
         $('#paymentGrandTotal').text(formatCurrency(totalPayment));
         $('#paymentAfterSummary').text('Sisa setelah pembayaran: ' + formatCurrency(totalAfter));
@@ -400,14 +390,15 @@
         $('#submitPaymentBtn').prop('disabled', !ready);
 
         if (bankSelected) {
-            $('#selectedBankBalancePanel').removeClass('d-none');
-            $('#selectedBankBalance').text(formatCurrency(balance));
             $('#paymentBankStatus')
-                .text(insufficientBalance ? 'Saldo tidak mencukupi. Kekurangan ' + formatCurrency(totalPayment - balance) + '.' : 'Saldo mencukupi untuk transaksi ini.')
-                .toggleClass('text-danger', insufficientBalance)
-                .toggleClass('text-success', !insufficientBalance);
+                .text('Rekening siap digunakan.')
+                .toggleClass('text-danger', false)
+                .toggleClass('text-success', true);
         } else {
-            $('#selectedBankBalancePanel').addClass('d-none');
+            $('#paymentBankStatus')
+                .text('Pilih rekening sumber dana.')
+                .toggleClass('text-danger', false)
+                .toggleClass('text-success', false);
         }
 
         let hint = 'Siap diproses sebagai satu batch pembayaran.';
@@ -417,8 +408,6 @@
             hint = 'Isi tanggal pembayaran.';
         } else if (!paymentBanksLoaded || !bankSelected) {
             hint = 'Pilih rekening sumber dana.';
-        } else if (insufficientBalance) {
-            hint = 'Saldo rekening tidak mencukupi.';
         }
         $('#paymentSubmitHint').text(hint);
     }
@@ -480,6 +469,7 @@
         detailFields.forEach(function(selector) {
             $(selector).val('-');
         });
+        paintDetailTones();
         $('#payment-history-body').html('<tr><td colspan="4" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat riwayat pembayaran...</td></tr>');
         $('#detail-modal').modal('show');
 
@@ -529,6 +519,7 @@
                 }
                 $('#detail-bank').val(bankInfo);
                 $('#detail-description').val(data.description || '');
+                paintDetailTones();
 
                 const historyBody = $('#payment-history-body').empty();
                 if (Array.isArray(data.payment_histories) && data.payment_histories.length > 0) {
@@ -865,10 +856,6 @@
                             icon: isConflict ? 'warning' : 'error',
                             confirmButtonText: 'Tutup',
                         });
-
-                        if (xhr.status === 422 && message.toLowerCase().indexOf('saldo') !== -1) {
-                            loadBankData(true);
-                        }
                     }
                 });
             });
