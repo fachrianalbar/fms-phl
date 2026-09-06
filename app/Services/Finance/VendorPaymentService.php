@@ -47,6 +47,33 @@ class VendorPaymentService
     }
 
     /**
+     * Nilai dasar tagihan vendor: harga vendor + seluruh cost component On Charge.
+     * Cost lain (mis. biaya internal/Reductional) tidak ditagihkan ke vendor.
+     */
+    public function vendorOnChargeCosts($order)
+    {
+        return collect($order->cost ?? [])
+            ->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')
+            ->values();
+    }
+
+    public function vendorBaseAmount($order, $vendorPayment = null): float
+    {
+        return max(0, $vendorPayment
+            ? (float) ($vendorPayment->amount ?? 0)
+            : (float) ($order->vendorPrice ?? 0));
+    }
+
+    public function vendorBillingAmount($order, $vendorPayment = null): float
+    {
+        $baseAmount = $this->vendorBaseAmount($order, $vendorPayment);
+        $onChargeAmount = $this->vendorOnChargeCosts($order)
+            ->sum(fn ($cost) => (float) ($cost->nominal ?? 0));
+
+        return max(0, $baseAmount + $onChargeAmount);
+    }
+
+    /**
      * Order fleet external yang belum punya nota (menunggu dibuat invoice/nota).
      * Termasuk order yang punya vendor_payment lama tanpa nota_number.
      */
@@ -55,7 +82,7 @@ class VendorPaymentService
         return $this->order->whereHas('fleet.company', function ($q) {
             $q->whereRaw('LOWER(type) = ?', ['external']);
         })
-            ->with(['fleet', 'fleet.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus', 'vendorPayments'])
+            ->with(['fleet', 'fleet.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus', 'vendorPayments', 'cost.costComponent'])
             ->where(function ($q) {
                 $q->doesntHave('vendorPayments')
                     ->orWhereHas('vendorPayments', function ($q2) {
@@ -63,6 +90,7 @@ class VendorPaymentService
                     });
             })
             ->orderBy('orderDate', 'asc')
+            ->orderBy('created_at', 'asc')
             ->get();
     }
 
@@ -270,9 +298,9 @@ class VendorPaymentService
         $waiting = $this->findWaitingOrders();
 
         $totalBilling = (float) $waiting->sum(function ($order) {
-            $vp = $order->vendorPayments->first();
+            $vp = $order->vendorPayments->sortByDesc('created_at')->first();
 
-            return $vp ? (float) $vp->amount : (float) ($order->vendorPrice ?? 0);
+            return $this->vendorBillingAmount($order, $vp);
         });
 
         $vendorCount = $waiting->map(function ($order) {
@@ -934,7 +962,7 @@ class VendorPaymentService
         }
 
         // Ambil semua order terpilih dengan relasi customer, company, dan fleet
-        $orders = $this->order->with(['customer.company', 'fleet.company'])
+        $orders = $this->order->with(['customer.company', 'fleet.company', 'cost'])
             ->whereIn('code', $orderCodes)
             ->orderBy('code')
             ->lockForUpdate()
@@ -1001,7 +1029,8 @@ class VendorPaymentService
         foreach ($orderCodes as $orderCode) {
             $order = $orders->firstWhere('code', $orderCode);
             $vendorPayment = $vendorPayments->firstWhere('orderCode', $orderCode);
-            $dpp = (int) round((float) ($vendorPayment->amount ?? $order->vendorPrice ?? 0));
+            // DPP vendor = harga dasar yang tersimpan + cost component On Charge.
+            $dpp = (int) round($this->vendorBillingAmount($order, $vendorPayment));
 
             if ($dpp < 0) {
                 throw new \DomainException('Nilai DPP order tidak valid.', 422);

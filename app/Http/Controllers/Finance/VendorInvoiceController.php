@@ -7,7 +7,7 @@ use App\Models\CompanySetting;
 use App\Models\Finance\VendorPayment;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
-use Carbon\Carbon;
+
 use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -159,7 +159,7 @@ class VendorInvoiceController extends Controller
                 })
                 ->addColumn('select', function ($row) {
                     $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
-                    $billingAmount = (float) ($vendorPayment->amount ?? $row->vendorPrice ?? 0);
+                    $billingAmount = $this->service->vendorBillingAmount($row, $vendorPayment);
                     $paidAmount = (float) ($vendorPayment->paid_amount ?? 0);
                     $remainingAmount = max(0, $billingAmount - $paidAmount);
                     $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
@@ -168,9 +168,6 @@ class VendorInvoiceController extends Controller
                     $fleetCompanyName = $row->fleet->company->name ?? '';
 
                     return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . e($row->code) . '" data-customer-code="' . e($customerCode) . '" data-fleet-company-code="' . e($fleetCompanyCode) . '" data-fleet-company-name="' . e($fleetCompanyName) . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '" data-checkbox-type="nota" data-nota-number=""></div>';
-                })
-                ->editColumn('orderDate', function ($row) {
-                    return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->editColumn('shipmentNumber', function ($row) {
                     return e($row->shipmentNumber ?: '-');
@@ -213,9 +210,34 @@ class VendorInvoiceController extends Controller
 
                     return '-';
                 })
+                ->addColumn('vendorPriceAmount', function ($row) {
+                    $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
+                    $amount = $this->service->vendorBaseAmount($row, $vendorPayment);
+
+                    return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
+                })
+                ->addColumn('onChargeAmount', function ($row) {
+                    $costs = $this->service->vendorOnChargeCosts($row);
+
+                    if ($costs->isEmpty()) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    $amount = (float) $costs->sum('nominal');
+                    $details = $costs->map(function ($cost) {
+                        $name = $cost->costComponent->name ?? ($cost->description ?? 'Biaya Tambahan');
+
+                        return e($name) . ' · Rp ' . number_format((float) ($cost->nominal ?? 0), 0, ',', '.');
+                    })->implode('<br>');
+
+                    return '<div class="vendor-on-charge-cell" title="' . e(strip_tags(str_replace('<br>', ', ', $details))) . '">' .
+                        '<strong>+ Rp ' . number_format($amount, 0, ',', '.') . '</strong>' .
+                        '<small>' . $details . '</small>' .
+                        '</div>';
+                })
                 ->addColumn('billingAmount', function ($row) {
                     $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
-                    $amount = (float) ($vendorPayment->amount ?? $row->vendorPrice ?? 0);
+                    $amount = $this->service->vendorBillingAmount($row, $vendorPayment);
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
                 })
@@ -226,7 +248,7 @@ class VendorInvoiceController extends Controller
                 })
                 ->addColumn('remainingAmount', function ($row) {
                     $vendorPayment = $row->vendorPayments->sortByDesc('created_at')->first();
-                    $billing = (float) ($vendorPayment->amount ?? $row->vendorPrice ?? 0);
+                    $billing = $this->service->vendorBillingAmount($row, $vendorPayment);
                     $amount = max(0, $billing - (float) ($vendorPayment->paid_amount ?? 0));
 
                     return $amount > 0 ? number_format($amount, 0, ',', '.') : '0';
@@ -249,7 +271,7 @@ class VendorInvoiceController extends Controller
 
                     return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
                 })
-                ->rawColumns(['select', 'status', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name'])
+                ->rawColumns(['select', 'status', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'onChargeAmount'])
                 ->toJson();
         }
     }
@@ -796,7 +818,11 @@ class VendorInvoiceController extends Controller
             if ($subtotal <= 0 && $qty > 0) {
                 $subtotal = $qty * $unitPrice;
             }
-            $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+            $additionalCost = $order->cost
+                ? $order->cost
+                    ->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')
+                    ->sum('nominal')
+                : 0;
             $totalBefore = $subtotal + $additionalCost;
             $pph = $order->fleet->company->pph ?? 0;
             $pphAmount = ($totalBefore * $pph) / 100;

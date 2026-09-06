@@ -21,6 +21,31 @@
 <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
 @include('vendor.invoice.partials.table-style')
+<style>
+    .vendor-on-charge-cell {
+        min-width: 150px;
+        text-align: right;
+        line-height: 1.25;
+    }
+
+    .vendor-on-charge-cell strong,
+    .vendor-on-charge-cell small {
+        display: block;
+    }
+
+    .vendor-on-charge-cell strong {
+        color: #b45309;
+        font-size: 12px;
+    }
+
+    .vendor-on-charge-cell small {
+        max-width: 190px;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 10px;
+        white-space: normal;
+    }
+</style>
 @endpush
 
 @section('content')
@@ -139,7 +164,9 @@
                             <th class="text-center">Format</th>
                             <th>{{ __('menu_vendor_payment.origin') }}</th>
                             <th>{{ __('menu_vendor_payment.destination') }}</th>
-                            <th class="text-end">Tagihan</th>
+                            <th class="text-end">Harga Vendor</th>
+                            <th class="text-end">Cost Component</th>
+                            <th class="text-end">Total Tagihan</th>
                             <th class="text-end">Terbayar</th>
                             <th class="text-end">Sisa</th>
                             <th class="text-center">Status</th>
@@ -257,7 +284,25 @@
                 },
                 {
                     "data": 'orderDate',
-                    "searchable": true
+                    "searchable": true,
+                    "render": function(data, type) {
+                        if (!data) {
+                            return type === 'sort' || type === 'type' ? 0 : '-';
+                        }
+
+                        const isoDate = String(data).substring(0, 10);
+                        const parts = isoDate.split('-');
+
+                        // Sorting memakai YYYYMMDD dari tanggal ISO mentah.
+                        if (type === 'sort' || type === 'type') {
+                            return parts.length === 3 ? Number(parts.join('')) : 0;
+                        }
+
+                        // Tampilan tetap DD-MM-YYYY.
+                        return parts.length === 3
+                            ? parts[2] + '-' + parts[1] + '-' + parts[0]
+                            : data;
+                    }
                 },
                 {
                     "data": 'code',
@@ -316,8 +361,19 @@
                     "searchable": true
                 },
                 {
+                    "data": 'vendorPriceAmount',
+                    "searchable": true,
+                    "className": 'text-end'
+                },
+                {
+                    "data": 'onChargeAmount',
+                    "searchable": true,
+                    "className": 'text-end'
+                },
+                {
                     "data": 'billingAmount',
-                    "searchable": true
+                    "searchable": true,
+                    "className": 'text-end fw-semibold'
                 },
                 {
                     "data": 'paidAmount',
@@ -531,11 +587,10 @@
             };
         }
 
-        // Batasi rate 0-100% dan hitung nominal secara langsung.
+        // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
+        // keystroke. Memformat langsung akan menghapus tanda desimal sementara
+        // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
         $('#notaPpnRate, #notaPphRate').on('input', function() {
-            const value = parseNotaRateInput(this);
-
-            $(this).val(value === 0 ? '0' : formatNotaRate(value));
             updateNotaTaxCalculation();
         });
 

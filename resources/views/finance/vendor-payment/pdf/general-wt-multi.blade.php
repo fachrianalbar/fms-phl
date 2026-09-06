@@ -134,7 +134,9 @@
                         if ($subtotal <= 0 && $qty > 0) {
                             $subtotal = $qty * $unitPrice;
                         }
-                        $additionalCost = $order->cost ? $order->cost->sum('nominal') : 0;
+                        $additionalCost = $order->cost
+                            ? $order->cost->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')->sum('nominal')
+                            : 0;
                     }
                     
                     $totalBefore = $subtotal + $additionalCost;
