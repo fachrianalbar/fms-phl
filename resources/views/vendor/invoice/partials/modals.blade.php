@@ -859,13 +859,9 @@
                         <div class="nota-calc-row">
                             <div class="nota-calc-label mb-2"><label class="form-label nota-field-label mb-0"
                                     for="notaClaimAmount"><i class="mdi mdi-credit-card-off-outline me-2 text-warning"></i>Biaya Claim (dipotong)</label></div>
-                            <div class="input-group nota-tax-input-group">
-                                <span class="input-group-text">Rp</span>
-                                <input type="text" class="form-control nota-tax-input text-end" id="notaClaimAmount"
-                                    name="claimAmount" value="0" inputmode="numeric" autocomplete="off"
-                                    placeholder="0">
-                                <span class="input-group-text nota-tax-preview" id="notaClaimPreview">Rp 0</span>
-                            </div>
+                            <input type="text" class="form-control nota-tax-input text-end" id="notaClaimAmount"
+                                name="claimAmount" value="0" inputmode="numeric" autocomplete="off"
+                                placeholder="0">
                             <small class="form-text text-muted">Nominal potongan yang mengurangi total bayar nota</small>
                         </div>
 

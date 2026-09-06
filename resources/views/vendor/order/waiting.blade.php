@@ -571,6 +571,25 @@
             return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
         }
 
+        // Auto-format pemisah ribuan saat mengetik nominal (mis. 500000 → 500.000).
+        // Titik/koma di akhir dibiarkan agar desimal masih bisa diketik.
+        function formatNotaClaimInput(el) {
+            let value = String($(el).val() || '');
+            if (value.endsWith('.') || value.endsWith(',')) {
+                return;
+            }
+
+            let digits = value.replace(/\./g, '').replace(/,/g, '').replace(/[^0-9]/g, '');
+            if (digits === '') {
+                return;
+            }
+
+            let formatted = formatNotaNumber(Number(digits));
+            if (value !== formatted) {
+                $(el).val(formatted);
+            }
+        }
+
         // Hitung nominal dari DPP x rate / 100 dan total bayar.
         function updateNotaTaxCalculation() {
             const ppnRate = parseNotaRateInput($('#notaPpnRate'));
@@ -582,7 +601,6 @@
 
             $('#notaPpnPreview, #notaPpnAmountPreview').text('Rp ' + formatNotaNumber(ppn));
             $('#notaPphPreview, #notaPphAmountPreview').text('Rp ' + formatNotaNumber(pph));
-            $('#notaClaimPreview').text('Rp ' + formatNotaNumber(claim));
             $('#notaSubtotal').text('Rp ' + formatNotaNumber(notaModalState.subtotal));
 
             const grandTotalEl = $('#notaGrandTotal');
@@ -602,7 +620,12 @@
         // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
         // keystroke. Memformat langsung akan menghapus tanda desimal sementara
         // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
-        $('#notaPpnRate, #notaPphRate, #notaClaimAmount').on('input', function() {
+        $('#notaPpnRate, #notaPphRate').on('input', function() {
+            updateNotaTaxCalculation();
+        });
+
+        $('#notaClaimAmount').on('input', function() {
+            formatNotaClaimInput(this);
             updateNotaTaxCalculation();
         });
 
