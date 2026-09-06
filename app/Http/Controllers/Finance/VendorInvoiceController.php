@@ -8,11 +8,13 @@ use App\Models\Finance\VendorPayment;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
 use Carbon\Carbon;
+use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Mpdf\Mpdf;
+use Throwable;
 use Yajra\DataTables\DataTables;
 
 /**
@@ -264,27 +266,27 @@ class VendorInvoiceController extends Controller
                 ->addIndexColumn()
                 ->addColumn('select', function ($row) {
                     $orderCodes = $row->order_codes->implode(',');
+                    $vendorName = $row->fleet_company_name ?? '-';
+                    $ariaLabel = 'Pilih nota ' . $row->nota_number . ' vendor ' . $vendorName;
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-ppn-amount="' . ($row->ppn_amount ?? 0) . '" data-pph-amount="' . ($row->pph_amount ?? 0) . '" data-checkbox-type="payment"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-ppn-amount="' . ($row->ppn_amount ?? 0) . '" data-pph-amount="' . ($row->pph_amount ?? 0) . '" data-checkbox-type="payment" data-vendor-name="' . e($vendorName) . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" data-nota-date="' . e($row->nota_date ?? '') . '" aria-label="' . e($ariaLabel) . '"></div>';
                 })
                 ->addColumn('action', function ($row) {
                     $firstOrderCode = $row->order_codes->first();
 
                     $buttons = [];
+                    $buttons[] = '<a href="' . route('vendor.invoice.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
                     if ($row->paid_amount > 0 || $row->payment_status !== 'pending') {
-                        $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $firstOrderCode . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
-                        $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $firstOrderCode . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code ?? '') . '" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
                     } else {
-                        $buttons[] = '<button type="button" onclick="confirmCancelNota(\'' . $firstOrderCode . '\')" class="btn btn-sm btn-outline-warning" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-warning js-vendor-nota-cancel" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
                     }
 
                     return '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
                 })
                 ->editColumn('nota_number', function ($row) {
                     return '<span class="badge rounded-pill text-bg-primary">' . e($row->nota_number) . '</span>';
-                })
-                ->editColumn('nota_date', function ($row) {
-                    return $row->nota_date ? Carbon::parse($row->nota_date)->format('d-m-Y') : '-';
                 })
                 ->editColumn('fleet_company_name', function ($row) {
                     return e($row->fleet_company_name ?? '-');
@@ -303,17 +305,21 @@ class VendorInvoiceController extends Controller
                 })
                 ->addColumn('ppn_amount', function ($row) {
                     $ppn = (float) ($row->ppn_amount ?? 0);
+                    $rate = (float) ($row->ppn_rate ?? 0);
+                    $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
 
                     return $ppn > 0
-                        ? '<span class="text-primary fw-semibold">' . number_format($ppn, 0, ',', '.') . '</span>'
-                        : '<span class="text-muted">0</span>';
+                        ? '<span class="text-primary fw-semibold">' . e($rateText) . '%<br>Rp ' . number_format($ppn, 0, ',', '.') . '</span>'
+                        : '<span class="text-muted">' . e($rateText ?: '0') . '%<br>Rp 0</span>';
                 })
                 ->addColumn('pph_amount', function ($row) {
                     $pph = (float) ($row->pph_amount ?? 0);
+                    $rate = (float) ($row->pph_rate ?? 0);
+                    $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
 
                     return $pph > 0
-                        ? '<span class="text-danger fw-semibold">' . number_format($pph, 0, ',', '.') . '</span>'
-                        : '<span class="text-muted">0</span>';
+                        ? '<span class="text-danger fw-semibold">' . e($rateText) . '%<br>- Rp ' . number_format($pph, 0, ',', '.') . '</span>'
+                        : '<span class="text-muted">' . e($rateText ?: '0') . '%<br>Rp 0</span>';
                 })
                 ->editColumn('paid_amount', function ($row) {
                     return $row->paid_amount > 0 ? number_format($row->paid_amount, 0, ',', '.') : '0';
@@ -322,14 +328,14 @@ class VendorInvoiceController extends Controller
                     return $row->remaining_amount > 0 ? number_format($row->remaining_amount, 0, ',', '.') : '0';
                 })
                 ->editColumn('payment_status', function ($row) {
-                    $statusText = 'Pending';
+                    $statusText = 'Belum dibayar';
                     $badgeClass = 'warning';
 
                     if ($row->payment_status === 'partial') {
-                        $statusText = 'Partial';
+                        $statusText = 'Dibayar sebagian';
                         $badgeClass = 'info';
                     } elseif ($row->payment_status === 'paid') {
-                        $statusText = 'Paid';
+                        $statusText = 'Lunas';
                         $badgeClass = 'success';
                     }
 
@@ -353,22 +359,19 @@ class VendorInvoiceController extends Controller
                 ->addColumn('select', function ($row) {
                     $orderCodes = $row->order_codes->implode(',');
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-checkbox-type="payment"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input class="form-check-input row-payment-checkbox" type="checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-ppn-amount="' . ($row->ppn_amount ?? 0) . '" data-pph-amount="' . ($row->pph_amount ?? 0) . '" data-checkbox-type="payment"></div>';
                 })
                 ->addColumn('action', function ($row) {
                     $firstOrderCode = $row->order_codes->first();
 
                     $buttons = [];
-                    $buttons[] = '<button type="button" onclick="showDetailModal(\'' . $firstOrderCode . '\')" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
-                    $buttons[] = '<button type="button" onclick="confirmCancelPayment(\'' . $firstOrderCode . '\')" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code ?? '') . '" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
 
                     return '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
                 })
                 ->editColumn('nota_number', function ($row) {
                     return '<span class="badge rounded-pill text-bg-primary">' . e($row->nota_number) . '</span>';
-                })
-                ->editColumn('nota_date', function ($row) {
-                    return $row->nota_date ? Carbon::parse($row->nota_date)->format('d-m-Y') : '-';
                 })
                 ->editColumn('fleet_company_name', function ($row) {
                     return e($row->fleet_company_name ?? '-');
@@ -389,7 +392,7 @@ class VendorInvoiceController extends Controller
                     return $row->paid_amount > 0 ? number_format($row->paid_amount, 0, ',', '.') : '0';
                 })
                 ->editColumn('payment_status', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-success">Paid</span>';
+                    return '<span class="badge rounded-pill text-bg-success">Lunas</span>';
                 })
                 ->rawColumns(['select', 'action', 'nota_number', 'order_count', 'plate_numbers', 'payment_status'])
                 ->toJson();
@@ -402,34 +405,96 @@ class VendorInvoiceController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'orderCodes' => 'required|array|min:1',
-            'orderCodes.*' => 'required|string',
-            'date' => 'required|date',
-            'userBankCode' => 'required',
-            'paymentAmount' => 'nullable|numeric|min:1',
+            'requestKey' => ['required', 'uuid'],
+            'payments' => ['required', 'array', 'min:1'],
+            'payments.*.nota_number' => ['required', 'string', 'distinct'],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'payments.*.expected_remaining' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'date' => ['required', 'date'],
+            'userBankCode' => ['required', 'string'],
+            'description' => ['nullable', 'string', 'max:255'],
         ]);
+
         if ($validator->fails()) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', $validator->errors()->all()[0]);
-        }
-        try {
-            DB::beginTransaction();
+            $message = $validator->errors()->first();
 
-            $result = $this->service->store($request, $this->title);
-            DB::commit();
-
-            $message = $result['processed_count'] . ' order vendor berhasil dibayar lunas.';
-            if (($result['skipped_count'] ?? 0) > 0) {
-                $message .= ' ' . $result['skipped_count'] . ' order dilewati karena sudah lunas.';
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => $validator->errors(),
+                ], 422);
             }
-            if (! empty($result['batch_code'])) {
-                $message .= ' Kode pembayaran: ' . $result['batch_code'] . '.';
+
+            return redirect()->route('vendor.invoice.unpaid')->with('fail', $message);
+        }
+
+        $request->merge($validator->validated());
+
+        try {
+            $result = DB::transaction(fn () => $this->service->store($request, $this->title));
+            $message = $result['idempotent']
+                ? 'Pembayaran vendor sebelumnya berhasil ditemukan.'
+                : $result['nota_count'] . ' nota vendor berhasil dibayar.';
+            $message .= ' Kode pembayaran: ' . $result['batch_code'] . '.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'result' => $result,
+                ]);
             }
 
             return redirect()->route('vendor.invoice.unpaid')->with('success', $message);
-        } catch (\Throwable $th) {
-            DB::rollback();
+        } catch (Throwable $th) {
+            $result = null;
 
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            try {
+                $result = $this->service->findBatchResultByRequest($request);
+            } catch (Throwable $lookupException) {
+                report($lookupException);
+            }
+
+            if ($result) {
+                $message = 'Pembayaran vendor sebelumnya berhasil ditemukan. Kode pembayaran: ' . $result['batch_code'] . '.';
+
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => $message,
+                        'result' => $result,
+                    ]);
+                }
+
+                return redirect()->route('vendor.invoice.unpaid')->with('success', $message);
+            }
+
+            if ($th instanceof DomainException) {
+                $status = in_array((int) $th->getCode(), [409, 422], true) ? (int) $th->getCode() : 422;
+                $message = $th->getMessage();
+
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message,
+                    ], $status);
+                }
+
+                return redirect()->route('vendor.invoice.unpaid')->with('fail', $message);
+            }
+
+            report($th);
+            $message = 'Pembayaran vendor gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->route('vendor.invoice.unpaid')->with('fail', $message);
         }
     }
 
@@ -459,6 +524,8 @@ class VendorInvoiceController extends Controller
             // PPN & PPh manual dari nota (nilai sama di semua baris → MAX agar tidak ganda)
             $vendorPayment->nota_ppn = (float) $allAssociated->max('ppn_amount');
             $vendorPayment->nota_pph = (float) $allAssociated->max('pph_amount');
+            $vendorPayment->nota_ppn_rate = (float) $allAssociated->max('ppn_rate');
+            $vendorPayment->nota_pph_rate = (float) $allAssociated->max('pph_rate');
 
             $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
                 ->where('type', 'Out')
@@ -588,7 +655,12 @@ class VendorInvoiceController extends Controller
     }
 
     /**
-     * Cetak nota PDF untuk beberapa nota/order terpilih.
+     * Cetak nota PDF untuk nota/order terpilih.
+     *
+     * Di halaman Invoice Belum Lunas, tombol cetak dipastikan hanya memilih
+     * SATU nota (lihat pdfNota() / handler JS cetak) sehingga hasil cetak
+     * tidak pernah menggabungkan beberapa nota — penggabungan order ke nota
+     * hanya terjadi saat generate nota (menu Order Menunggu Nota).
      */
     public function pdfMulti(Request $request)
     {
@@ -598,8 +670,59 @@ class VendorInvoiceController extends Controller
             $orderCodes = array_filter(array_map('trim', explode(',', $orderCodes)));
         }
 
+        try {
+            $document = $this->buildNotaPdf($orderCodes);
+        } catch (DomainException $exception) {
+            return redirect()->route('vendor.invoice.unpaid')->with('fail', $exception->getMessage());
+        }
+
+        return response($document['content'])
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf"');
+    }
+
+    /**
+     * Cetak PDF satu nota utuh (seluruh order di dalam nomor nota yang sama).
+     * Dipakai tombol cetak per baris di halaman Invoice Belum Lunas,
+     * sehingga 1 file PDF = 1 nota (tidak pernah digabung antar nota).
+     */
+    public function pdfNota($orderCode)
+    {
+        $vendorPayment = VendorPayment::where('orderCode', $orderCode)->first();
+
+        if (! $vendorPayment || ! $vendorPayment->nota_number) {
+            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Nomor nota belum di-generate untuk order ini. Silakan generate nota terlebih dahulu.');
+        }
+
+        $orderCodes = VendorPayment::where('nota_number', $vendorPayment->nota_number)
+            ->pluck('orderCode')
+            ->toArray();
+
+        try {
+            $document = $this->buildNotaPdf($orderCodes);
+        } catch (DomainException $exception) {
+            return redirect()->route('vendor.invoice.unpaid')->with('fail', $exception->getMessage());
+        }
+
+        return response($document['content'])
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-' . str_replace('/', '-', $vendorPayment->nota_number) . '.pdf"');
+    }
+
+    /**
+     * Susun konten PDF nota pembayaran dari daftar order.
+     * Seluruh order yang berada pada nomor nota yang sama ikut disertakan.
+     *
+     * @throws \DomainException bila order belum punya nota / tidak ditemukan
+     *
+     * @return array{content: string, notaNumber: string|null}
+     */
+    private function buildNotaPdf(array $orderCodes)
+    {
+        $orderCodes = array_values(array_unique(array_filter($orderCodes)));
+
         if (empty($orderCodes)) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Tidak ada order yang dipilih');
+            throw new DomainException('Tidak ada order yang dipilih', 422);
         }
 
         $selectedNotaNumbers = VendorPayment::whereIn('orderCode', $orderCodes)
@@ -617,7 +740,7 @@ class VendorInvoiceController extends Controller
 
         $vendorPayments = VendorPayment::whereIn('orderCode', $orderCodes)->get();
         if ($vendorPayments->count() < count($orderCodes) || $vendorPayments->contains(fn ($vp) => ! $vp->nota_number)) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Beberapa order terpilih belum memiliki nomor nota. Silakan generate nota terlebih dahulu.');
+            throw new DomainException('Beberapa order terpilih belum memiliki nomor nota. Silakan generate nota terlebih dahulu.', 422);
         }
 
         $orders = \App\Models\Operational\Order::with([
@@ -631,7 +754,7 @@ class VendorInvoiceController extends Controller
         ])->whereIn('code', $orderCodes)->get();
 
         if ($orders->isEmpty()) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Data order tidak ditemukan');
+            throw new DomainException('Data order tidak ditemukan', 422);
         }
 
         $groupedByFormat = $orders->groupBy(function ($order) {
@@ -651,10 +774,16 @@ class VendorInvoiceController extends Controller
             }
         }
 
+        $vendorPayments = VendorPayment::with(['paymentHistory.userBank.bank'])
+            ->whereIn('orderCode', $orderCodes)
+            ->get();
+
         $totalSubtotal = 0;
         $totalAdditionalCost = 0;
         $totalPphAmount = 0;
         $totalPpnAmount = 0;
+        $totalPpnRate = 0;
+        $totalPphRate = 0;
         $totalGrandTotal = 0;
 
         foreach ($orders as $order) {
@@ -695,6 +824,8 @@ class VendorInvoiceController extends Controller
 
         $totalPpnAmount = (float) $notaTaxTotals->sum('ppn');
         $totalPphAmount += (float) $notaTaxTotals->sum('pph');
+        $totalPpnRate = (float) ($vendorPayments->max('ppn_rate') ?? 0);
+        $totalPphRate = (float) ($vendorPayments->max('pph_rate') ?? 0);
         $totalGrandTotal += $totalPpnAmount - (float) $notaTaxTotals->sum('pph');
 
         $company = CompanySetting::first();
@@ -711,10 +842,6 @@ class VendorInvoiceController extends Controller
         if ($userBankCode) {
             $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
         }
-
-        $vendorPayments = VendorPayment::with(['paymentHistory.userBank.bank'])
-            ->whereIn('orderCode', $orderCodes)
-            ->get();
 
         $allHistories = collect();
         foreach ($vendorPayments as $vp) {
@@ -759,6 +886,8 @@ class VendorInvoiceController extends Controller
                 ->with('totalAdditionalCost', $totalAdditionalCost)
                 ->with('totalPpnAmount', $totalPpnAmount)
                 ->with('totalPphAmount', $totalPphAmount)
+                ->with('totalPpnRate', $totalPpnRate)
+                ->with('totalPphRate', $totalPphRate)
                 ->with('totalGrandTotal', $totalGrandTotal)
                 ->with('notaNumber', $notaNumber)
                 ->with('userBank', $userBank)
@@ -766,44 +895,86 @@ class VendorInvoiceController extends Controller
                 ->with('paymentHistoryTotal', $paymentHistoryTotal)
         );
 
-        return $mpdf->Output('Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf', 'I');
+        return [
+            'content' => $mpdf->Output('', 'S'),
+            'notaNumber' => $notaNumber,
+        ];
     }
 
     /**
      * Membatalkan pembayaran vendor (mengembalikan saldo bank, reset status).
      */
-    public function destroy($orderCode)
+    public function destroy(Request $request, $orderCode)
     {
+        $request->validate([
+            'expected_batch_code' => ['required', 'string', 'max:30'],
+        ]);
+
         try {
-            DB::beginTransaction();
+            $result = DB::transaction(fn () => $this->service->cancelPayment(
+                $orderCode,
+                (string) $request->input('expected_batch_code'),
+                $this->title
+            ));
+            $message = 'Batch pembayaran ' . $result['batch_code'] . ' berhasil dibatalkan. '
+                . 'Dana Rp ' . number_format($result['payment_amount'], 0, ',', '.')
+                . ' telah dikembalikan untuk ' . $result['nota_count'] . ' nota ('
+                . $result['order_count'] . ' order).';
 
-            $this->service->cancelPayment($orderCode, $this->title);
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'result' => $result,
+                ]);
+            }
 
-            DB::commit();
+            return redirect()->back()->with('success', $message);
+        } catch (DomainException $exception) {
+            $status = in_array((int) $exception->getCode(), [409, 422], true)
+                ? (int) $exception->getCode()
+                : 422;
 
-            return redirect()->back()
-                ->with('success', 'Pembayaran vendor untuk order ' . $orderCode . ' berhasil dibatalkan secara permanen.');
-        } catch (\Throwable $th) {
-            DB::rollback();
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], $status);
+            }
 
-            return redirect()->back()
-                ->with('fail', 'Gagal membatalkan pembayaran: ' . $th->getMessage());
+            return redirect()->back()->with('fail', $exception->getMessage());
+        } catch (Throwable $th) {
+            report($th);
+            $message = 'Pembatalan pembayaran gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->back()->with('fail', $message);
         }
     }
 
     /**
      * Generate nomor nota (invoice) untuk order-order yang dipilih.
-     * PPN & PPh diinput manual (nominal rupiah) dari modal generate nota.
+     * PPN & PPh diinput sebagai persentase dari modal generate nota.
+     * Proses dijalankan via AJAX (response JSON) dari halaman Order Menunggu
+     * Nota agar loader & alert SweetAlert dapat ditampilkan; request non-AJAX
+     * tetap diarahkan dengan flash message.
      */
     public function generateNota(Request $request)
     {
         $data = $request->all();
 
-        // Normalisasi input PPN/PPh: buang pemisah ribuan ("1.650.000" → 1650000)
-        // agar validasi numeric tetap lolos bila nilai berformat terkirim.
-        foreach (['ppnAmount', 'pphAmount'] as $taxField) {
+        // Normalisasi rate pajak. Koma diterima sebagai pemisah desimal,
+        // sedangkan titik dipertahankan agar rate seperti 11.5 tetap benar.
+        foreach (['ppnRate', 'pphRate'] as $taxField) {
             if (isset($data[$taxField]) && is_string($data[$taxField])) {
-                $clean = str_replace(['.', ' ', ','], '', trim($data[$taxField]));
+                $clean = str_replace(' ', '', trim($data[$taxField]));
+                $clean = str_replace(',', '.', $clean);
 
                 $data[$taxField] = $clean === '' ? 0 : (float) $clean;
             }
@@ -813,11 +984,18 @@ class VendorInvoiceController extends Controller
             'orderCodes' => 'required|array|min:1',
             'orderCodes.*' => 'required|string',
             'userBankCode' => 'required|string|exists:user_bank,code',
-            'ppnAmount' => ['nullable', 'numeric', 'min:0'],
-            'pphAmount' => ['nullable', 'numeric', 'min:0'],
+            'ppnRate' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'pphRate' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         if ($validator->fails()) {
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->all()[0],
+                ], 422);
+            }
+
             return redirect()->route('vendor.order.waiting')
                 ->with('fail', $validator->errors()->all()[0]);
         }
@@ -826,28 +1004,61 @@ class VendorInvoiceController extends Controller
             DB::beginTransaction();
 
             $notaNumber = $this->service->assignNota(
-                $request->orderCodes,
-                $request->userBankCode,
+                $data['orderCodes'],
+                $data['userBankCode'],
                 $this->title,
-                (float) ($data['ppnAmount'] ?? 0),
-                (float) ($data['pphAmount'] ?? 0)
+                (float) ($data['ppnRate'] ?? 0),
+                (float) ($data['pphRate'] ?? 0)
             );
 
             DB::commit();
 
-            $ppnAmount = (float) ($data['ppnAmount'] ?? 0);
-            $pphAmount = (float) ($data['pphAmount'] ?? 0);
-            $ppnInfo = $ppnAmount > 0 || $pphAmount > 0
-                ? ' (PPN: Rp ' . number_format($ppnAmount, 0, ',', '.') . ', PPh: Rp ' . number_format($pphAmount, 0, ',', '.') . ')'
+            $ppnRate = (float) ($data['ppnRate'] ?? 0);
+            $pphRate = (float) ($data['pphRate'] ?? 0);
+            $ppnInfo = $ppnRate > 0 || $pphRate > 0
+                ? ' (PPN: ' . rtrim(rtrim(number_format($ppnRate, 4, ',', '.'), '0'), ',') . '%, PPh: ' . rtrim(rtrim(number_format($pphRate, 4, ',', '.'), '0'), ',') . '%)'
                 : '';
 
-            return redirect()->route('vendor.order.waiting')
-                ->with('success', 'Nota pembayaran berhasil di-generate dengan nomor: ' . $notaNumber . $ppnInfo);
-        } catch (\Throwable $th) {
-            DB::rollback();
+            $message = 'Nota pembayaran berhasil di-generate dengan nomor: ' . $notaNumber . $ppnInfo;
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'nota_number' => $notaNumber,
+                ]);
+            }
 
             return redirect()->route('vendor.order.waiting')
-                ->with('fail', 'Gagal generate nota: ' . $th->getMessage());
+                ->with('success', $message);
+        } catch (DomainException $exception) {
+            DB::rollback();
+            $message = $exception->getMessage();
+            $status = in_array((int) $exception->getCode(), [409, 422], true)
+                ? (int) $exception->getCode()
+                : 422;
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], $status);
+            }
+
+            return redirect()->route('vendor.order.waiting')->with('fail', $message);
+        } catch (Throwable $th) {
+            DB::rollback();
+            report($th);
+            $message = 'Generate nota gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->route('vendor.order.waiting')->with('fail', $message);
         }
     }
 
@@ -857,19 +1068,18 @@ class VendorInvoiceController extends Controller
     public function cancelNota($orderCode)
     {
         try {
-            DB::beginTransaction();
-
-            $this->service->cancelNota($orderCode, $this->title);
-
-            DB::commit();
+            DB::transaction(fn () => $this->service->cancelNota($orderCode, $this->title));
 
             return redirect()->route('vendor.invoice.unpaid')
-                ->with('success', 'Nota pembayaran untuk order ' . $orderCode . ' berhasil dibatalkan.');
-        } catch (\Throwable $th) {
-            DB::rollback();
+                ->with('success', 'Nota pembayaran berhasil dibatalkan.');
+        } catch (DomainException $exception) {
+            return redirect()->route('vendor.invoice.unpaid')
+                ->with('fail', $exception->getMessage());
+        } catch (Throwable $th) {
+            report($th);
 
             return redirect()->route('vendor.invoice.unpaid')
-                ->with('fail', 'Gagal membatalkan nota: ' . $th->getMessage());
+                ->with('fail', 'Pembatalan nota gagal diproses. Silakan coba lagi.');
         }
     }
 }

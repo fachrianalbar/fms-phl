@@ -413,7 +413,17 @@ class OrderController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', 'Cannot delete order with status 5 or 6');
         }
 
-        $this->service->destroy($id, $this->title);
+        // Jaga integritas dokumen finansial: order yang sudah dipakai nota vendor
+        // atau faktur pelanggan tidak boleh dihapus — dokumen tsb akan kehilangan data order.
+        if ($data->vendorPayments()->exists() || $data->invoiceDetail()->exists()) {
+            return redirect()->route($this->view . 'index')->with('fail', 'Order tidak dapat dihapus karena sudah memiliki nota vendor atau faktur. Hapus/batalkan dokumen terkait terlebih dahulu.');
+        }
+
+        try {
+            $this->service->destroy($id, $this->title);
+        } catch (\DomainException $exception) {
+            return redirect()->route($this->view . 'index')->with('fail', $exception->getMessage());
+        }
 
         return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }

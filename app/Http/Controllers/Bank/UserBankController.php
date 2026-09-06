@@ -224,6 +224,7 @@ class UserBankController extends Controller
                     'bank_name' => $bankName,
                     'account_number' => $bank->accountNumber ?? '',
                     'account_name' => $bank->accountName ?? '',
+                    'balance' => (float) ($bank->liveMutation?->balance ?? 0),
                 ];
             });
 

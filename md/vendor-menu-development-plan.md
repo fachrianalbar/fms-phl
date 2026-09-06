@@ -249,6 +249,9 @@ Hapus mapping lama `'finance/vendor-payment'` setelah menu lama dinonaktifkan.
 2. **Pembayaran tetap dari halaman Invoice Belum Lunas.** ✅ — Tidak dibuat menu pembayaran terpisah; *Daftar Pembayaran* bersifat riwayat (read-only).
 3. **Judul halaman diambil via `getByCode()`** (kode unik `VENDOR_INV_UNPAID`, dsb.) — bukan `getByName()`, untuk menghindari bentrok nama dengan menu faktur.
 4. **Menu lama `VENDOR-PAYMENT` dihapus + URL lama di-redirect** ke `vendor/invoice/unpaid` demi transisi user.
+5. **Cetak nota = per nota (1 PDF = 1 nota), tidak pernah digabung.** ✅
+   - Penggabungan beberapa order ke dalam satu nota **hanya** terjadi saat *generate nota* (menu Order Menunggu Nota).
+   - Halaman Invoice Belum Lunas tidak menyediakan cetak gabungan antar nota: tombol **Cetak Nota** aktif hanya saat **satu** nota dipilih, dan ada tombol cetak per baris nota (`vendor.invoice.pdf-nota`) yang mencetak satu nota utuh (seluruh order di dalam nomor nota tersebut).
 
 ### Keputusan turunan penting (bugfix menyertai migrasi)
 

@@ -27,7 +27,7 @@ class UserBankService
 
     public function findCompany()
     {
-        return $this->service->where('type', 2)->with(['bank'])->get();
+        return $this->service->where('type', 2)->with(['bank', 'liveMutation'])->get();
     }
 
     public function findPerson()

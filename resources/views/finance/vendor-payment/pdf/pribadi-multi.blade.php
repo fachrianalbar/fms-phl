@@ -184,14 +184,14 @@
             @endif
             @if (isset($totalPpnAmount) && $totalPpnAmount > 0)
                 <tr>
-                    <td colspan="7" style="text-align: center;">PPN</td>
+                    <td colspan="7" style="text-align: center;">PPN {{ rtrim(rtrim(number_format($totalPpnRate ?? 0, 4, ',', '.'), '0'), ',') }}%</td>
                     <td style="text-align: right;">
                         {{ number_format($totalPpnAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
             @if ($totalPphAmount > 0)
                 <tr>
-                    <td colspan="7" style="text-align: center;">PPH</td>
+                    <td colspan="7" style="text-align: center;">PPh {{ rtrim(rtrim(number_format($totalPphRate ?? 0, 4, ',', '.'), '0'), ',') }}%</td>
                     <td style="text-align: right;">
                         {{ number_format($totalPphAmount, 0, ',', '.') }}</td>
                 </tr>

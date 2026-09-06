@@ -2,6 +2,7 @@
 
 namespace App\Models\Bank;
 
+use App\Models\LiveMutation;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,5 +29,10 @@ class UserBank extends Model
     public function bank()
     {
         return $this->belongsTo(BankAccount::class, 'bankCode', 'code');
+    }
+
+    public function liveMutation()
+    {
+        return $this->hasOne(LiveMutation::class, 'userBankCode', 'code');
     }
 }

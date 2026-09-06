@@ -217,22 +217,26 @@
             url: "{{ route('api.user-bank.company') }}",
             type: "GET",
             success: function(response) {
-                let options = '<option value="">Pilih Bank</option>';
-                if (response && response.length > 0) {
+                const bankSelect = $('#notaUserBankCode').empty();
+                bankSelect.append(new Option('Pilih Bank', ''));
+
+                if (Array.isArray(response) && response.length > 0) {
                     response.forEach(function(bank) {
-                        let bankLabel = bank.bank_name || 'Unknown Bank';
-                        options +=
-                            `<option value="${bank.code}">${bankLabel} - ${bank.account_number} (${bank.account_name})</option>`;
+                        const bankLabel = (bank.bank_name || 'Unknown Bank') + ' - ' + (bank.account_number || '-') + ' (' + (bank.account_name || '-') + ')';
+                        bankSelect.append(new Option(bankLabel, bank.code || ''));
                     });
                 } else {
-                    options += '<option value="" disabled>Tidak ada data bank</option>';
+                    bankSelect.append(new Option('Tidak ada data bank', '', false, false));
+                    bankSelect.find('option:last').prop('disabled', true);
                 }
-                $('#notaUserBankCode').html(options).trigger('change');
+
+                bankSelect.trigger('change');
             },
-            error: function(xhr) {
-                let options = '<option value="">Pilih Bank</option>';
-                options += '<option value="" disabled>Error memuat data</option>';
-                $('#notaUserBankCode').html(options).trigger('change');
+            error: function() {
+                const bankSelect = $('#notaUserBankCode').empty();
+                bankSelect.append(new Option('Pilih Bank', ''));
+                bankSelect.append(new Option('Error memuat data', '', false, false));
+                bankSelect.find('option:last').prop('disabled', true).end().trigger('change');
             }
         });
     }
@@ -451,25 +455,27 @@
             $('#notaFleetCompanyName').text(fleetCompanyName || '-').attr('title', fleetCompanyName);
 
             // Render chip kode order
-            const orderListEl = $('#notaOrderList');
-            orderListEl.html('');
+            const orderListEl = $('#notaOrderList').empty();
             selectedCodes.forEach(function(orderCode) {
-                orderListEl.append('<span class="nota-order-chip">' + orderCode + '</span>');
+                orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(orderCode));
             });
 
-            // Reset input PPN/PPh (input manual) + subtotal
-            $('#notaPpnAmount').val('0');
-            $('#notaPphAmount').val('0');
+            // Reset rate PPN/PPh + subtotal
+            $('#notaPpnRate').val('0');
+            $('#notaPphRate').val('0');
             notaModalState.subtotal = totals.billing;
             updateNotaTaxCalculation();
 
             $('#notaUserBankCode').val('').trigger('change'); // Reset bank selection
 
             // Populate hidden inputs
-            const container = $('#notaOrderCodesContainer');
-            container.html('');
+            const container = $('#notaOrderCodesContainer').empty();
             selectedCodes.forEach(function(orderCode) {
-                container.append(`<input type="hidden" name="orderCodes[]" value="${orderCode}">`);
+                container.append($('<input>', {
+                    type: 'hidden',
+                    name: 'orderCodes[]',
+                    value: orderCode,
+                }));
             });
 
             // Tampilkan modal generate nota
@@ -481,26 +487,35 @@
             subtotal: 0,
         };
 
-        // Ambil nominal (integer rupiah) dari input berformat ribuan
-        function parseNotaTaxInput(el) {
-            const digits = String($(el).val() || '').replace(/[^0-9]/g, '');
+        // Ambil rate desimal dari input (koma diterima sebagai pemisah desimal).
+        function parseNotaRateInput(el) {
+            let value = String($(el).val() || '').replace(',', '.').replace(/[^0-9.]/g, '');
+            const parts = value.split('.');
+            value = parts.shift() + (parts.length ? '.' + parts.join('') : '');
+            const rate = parseFloat(value);
 
-            return digits === '' ? 0 : parseInt(digits, 10);
+            return Number.isFinite(rate) ? Math.min(100, Math.max(0, rate)) : 0;
         }
 
-        // Format angka ribuan gaya Indonesia
+        function formatNotaRate(value) {
+            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(Number(value) || 0);
+        }
+
+        // Format angka rupiah gaya Indonesia.
         function formatNotaNumber(value) {
             return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
         }
 
-        // Hitung ulang Total Bayar (DPP + PPN − PPh) di modal nota
+        // Hitung nominal dari DPP x rate / 100 dan total bayar.
         function updateNotaTaxCalculation() {
-            const ppn = parseNotaTaxInput($('#notaPpnAmount'));
-            const pph = parseNotaTaxInput($('#notaPphAmount'));
+            const ppnRate = parseNotaRateInput($('#notaPpnRate'));
+            const pphRate = parseNotaRateInput($('#notaPphRate'));
+            const ppn = Math.round(notaModalState.subtotal * ppnRate / 100);
+            const pph = Math.round(notaModalState.subtotal * pphRate / 100);
             const grandTotal = notaModalState.subtotal + ppn - pph;
 
-            $('#notaPpnPreview').text('Rp ' + formatNotaNumber(ppn));
-            $('#notaPphPreview').text('Rp ' + formatNotaNumber(pph));
+            $('#notaPpnPreview, #notaPpnAmountPreview').text('Rp ' + formatNotaNumber(ppn));
+            $('#notaPphPreview, #notaPphAmountPreview').text('Rp ' + formatNotaNumber(pph));
             $('#notaSubtotal').text('Rp ' + formatNotaNumber(notaModalState.subtotal));
 
             const grandTotalEl = $('#notaGrandTotal');
@@ -508,29 +523,28 @@
             grandTotalEl.toggleClass('nota-grand-total-negative', grandTotal < 0);
 
             return {
+                ppnRate: ppnRate,
+                pphRate: pphRate,
                 ppn: ppn,
                 pph: pph,
                 grandTotal: grandTotal,
             };
         }
 
-        // Format ribuan otomatis saat mengetik PPN / PPh (input manual)
-        $('#notaPpnAmount, #notaPphAmount').on('input', function() {
-            const value = parseNotaTaxInput(this);
+        // Batasi rate 0-100% dan hitung nominal secara langsung.
+        $('#notaPpnRate, #notaPphRate').on('input', function() {
+            const value = parseNotaRateInput(this);
 
-            $(this).val(value === 0 ? '0' : formatNotaNumber(value));
+            $(this).val(value === 0 ? '0' : formatNotaRate(value));
             updateNotaTaxCalculation();
         });
 
-        // Blok nilai minus / karakter aneh saat paste + pilih semua saat fokus
-        $('#notaPpnAmount, #notaPphAmount').on('blur', function() {
-            const value = parseNotaTaxInput(this);
-
-            $(this).val(formatNotaNumber(value));
+        $('#notaPpnRate, #notaPphRate').on('blur', function() {
+            $(this).val(formatNotaRate(parseNotaRateInput(this)));
+            updateNotaTaxCalculation();
         });
 
-        // Saat fokus, pilih seluruh angka agar mudah langsung diganti
-        $('#notaPpnAmount, #notaPphAmount').on('focus', function() {
+        $('#notaPpnRate, #notaPphRate').on('focus', function() {
             $(this).select();
         });
 
@@ -548,28 +562,28 @@
                 return false;
             }
 
-            // Validasi PPN & PPh (input manual): tidak boleh minus
+            // Validasi rate PPN/PPh, lalu tampilkan rate dan nominal hasil hitung.
             const tax = updateNotaTaxCalculation();
-            if (tax.ppn < 0 || tax.pph < 0) {
-                swal('Peringatan', 'Nominal PPN dan PPh tidak boleh minus.', 'warning');
+            if (tax.ppnRate < 0 || tax.pphRate < 0 || tax.ppnRate > 100 || tax.pphRate > 100) {
+                swal('Peringatan', 'Persentase PPN dan PPh harus antara 0% sampai 100%.', 'warning');
 
                 return false;
             }
 
             if (tax.grandTotal < 0) {
-                swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh) tidak boleh minus. Periksa kembali nominal PPh yang diinput.', 'warning');
+                swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh) tidak boleh minus. Periksa kembali persentase PPh yang diinput.', 'warning');
 
                 return false;
             }
 
-            // Pastikan hidden input PPN/PPh berisi angka bersih (tanpa titik ribuan)
-            $('#notaPpnAmount').val(String(tax.ppn));
-            $('#notaPphAmount').val(String(tax.pph));
+            // Kirim rate sebagai angka bersih tanpa pemisah ribuan.
+            $('#notaPpnRate').val(String(tax.ppnRate).replace(',', '.'));
+            $('#notaPphRate').val(String(tax.pphRate).replace(',', '.'));
 
-            const taxText = (tax.ppn > 0 || tax.pph > 0)
+            const taxText = (tax.ppnRate > 0 || tax.pphRate > 0)
                 ? '\nSubtotal (DPP): ' + formatCurrency(notaModalState.subtotal) +
-                  '\nPPN: ' + formatCurrency(tax.ppn) +
-                  '\nPPh: ' + formatCurrency(tax.pph) +
+                  '\nPPN (' + formatNotaRate(tax.ppnRate) + '%): ' + formatCurrency(tax.ppn) +
+                  '\nPPh (' + formatNotaRate(tax.pphRate) + '%): ' + formatCurrency(tax.pph) +
                   '\nTotal Bayar: ' + formatCurrency(tax.grandTotal)
                 : '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
 
@@ -580,11 +594,58 @@
                 buttons: ["Batal", "Ya, Generate Nota!"],
             }).then((willGenerate) => {
                 if (willGenerate) {
-                    $('#generate-nota-form').off('submit').submit();
+                    // Loader SweetAlert selama proses generate nota berjalan
+                    swal({
+                        title: "Memproses Generate Nota...",
+                        text: "Sedang membuat nota pembayaran, mohon tunggu.",
+                        icon: "info",
+                        buttons: false,
+                        closeOnClickOutside: false,
+                        closeOnEsc: false,
+                    });
+
+                    // Nonaktifkan tombol submit agar tidak ada klik ganda
+                    $('#generate-nota-form button[type="submit"]').prop('disabled', true);
+
+                    $.ajax({
+                        url: $('#generate-nota-form').attr('action'),
+                        type: 'POST',
+                        data: new FormData($('#generate-nota-form')[0]),
+                        processData: false,
+                        contentType: false,
+                        dataType: 'json',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        success: function(res) {
+                            $('#generate-nota-form button[type="submit"]').prop('disabled', false);
+
+                            if (res.success) {
+                                $('#nota-modal').modal('hide');
+                                swal({
+                                    title: "Berhasil!",
+                                    text: res.message || ('Nota pembayaran berhasil di-generate: ' + (res.nota_number || '')),
+                                    icon: "success",
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                swal("Gagal!", res.message || 'Terjadi kesalahan saat membuat nota.', "error");
+                            }
+                        },
+                        error: function(xhr) {
+                            $('#generate-nota-form button[type="submit"]').prop('disabled', false);
+
+                            let msg = 'Terjadi kesalahan saat membuat nota. Silakan coba lagi.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            }
+                            swal("Gagal!", msg, "error");
+                        }
+                    });
                 } else {
-                    // Kembalikan format ribuan pada input pajak (karena tadi dinormalisasi)
-                    $('#notaPpnAmount').val(formatNotaNumber(tax.ppn));
-                    $('#notaPphAmount').val(formatNotaNumber(tax.pph));
+                    // Kembalikan format rate setelah konfirmasi dibatalkan.
+                    $('#notaPpnRate').val(formatNotaRate(tax.ppnRate));
+                    $('#notaPphRate').val(formatNotaRate(tax.pphRate));
+                    updateNotaTaxCalculation();
                 }
             });
         });

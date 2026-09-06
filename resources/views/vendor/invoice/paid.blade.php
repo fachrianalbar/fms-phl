@@ -202,6 +202,23 @@
         return String(value);
     }
 
+    function formatNotaDate(value) {
+        if (!value) {
+            return '-';
+        }
+
+        const date = new Date(value);
+
+        if (isNaN(date.getTime())) {
+            return String(value);
+        }
+
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+
+        return day + '-' + month + '-' + date.getFullYear();
+    }
+
     function uniqueValues(values) {
         return values.filter(function(value, index, self) {
             return value && self.indexOf(value) === index;
@@ -238,9 +255,21 @@
     }
 
     function showDetailModal(orderCode) {
+        const detailFields = [
+            '#detail-code', '#detail-nota-number', '#detail-order-code', '#detail-shipment-number',
+            '#detail-plate-number', '#detail-fleet-company', '#detail-driver', '#detail-customer',
+            '#detail-billing-amount', '#detail-ppn-amount', '#detail-pph-amount', '#detail-paid-amount',
+            '#detail-remaining-amount', '#detail-payment-status', '#detail-bank', '#detail-description'
+        ];
+        detailFields.forEach(function(selector) {
+            setDetailField(selector, '-');
+        });
+        $('#payment-history-body').html('<tr><td colspan="4" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat riwayat pembayaran...</td></tr>');
+        $('#detail-modal').modal('show');
+
         try {
             $.ajax({
-                url: "{{ route('ajax.vendor-invoice-detail', ':orderCode') }}".replace(':orderCode', orderCode),
+                url: "{{ route('ajax.vendor-invoice-detail', ':orderCode') }}".replace(':orderCode', encodeURIComponent(orderCode)),
                 type: 'GET',
                 dataType: 'json',
                 success: function(data) {
@@ -316,6 +345,8 @@
 
                     // Amounts
                     setDetailField('#detail-billing-amount', formatCurrency(data.total_billing || data.amount || 0));
+                    setDetailField('#detail-ppn-amount', formatCurrency(data.nota_ppn || 0) + ' (' + Number(data.nota_ppn_rate || 0).toLocaleString('id-ID', { maximumFractionDigits: 4 }) + '%)');
+                    setDetailField('#detail-pph-amount', formatCurrency(data.nota_pph || 0) + ' (' + Number(data.nota_pph_rate || 0).toLocaleString('id-ID', { maximumFractionDigits: 4 }) + '%)');
                     setDetailField('#detail-paid-amount', formatCurrency(data.total_paid || data.paid_amount || 0));
                     setDetailField('#detail-remaining-amount', formatCurrency(data.total_remaining || data.remaining_amount || 0));
 
@@ -380,23 +411,48 @@
         }
     }
 
-    function confirmCancelPayment(orderCode) {
-        $('#delete-form').attr('action', "{{ url('vendor/invoice/payment') }}/" + orderCode);
+    function confirmCancelPayment(orderCode, batchCode) {
+        if (!batchCode) {
+            swal('Tidak dapat dibatalkan', 'Kode batch pembayaran tidak tersedia. Data lama tidak dibatalkan otomatis demi keamanan.', 'warning');
+            return;
+        }
+
+        $('#delete-form').attr('action', "{{ url('vendor/invoice/payment') }}/" + encodeURIComponent(orderCode));
+        $('#cancel-payment-batch-code').val(batchCode);
 
         swal({
-            title: "Apakah Anda yakin?",
-            text: "Seluruh pembayaran untuk nota ini akan dibatalkan secara permanen! Saldo bank akan dikembalikan dan nota kembali belum lunas.",
-            icon: "warning",
-            buttons: ["Batal", "Ya, Batalkan!"],
+            title: 'Batalkan batch pembayaran terakhir?',
+            text: 'Batch dapat mencakup beberapa nota. Saldo dikembalikan hanya untuk batch ' + batchCode + '.',
+            icon: 'warning',
+            buttons: ['Kembali', 'Ya, Batalkan Batch'],
             dangerMode: true,
-        }).then((willCancel) => {
+        }).then(function(willCancel) {
             if (willCancel) {
+                swal({
+                    title: 'Membatalkan pembayaran',
+                    text: 'Sedang mengembalikan saldo dan memperbarui nota...',
+                    icon: 'info',
+                    buttons: false,
+                    closeOnClickOutside: false,
+                    closeOnEsc: false,
+                });
                 $('#delete-form').submit();
             }
         });
     }
 
     $(document).ready(function() {
+        $(document).on('click', '.js-vendor-payment-detail', function() {
+            showDetailModal(String($(this).attr('data-order-code') || ''));
+        });
+
+        $(document).on('click', '.js-vendor-payment-cancel', function() {
+            confirmCancelPayment(
+                String($(this).attr('data-order-code') || ''),
+                String($(this).attr('data-batch-code') || '')
+            );
+        });
+
         vendorPaidTable = $('#dtPaid').DataTable({
             processing: true,
             serverSide: true,
@@ -408,7 +464,7 @@
                 { data: 'action', className: 'text-center' },
                 { data: 'DT_RowIndex', className: 'text-center' },
                 { data: 'nota_number' },
-                { data: 'nota_date' },
+                { data: 'nota_date', render: function(data) { return formatNotaDate(data); } },
                 { data: 'fleet_company_name' },
                 { data: 'order_count', className: 'text-center' },
                 { data: 'plate_numbers' },

@@ -26,7 +26,9 @@ class VendorPayment extends Model
         'nota_number',
         'user_bank_code',
         'ppn_amount',
+        'ppn_rate',
         'pph_amount',
+        'pph_rate',
         'description',
         'date',
     ];

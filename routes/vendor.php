@@ -30,6 +30,7 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
     Route::post('invoice/cancel-nota/{orderCode}', [VendorInvoiceController::class, 'cancelNota'])->name('invoice.cancel-nota');
     Route::delete('invoice/payment/{orderCode}', [VendorInvoiceController::class, 'destroy'])->name('invoice.payment.cancel');
     Route::get('invoice/pdf/{orderCode}', [VendorInvoiceController::class, 'pdf'])->name('invoice.pdf');
+    Route::get('invoice/pdf-nota/{orderCode}', [VendorInvoiceController::class, 'pdfNota'])->name('invoice.pdf-nota');
     Route::post('invoice/pdf-multi', [VendorInvoiceController::class, 'pdfMulti'])->name('invoice.pdf-multi');
 
     // 3. Daftar Pembayaran

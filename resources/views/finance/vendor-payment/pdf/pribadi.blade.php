@@ -138,7 +138,9 @@
                 $pph = $order->fleet->company->pph ?? 0;
                 $pphAmount = ($totalBefore * $pph) / 100;
 
-                // PPN & PPh manual dari nota (input saat generate nota)
+                // PPN & PPh dari rate nota (nominal sudah dihitung saat generate nota).
+                $notaPpnRate = (float) ($vendorPayment->ppn_rate ?? 0);
+                $notaPphRate = (float) ($vendorPayment->pph_rate ?? 0);
                 $notaPpnAmount = (float) ($vendorPayment->ppn_amount ?? 0);
                 $notaPphAmount = (float) ($vendorPayment->pph_amount ?? 0);
 
@@ -172,14 +174,14 @@
             @endif
             @if ($notaPpnAmount > 0)
                 <tr>
-                    <td colspan="7" style="text-align: center;">PPN</td>
+                    <td colspan="7" style="text-align: center;">PPN {{ rtrim(rtrim(number_format($notaPpnRate, 4, ',', '.'), '0'), ',') }}%</td>
                     <td style="text-align: right;">
                         {{ number_format($notaPpnAmount, 0, ',', '.') }}</td>
                 </tr>
             @endif
             @if ($notaPphAmount > 0)
                 <tr>
-                    <td colspan="7" style="text-align: center;">PPh (Pajak Penghasilan)</td>
+                    <td colspan="7" style="text-align: center;">PPh {{ rtrim(rtrim(number_format($notaPphRate, 4, ',', '.'), '0'), ',') }}% (Pajak Penghasilan)</td>
                     <td style="text-align: right;">
                         {{ number_format($notaPphAmount, 0, ',', '.') }}</td>
                 </tr>

@@ -243,9 +243,19 @@ class OrderService
 
     public function destroy($id, $title)
     {
-        $this->logActivity($title, $this->getById($id), 'Delete');
-
         $data = $this->getById($id);
+
+        if (! $data) {
+            return;
+        }
+
+        // Pengaman ganda: order yang sudah dipakai nota vendor atau faktur tidak
+        // boleh dihapus, agar dokumen finansial tsb tidak menjadi yatim.
+        if ($data->vendorPayments()->exists() || $data->invoiceDetail()->exists()) {
+            throw new \DomainException('Order tidak dapat dihapus karena sudah memiliki nota vendor atau faktur. Hapus/batalkan dokumen terkait terlebih dahulu.');
+        }
+
+        $this->logActivity($title, $data, 'Delete');
 
         $this->customerDetailOrder->where('orderCode', $data->code)->delete();
 
@@ -255,7 +265,9 @@ class OrderService
 
         \App\Models\Operational\OrderDriverSalary::where('order_id', $data->id)->where('status', '0')->delete();
 
-        $this->service->where('id', $id)->delete();
+        // Hapus lewat instance model agar SoftDeletes berlaku (bukan hard delete),
+        // sehingga order yang terhapus masih bisa dipulihkan.
+        $data->delete();
     }
 
     public function storeOrderTax($selectedOrders)
