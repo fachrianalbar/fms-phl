@@ -20,10 +20,25 @@ class OrderPaymentHistory extends Model
         'code',
         'orderCode',
         'paymentType',
+        'claim',
+        'claim_description',
+        'ppn',
+        'ppn_percent',
+        'pph',
+        'pph_percent',
         'total',
         'date',
         'description',
         'userBankCode',
+    ];
+
+    protected $casts = [
+        'claim' => 'float',
+        'ppn' => 'float',
+        'ppn_percent' => 'float',
+        'pph' => 'float',
+        'pph_percent' => 'float',
+        'total' => 'float',
     ];
 
     public function order()

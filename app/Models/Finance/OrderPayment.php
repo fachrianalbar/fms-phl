@@ -20,10 +20,26 @@ class OrderPayment extends Model
         'orderCode',
         'cost',
         'additional_cost',
+        'claim',
+        'claim_description',
         'ppn',
+        'ppn_percent',
         'pph',
+        'pph_percent',
         'total',
         'status',
+    ];
+
+    protected $casts = [
+        'cost' => 'float',
+        'additional_cost' => 'float',
+        'claim' => 'float',
+        'ppn' => 'float',
+        'ppn_percent' => 'float',
+        'pph' => 'float',
+        'pph_percent' => 'float',
+        'total' => 'float',
+        'status' => 'integer',
     ];
 
     public function order()

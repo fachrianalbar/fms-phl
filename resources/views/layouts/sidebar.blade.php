@@ -47,9 +47,6 @@
         'vendor/invoice/paid' => 'mdi-cash-check',
         'vendor/payment' => 'mdi-credit-card-outline',
 
-        // Finance
-        'finance/order-payment' => 'mdi-cash-multiple',
-
         // Inventory
         'inventory/items' => 'mdi-package-variant-closed',
         'inventory/stock' => 'mdi-clipboard-list-outline',

@@ -1,8 +1,8 @@
 @extends('layouts.main', [
     'title' => $title,
     'pageTitle' => $title,
-    'firstSegment' => 'Finance',
-    'secondSegment' => 'Order Payment Details',
+    'firstSegment' => $title,
+    'secondSegment' => 'Detail Pembayaran',
 ])
 
 @php
@@ -54,7 +54,7 @@
                             @endphp
                             <span class="badge rounded-pill {{ $badgeClass }} px-3 py-2 fs-7 fw-bold">{{ $paymentStatus }}</span>
                         </div>
-                        <h4 class="text-dark fw-bold mb-0">Rincian Pembayaran Order</h4>
+                        <h4 class="text-dark fw-bold mb-0">Rincian Pembayaran Langsung</h4>
                         <span class="text-muted small">Kelola dan pantau detail tagihan serta riwayat transaksi pembayaran.</span>
                     </div>
                     <div>
@@ -130,8 +130,8 @@
                                 <div class="p-3 border rounded light-bg-detail">
                                     <span class="text-muted d-block small mb-1">Rute Perjalanan</span>
                                     <span class="fw-bold text-dark fs-6">
-                                        {{ $route->originLocation->name ?? '-' }} 
-                                        <i class="mdi mdi-arrow-right mx-2 text-primary"></i> 
+                                        {{ $route->originLocation->name ?? '-' }}
+                                        <i class="mdi mdi-arrow-right mx-2 text-primary"></i>
                                         {{ $route->destinationLocation->name ?? '-' }}
                                     </span>
                                 </div>
@@ -195,10 +195,13 @@
 
                 <!-- Payment History -->
                 <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent border-0 pt-4 pb-0">
+                    <div class="card-header bg-transparent border-0 pt-4 pb-0 d-flex justify-content-between align-items-center">
                         <h5 class="card-title fw-bold text-dark mb-0">
                             <i class="mdi mdi-history text-primary me-2"></i>Riwayat Pembayaran
                         </h5>
+                        <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                            {{ $data->orderPaymentHistory->count() }} transaksi
+                        </span>
                     </div>
                     <div class="card-body p-4">
                         @if($data->orderPaymentHistory->isEmpty())
@@ -215,12 +218,28 @@
                                             <th>Tanggal Bayar</th>
                                             <th>Tipe</th>
                                             <th>Bank Akun</th>
+                                            <th>Pajak & Claim</th>
                                             <th>Keterangan</th>
-                                            <th class="text-end" style="width: 25%">Nominal</th>
+                                            <th class="text-end" style="width: 20%">Nominal</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($data->orderPaymentHistory as $item)
+                                            @php
+                                                $ppnText = '-';
+                                                if ($item->ppn_percent !== null && (float) $item->ppn_percent > 0) {
+                                                    $ppnText = rtrim(rtrim(number_format((float) $item->ppn_percent, 2, '.', ''), '0'), '.') . '% — Rp ' . number_format((float) ($item->ppn ?? 0), 0, ',', '.');
+                                                } elseif ((float) ($item->ppn ?? 0) > 0) {
+                                                    $ppnText = 'Rp ' . number_format((float) $item->ppn, 0, ',', '.');
+                                                }
+
+                                                $pphText = '-';
+                                                if ($item->pph_percent !== null && (float) $item->pph_percent > 0) {
+                                                    $pphText = rtrim(rtrim(number_format((float) $item->pph_percent, 2, '.', ''), '0'), '.') . '% — Rp ' . number_format((float) ($item->pph ?? 0), 0, ',', '.');
+                                                } elseif ((float) ($item->pph ?? 0) > 0) {
+                                                    $pphText = 'Rp ' . number_format((float) $item->pph, 0, ',', '.');
+                                                }
+                                            @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($item->date)->format('d-m-Y') }}</td>
@@ -236,6 +255,18 @@
                                                     <span class="text-muted d-block small">
                                                         a/n {{ $item?->userBank?->accountName }}
                                                     </span>
+                                                </td>
+                                                <td>
+                                                    <span class="text-dark small d-block">PPN: {{ $ppnText }}</span>
+                                                    <span class="text-dark small d-block">PPH: {{ $pphText }}</span>
+                                                    @if((float) ($item->claim ?? 0) > 0)
+                                                        <span class="text-warning-emphasis small d-block fw-semibold">
+                                                            Claim: -Rp {{ number_format($item->claim, 0, ',', '.') }}
+                                                            @if($item->claim_description)
+                                                                <span class="text-muted fw-normal">({{ $item->claim_description }})</span>
+                                                            @endif
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td><span class="text-muted small">{{ $item->description ?? '-' }}</span></td>
                                                 <td class="text-end fw-bold text-success">
@@ -269,25 +300,35 @@
                                 <span class="text-muted">Biaya Tambahan</span>
                                 <span class="fw-semibold text-dark">Rp {{ number_format($orderPayment['additional_cost'] ?? 0, 0, ',', '.') }}</span>
                             </div>
-                            
+
                             <hr class="my-2 text-muted opacity-25">
-                            
+
                             <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
                                 <span class="fw-bold text-dark">Subtotal</span>
                                 <span class="fw-bold text-dark">Rp {{ number_format($orderPayment['cost'] + ($orderPayment['additional_cost'] ?? 0), 0, ',', '.') }}</span>
                             </div>
-                            
+
                             <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
-                                <span class="text-muted">PPN (+)</span>
+                                <span class="text-muted">PPN (+)@if($orderPayment['ppn_percent'] !== null) {{ ' ' . rtrim(rtrim(number_format((float) $orderPayment['ppn_percent'], 2, '.', ''), '0'), '.') . '%' }}@endif</span>
                                 <span class="fw-semibold text-success">+ Rp {{ number_format($orderPayment['ppn'] ?? 0, 0, ',', '.') }}</span>
                             </div>
                             <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
-                                <span class="text-muted">PPH (-)</span>
+                                <span class="text-muted">PPH (-)@if($orderPayment['pph_percent'] !== null) {{ ' ' . rtrim(rtrim(number_format((float) $orderPayment['pph_percent'], 2, '.', ''), '0'), '.') . '%' }}@endif</span>
                                 <span class="fw-semibold text-danger">- Rp {{ number_format($orderPayment['pph'] ?? 0, 0, ',', '.') }}</span>
                             </div>
-                            
+
+                            <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
+                                <div>
+                                    <span class="text-muted">Biaya Claim (-)</span>
+                                    @if(!empty($orderPayment['claim_description']))
+                                        <div class="text-muted fs-11 fst-italic">{{ $orderPayment['claim_description'] }}</div>
+                                    @endif
+                                </div>
+                                <span class="fw-semibold text-warning-emphasis">- Rp {{ number_format($orderPayment['claim'] ?? 0, 0, ',', '.') }}</span>
+                            </div>
+
                             <hr class="my-2 text-muted opacity-25">
-                            
+
                             <div class="list-group-item d-flex justify-content-between align-items-center border-0 px-0 py-2">
                                 <span class="fw-bold text-dark fs-6">Total Tagihan</span>
                                 <span class="fw-bold text-dark fs-6">Rp {{ number_format($orderPayment['grand_total'], 0, ',', '.') }}</span>
@@ -296,9 +337,9 @@
                                 <span class="text-muted">Sudah Dibayar</span>
                                 <span class="fw-semibold text-success">Rp {{ number_format($orderPayment['payment'], 0, ',', '.') }}</span>
                             </div>
-                            
+
                             <hr class="my-2 text-muted opacity-25">
-                            
+
                             @php
                                 $sisaTagihan = $orderPayment['total'];
                                 if ($sisaTagihan < 0) {
@@ -310,14 +351,18 @@
                                     $sisaLabel = 'Sisa Tagihan';
                                     $sisaValue = 'Rp ' . number_format($sisaTagihan, 0, ',', '.');
                                 } else {
-                                    $sisaClass = 'text-success bg-success-subtle border border-success-subtle';
-                                    $sisaLabel = 'Lunas';
-                                    $sisaValue = 'Rp 0';
+                                    $sisaClass = 'text-success bg-success-subtle border border-success-subtle justify-content-center';
+                                    $sisaLabel = '';
+                                    $sisaValue = '<i class="mdi mdi-check-circle-outline me-1"></i>Lunas';
                                 }
                             @endphp
-                            <div class="list-group-item d-flex justify-content-between align-items-center rounded-3 p-3 mt-3 {{ $sisaClass }}">
-                                <span class="fw-bold fs-7">{{ $sisaLabel }}</span>
-                                <span class="fw-bold fs-5">{{ $sisaValue }}</span>
+                            <div class="list-group-item d-flex align-items-center rounded-3 p-3 mt-3 {{ $sisaClass }}">
+                                @if(!empty($sisaLabel))
+                                    <span class="fw-bold fs-7">{{ $sisaLabel }}</span>
+                                    <span class="fw-bold fs-5 ms-auto">{{ $sisaValue }}</span>
+                                @else
+                                    <span class="fw-bold fs-5 text-center w-100">{!! $sisaValue !!}</span>
+                                @endif
                             </div>
                         </div>
                     </div>
