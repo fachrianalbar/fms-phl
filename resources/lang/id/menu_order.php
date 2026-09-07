@@ -25,7 +25,6 @@ return [
     'order_code' => 'Kode Pesanan',
     'cost' => 'Biaya',
     'order_type' => 'Tipe Pesanan',
-    'order_tax' => 'Pajak Pesanan',
     'fleet_type' => 'Tipe Kendaraan',
     'additional_cost' => 'Tambahan Biaya',
     'action' => 'Aksi',

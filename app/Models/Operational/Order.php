@@ -62,7 +62,6 @@ class Order extends Model
         'estimatedTime',
         'distance',
         'returnDate',
-        'is_order_tax',
         'returnDescription',
         'routeAmount',
         'price',

@@ -7,7 +7,6 @@ use App\Http\Controllers\Operational\NotReturnDoController;
 use App\Http\Controllers\Operational\OrderController;
 use App\Http\Controllers\Operational\OrderMonitoringController;
 use App\Http\Controllers\Operational\OrderOfficeController;
-use App\Http\Controllers\Operational\OrderTaxController;
 use App\Http\Controllers\Operational\ReturnDoController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,7 +18,6 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::post('return-do/sync-driver-salary', [ReturnDoController::class, 'syncDriverSalary'])->name('return-do.sync-driver-salary');
     Route::get('return-do/{orderId}/files', [ReturnDoController::class, 'getOrderFiles'])->name('return-do.get-files');
     Route::resource('not-return-do', NotReturnDoController::class)->except(['update']);
-    Route::resource('order-tax', OrderTaxController::class);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::put('not-return-do/update/{code}', [NotReturnDoController::class, 'update'])->name('not-return-do.update');
     Route::put('not-return-do/confirm/{code}', [NotReturnDoController::class, 'confirmReturn'])->name('not-return-do.confirm-return');
@@ -46,7 +44,6 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::delete('bon-ujt-detail/{id}', [BonUjtController::class, 'destroyBonUjtDetail'])->name('bon-ujt-detail.destroy');
     Route::post('order/recalculate-vendor-prices', [OrderController::class, 'recalculateVendorPrices'])->name('order.recalculate-vendor-prices');
     Route::resource('order', OrderController::class);
-    Route::post('store-order-tax', [OrderController::class, 'storeOrderTax'])->name('order.store-order-tax');
     Route::get('/order/{id}/detail', [OrderController::class, 'showOrder'])->name('order.show-order');
     Route::get('check-order-null-relation', [OrderController::class, 'checkNullRelations'])->name('order.check-null-relation');
     Route::get('excel-order', [OrderController::class, 'excelOrder'])->name('order.excel-order');
@@ -67,7 +64,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('order-monitoring', [OrderMonitoringController::class, 'datatable'])->name('order-monitoring');
     Route::get('not-return-do', [NotReturnDoController::class, 'datatable'])->name('not-return-do');
     Route::get('return-do', [ReturnDoController::class, 'datatable'])->name('return-do');
-    Route::get('order-tax', [OrderTaxController::class, 'datatable'])->name('order-tax');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {

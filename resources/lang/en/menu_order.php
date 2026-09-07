@@ -25,7 +25,6 @@ return [
     'order_code' => 'Order Code',
     'cost' => 'Cost',
     'order_type' => 'Order Type',
-    'order_tax' => 'Order Tax',
     'fleet_type' => 'Fleet Type',
     'additional_cost' => 'Additional Cost',
     'action' => 'Action',

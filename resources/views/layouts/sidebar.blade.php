@@ -87,7 +87,6 @@
         'operational/not-return-do' => 'mdi-file-cancel-outline',
         'operational/bon-ujt' => 'mdi-wallet-outline',
         'operational/return-do' => 'mdi-file-restore-outline',
-        'operational/order-tax' => 'mdi-percent-outline',
         'operational/office-order' => 'mdi-briefcase-outline',
         'operational/down-payment' => 'mdi-cash-plus',
 

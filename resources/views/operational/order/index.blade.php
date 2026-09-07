@@ -76,10 +76,6 @@
                         <i class="mdi mdi-file-excel fs-14 text-success"></i>
                     </a>
 
-                    <button type="button" class="btn btn-icon btn-sm bg-info-subtle" id="modal-tax-btn">
-                        <i class="mdi mdi-book-check fs-14 text-info"></i>
-                    </button>
-
                     <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
                 </div>
 
@@ -275,53 +271,6 @@
             </div>
         </div>
 
-        <form method="post" action="{{ route($view . 'store-order-tax') }}">
-            @csrf
-            <div class="modal fade bd-example-modal-xl" id="modal-tax" tabindex="-1" role="dialog"
-                aria-labelledby="myLargeModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Data {{ __('menu_order.order_tax') }}</h4>
-                            <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                        </div>
-                        <div class="card">
-                            <div class="card-body col-md-12">
-                                <div class="row g-3">
-                                    <table class="table table-striped w-100 nowrap" id="dt-order-tax">
-                                        <thead>
-                                            <tr>
-                                                <th>#</th>
-                                                <th>No</th>
-                                                <th>{{ __('menu_order.order_date') }}</th>
-                                                <th>{{ __('menu_order.plate_number') }}</th>
-                                                <th>{{ __('menu_order.driver') }}</th>
-                                                <th>Type</th>
-                                                <th>{{ __('menu_order.shipment_no') }}</th>
-                                                <th>{{ __('menu_order.customer') }}</th>
-                                                <th>{{ __('menu_order.destination') }}</th>
-                                                <th>Price</th>
-                                                <th>Harga Vendor Pribadi</th>
-                                                <th>Harga Vendor</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="modal-footer justify-content-start">
-                            <button type="submit" id="saveOrderTax"
-                                class="btn btn-primary">{{ __('general.save') }}</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </form>
-
         <!-- Modal Add Cost Component -->
         <div class="modal fade bd-example-modal-xl" id="modal-cost-component" tabindex="-1" role="dialog"
             aria-labelledby="myLargeModalLabel" aria-hidden="true">
@@ -511,13 +460,6 @@
     <script src=" {{ asset('assets/js/helper.js') }}"></script>
 
     <script>
-        let selectedOrders = [];
-
-        $('#modal-tax-btn').on('click', function() {
-            $('#modal-tax').modal('show');
-        });
-
-
         $(document).ready(function() {
             const table = $('#dt').DataTable({
                 "processing": true,
@@ -601,73 +543,6 @@
 
             })
 
-            const tableTax = $('#dt-order-tax').DataTable({
-                "processing": true,
-                "serverSide": true,
-                "destroy": true,
-                "ajax": {
-                    "url": "{{ route('dt.order') }}",
-                    "data": function(d) {
-                        d.is_order_tax = 0;
-                    }
-                },
-                "columns": [{
-                        "data": 'actionTax'
-                    },
-                    {
-                        "data": 'DT_RowIndex'
-                    },
-                    {
-                        "data": 'orderDate'
-                    },
-                    {
-                        "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": 'driver.name'
-                    },
-                    {
-                        "data": 'orderType'
-                    },
-                    {
-                        "data": "shipmentNumber"
-                    },
-                    {
-                        "data": 'customer.name'
-                    },
-                    {
-                        "data": 'route.destinationLocation.name'
-                    },
-                    {
-                        "data": 'price'
-                    },
-                    {
-                        "data": 'harga_vendor_pribadi'
-                    },
-                    {
-                        "data": 'harga_vendor'
-                    },
-
-
-                ],
-                "columnDefs": [{
-                        "searchable": false,
-                        "targets": [0, 1]
-                    },
-                    {
-                        "orderable": false,
-                        "targets": [0, 1]
-                    }
-                ],
-                "order": [
-                    [2, 'desc']
-                ]
-            })
-
-            // $('#modal-tax-btn').click(function() {
-            //     $('#modal-tax').modal('show');
-            // });
-
 
             // Event untuk form filter
             $('#filterForm').on('submit', function(e) {
@@ -680,49 +555,6 @@
 
 
                 table.ajax.reload(); // Reload DataTable dengan filter baru
-            });
-
-            // Event handler untuk checkbox
-            $(document).on('change', '.order-checkbox', function() {
-                const orderId = $(this).val();
-                if ($(this).is(':checked')) {
-                    if (!selectedOrders.includes(orderId)) {
-                        selectedOrders.push(orderId);
-                    }
-                } else {
-                    selectedOrders = selectedOrders.filter(id => id !== orderId);
-                }
-
-            });
-
-            $('#saveOrderTax').click(function(e) {
-                // Get all checkboxes
-                if (selectedOrders.length === 0) {
-                    event.preventDefault();
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "Please select at least one item",
-                        icon: "warning",
-                    });
-                    return;
-                }
-
-                // Tambahkan array ke form
-                $('<input>').attr({
-                    type: 'hidden',
-                    name: 'selectedOrders',
-                    value: JSON.stringify(selectedOrders)
-                }).appendTo('form');
-            });
-
-            // Simpan state saat DataTable di-reload (misalnya saat pindah halaman)
-            $('#dt-order-tax').on('draw.dt', function() {
-                $('.order-checkbox').each(function() {
-                    const orderId = $(this).val();
-                    if (selectedOrders.includes(orderId)) {
-                        $(this).prop('checked', true);
-                    }
-                });
             });
 
             $('#check-null').on('click', function() {

@@ -270,11 +270,6 @@ class OrderService
         $data->delete();
     }
 
-    public function storeOrderTax($selectedOrders)
-    {
-        $this->service->whereIn('code', $selectedOrders)->update(['is_order_tax' => 1]);
-    }
-
     public function getCustomerDetailOrder($orderCode)
     {
         return $this->customerDetailOrder->where('orderCode', $orderCode)->with(['customerDetail'])->get();

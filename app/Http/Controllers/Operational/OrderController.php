@@ -448,10 +448,6 @@ class OrderController extends Controller
                 $data->whereIn('status', [0, 1, 2]);
             }
 
-            if ($request->has('is_order_tax')) {
-                $data->where('is_order_tax', $request->is_order_tax);
-            }
-
             // Definisikan kolom filter dengan alias
             $filters = [
                 'fleet_plateNumber' => $request->plateNumber,
@@ -710,12 +706,7 @@ class OrderController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
-                ->addColumn('actionTax', function ($row) {
-                    $btn = '<input class="order-checkbox" type="checkbox" name="order[]" data-id="' . $row->code . '" value="' . $row->code . '">';
-
-                    return $btn;
-                })
-                ->rawColumns(['action', 'actionTax', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice', 'price', 'harga_vendor', 'harga_vendor_pribadi'])
+                ->rawColumns(['action', 'status', 'fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'totalPrice', 'price', 'harga_vendor', 'harga_vendor_pribadi'])
                 ->toJson();
         }
     }
@@ -1030,33 +1021,6 @@ class OrderController extends Controller
             ->first();
 
         return $route->routeDetail;
-    }
-
-    public function storeOrderTax(Request $request)
-    {
-        $selectedOrders = json_decode($request->input('selectedOrders'), true);
-
-        $validator = Validator::make($request->all(), [
-            'order' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return redirect()->back()->with('fail', $validator->errors()->all()[0]);
-        }
-
-        try {
-            DB::beginTransaction();
-
-            $this->service->storeOrderTax($selectedOrders);
-
-            DB::commit();
-
-            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
-        } catch (\Throwable $th) {
-            DB::rollback();
-
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
-        }
     }
 
     public function generateCode(Request $request)
