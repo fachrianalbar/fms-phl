@@ -1251,6 +1251,7 @@
     function readNotaCheckbox(checkbox) {
         return {
             orderCode: String(checkbox.attr('data-order-code') || ''),
+            shipmentNumber: String(checkbox.attr('data-shipment') || ''),
             customerCode: String(checkbox.attr('data-customer-code') || ''),
             customerName: String(checkbox.attr('data-customer-name') || '-'),
             billingAmount: Math.round(Number(checkbox.attr('data-billing-amount') || 0)),
@@ -1494,7 +1495,10 @@
 
         const orderListEl = $('#notaOrderList').empty();
         selectedCodes.forEach(function(orderCode) {
-            orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(orderCode));
+            const item = selectedNotaOrders[orderCode];
+            const shipment = (item && item.shipmentNumber) || '';
+            const label = shipment || orderCode;
+            orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(label));
         });
 
         $('#notaPpnRate').val('0');

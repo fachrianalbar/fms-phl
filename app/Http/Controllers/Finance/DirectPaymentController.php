@@ -544,7 +544,7 @@ class DirectPaymentController extends Controller
                     $disabled = $row->payment_status === 'partial' ? ' disabled' : '';
                     $subtotalAmount = (float) $row->cost + (float) $row->additional_cost;
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox"' . $disabled . ' data-order-code="' . e($row->code) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->grand_total . '" data-subtotal-amount="' . $subtotalAmount . '" data-paid-amount="' . $row->payment . '" data-remaining-amount="' . $row->remaining . '" data-checkbox-type="nota" data-nota-number=""></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox"' . $disabled . ' data-order-code="' . e($row->code) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->grand_total . '" data-subtotal-amount="' . $subtotalAmount . '" data-shipment="' . e($row->shipment ?? '') . '" data-paid-amount="' . $row->payment . '" data-remaining-amount="' . $row->remaining . '" data-checkbox-type="nota" data-nota-number=""></div>';
                 })
                 ->addColumn('action', function ($row) {
                     if ($row->unit_type === 'nota') {

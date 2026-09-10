@@ -25,6 +25,63 @@ class UserBankService
         return $this->service->get();
     }
 
+    /**
+     * Data untuk datatable user-bank: eager load relasi + filter status pill,
+     * dipetakan menjadi array bersih (hanya kolom yang dipakai tabel).
+     * Status: all | person | company | internal | external.
+     */
+    public function findAllFiltered(string $status = 'all')
+    {
+        $query = $this->service->with(['bank', 'liveMutation']);
+
+        if ($status === 'person') {
+            $query->where('type', 1);
+        } elseif ($status === 'company') {
+            $query->where('type', 2);
+        } elseif ($status === 'internal') {
+            $query->where('rekening_type', 'internal');
+        } elseif ($status === 'external') {
+            $query->where('rekening_type', 'external');
+        }
+
+        return $query->get()->map(function ($row) {
+            return [
+                'id' => $row->id,
+                'bank_name' => $row->bank->name ?? '',
+                'accountNumber' => $row->accountNumber,
+                'accountName' => $row->accountName,
+                'type' => $row->type,
+                'rekening_type' => $row->rekening_type,
+                'bankCode' => $row->bankCode,
+                'balance' => (float) ($row->liveMutation->balance ?? 0),
+            ];
+        });
+    }
+
+    /**
+     * Statistik agregat untuk KPI cards halaman index.
+     */
+    public function getStats()
+    {
+        $banks = $this->service->get();
+
+        return [
+            'totalCount' => $banks->count(),
+            'personCount' => $banks->where('type', 1)->count(),
+            'companyCount' => $banks->where('type', 2)->count(),
+            'internalCount' => $banks->filter(function ($bank) {
+                return strtolower($bank->rekening_type ?? '') === 'internal';
+            })->count(),
+            'externalCount' => $banks->filter(function ($bank) {
+                return strtolower($bank->rekening_type ?? '') !== 'internal';
+            })->count(),
+            'totalBalance' => (int) $this->service->with('liveMutation')->get()
+                ->sum(function ($bank) {
+                    return (int) ($bank->liveMutation->balance ?? 0);
+                }),
+        ];
+    }
+
     public function findCompany()
     {
         return $this->service->where('type', 2)->with(['bank', 'liveMutation'])->get();
@@ -52,6 +109,7 @@ class UserBankService
             'accountName' => $request->accountName,
             'bankCode' => $request->bankCode,
             'type' => $request->type,
+            'rekening_type' => $request->rekening_type ?? 'external',
             // 'balance' => (int)$request->balance,
             'accountNumber' => $request->accountNumber,
         ]);
@@ -89,6 +147,7 @@ class UserBankService
             'accountName' => $request->accountName,
             'bankCode' => $request->bankCode,
             'type' => $request->type,
+            'rekening_type' => $request->rekening_type ?? $this->getById($id)->rekening_type ?? 'external',
             // 'balance' => (int)$request->balance,
             'accountNumber' => $request->accountNumber,
         ]);

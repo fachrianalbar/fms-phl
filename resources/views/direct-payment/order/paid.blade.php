@@ -38,7 +38,7 @@
 
     .table-scroll-wrap .direct-payment-table {
         min-width: 980px;
-        width: max-content !important;
+        width: 100% !important;
     }
 
     /* Select2 untuk dropdown "Tampilkan _MENU_ data" milik DataTables */

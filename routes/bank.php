@@ -13,7 +13,7 @@ Route::prefix('bank')->name('bank.')->group(function () {
     Route::resource('expense', ExpenseController::class);
     Route::resource('bank-book', BankBookController::class);
     Route::resource('bank-account', BankAccountController::class);
-    Route::resource('user-bank', UserBankController::class);
+    Route::resource('user-bank', UserBankController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('config-bank', ConfigBankController::class);
     Route::delete('config-bank/delete-by-user/{code}', [ConfigBankController::class, 'destroyByUser'])->name('config-bank.destroy-by-user');
 });
@@ -29,6 +29,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('list-user-bank', [ConfigBankController::class, 'listUserBank'])->name('list-user-bank');
+    Route::get('user-bank/stats', [UserBankController::class, 'stats'])->name('user-bank.stats');
 });
 
 Route::prefix('api')->name('api.')->group(function () {
