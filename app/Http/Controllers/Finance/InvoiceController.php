@@ -141,7 +141,9 @@ class InvoiceController extends Controller
      */
     public function create()
     {
-        $customer = $this->customerSvc->findAll();
+        // Hanya customer isDo = 1 (tidak langsung cetak) yang boleh difaktur;
+        // customer isDo = 0 (langsung cetak) ditangani Pembayaran Langsung.
+        $customer = $this->customerSvc->findAllInvoicable();
 
         return view('invoice.create')
             ->with('view', 'invoice.')

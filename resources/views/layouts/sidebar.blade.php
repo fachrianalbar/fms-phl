@@ -47,6 +47,11 @@
         'vendor/invoice/paid' => 'mdi-cash-check',
         'vendor/payment' => 'mdi-credit-card-outline',
 
+        // Pembayaran Langsung
+        'direct-payment/order/unpaid' => 'mdi-cash-remove',
+        'direct-payment/order/paid' => 'mdi-cash-check',
+        'direct-payment/payment' => 'mdi-credit-card-outline',
+
         // Inventory
         'inventory/items' => 'mdi-package-variant-closed',
         'inventory/stock' => 'mdi-clipboard-list-outline',

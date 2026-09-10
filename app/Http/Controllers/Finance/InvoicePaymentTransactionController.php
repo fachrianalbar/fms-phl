@@ -61,10 +61,12 @@ class InvoicePaymentTransactionController extends Controller
 
     /**
      * Form transaksi pembayaran baru: pilih customer -> centang faktur -> nominal & claim.
+     * Customer ditampilkan: isDo = 1, ditambah isDo = 0 yang masih punya faktur
+     * terbuka (data lama) agar tetap bisa ditagih sampai lunas.
      */
     public function create()
     {
-        $customer = $this->customerSvc->findAll();
+        $customer = $this->customerSvc->findAllInvoicePayable();
         $userBank = $this->userBankSvc->findCompany();
 
         return view($this->view.'create')

@@ -104,15 +104,15 @@ class InvoiceService
             ->whereNull('deleted_at')
             ->select('orderCode');
 
+        // Order yang boleh difaktur: status 4 (Kembali Do) milik customer
+        // isDo = 1 (tidak langsung cetak). Customer isDo = 0 (langsung cetak)
+        // ditangani menu Pembayaran Langsung.
         return $this->order
             ->whereNotIn('code', $usedOrderCodes)
-            ->where(function ($q) {
-                $q->where('status', 4)
-                    ->orWhereHas('customer', function ($q2) {
-                        $q2->where('isDo', 0);
-                    });
+            ->where('status', 4)
+            ->whereHas('customer', function ($q) {
+                $q->where('isDo', 1);
             })
-            ->where('status', '!=', 5) // buang semua status 5
             ->with([
                 'fleet',
                 'fleet.type',
@@ -159,11 +159,31 @@ class InvoiceService
         }
     }
 
+    /**
+     * Order customer isDo = 0 (langsung cetak / non-DO) tidak boleh difaktur —
+     * pembayarannya ditangani menu Pembayaran Langsung.
+     */
+    protected function ensureOrdersAreDirectPayOnly(array $orderCodes): void
+    {
+        $directPayOrders = $this->order->newQuery()
+            ->whereIn('code', $orderCodes)
+            ->whereHas('customer', function ($q) {
+                $q->where('isDo', 0);
+            })
+            ->pluck('code')
+            ->toArray();
+
+        if (! empty($directPayOrders)) {
+            throw new \RuntimeException('Order customer langsung cetak tidak dapat difaktur. Gunakan menu Pembayaran Langsung: ' . implode(', ', $directPayOrders));
+        }
+    }
+
     public function store($request, $title, $selectedOrders)
     {
         $orderCodes = array_values(array_unique(array_filter((array) $selectedOrders)));
         $this->ensureOrdersAreNotInInvoice($orderCodes);
         $this->ensureOrdersBelongToCustomer($orderCodes, $request->customerCode);
+        $this->ensureOrdersAreDirectPayOnly($orderCodes);
 
         $usePpn = (bool) ($request->input('usePpn') ?? false);
         $usePph = (bool) ($request->input('usePph') ?? false);
@@ -301,6 +321,7 @@ class InvoiceService
 
         $this->ensureOrdersAreNotInInvoice($orderCodes);
         $this->ensureOrdersBelongToCustomer($orderCodes, $invoice->customerCode);
+        $this->ensureOrdersAreDirectPayOnly($orderCodes);
 
         if (! empty($orderCodes)) {
 

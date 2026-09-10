@@ -36,6 +36,37 @@ class CustomerService
         return $this->service->with(['company'])->get();
     }
 
+    /**
+     * Customer yang boleh membuat faktur (menu Faktur): hanya isDo = 1
+     * (tidak langsung dicetak). Customer isDo = 0 (langsung cetak) ditangani
+     * menu Pembayaran Langsung.
+     */
+    public function findAllInvoicable()
+    {
+        return $this->service->with(['company'])
+            ->where('isDo', 1)
+            ->get();
+    }
+
+    /**
+     * Customer untuk menu pembayaran faktur: customer isDo = 1, ditambah
+     * customer isDo = 0 yang masih memiliki faktur terbuka (belum lunas)
+     * dari data lama agar tetap bisa ditagih. Setelah faktur lama lunas,
+     * customer tsb otomatis tidak muncul lagi di menu Faktur.
+     */
+    public function findAllInvoicePayable()
+    {
+        $openInvoice = fn ($q) => $q->whereNull('status')
+            ->orWhere('status', '!=', \App\Models\Finance\Invoice::STATUS_FULL);
+
+        return $this->service->with(['company'])
+            ->where(function ($q) use ($openInvoice) {
+                $q->where('isDo', 1)
+                    ->orWhereHas('invoices', $openInvoice);
+            })
+            ->get();
+    }
+
     public function getById($id)
     {
         return $this->service->where('id', $id)->with(['details', 'pic'])->first();

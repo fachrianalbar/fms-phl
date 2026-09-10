@@ -30,6 +30,7 @@ class OrderPaymentHistory extends Model
         'date',
         'description',
         'userBankCode',
+        'batch_code',
     ];
 
     protected $casts = [
@@ -49,5 +50,10 @@ class OrderPaymentHistory extends Model
     public function userBank()
     {
         return $this->belongsTo(UserBank::class, 'userBankCode', 'code');
+    }
+
+    public function orderPayment()
+    {
+        return $this->belongsTo(OrderPayment::class, 'orderCode', 'orderCode');
     }
 }

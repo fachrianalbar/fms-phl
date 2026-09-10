@@ -28,6 +28,8 @@ class OrderPayment extends Model
         'pph_percent',
         'total',
         'status',
+        'nota_number',
+        'user_bank_code',
     ];
 
     protected $casts = [
@@ -45,5 +47,10 @@ class OrderPayment extends Model
     public function order()
     {
         return $this->belongsTo(Order::class, 'orderCode', 'code');
+    }
+
+    public function paymentHistory()
+    {
+        return $this->hasMany(OrderPaymentHistory::class, 'orderCode', 'orderCode');
     }
 }
