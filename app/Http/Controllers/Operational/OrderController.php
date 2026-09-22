@@ -17,7 +17,6 @@ use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\CompanySettingService;
-use App\Services\Data\FleetDriverService;
 use App\Services\Master\CostComponentService;
 use App\Services\Master\CustomerService;
 use App\Services\Master\EmployeeService;
@@ -51,8 +50,6 @@ class OrderController extends Controller
 
     protected $materialSvc;
 
-    protected $fleetDriverSvc;
-
     protected $customerSvc;
 
     protected $orderTypeSvc;
@@ -78,7 +75,6 @@ class OrderController extends Controller
     public function __construct(
         OrderService $orderSvc,
         MaterialService $materialSvc,
-        FleetDriverService $fleetDriverSvc,
         CustomerService $customerSvc,
         OrderTypeService $orderTypeSvc,
         RouteTypeService $routeTypeSvc,
@@ -98,7 +94,6 @@ class OrderController extends Controller
         $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
         $this->view = 'operational.order.';
         $this->materialSvc = $materialSvc;
-        $this->fleetDriverSvc = $fleetDriverSvc;
         $this->customerSvc = $customerSvc;
         $this->orderTypeSvc = $orderTypeSvc;
         $this->routeTypeSvc = $routeTypeSvc;
@@ -144,7 +139,6 @@ class OrderController extends Controller
     public function create()
     {
         $material = $this->materialSvc->findAll();
-        $fleetDriver = $this->fleetDriverSvc->findAll();
         $customer = $this->customerSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
@@ -158,7 +152,6 @@ class OrderController extends Controller
         return view($this->view . 'create')
             ->with('view', $this->view)
             ->with('material', $material)
-            ->with('fleetDriver', $fleetDriver)
             ->with('customer', $customer)
             ->with('orderType', $orderType)
             ->with('routeType', $routeType)
@@ -315,7 +308,6 @@ class OrderController extends Controller
         }
 
         $material = $this->materialSvc->findAll();
-        $fleetDriver = $this->fleetDriverSvc->findAll();
         $customer = $this->customerSvc->findAll();
         $orderType = $this->orderTypeSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
@@ -346,7 +338,6 @@ class OrderController extends Controller
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('material', $material)
-            ->with('fleetDriver', $fleetDriver)
             ->with('customer', $customer)
             ->with('orderType', $orderType)
             ->with('routeType', $routeType)

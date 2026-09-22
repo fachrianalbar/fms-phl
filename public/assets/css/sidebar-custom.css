@@ -208,12 +208,17 @@ body[data-menu-color="dark"] .app-sidebar-menu {
     color: var(--phl-sb-accent-strong);
 }
 
-/* Labels truncate instead of wrapping inside narrow sidebar */
+/* Labels wrap to multiple lines instead of truncating in the narrow sidebar.
+ * Long words break anywhere so nothing overflows; the label flexes to fill
+ * the row (keeps the chevron pinned right) and stays aligned to the icon. */
 #sidebar-menu .phl-label {
+    flex: 1 1 auto;
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    padding-right: 2px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.35;
 }
 
 /* ---------- Disabled ---------- */

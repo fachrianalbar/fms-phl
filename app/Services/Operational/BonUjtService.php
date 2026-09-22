@@ -69,7 +69,6 @@ class BonUjtService
         $orderCodeArr = $this->bonUjtDetail->where('bonUJtCode', $data->code)->pluck('orderCode');
 
         return $this->order->whereIn('code', $orderCodeArr)->with([
-            'fleetDriver.fleet',
             // 'fleetDriver.employee',
             'fleet',
             'driver',

@@ -23,7 +23,6 @@ class ProfitLossService
     public function datatableOrder($fleetCode)
     {
         return $this->order->where('fleetCode', $fleetCode)->with([
-            'fleetDriver.fleet',
             'driver',
             // 'fleetDriver.employee',
             'customer',

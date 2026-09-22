@@ -3,6 +3,7 @@
 namespace App\Models\Warehouse;
 
 use App\Models\Master\Fleet;
+use App\Models\Purchasing\Purchase;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -50,5 +51,14 @@ class Maintenance extends Model
     public function details()
     {
         return $this->hasMany(MaintenanceDetail::class, 'maintenanceCode', 'code');
+    }
+
+    /**
+     * Purchase Order (PO) yang dipilih untuk maintenance ini.
+     */
+    public function purchases()
+    {
+        return $this->belongsToMany(Purchase::class, 'maintenance_purchase', 'maintenance_id', 'purchase_id')
+            ->withTimestamps();
     }
 }

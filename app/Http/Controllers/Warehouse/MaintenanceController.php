@@ -7,6 +7,7 @@ use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
+use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
@@ -98,6 +99,8 @@ class MaintenanceController extends Controller
             'warehouseCode' => 'required',
             'date' => 'required',
             'time' => 'required',
+            'purchase_ids' => 'required|array|min:1',
+            'purchase_ids.*' => 'required|exists:purchase,id',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
@@ -128,7 +131,7 @@ class MaintenanceController extends Controller
         }
 
         // Load relationships
-        $data->load(['fleet', 'warehouse', 'details.item']);
+        $data->load(['fleet', 'warehouse', 'details.item', 'purchases.supplier']);
 
         return response()->json($data);
     }
@@ -146,6 +149,8 @@ class MaintenanceController extends Controller
 
         $fleet = $this->fleetSvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
+
+        $data->load(['purchases', 'purchases.supplier']);
 
         return view($this->view . 'edit')
             ->with('view', $this->view)
@@ -165,6 +170,8 @@ class MaintenanceController extends Controller
             'fleetCode' => 'required',
             'date' => 'required',
             'time' => 'required',
+            'purchase_ids' => 'required|array|min:1',
+            'purchase_ids.*' => 'required|exists:purchase,id',
         ]);
 
         if ($validator->fails()) {
@@ -429,5 +436,37 @@ class MaintenanceController extends Controller
         })->values();
 
         return response()->json(['success' => true, 'data' => $stocks]);
+    }
+
+    /**
+     * Get purchase orders (PO) by warehouse untuk dropdown "No PO" di form maintenance.
+     */
+    public function getPurchasesByWarehouse(Request $request)
+    {
+        $warehouseCode = $request->warehouseCode;
+
+        if (! $warehouseCode) {
+            return response()->json(['success' => false, 'message' => 'Warehouse code is required'], 400);
+        }
+
+        $purchases = Purchase::query()
+            ->with('supplier')
+            ->where('warehouseCode', $warehouseCode)
+            ->orderByDesc('date')
+            ->orderByDesc('code')
+            ->get()
+            ->map(function ($purchase) {
+                return [
+                    'id' => $purchase->id,
+                    'code' => $purchase->code,
+                    'date' => $purchase->date,
+                    'supplierCode' => $purchase->supplierCode,
+                    'supplierName' => optional($purchase->supplier)->name,
+                    'status' => $purchase->status,
+                ];
+            })
+            ->values();
+
+        return response()->json(['success' => true, 'data' => $purchases]);
     }
 }

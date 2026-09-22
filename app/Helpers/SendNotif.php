@@ -3,18 +3,9 @@
 namespace App\Helpers;
 
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Mail;
 
 class SendNotif
 {
-    public static function EmailTruckOrderMonitoring($data)
-    {
-        Mail::send('operational.monitoring-order.notif.email', $data, function ($message) use ($data) {
-            $message->from(env('MAIL_FROM_ADDRESS'), env('MAIL_FROM_NAME'));
-            $message->to($data['email'])->subject('⚠️ Peringatan! Truk Keluar dari Jalur');
-        });
-    }
-
     public static function sendWa(string $telephone, string $message)
     {
         $userkey = env('WA_USER_KEY');

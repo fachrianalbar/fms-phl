@@ -38,7 +38,6 @@ class NotReturnDoService
     public function findAll()
     {
         return $this->service->where('status', 3)->with([
-            'fleetDriver.fleet',
             'driver',
             // 'fleetDriver.employee',
             'customer',
@@ -57,7 +56,6 @@ class NotReturnDoService
     public function datatable()
     {
         return $this->service->where('status', 3)->with([
-            'fleetDriver.fleet',
             'driver',
             // 'fleetDriver.employee',
             'customer',

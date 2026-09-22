@@ -73,22 +73,6 @@
 
                     </div>
 
-                    <div class="row mt-4">
-                        {{-- <div class="col-md-6">
-                            <label class="form-label" for="itemLocationCode">Item Location <i
-                                    class="mdi mdi-information text-danger"></i></label>
-                            <select class="js-example-basic-single" name="itemLocationCode" id="itemLocationCode" required>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
-                    @foreach ($location as $item)
-                    <option value="{{ $item->code }}"
-                        {{ $data->itemLocationCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
-                    </option>
-                    @endforeach
-                    </select>
-                </div> --}}
-                    </div>
-
-
                     <div class="col-12">
                         <button class="btn btn-primary" type="submit">Edit</button>
                     </div>

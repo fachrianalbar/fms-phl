@@ -31,25 +31,20 @@ class OrderDriverSalaryService
             $primaryDriverId = Employee::where('code', $order->driverCode)->value('id');
         }
 
-        // Fetch all order costs with their cost components
-        $orderCosts = OrderCost::where('orderCode', $order->code)
+        // Only load salary costs; the old implementation loaded every cost and
+        // filtered them in PHP before syncing.
+        $salaryCosts = OrderCost::where('orderCode', $order->code)
+            ->whereHas('costComponent', function ($q) {
+                $q->where('type', 'salary')
+                    ->orWhere('name', 'like', '%gaji%');
+            })
             ->with('costComponent')
             ->get();
 
-        // Filter salary costs (type = 'salary' or name contains 'gaji')
-        $salaryCosts = $orderCosts->filter(function ($cost) {
-            return $cost->costComponent && (
-                $cost->costComponent->type === 'salary' ||
-                stripos($cost->costComponent->name, 'gaji') !== false
-            );
-        });
-
-        $activeSalaryCostIds = [];
         $syncedSalaryRowIds = [];
 
         foreach ($salaryCosts as $cost) {
             $costComponentId = $cost->costComponent->id;
-            $activeSalaryCostIds[] = $cost->id;
 
             // Determine driver for this cost: specific driver on cost, or fallback to order primary driver
             $rowDriverId = null;

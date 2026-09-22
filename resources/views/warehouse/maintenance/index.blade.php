@@ -166,6 +166,12 @@
                             <p id="detail-warehouse"></p>
                         </div>
                     </div>
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Purchase Order (No PO):</strong>
+                            <div id="detail-po" class="mt-1"></div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-12">
                             <strong>Items:</strong>
@@ -332,6 +338,19 @@
                     $('#detail-date').text(response.date + ' ' + response.time);
                     $('#detail-fleet').text(response.fleet ? response.fleet.plateNumber : '-');
                     $('#detail-warehouse').text(response.warehouse ? response.warehouse.name : '-');
+
+                    // Populate PO badges
+                    let poHtml = '<span class="text-muted">-</span>';
+                    if (response.purchases && response.purchases.length > 0) {
+                        poHtml = response.purchases.map(function(p) {
+                            let text = p.code;
+                            if (p.supplier && p.supplier.name) {
+                                text += ' (' + p.supplier.name + ')';
+                            }
+                            return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1 mb-1">' + text + '</span>';
+                        }).join(' ');
+                    }
+                    $('#detail-po').html(poHtml);
 
                     // Populate items table
                     let itemsHtml = '';

@@ -38,7 +38,7 @@ class MaintenanceFleetDetailReport implements FromView, ShouldAutoSize
             ->select([
                 DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
                 DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                DB::raw('COALESCE(SUM(item.price * maintenance_detail.qty), 0) as totalCost'),
+                DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
             ])
             ->leftJoin('maintenance_detail', function ($join) {
                 $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')

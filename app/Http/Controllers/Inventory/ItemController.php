@@ -6,7 +6,6 @@ use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
 use App\Models\inventory\Item;
 use App\Services\Inventory\ItemCategoryService;
-use App\Services\Inventory\ItemLocationService;
 use App\Services\Inventory\ItemService;
 use App\Services\Inventory\SupplierService;
 use App\Services\Inventory\WarehouseService;
@@ -30,8 +29,6 @@ class ItemController extends Controller
 
     protected $supplierSvc;
 
-    protected $locationSvc;
-
     protected $title;
 
     protected $view;
@@ -43,15 +40,13 @@ class ItemController extends Controller
         UnitService $unitSvc,
         ItemCategoryService $categorySvc,
         WarehouseService $warehouseSvc,
-        SupplierService $supplierSvc,
-        ItemLocationService $locationSvc
+        SupplierService $supplierSvc
     ) {
         $this->service = $itemSvc;
         $this->unitSvc = $unitSvc;
         $this->categorySvc = $categorySvc;
         $this->warehouseSvc = $warehouseSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->locationSvc = $locationSvc;
         $this->title = 'Item';
         $this->view = 'inventory.items.';
     }
@@ -78,13 +73,11 @@ class ItemController extends Controller
         $category = $this->categorySvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
-        $location = $this->locationSvc->findAll();
         $types = Item::types();
 
         return view($this->view.'create')
             ->with('view', $this->view)
             ->with('unit', $unit)
-            ->with('location', $location)
             ->with('category', $category)
             ->with('warehouse', $warehouse)
             ->with('supplier', $supplier)
@@ -149,14 +142,12 @@ class ItemController extends Controller
         $category = $this->categorySvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
-        $location = $this->locationSvc->findAll();
         $types = Item::types();
 
         return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('unit', $unit)
-            ->with('location', $location)
             ->with('category', $category)
             ->with('warehouse', $warehouse)
             ->with('supplier', $supplier)

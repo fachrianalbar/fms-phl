@@ -333,16 +333,14 @@ class MaintenancePerFleetController extends Controller
                     'maintenance.code',
                     'maintenance.date',
                     'maintenance.time',
-                    'maintenance.grand_total',
-                    'warehouse.name as warehouseName',
-                    DB::raw('COUNT(DISTINCT maintenance_detail.code) as totalItem'),
-                    DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
+                    'maintenance_detail.itemCode',
+                    'item.name as itemName',
+                    'supplier.name as supplierName',
+                    'maintenance_detail.qty',
+                    'maintenance_detail.price',
+                    'maintenance_detail.total',
                 ])
-                ->leftJoin('warehouse', function ($join) {
-                    $join->on('warehouse.code', '=', 'maintenance.warehouseCode')
-                        ->whereNull('warehouse.deleted_at');
-                })
-                ->leftJoin('maintenance_detail', function ($join) {
+                ->join('maintenance_detail', function ($join) {
                     $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
                         ->whereNull('maintenance_detail.deleted_at');
                 })
@@ -350,40 +348,41 @@ class MaintenancePerFleetController extends Controller
                     $join->on('item.code', '=', 'maintenance_detail.itemCode')
                         ->whereNull('item.deleted_at');
                 })
+                ->leftJoin('supplier', function ($join) {
+                    $join->on('supplier.code', '=', 'item.supplierCode')
+                        ->whereNull('supplier.deleted_at');
+                })
                 ->where('maintenance.fleetCode', $fleetCode)
                 ->where('maintenance.status', 0)
                 ->whereNull('maintenance.deleted_at')
-                ->groupBy('maintenance.code', 'maintenance.date', 'maintenance.time', 'maintenance.grand_total', 'warehouse.name')
                 ->orderByDesc('maintenance.date')
-                ->orderByDesc('maintenance.time');
+                ->orderByDesc('maintenance.time')
+                ->orderBy('maintenance.code')
+                ->orderBy('maintenance_detail.itemCode');
 
             $this->applyDateFilter($data, $request->startDate, $request->endDate);
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return '<button type="button" class="btn btn-icon btn-sm bg-info-subtle" '
-                        . 'onclick="showMaintenanceItems(\'' . $row->code . '\')" '
-                        . 'data-bs-toggle="tooltip" title="Detail">'
-                        . '<i class="mdi mdi-eye-outline fs-14 text-info"></i>'
-                        . '</button>';
-                })
                 ->addColumn('maintenanceDate', function ($row) {
                     return Carbon::parse($row->date)->format('d-m-Y') . ' ' . Carbon::parse($row->time)->format('H:i');
                 })
-                ->editColumn('warehouseName', function ($row) {
-                    return $row->warehouseName ?: '-';
+                ->editColumn('itemName', function ($row) {
+                    return $row->itemName ?: '-';
                 })
-                ->editColumn('totalItem', function ($row) {
-                    return number_format((float) $row->totalItem, 0, ',', '.');
+                ->editColumn('supplierName', function ($row) {
+                    return $row->supplierName ?: '-';
                 })
-                ->editColumn('totalQty', function ($row) {
-                    return number_format((float) $row->totalQty, 1, ',', '.');
+                ->editColumn('qty', function ($row) {
+                    return number_format((float) $row->qty, 1, ',', '.');
                 })
-                ->editColumn('totalCost', function ($row) {
-                    return number_format((float) $row->grand_total, 0, ',', '.');
+                ->editColumn('price', function ($row) {
+                    return 'Rp ' . number_format((float) $row->price, 0, ',', '.');
                 })
-                ->rawColumns(['action', 'maintenanceDate', 'warehouseName', 'totalItem', 'totalQty', 'totalCost'])
+                ->editColumn('total', function ($row) {
+                    return 'Rp ' . number_format((float) $row->total, 0, ',', '.');
+                })
+                ->rawColumns(['maintenanceDate', 'itemName', 'supplierName', 'qty', 'price', 'total'])
                 ->toJson();
         }
     }

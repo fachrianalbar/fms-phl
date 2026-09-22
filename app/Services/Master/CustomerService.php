@@ -37,6 +37,14 @@ class CustomerService
     }
 
     /**
+     * Query builder customer (dengan relasi company) untuk server-side DataTables.
+     */
+    public function findAllQuery()
+    {
+        return $this->service->with(['company'])->orderBy('name');
+    }
+
+    /**
      * Customer yang boleh membuat faktur (menu Faktur): hanya isDo = 1
      * (tidak langsung dicetak). Customer isDo = 0 (langsung cetak) ditangani
      * menu Pembayaran Langsung.

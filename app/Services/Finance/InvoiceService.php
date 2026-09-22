@@ -301,7 +301,6 @@ class InvoiceService
         $orderCodeArr = $this->invoiceDetail->where('invoiceCode', $data->code)->pluck('orderCode');
 
         return $this->order->whereIn('code', $orderCodeArr)->with([
-            'fleetDriver.fleet',
             // 'fleetDriver.employee',
             'fleet',
             'driver',

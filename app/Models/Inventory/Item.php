@@ -23,7 +23,6 @@ class Item extends Model
         'name',
         'brandName',
         'categoryCode',
-        'itemLocationCode',
         'warehouseCode',
         'unitCode',
         'supplierCode',
@@ -50,11 +49,6 @@ class Item extends Model
     public function category()
     {
         return $this->belongsTo(ItemCategory::class, 'categoryCode', 'code');
-    }
-
-    public function location()
-    {
-        return $this->belongsTo(ItemLocation::class, 'itemLocationCode', 'code');
     }
 
     public function warehouse()

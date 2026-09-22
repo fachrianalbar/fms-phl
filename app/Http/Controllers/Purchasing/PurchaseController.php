@@ -49,10 +49,12 @@ class PurchaseController extends Controller
     public function index()
     {
         $supplier = $this->supplierSvc->findAll();
+        $stats = $this->service->stats();
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
+            ->with('stats', $stats)
             ->with('title', $this->title);
     }
 
@@ -280,6 +282,23 @@ class PurchaseController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
+            if ($request->paymentStatus === 'Paid') {
+                $data->where('paymentStatus', 'Paid');
+            } elseif ($request->paymentStatus === 'unpaid') {
+                $data->where('paymentStatus', '!=', 'Paid');
+            }
+
+            // Pencarian global DataTables (kotak pencarian) — kode, supplier, gudang.
+            $search = $request->input('search.value');
+
+            if (! empty($search)) {
+                $data->where(function ($query) use ($search) {
+                    $query->where('purchase.code', 'like', '%'.$search.'%')
+                        ->orWhereHas('supplier', fn ($supplier) => $supplier->where('name', 'like', '%'.$search.'%'))
+                        ->orWhereHas('warehouse', fn ($warehouse) => $warehouse->where('name', 'like', '%'.$search.'%'));
+                });
+            }
+
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('purchaseDate', function ($row) {
@@ -329,7 +348,7 @@ class PurchaseController extends Controller
                     $supplier = '';
 
                     if (isset($row->supplier->name)) {
-                        $supplier = $row->supplier->name;
+                        $supplier = e($row->supplier->name);
                     }
 
                     return $supplier;
@@ -338,79 +357,42 @@ class PurchaseController extends Controller
                     $warehouse = '';
 
                     if (isset($row->warehouse->name)) {
-                        $warehouse = $row->warehouse->name;
+                        $warehouse = e($row->warehouse->name);
                     }
 
                     return $warehouse;
                 })
-                ->editColumn('purchaseStatus.name', function ($row) {
-                    $status = '';
-
-                    if (isset($row->purchaseStatus->name)) {
-                        $status = Auth::user()->languange == 'id' ? $row->purchaseStatus->nama : $row->purchaseStatus->name;
+                ->addColumn('paymentStatusHtml', function ($row) {
+                    if ($row->paymentStatus == 'Paid') {
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11">Lunas</span>';
                     }
 
-                    if ($row->status == 2) {
-                        $total = $row->details->count();
-
-                        $count = 0;
-
-                        foreach ($row->details as $item) {
-                            if ($item->status == 1) {
-                                $count++;
-                            }
-                        }
-
-                        if ($count == $total) {
-                            $status = 'Stored Full';
-                        }
-
-                        if ($count > 0 && $count < $total) {
-                            $status = 'Stored Half';
-                        }
-
-                        if ($count == 0) {
-                            $status = 'No Stored';
-                        }
+                    if ($row->paymentStatus == 'Partial') {
+                        return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fs-11">Sebagian</span>';
                     }
 
-                    return $status;
+                    return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fs-11">Belum Bayar</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $icon = 'mdi-pencil-outline';
-                    $title = 'Edit';
-                    if ($row->paidAmount > 0 || $row->status == 3) {
-                        $icon = 'mdi-eye';
-                        $title = 'Detail';
-                    }
+                    $isDetail = ($row->paidAmount > 0 || $row->status == 3);
+                    $icon = $isDetail ? 'mdi-eye' : 'mdi-pencil-outline';
+                    $title = $isDetail ? 'Detail' : 'Edit';
 
-                    $btn = '<td>
-                                <a href="'.route($this->view.($icon == 'mdi-eye' ? 'show' : 'edit'), $row->id).'"
-                                class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                data-bs-toggle="tooltip" title="'.$title.'">
-                                    <i class="mdi '.$icon.' fs-14 text-primary"></i>
-                                </a>
+                    $btn = '<a href="'.route($this->view.($isDetail ? 'show' : 'edit'), $row->id).'" '
+                        .'class="btn btn-icon btn-sm bg-primary-subtle me-1" '
+                        .'data-bs-toggle="tooltip" title="'.$title.'">'
+                        .'<i class="mdi '.$icon.' fs-14 text-primary"></i></a>';
 
-                                <a href="javascript:deleteData(\''.$row->id.'\')"
-                                class="btn btn-icon btn-sm bg-danger-subtle"
-                                data-bs-toggle="tooltip" title="Delete">
-                                    <i class="mdi mdi-delete fs-14 text-danger"></i>
-                                </a>
-                            </td>';
-
-                    if (in_array($row->status, [1, 2, 3]) || $row->paidAmount > 0) {
-                        $btn = '<td>
-                                    <a href="'.route($this->view.($icon == 'mdi-eye' ? 'show' : 'edit'), $row->id).'"
-                                    class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                    data-bs-toggle="tooltip" title="'.$title.'">
-                                        <i class="mdi '.$icon.' fs-14 text-primary"></i>
-                                    </a>
-                                </td>';
+                    if (! (in_array($row->status, [1, 2, 3]) || $row->paidAmount > 0)) {
+                        $btn .= '<a href="javascript:deleteData(\''.$row->id.'\')" '
+                            .'class="btn btn-icon btn-sm bg-danger-subtle" '
+                            .'data-bs-toggle="tooltip" title="Delete">'
+                            .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
                     }
 
                     return $btn;
                 })
-                ->rawColumns(['purchaseDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'purchaseStatus.name', 'paymentDate', 'verifDate', 'action'])
+                ->rawColumns(['purchaseDate', 'dueDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'paymentStatusHtml', 'action'])
                 ->toJson();
         }
     }

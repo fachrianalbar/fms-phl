@@ -15,6 +15,7 @@ use App\Traits\LogActivity;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class PurchaseService
 {
@@ -46,6 +47,39 @@ class PurchaseService
             'warehouse',
             'purchaseStatus',
         ])->orderBy('date', 'desc')->orderBy('time', 'desc');
+    }
+
+    /**
+     * Ringkasan agregat untuk kartu KPI halaman daftar pembelian.
+     *
+     * Nilai tagihan memakai kolom `nominal` bila terisi, jika tidak dihitung
+     * dari detail (price * COALESCE(qty, receivedQty)) — sama seperti
+     * PurchasePaymentService::billingOf(). Dihitung sebagai satu agregat SQL
+     * (derived table) agar tidak memuat ribuan model.
+     */
+    public function stats(): array
+    {
+        $detailSums = DB::table('purchase_detail')
+            ->whereNull('deleted_at')
+            ->groupBy('purchaseCode')
+            ->selectRaw('purchaseCode, SUM(price * COALESCE(qty, receivedQty)) as detail_sum');
+
+        $row = $this->service->newQuery()
+            ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
+            ->selectRaw('COUNT(*) as total_count')
+            ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Paid' THEN 1 ELSE 0 END) as paid_count")
+            ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Unpaid' THEN 1 ELSE 0 END) as unpaid_count")
+            ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Partial' THEN 1 ELSE 0 END) as partial_count")
+            ->selectRaw('SUM(COALESCE(NULLIF(purchase.nominal, 0), ds.detail_sum, 0)) as total_billing')
+            ->first();
+
+        return [
+            'totalCount' => (int) ($row->total_count ?? 0),
+            'paidCount' => (int) ($row->paid_count ?? 0),
+            'unpaidCount' => (int) ($row->unpaid_count ?? 0),
+            'partialCount' => (int) ($row->partial_count ?? 0),
+            'totalBilling' => (float) ($row->total_billing ?? 0),
+        ];
     }
 
     public function getById(string $id)

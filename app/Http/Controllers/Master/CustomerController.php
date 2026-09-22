@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\CustomerExport;
 use App\Http\Controllers\Controller;
 use App\Services\Master\CompanyService;
 use App\Services\Master\CustomerService;
@@ -11,6 +12,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class CustomerController extends Controller
@@ -40,8 +43,11 @@ class CustomerController extends Controller
      */
     public function index()
     {
+        $company = $this->companySvc->findAll();
+
         return view($this->view.'index')
             ->with('view', $this->view)
+            ->with('company', $company)
             ->with('title', $this->title);
     }
 
@@ -183,33 +189,89 @@ class CustomerController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->buildFilteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
-                ->editColumn('company.name', function ($row) {
-                    return isset($row->company->name) ? $row->company->name : '';
+                ->addColumn('companyName', function ($row) {
+                    return $row->company->name ?? '-';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
+                    $editUrl = route($this->view.'edit', $row->id);
 
-        <a href="javascript:deleteData(\''.$row->id.'\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
-
-                    return $btn;
+                    return '<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle me-1" data-bs-toggle="tooltip" title="Edit">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>'
+                        .'<a href="javascript:deleteData(\''.$row->id.'\')" class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">'
+                        .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
                 })
-                ->rawColumns(['action', 'company.name'])
+                ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    /**
+     * Bangun query customer yang sudah diterapkan filter bar (perusahaan, tipe, periode).
+     */
+    private function buildFilteredQuery(Request $request)
+    {
+        $query = $this->service->findAllQuery();
+
+        if ($request->filled('companyCode')) {
+            $query->where('companyCode', $request->companyCode);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new CustomerExport($request), 'Customer-Report.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->buildFilteredQuery($request)->get();
+
+        $companyName = null;
+        if ($request->filled('companyCode')) {
+            $companyName = optional($this->companySvc->getByCode($request->companyCode))->name;
+        }
+
+        $typeLabel = null;
+        if ($request->filled('type')) {
+            $typeLabel = $request->type === 'Company'
+                ? __('menu_customer.company')
+                : __('menu_customer.person');
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view.'report.customer-pdf')
+                ->with('rows', $rows)
+                ->with('companyName', $companyName)
+                ->with('typeLabel', $typeLabel)
+                ->with('startDate', $request->startDate)
+                ->with('endDate', $request->endDate)
+        );
+
+        return $mpdf->Output('Customer-Report.pdf', 'I');
     }
 
     public function customerCompanyFormat($code)

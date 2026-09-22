@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Purchasing;
 
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Inventory\Item;
-use App\Models\LiveMutation;
 use App\Services\Bank\UserBankService;
 use App\Services\Inventory\SupplierService;
 use App\Services\MenuService;
@@ -15,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Throwable;
 use Yajra\DataTables\DataTables;
 
 class PurchasePaymentController extends Controller
@@ -31,259 +30,349 @@ class PurchasePaymentController extends Controller
 
     protected $menuSvc;
 
-    public function __construct(PurchasePaymentService $purchasePaymentSvc, SupplierService $supplierSvc, UserBankService $userBankSvc, MenuService $menuSvc)
-    {
+    public function __construct(
+        PurchasePaymentService $purchasePaymentSvc,
+        SupplierService $supplierSvc,
+        UserBankService $userBankSvc,
+        MenuService $menuSvc
+    ) {
         $this->service = $purchasePaymentSvc;
         $this->supplierSvc = $supplierSvc;
         $this->userBankSvc = $userBankSvc;
-        $this->title = 'Purchase Payment';
-        $this->menuSvc = $menuSvc->getByName('Purchase Payment');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->menuSvc = $menuSvc;
         $this->view = 'purchasing.purchase-payment.';
+        $this->title = 'Purchase Payment';
     }
 
     /**
-     * Display a listing of the resource.
+     * Judul halaman dari data menu (aman dari bentrok nama).
+     */
+    private function pageTitle(string $menuCode, string $fallback): string
+    {
+        $menu = $this->menuSvc->getByCode($menuCode);
+
+        if (! $menu) {
+            return $fallback;
+        }
+
+        return Auth::user()->languange == 'id' ? $menu->nama : $menu->name;
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Halaman                                                            */
+    /* ------------------------------------------------------------------ */
+
+    /**
+     * Halaman "Hutang Supplier Belum Lunas" — bayar satu / banyak pembelian.
      */
     public function index()
     {
         $supplier = $this->supplierSvc->findAll();
+        $userBank = $this->userBankSvc->findCompany();
+        $stats = $this->service->statsUnpaid();
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
-            ->with('title', $this->title);
+            ->with('userBank', $userBank)
+            ->with('stats', $stats)
+            ->with('title', $this->pageTitle('PURCHASE_PAYMENT', 'Hutang Supplier Belum Lunas'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Halaman "Hutang Supplier Lunas" — arsip + cetak + batal pembayaran.
      */
-    public function edit(string $id)
+    public function paid()
     {
-        $data = $this->service->getById($id);
-
-        if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
-        }
-
-        $totalPrice = 0;
-        $totalQty = 0;
-        foreach ($data->details as $item) {
-            $totalPrice += intval($item->price) * $item->receivedQty;
-            $totalQty += $item->receivedQty;
-        }
-
         $supplier = $this->supplierSvc->findAll();
-        // $items = Item::OrderBy('name', 'asc')->get();
+        $stats = $this->service->statsPaid();
 
-        $userBank = $this->userBankSvc->findCompany();
-
-        return view($this->view.'edit')
+        return view($this->view.'paid')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
-            // ->with('items', $items)
-            ->with('title', $this->title)
-            ->with('totalPrice', $totalPrice)
-            ->with('userBank', $userBank)
-            ->with('totalQty', $totalQty)
-            ->with('data', $data);
+            ->with('stats', $stats)
+            ->with('title', $this->pageTitle('PURCHASE_PAID', 'Hutang Supplier Lunas'));
     }
 
-    public function update(Request $request, string $id)
-    {
-        $data = $this->service->getById($id);
+    /* ------------------------------------------------------------------ */
+    /* Aksi pembayaran                                                    */
+    /* ------------------------------------------------------------------ */
 
+    /**
+     * Simpan pembayaran banyak pembelian sekaligus (DP / cicilan / lunas).
+     */
+    public function storeBatch(Request $request)
+    {
         $validator = Validator::make($request->all(), [
-            'paymentDate' => ['required', 'date'],
+            'requestKey' => ['required', 'uuid'],
+            'payments' => ['required', 'array', 'min:1'],
+            'payments.*.purchase_code' => ['required', 'string', 'distinct'],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'payments.*.expected_remaining' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'date' => ['required', 'date'],
+            'userBankCode' => ['required', 'string'],
+            'description' => ['nullable', 'string', 'max:255'],
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
+            $message = $validator->errors()->first();
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'errors' => $validator->errors(),
+                ], 422);
+            }
+
+            return redirect()->route($this->view.'index')->with('fail', $message);
         }
 
-        $totalPrice = 0;
-        // foreach ($data->details as $item) {
-        //     $itemStock = Item::where('code', $item->itemCode)->first();
-
-        //     $totalPrice += intval($itemStock->price) * $item->receivedQty;
-        // }
-
-        // $liveMutation = LiveMutation::where('userBankCode', $request->userBankCode)->first();
-
-        // if ($totalPrice > $liveMutation->balance) {
-        //     return redirect()->route($this->view . 'index')->with('fail', 'Balance is not enough');
-        // }
+        $request->merge($validator->validated());
 
         try {
-            DB::beginTransaction();
+            $result = DB::transaction(fn () => $this->service->storeBatch($request, $this->title));
 
-            $this->service->update($request, $id, $this->title, $totalPrice);
+            $message = $result['idempotent']
+                ? 'Pembayaran sebelumnya berhasil ditemukan.'
+                : $result['purchase_count'].' pembelian berhasil dibayar.';
+            $message .= ' Kode pembayaran: '.$result['batch_code'].'.';
 
-            DB::commit();
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => $message, 'result' => $result]);
+            }
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
-        } catch (\Throwable $th) {
-            DB::rollback();
+            return redirect()->route($this->view.'index')->with('success', $message);
+        } catch (Throwable $th) {
+            $result = null;
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            try {
+                $result = $this->service->findBatchResultByRequest($request);
+            } catch (Throwable $lookupException) {
+                report($lookupException);
+            }
+
+            if ($result) {
+                $message = 'Pembayaran sebelumnya berhasil ditemukan. Kode pembayaran: '.$result['batch_code'].'.';
+
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => true, 'message' => $message, 'result' => $result]);
+                }
+
+                return redirect()->route($this->view.'index')->with('success', $message);
+            }
+
+            if ($th instanceof \DomainException) {
+                $status = in_array((int) $th->getCode(), [409, 422], true) ? (int) $th->getCode() : 422;
+
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $th->getMessage()], $status);
+                }
+
+                return redirect()->route($this->view.'index')->with('fail', $th->getMessage());
+            }
+
+            report($th);
+            $message = 'Pembayaran gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
+
+            return redirect()->route($this->view.'index')->with('fail', $message);
         }
     }
 
-    public function datatable(Request $request)
+    /**
+     * Batalkan satu batch pembayaran (kembalikan saldo + status pembelian).
+     */
+    public function cancelPayment(Request $request, string $batchCode)
     {
-        if ($request->ajax()) {
-            $data = $this->service->datatable();
+        try {
+            $result = DB::transaction(fn () => $this->service->cancelPayment($batchCode, $this->title));
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'code' => $request->code,
-                'supplierCode' => $request->supplierCode,
-            ];
+            $message = 'Pembayaran '.$result['batch_code'].' berhasil dibatalkan. '
+                .'Saldo dikembalikan Rp '.number_format($result['reversed_amount'], 0, ',', '.').'.';
 
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
 
-            $dateFilters = [
-                'date' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
+            return redirect()->route($this->view.'paid')->with('success', $message);
+        } catch (Throwable $th) {
+            if ($th instanceof \DomainException) {
+                $status = in_array((int) $th->getCode(), [409, 422], true) ? (int) $th->getCode() : 422;
 
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+                if ($request->ajax() || $request->expectsJson()) {
+                    return response()->json(['success' => false, 'message' => $th->getMessage()], $status);
+                }
 
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->addColumn('purchaseDate', function ($row) {
-                    $date = Carbon::parse($row->date)->format('d-M-Y');
-                    $time = Carbon::parse($row->time)->format('H:i');
+                return redirect()->route($this->view.'paid')->with('fail', $th->getMessage());
+            }
 
-                    return $date;
-                })
-                ->editColumn('paymentDate', function ($row) {
-                    $paymentDate = '';
-                    if ($row->paymentDate) {
-                        $paymentDate = Carbon::parse($row->paymentDate)->format('d-M-Y');
-                    }
+            report($th);
+            $message = 'Pembatalan gagal diproses. Silakan coba lagi.';
 
-                    return $paymentDate;
-                })
-                ->addColumn('dueDate', function ($row) {
-                    $dueDate = '';
-                    if ($row->dueDate) {
-                        $dueDate = Carbon::parse($row->dueDate)->format('d-M-Y');
-                    }
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $message], 500);
+            }
 
-                    return $dueDate;
-                })
-                ->addColumn('totalPrice', function ($row) {
-                    $totalPrice = 0;
-                    foreach ($row->details as $item) {
-                        if ($item->receivedQty) {
-                            $totalPrice += intval($item->price) * $item->receivedQty;
-                        } else {
-                            $totalPrice += intval($item->price) * $item->qty;
-                        }
-                    }
-
-                    return number_format($totalPrice, 0, ',', '.');
-                })
-                ->editColumn('supplier.name', function ($row) {
-                    $supplier = '';
-
-                    if (isset($row->supplier->name)) {
-                        $supplier = $row->supplier->name;
-                    }
-
-                    return $supplier;
-                })
-                ->editColumn('warehouse.name', function ($row) {
-                    $warehouse = '';
-
-                    if (isset($row->warehouse->name)) {
-                        $warehouse = $row->warehouse->name;
-                    }
-
-                    return $warehouse;
-                })
-                ->addColumn('purchaseStatus', function ($row) {
-                    $status = '';
-                    $total = $row->details->count();
-
-                    $count = 0;
-
-                    if (isset($row->purchaseStatus->name)) {
-                        $status = Auth::user()->languange == 'id' ? $row->purchaseStatus->nama : $row->purchaseStatus->name;
-
-                        if ($row->status == 2) {
-                            foreach ($row->details as $item) {
-                                if ($item->status == 1) {
-                                    $count++;
-                                }
-                            }
-
-                            if ($count == $total) {
-                                $status = 'Stored Full';
-                            }
-
-                            if ($count > 0 && $count < $total) {
-                                $status = 'Stored Half';
-                            }
-                        }
-                    }
-
-                    if ($status) {
-                        $status = '<span class="badge bg-info">'.$status.'</span>';
-                    }
-
-                    $paymentBadge = '';
-                    if ($row->paymentStatus == 'Paid') {
-                        $paymentBadge = '<span class="badge bg-success">Paid</span>';
-                    } elseif ($row->paymentStatus == 'Partial') {
-                        $paymentBadge = '<span class="badge bg-warning text-dark">Partial</span>';
-                    } else {
-                        $paymentBadge = '<span class="badge bg-secondary">Unpaid</span>';
-                    }
-
-                    return $status . ' ' . $paymentBadge;
-                })
-                ->addColumn('action', function ($row) {
-                    $icon = 'mdi-credit-card';
-                    $title = 'Payment';
-                    
-                    if ($row->paymentStatus == 'Paid') {
-                        $icon = 'mdi-eye';
-                        $title = 'Detail';
-                    }
-
-                    $btn = '<td>
-                                <a href="'.route($this->view.'edit', $row->id).'"
-                                class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                data-bs-toggle="tooltip" title="'.$title.'">
-                                    <i class="mdi '.$icon.' fs-14 text-primary"></i>
-                                </a>
-                            </td>';
-
-                    return $btn;
-                })
-                ->rawColumns(['purchaseDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'purchaseStatus', 'action'])
-                ->setRowClass(function ($row) {
-                    if ($row->dueDate && $row->paymentStatus != 'Paid') {
-                        $due = Carbon::parse($row->dueDate)->startOfDay();
-                        $today = now()->startOfDay();
-                        
-                        // diffInDays returns negative if $due is in the past, or positive if in the future
-                        $diff = $today->diffInDays($due, false);
-                        
-                        if ($diff < 0) {
-                            return 'table-danger text-danger'; // Past due date
-                        } elseif ($diff >= 0 && $diff <= 7) {
-                            return 'table-warning'; // Within 1 week
-                        }
-                    }
-                    return '';
-                })
-                ->toJson();
+            return redirect()->route($this->view.'paid')->with('fail', $message);
         }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Datatable & detail                                                 */
+    /* ------------------------------------------------------------------ */
+
+    public function datatableUnpaid(Request $request)
+    {
+        if (! $request->ajax()) {
+            return response()->json(['data' => []]);
+        }
+
+        $data = $this->service->datatableUnpaid();
+
+        if (in_array($request->paymentStatus, ['Unpaid', 'Partial'], true)) {
+            $data->where('paymentStatus', $request->paymentStatus);
+        }
+
+        $filters = [
+            'code' => $request->code,
+            'supplierCode' => $request->supplierCode,
+        ];
+
+        $dateFilters = [
+            'date' => [
+                'start' => $request->startDate,
+                'end' => $request->endDate,
+            ],
+        ];
+
+        $data = FilterHelper::applyFilters($data, $filters, [], $dateFilters);
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('purchaseDate', fn ($row) => $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '')
+            ->addColumn('dueDateHtml', function ($row) {
+                if (! $row->dueDate) {
+                    return '<span class="text-muted">-</span>';
+                }
+
+                $due = Carbon::parse($row->dueDate);
+                $diff = now()->startOfDay()->diffInDays($due->copy()->startOfDay(), false);
+                $formatted = $due->format('d-M-Y');
+
+                if ($row->paymentStatus != 'Paid' && $diff < 0) {
+                    return '<span class="badge bg-danger-subtle text-danger">'.$formatted.'</span>';
+                }
+
+                if ($row->paymentStatus != 'Paid' && $diff <= 7) {
+                    return '<span class="badge bg-warning-subtle text-warning-emphasis">'.$formatted.'</span>';
+                }
+
+                return $formatted;
+            })
+            ->addColumn('totalPrice', fn ($row) => number_format($this->service->billingOf($row), 0, ',', '.'))
+            ->addColumn('paidAmount', fn ($row) => number_format((float) $row->paidAmount, 0, ',', '.'))
+            ->addColumn('remaining', function ($row) {
+                $remaining = max(0, $this->service->billingOf($row) - (float) $row->paidAmount);
+
+                return number_format($remaining, 0, ',', '.');
+            })
+            ->addColumn('remainingRaw', function ($row) {
+                return (int) round(max(0, $this->service->billingOf($row) - (float) $row->paidAmount));
+            })
+            ->addColumn('billingRaw', fn ($row) => $this->service->billingOf($row))
+            ->editColumn('supplier.name', fn ($row) => $row->supplier->name ?? '')
+            ->addColumn('paymentStatusHtml', function ($row) {
+                if ($row->paymentStatus == 'Paid') {
+                    return '<span class="badge bg-success">Paid</span>';
+                }
+
+                if ($row->paymentStatus == 'Partial') {
+                    return '<span class="badge bg-warning text-dark">Partial</span>';
+                }
+
+                return '<span class="badge bg-secondary">Unpaid</span>';
+            })
+            ->rawColumns(['dueDateHtml', 'paymentStatusHtml'])
+            ->setRowClass(function ($row) {
+                if ($row->dueDate && $row->paymentStatus != 'Paid') {
+                    $diff = now()->startOfDay()->diffInDays(Carbon::parse($row->dueDate)->startOfDay(), false);
+
+                    if ($diff < 0) {
+                        return 'table-danger';
+                    }
+
+                    if ($diff <= 7) {
+                        return 'table-warning';
+                    }
+                }
+
+                return '';
+            })
+            ->toJson();
+    }
+
+    public function datatablePaid(Request $request)
+    {
+        if (! $request->ajax()) {
+            return response()->json(['data' => []]);
+        }
+
+        $data = $this->service->datatablePaid();
+
+        $filters = [
+            'code' => $request->code,
+            'supplierCode' => $request->supplierCode,
+        ];
+
+        $dateFilters = [
+            'date' => [
+                'start' => $request->startDate,
+                'end' => $request->endDate,
+            ],
+        ];
+
+        $data = FilterHelper::applyFilters($data, $filters, [], $dateFilters);
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('purchaseDate', fn ($row) => $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '')
+            ->addColumn('paymentDateHtml', fn ($row) => $row->paymentDate ? Carbon::parse($row->paymentDate)->format('d-M-Y') : '')
+            ->addColumn('totalPrice', fn ($row) => number_format($this->service->billingOf($row), 0, ',', '.'))
+            ->addColumn('paidAmount', fn ($row) => number_format((float) $row->paidAmount, 0, ',', '.'))
+            ->editColumn('supplier.name', fn ($row) => $row->supplier->name ?? '')
+            ->addColumn('paymentStatusHtml', fn ($row) => '<span class="badge bg-success">Paid</span>')
+            ->addColumn('action', function ($row) {
+                $btn = '<button type="button" class="btn btn-icon btn-sm bg-primary-subtle me-1 btn-detail-row" '
+                    .'data-code="'.$row->code.'" data-bs-toggle="tooltip" title="Detail">'
+                    .'<i class="mdi mdi-eye fs-14 text-primary"></i></button>';
+
+                if ($row->paymentCode && $row->paymentBatch && $row->paymentBatch->status === 'active') {
+                    $btn .= '<button type="button" class="btn btn-icon btn-sm bg-danger-subtle btn-cancel-row" '
+                        .'data-code="'.$row->code.'" data-batch="'.$row->paymentCode.'" data-bs-toggle="tooltip" title="Batal Pembayaran">'
+                        .'<i class="mdi mdi-close-circle-outline fs-14 text-danger"></i></button>';
+                }
+
+                return '<td>'.$btn.'</td>';
+            })
+            ->rawColumns(['paymentStatusHtml', 'action'])
+            ->toJson();
+    }
+
+    /**
+     * Detail pembelian + riwayat pembayaran (untuk modal detail).
+     */
+    public function detail(string $purchaseCode)
+    {
+        $data = $this->service->findPaymentDetail($purchaseCode);
+
+        if (empty($data)) {
+            return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.'], 404);
+        }
+
+        return response()->json($data);
     }
 }

@@ -18,4 +18,5 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('maintenance-generate-code', [MaintenanceController::class, 'generateCode'])->name('maintenance-generate-code');
     Route::get('maintenance-stock-by-warehouse', [MaintenanceController::class, 'getStockByWarehouse'])->name('maintenance-stock-by-warehouse');
+    Route::get('maintenance-purchases-by-warehouse', [MaintenanceController::class, 'getPurchasesByWarehouse'])->name('maintenance-purchases-by-warehouse');
 });

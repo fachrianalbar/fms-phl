@@ -1,8 +1,7 @@
 @php
     // Fallback icon feather untuk parent yang tidak punya icon di DB
     $parentIconFallbacks = [
-        'SETTING' => 'settings',
-        'FAKTUR' => 'file-plus',
+        'FAKTUR' => 'file-text',
     ];
 
     /*
@@ -11,37 +10,25 @@
      * jadi icon submenu dipetakan lokal berdasarkan URL menu.
      */
     $childIcons = [
-        '' => 'mdi-lock-outline', // menu tanpa url (mis. Change Password)
-
         // Administrator
         'administrator/user' => 'mdi-account-outline',
         'administrator/role' => 'mdi-shield-account-outline',
-        'administrator/company-setting' => 'mdi-tune',
         'administrator/activity-log' => 'mdi-history',
+        'master/menu' => 'mdi-menu',
 
         // Bank
         'bank/bank-account' => 'mdi-bank-outline',
         'bank/user-bank' => 'mdi-account-cash-outline',
-        'bank/config-bank' => 'mdi-cog-outline',
-        'bank/transfer-fund' => 'mdi-swap-horizontal',
-        'bank/expense' => 'mdi-cash-minus',
         'bank/bank-book' => 'mdi-book-open-variant',
 
-        // Data
-        'data/fleet-owner' => 'mdi-account-hard-hat',
-        'data/drop-location' => 'mdi-map-marker-down',
-        'data/pickup-location' => 'mdi-map-marker-up',
-        'data/route' => 'mdi-routes',
-        'data/tonase-bonus' => 'mdi-star-outline',
-
-        // Faktur
+        // Faktur (Piutang / AR)
         'invoice/create' => 'mdi-file-plus-outline',
         'invoice/unpaid' => 'mdi-cash-remove',
         'invoice/paid' => 'mdi-cash-check',
         'invoice/payment' => 'mdi-credit-card-outline',
         'invoice/payment-transaction' => 'mdi-receipt-text-check-outline',
 
-        // Vendor
+        // Vendor (Hutang / AP)
         'vendor/order/waiting' => 'mdi-tray-full',
         'vendor/invoice/unpaid' => 'mdi-cash-remove',
         'vendor/invoice/paid' => 'mdi-cash-check',
@@ -52,65 +39,49 @@
         'direct-payment/order/paid' => 'mdi-cash-check',
         'direct-payment/payment' => 'mdi-credit-card-outline',
 
-        // Inventory
+        // Inventory & Gudang
         'inventory/items' => 'mdi-package-variant-closed',
+        'inventory/item-category' => 'mdi-tag-multiple-outline',
+        'inventory/item-unit' => 'mdi-counter',
+        'inventory/warehouse' => 'mdi-warehouse',
         'inventory/stock' => 'mdi-clipboard-list-outline',
         'inventory/transaction-stock' => 'mdi-card-text-outline',
-        'inventory/warehouse' => 'mdi-warehouse',
-        'inventory/supplier' => 'mdi-factory',
-        'inventory/item-unit' => 'mdi-counter',
-        'inventory/item-location' => 'mdi-map-marker-radius-outline',
-        'inventory/item-category' => 'mdi-tag-multiple-outline',
         'inventory/stock-sync' => 'mdi-cloud-sync-outline',
+        'warehouse/maintenance' => 'mdi-tools',
 
-        // Master
+        // Master Data
+        'master/customer' => 'mdi-account-multiple-outline',
         'master/fleet-brand' => 'mdi-truck-flatbed',
         'master/fleet-type' => 'mdi-truck-cargo-container',
-        'master/position' => 'mdi-badge-account-outline',
-        'master/employee' => 'mdi-account-group-outline',
         'master/fleets' => 'mdi-truck-delivery-outline',
-        'master/unit' => 'mdi-ruler-square',
-        'master/customer' => 'mdi-account-multiple-outline',
-        'master/cost-component' => 'mdi-currency-usd',
-        'master/location' => 'mdi-map-marker-outline',
-        'master/material' => 'mdi-cube-outline',
-        'master/bank-sender' => 'mdi-bank-transfer',
-        'master/bank-receiver' => 'mdi-bank-transfer-in',
-        'master/due-date' => 'mdi-calendar-clock-outline',
         'master/fleet-company' => 'mdi-truck-check-outline',
-        'master/transaction-type' => 'mdi-swap-horizontal-circle-outline',
-        'master/company' => 'mdi-office-building-outline',
-        'master/menu' => 'mdi-menu',
+        'master/employee' => 'mdi-account-group-outline',
+        'master/location' => 'mdi-map-marker-outline',
+        'data/route' => 'mdi-routes',
+        'master/material' => 'mdi-cube-outline',
+        'master/unit' => 'mdi-ruler-square',
+        'master/cost-component' => 'mdi-currency-usd',
         'master/cost-component-price-log' => 'mdi-history',
+        'master/company' => 'mdi-office-building-outline',
 
         // Operational
         'operational/order' => 'mdi-clipboard-text-multiple-outline',
-        'operational/monitoring-order' => 'mdi-truck-fast-outline',
         'operational/not-return-do' => 'mdi-file-cancel-outline',
-        'operational/bon-ujt' => 'mdi-wallet-outline',
         'operational/return-do' => 'mdi-file-restore-outline',
-        'operational/office-order' => 'mdi-briefcase-outline',
-        'operational/down-payment' => 'mdi-cash-plus',
 
-        // Purchasing
+        // Supplier
+        'inventory/supplier' => 'mdi-factory',
         'purchasing/purchase' => 'mdi-cart-outline',
-        'purchasing/purchase-verification' => 'mdi-check-decagram-outline',
-        'purchasing/purchase-confirmation' => 'mdi-check-all',
-        'purchasing/purchase-payment' => 'mdi-cash-check',
+        'purchasing/purchase-payment' => 'mdi-cash-remove',
+        'purchasing/purchase-paid' => 'mdi-cash-check',
+        'report/supplier' => 'mdi-chart-timeline-variant',
 
         // Report
-        'report/profit-loss' => 'mdi-finance',
         'report/order-detail' => 'mdi-chart-bar',
+        'report/profit-loss' => 'mdi-finance',
         'report/driver-salary' => 'mdi-cash',
-        'report/driver-tonase' => 'mdi-weight-kilogram',
-        'report/fleet-tonase' => 'mdi-scale-balance',
-        'report/all-order-list' => 'mdi-format-list-bulleted',
         'report/maintenance-fleet' => 'mdi-wrench-clock',
         'report/maintenance-company-internal' => 'mdi-domain',
-        'report/supplier' => 'mdi-factory',
-
-        // Warehouse
-        'warehouse/maintenance' => 'mdi-tools',
     ];
 @endphp
 

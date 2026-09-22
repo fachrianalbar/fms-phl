@@ -62,7 +62,6 @@ class OrderService
     public function datatable()
     {
         return $this->service->with([
-            'fleetDriver.fleet',
             'driver',
             'customer',
             'route.destinationLocation',

@@ -21,7 +21,6 @@ class ReturnDoService
         return $this->service
             ->whereIn('status', [4, 5])
             ->with([
-                'fleetDriver.fleet',
                 'driver',
                 'customer',
                 'route.originLocation',
@@ -41,7 +40,6 @@ class ReturnDoService
         $query = $this->service
             ->whereIn('status', [4, 5])
             ->with([
-                'fleetDriver.fleet',
                 'driver',
                 'customer',
                 'route.originLocation',

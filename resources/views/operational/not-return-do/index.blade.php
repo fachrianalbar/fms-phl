@@ -296,8 +296,11 @@
                                     <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleet as $item)
-                                            <option value="{{ $item->plateNumber }}">
-                                                {{ $item->plateNumber }}</option>
+                                            @php
+                                                $plateVal = is_array($item) ? ($item['plateNumber'] ?? '') : ($item->plateNumber ?? '');
+                                            @endphp
+                                            <option value="{{ $plateVal }}">
+                                                {{ $plateVal }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -307,7 +310,10 @@
                                     <select class="js-example-basic-single" name="driverName" id="driverName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($driver as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                            @php
+                                                $driverVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
+                                            @endphp
+                                            <option value="{{ $driverVal }}">{{ $driverVal }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -319,10 +325,13 @@
                                     <select class="js-example-basic-single" name="customerName" id="customerName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($customer as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            @php
+                                                $customerVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
+                                            @endphp
+                                            <option value="{{ $customerVal }}">{{ $customerVal }}
                                             </option>
                                         @endforeach
-                                    </select>`
+                                    </select>
                                 </div>
 
                                 <div class="col-md-6">
@@ -330,10 +339,13 @@
                                     <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($fleetType as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            @php
+                                                $fleetTypeVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
+                                            @endphp
+                                            <option value="{{ $fleetTypeVal }}">{{ $fleetTypeVal }}
                                             </option>
                                         @endforeach
-                                    </select>`
+                                    </select>
                                 </div>
                             </div>
 
@@ -363,10 +375,13 @@
                                     <select class="js-example-basic-single" name="destination" id="destination">
                                         <option selected="" value="">{{ __('general.choose') }}...</option>
                                         @foreach ($location as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}
+                                            @php
+                                                $locVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
+                                            @endphp
+                                            <option value="{{ $locVal }}">{{ $locVal }}
                                             </option>
                                         @endforeach
-                                    </select>`
+                                    </select>
                                 </div>
                             </div>
                             <button class="btn btn-primary mt-3" type="button" id="btnFilter">Filter</button>

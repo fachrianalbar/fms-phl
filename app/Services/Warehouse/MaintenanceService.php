@@ -11,6 +11,7 @@ use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
 use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
+use App\Models\Warehouse\MaintenancePurchase;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
@@ -31,6 +32,26 @@ class MaintenanceService
     protected function isJasaItem(string $itemCode): bool
     {
         return Item::query()->where('code', $itemCode)->value('type') === Item::TYPE_JASA;
+    }
+
+    /**
+     * Sinkronkan daftar PO (purchase) yang dipilih ke pivot maintenance_purchase.
+     */
+    protected function syncPurchases(Maintenance $maintenance, $purchaseIds): void
+    {
+        MaintenancePurchase::query()->where('maintenance_id', $maintenance->id)->delete();
+
+        $ids = collect(is_array($purchaseIds) ? $purchaseIds : [$purchaseIds])
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($ids as $purchaseId) {
+            MaintenancePurchase::query()->create([
+                'maintenance_id' => $maintenance->id,
+                'purchase_id' => $purchaseId,
+            ]);
+        }
     }
 
     public function findAll()
@@ -79,6 +100,9 @@ class MaintenanceService
             'fleetCode' => $request->fleetCode,
             'warehouseCode' => $warehouseCode,
         ]);
+
+        // 1b. Simpan pilihan PO (Purchase Order) ke pivot maintenance_purchase
+        $this->syncPurchases($data, $request->input('purchase_ids', []));
 
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
@@ -190,6 +214,11 @@ class MaintenanceService
             'time' => $request->time,
             'fleetCode' => $request->fleetCode,
         ]);
+
+        // Sinkronkan pilihan PO (Purchase Order) ke pivot maintenance_purchase
+        if ($request->has('purchase_ids')) {
+            $this->syncPurchases($maintenanceData, $request->input('purchase_ids', []));
+        }
 
         if (isset($request->itemCode)) {
             $itemCodes = $request->itemCode;

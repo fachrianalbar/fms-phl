@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Inventory\ItemCategoryController;
 use App\Http\Controllers\Inventory\ItemController;
-use App\Http\Controllers\Inventory\ItemLocationController;
 use App\Http\Controllers\Inventory\ItemUnitController;
 use App\Http\Controllers\Inventory\StockController;
 use App\Http\Controllers\Inventory\StockSyncController;
@@ -19,7 +18,6 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::resource('warehouse', WarehouseController::class);
     Route::resource('supplier', SupplierController::class);
     Route::resource('item-unit', ItemUnitController::class);
-    Route::resource('item-location', ItemLocationController::class);
     Route::resource('transaction-stock', StockTransactionController::class);
     Route::get('stock-sync', [StockSyncController::class, 'index'])->name('stock-sync.index');
     Route::post('stock-sync', [StockSyncController::class, 'sync'])->name('stock-sync.sync');
@@ -42,7 +40,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('warehouse', [WarehouseController::class, 'datatable'])->name('warehouse');
     Route::get('supplier', [SupplierController::class, 'datatable'])->name('supplier');
     Route::get('item-unit', [ItemUnitController::class, 'datatable'])->name('item-unit');
-    Route::get('item-location', [ItemLocationController::class, 'datatable'])->name('item-location');
     Route::get('stock', [StockController::class, 'datatable'])->name('stock');
     Route::get('transaction-stock', [StockTransactionController::class, 'datatable'])->name('transaction-stock');
 });

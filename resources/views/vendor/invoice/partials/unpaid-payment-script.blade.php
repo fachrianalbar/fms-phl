@@ -612,6 +612,7 @@
                 { data: 'select', className: 'text-center', responsivePriority: 1 },
                 { data: 'action', className: 'text-center', responsivePriority: 5 },
                 { data: 'DT_RowIndex', className: 'text-center', responsivePriority: 13 },
+                { data: 'payment_status', className: 'text-center', responsivePriority: 3 },
                 { data: 'nota_number', className: 'dtr-control', responsivePriority: 1 },
                 { data: 'nota_date', render: function(data) { return formatNotaDate(data); }, responsivePriority: 6 },
                 { data: 'fleet_company_name', responsivePriority: 2 },
@@ -623,13 +624,12 @@
                 { data: 'claim_amount', className: 'text-end', responsivePriority: 12 },
                 { data: 'paid_amount', className: 'text-end', responsivePriority: 7 },
                 { data: 'remaining_amount', className: 'text-end fw-semibold', responsivePriority: 2 },
-                { data: 'payment_status', className: 'text-center', responsivePriority: 3 },
             ],
             columnDefs: [
                 { searchable: false, targets: [0, 1, 2] },
                 { orderable: false, targets: [0, 1, 2] },
             ],
-            order: [[4, 'asc']],
+            order: [[5, 'asc']],
             drawCallback: function() {
                 restoreSelectedCheckboxes();
                 updateSelectionSummary();

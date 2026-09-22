@@ -109,7 +109,7 @@
                     <th>No</th>
                     <th>Maintenance Code</th>
                     <th>Date</th>
-                    <th>Warehouse</th>
+
                     <th>Item Code</th>
                     <th>Item Name</th>
                     <th>Supplier</th>
@@ -124,7 +124,7 @@
                         @foreach ($maintenance->details as $detail)
                             @php
                                 $qty = (float) $detail->qty;
-                                $price = (float) ($detail->item->price ?? 0);
+                                $price = (float) ($detail->price ?? 0);
                                 $subtotal = $qty * $price;
 
                                 $detailTotalQty += $qty;
@@ -137,7 +137,7 @@
                                     {{ \Carbon\Carbon::parse($maintenance->date)->format('d-m-Y') }}
                                     {{ \Carbon\Carbon::parse($maintenance->time)->format('H:i') }}
                                 </td>
-                                <td>{{ $maintenance->warehouse?->name ?? '-' }}</td>
+
                                 <td>{{ $detail->itemCode }}</td>
                                 <td>{{ $detail->item?->name ?? '-' }}</td>
                                 <td>{{ $detail->item?->supplier?->name ?? '-' }}</td>
@@ -154,7 +154,7 @@
                                 {{ \Carbon\Carbon::parse($maintenance->date)->format('d-m-Y') }}
                                 {{ \Carbon\Carbon::parse($maintenance->time)->format('H:i') }}
                             </td>
-                            <td>{{ $maintenance->warehouse?->name ?? '-' }}</td>
+
                             <td>-</td>
                             <td>-</td>
                             <td>-</td>
@@ -165,12 +165,12 @@
                     @endif
                 @empty
                     <tr>
-                        <td colspan="10">No data found</td>
+                        <td colspan="9">No data found</td>
                     </tr>
                 @endforelse
 
                 <tr class="bold">
-                    <td colspan="7" class="text-right">TOTAL ITEM USAGE</td>
+                    <td colspan="6" class="text-right">TOTAL ITEM USAGE</td>
                     <td>{{ number_format($detailTotalQty, 1, ',', '.') }}</td>
                     <td></td>
                     <td class="text-right">Rp {{ number_format($detailTotalCost, 0, ',', '.') }}</td>

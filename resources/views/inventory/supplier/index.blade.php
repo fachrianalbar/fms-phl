@@ -1,7 +1,7 @@
 @extends('layouts.main', [
     'title' => $title,
     'pageTitle' => $title,
-    'firstSegment' => 'Inventory',
+    'firstSegment' => 'Supplier',
     'secondSegment' => $title,
 ])
 

@@ -180,7 +180,17 @@
                             <input class="form-control" name="accountNumber" id="accountNumber" type="number"
                                 placeholder="Account Number">
                         </div>
+                    </div>
 
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="status">Status Karyawan / Supir</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="1" selected>Aktif</option>
+                                <option value="0">Nonaktif</option>
+                            </select>
+                            <small class="text-muted">Supir nonaktif tidak akan muncul pada penugasan armada dan order operasional.</small>
+                        </div>
                     </div>
 
                     <div class="col-12">

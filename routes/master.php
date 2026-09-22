@@ -1,12 +1,9 @@
 <?php
 
-use App\Http\Controllers\Master\BankReceiverController;
-use App\Http\Controllers\Master\BankSenderController;
 use App\Http\Controllers\Master\CompanyController;
 use App\Http\Controllers\Master\CostComponentController;
 use App\Http\Controllers\Master\CostComponentPriceLogController;
 use App\Http\Controllers\Master\CustomerController;
-use App\Http\Controllers\Master\DueDateController;
 use App\Http\Controllers\Master\EmployeeController;
 use App\Http\Controllers\Master\FleetBrandController;
 use App\Http\Controllers\Master\FleetCompanyController;
@@ -27,11 +24,14 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::delete('fleet-picture/{id}', [FleetController::class, 'deleteFleetPicture'])->name('fleet-picture.destroy');
     Route::resource('position', PositionController::class);
     Route::resource('employee', EmployeeController::class);
+    Route::post('employee/{id}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
     Route::resource('fleet-type', FleetTypeController::class);
     Route::resource('fleet-brand', FleetBrandController::class);
     Route::resource('unit', UnitController::class);
     Route::resource('company', CompanyController::class);
     Route::resource('customer', CustomerController::class);
+    Route::get('customer-export/excel', [CustomerController::class, 'exportExcel'])->name('customer.export-excel');
+    Route::get('customer-export/pdf', [CustomerController::class, 'exportPdf'])->name('customer.export-pdf');
     Route::delete('customer-detail/{id}', [CustomerController::class, 'deleteCustomerDetail'])->name('customer-detail.destroy');
     Route::delete('customer-pic/{id}', [CustomerController::class, 'deleteCustomerPic'])->name('customer-pic.destroy');
     Route::resource('cost-component', CostComponentController::class);
@@ -40,10 +40,7 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::get('cost-component-price-log-export/excel', [CostComponentPriceLogController::class, 'exportExcel'])->name('cost-component-price-log.export-excel');
     Route::resource('location', LocationController::class);
     Route::resource('material', MaterialController::class);
-    Route::resource('bank-sender', BankSenderController::class);
-    Route::resource('bank-receiver', BankReceiverController::class);
     Route::resource('transaction-type', TransactionTypeController::class);
-    Route::resource('due-date', DueDateController::class);
     Route::resource('fleet-company', FleetCompanyController::class);
 
     // Menu routes
@@ -65,10 +62,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('cost-component-price-log', [CostComponentPriceLogController::class, 'datatable'])->name('cost-component-price-log');
     Route::get('location', [LocationController::class, 'datatable'])->name('location');
     Route::get('material', [MaterialController::class, 'datatable'])->name('material');
-    Route::get('bank-sender', [BankSenderController::class, 'datatable'])->name('bank-sender');
-    Route::get('bank-receiver', [BankReceiverController::class, 'datatable'])->name('bank-receiver');
     Route::get('transaction-type', [TransactionTypeController::class, 'datatable'])->name('transaction-type');
-    Route::get('due-date', [DueDateController::class, 'datatable'])->name('due-date');
     Route::get('fleet-company', [FleetCompanyController::class, 'datatable'])->name('fleet-company');
 
     // Menu datatables

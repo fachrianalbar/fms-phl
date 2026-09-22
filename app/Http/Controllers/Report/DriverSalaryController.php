@@ -182,8 +182,7 @@ class DriverSalaryController extends Controller
                     }
                 })
                 ->whereHas('order', function ($q) use ($startDate, $endDate) {
-                    $q->whereDate('orderDate', '>=', $startDate)
-                      ->whereDate('orderDate', '<=', $endDate)
+                    $q->whereBetween('orderDate', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                       ->whereNull('deleted_at');
                 })
                 ->get();
@@ -595,15 +594,17 @@ class DriverSalaryController extends Controller
         $employee = Employee::where('code', $driverCode)->first();
         $driverId = $employee?->id;
 
-        // Auto-sync any existing orders in this range on-the-fly
-        $ordersToSync = Order::where(function ($q) use ($driverCode) {
+        // Auto-sync existing orders in this range without a correlated relation query.
+        $costOrderCodes = OrderCost::query()
+            ->where('driverCode', $driverCode)
+            ->select('orderCode');
+
+        $ordersToSync = Order::query()
+            ->where(function ($q) use ($driverCode, $costOrderCodes) {
                 $q->where('driverCode', $driverCode)
-                  ->orWhereHas('cost', function ($q2) use ($driverCode) {
-                      $q2->where('driverCode', $driverCode);
-                  });
+                  ->orWhereIn('code', $costOrderCodes);
             })
-            ->whereDate('orderDate', '>=', $startDate)
-            ->whereDate('orderDate', '<=', $endDate)
+            ->whereBetween('orderDate', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
             ->whereNull('deleted_at')
             ->get();
 
@@ -624,13 +625,17 @@ class DriverSalaryController extends Controller
                 }
             })
             ->whereHas('order', function ($q) use ($startDate, $endDate) {
-                $q->whereDate('orderDate', '>=', $startDate)
-                  ->whereDate('orderDate', '<=', $endDate)
+                $q->whereBetween('orderDate', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
                   ->whereNull('deleted_at');
             })
             ->get();
 
-        $groupedByOrder = $orderDriverSalaries->groupBy('order_id');
+        // Show the oldest order first in the salary processing list.
+        $groupedByOrder = $orderDriverSalaries
+            ->groupBy('order_id')
+            ->sortBy(function ($items) {
+                return $items->first()->order?->orderDate ?? '9999-12-31 23:59:59';
+            });
         $result = [];
         $totalSalary = 0;
 

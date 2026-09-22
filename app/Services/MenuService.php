@@ -20,4 +20,9 @@ class MenuService
     {
         return $this->service->where('name', $name)->first();
     }
+
+    public function getByCode($code)
+    {
+        return $this->service->where('code', $code)->first();
+    }
 }

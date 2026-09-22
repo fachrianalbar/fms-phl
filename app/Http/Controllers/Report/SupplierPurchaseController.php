@@ -24,7 +24,7 @@ class SupplierPurchaseController extends Controller
 
     public function __construct()
     {
-        $this->title = 'Supplier Sparepart Purchase Report';
+        $this->title = 'Laporan Supplier';
         $this->view = 'report.supplier.';
     }
 
@@ -35,50 +35,74 @@ class SupplierPurchaseController extends Controller
             ->orderBy('name')
             ->get();
 
+        $rows = SupplierPurchaseReport::rowsForFilters(null, null);
+
         return view($this->view . 'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
+            ->with('stats', $this->summaryStats($rows))
             ->with('title', $this->title);
     }
 
     public function datatable(Request $request)
     {
-        if ($request->ajax()) {
-            $data = $this->summaryQuery($request);
-
-            return DataTables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) use ($request) {
-                    $detailUrl = route('report.supplier.detail', ['supplierCode' => $row->supplierCode]);
-
-                    $query = array_filter([
-                        'startDate' => $request->startDate,
-                        'endDate' => $request->endDate,
-                    ]);
-
-                    if (! empty($query)) {
-                        $detailUrl .= '?' . http_build_query($query);
-                    }
-
-                    return '<a href="' . $detailUrl . '" class="btn btn-icon btn-sm bg-info-subtle" data-bs-toggle="tooltip" title="Detail">'
-                        . '<i class="mdi mdi-eye-outline fs-14 text-info"></i>'
-                        . '</a>';
-                })
-                ->editColumn('totalPurchase', function ($row) {
-                    return number_format((float) $row->totalPurchase, 0, ',', '.');
-                })
-                ->editColumn('totalItem', function ($row) {
-                    return number_format((float) $row->totalItem, 0, ',', '.');
-                })
-                ->editColumn('totalQty', function ($row) {
-                    return number_format((float) $row->totalQty, 1, ',', '.');
-                })
-                ->editColumn('totalAmount', function ($row) {
-                    return number_format((float) $row->totalAmount, 0, ',', '.');
-                })
-                ->rawColumns(['action', 'totalPurchase', 'totalItem', 'totalQty', 'totalAmount'])
-                ->toJson();
+        if (! $request->ajax()) {
+            abort(404);
         }
+
+        $rows = SupplierPurchaseReport::rowsForFilters(
+            $request->startDate,
+            $request->endDate,
+            $request->supplierCode
+        );
+
+        return DataTables::of($rows)
+            ->addIndexColumn()
+            ->addColumn('action', function ($row) use ($request) {
+                $detailUrl = route('report.supplier.detail', ['supplierCode' => $row->supplierCode]);
+                $query = array_filter([
+                    'startDate' => $request->startDate,
+                    'endDate' => $request->endDate,
+                ]);
+
+                if ($query !== []) {
+                    $detailUrl .= '?' . http_build_query($query);
+                }
+
+                return '<a href="' . e($detailUrl) . '" class="btn btn-icon btn-sm bg-primary-subtle hover-scale" data-bs-toggle="tooltip" title="Lihat detail supplier">'
+                    . '<i class="mdi mdi-arrow-right fs-14 text-primary"></i>'
+                    . '</a>';
+            })
+            ->editColumn('supplierName', fn ($row) => e($row->supplierName))
+            ->editColumn('totalPurchase', fn ($row) => number_format((int) $row->totalPurchase, 0, ',', '.'))
+            ->editColumn('totalBilling', fn ($row) => $this->formatCurrency($row->totalBilling))
+            ->editColumn('totalPaid', fn ($row) => $this->formatCurrency($row->totalPaid))
+            ->editColumn('totalRemaining', fn ($row) => '<strong class="text-dark">' . $this->formatCurrency($row->totalRemaining) . '</strong>')
+            ->editColumn('dueSoonAmount', function ($row) {
+                return '<span class="text-warning-emphasis fw-semibold">' . $this->formatCurrency($row->dueSoonAmount) . '</span>'
+                    . '<small class="d-block text-muted">' . number_format((int) $row->dueSoonCount, 0, ',', '.') . ' PO</small>';
+            })
+            ->editColumn('overdueAmount', function ($row) {
+                $class = (float) $row->overdueAmount > 0 ? 'text-danger' : 'text-muted';
+
+                return '<span class="' . $class . ' fw-semibold">' . $this->formatCurrency($row->overdueAmount) . '</span>'
+                    . '<small class="d-block text-muted">' . number_format((int) $row->overdueCount, 0, ',', '.') . ' PO</small>';
+            })
+            ->editColumn('aging0To30', fn ($row) => $this->formatCurrency($row->aging0To30))
+            ->editColumn('aging31To60', fn ($row) => $this->formatCurrency($row->aging31To60))
+            ->editColumn('aging61To90', fn ($row) => $this->formatCurrency($row->aging61To90))
+            ->editColumn('agingOver90', function ($row) {
+                $class = (float) $row->agingOver90 > 0 ? 'text-danger fw-semibold' : '';
+
+                return '<span class="' . $class . '">' . $this->formatCurrency($row->agingOver90) . '</span>';
+            })
+            ->editColumn('unpaidCount', fn ($row) => number_format((int) $row->unpaidCount, 0, ',', '.'))
+            ->with(['stats' => $this->summaryStats($rows)])
+            ->rawColumns([
+                'action', 'totalRemaining', 'dueSoonAmount', 'overdueAmount',
+                'aging0To30', 'aging31To60', 'aging61To90', 'agingOver90',
+            ])
+            ->toJson();
     }
 
     public function detail(string $supplierCode, Request $request)
@@ -88,16 +112,27 @@ class SupplierPurchaseController extends Controller
             ->whereNull('deleted_at')
             ->firstOrFail();
 
-        $summary = $this->detailSummaryQuery($supplierCode, $request)->first();
+        $summary = SupplierPurchaseDetailReport::dataForFilters(
+            $supplierCode,
+            $request->startDate,
+            $request->endDate,
+            $request->purchaseCode
+        );
 
         return view($this->view . 'show')
             ->with('view', $this->view)
-            ->with('title', 'Supplier Sparepart Purchase Detail Report')
+            ->with('title', 'Detail Laporan Supplier')
             ->with('supplier', $supplier)
-            ->with('totalPurchase', (int) ($summary->totalPurchase ?? 0))
-            ->with('totalItem', (int) ($summary->totalItem ?? 0))
-            ->with('totalQty', (float) ($summary->totalQty ?? 0))
-            ->with('totalAmount', (float) ($summary->totalAmount ?? 0))
+            ->with('totalPurchase', $summary['totalPurchase'])
+            ->with('totalItem', $summary['totalItem'])
+            ->with('totalQty', $summary['totalQty'])
+            ->with('totalAmount', $summary['totalAmount'])
+            ->with('totalPaid', $summary['totalPaid'])
+            ->with('totalRemaining', $summary['totalRemaining'])
+            ->with('dueSoonAmount', $summary['dueSoonAmount'])
+            ->with('dueSoonCount', $summary['dueSoonCount'])
+            ->with('overdueAmount', $summary['overdueAmount'])
+            ->with('overdueCount', $summary['overdueCount'])
             ->with('purchaseCode', $request->purchaseCode)
             ->with('startDate', $request->startDate)
             ->with('endDate', $request->endDate);
@@ -110,36 +145,41 @@ class SupplierPurchaseController extends Controller
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return '<button type="button" class="btn btn-icon btn-sm bg-info-subtle" '
-                        . 'onclick="showPurchaseItems(\'' . $row->code . '\')" '
-                        . 'data-bs-toggle="tooltip" title="Detail">'
-                        . '<i class="mdi mdi-eye-outline fs-14 text-info"></i>'
-                        . '</button>';
-                })
-                ->addColumn('purchaseDate', function ($row) {
-                    return $this->formatPurchaseDate($row->date, $row->time);
-                })
-                ->editColumn('dueDate', function ($row) {
-                    if (! $row->dueDate) {
-                        return '-';
+                ->setRowClass(function ($row) {
+                    if ((float) $row->remainingAmount <= 0) {
+                        return '';
                     }
 
-                    return Carbon::parse($row->dueDate)->format('d-m-Y');
+                    if ((int) $row->daysToDue < 0) {
+                        return 'table-danger-subtle';
+                    }
+
+                    return (int) $row->daysToDue <= 7 ? 'table-warning-subtle' : '';
                 })
-                ->editColumn('warehouseName', function ($row) {
-                    return $row->warehouseName ?: '-';
+                ->addColumn('action', function ($row) {
+                    return '<button type="button" class="btn btn-icon btn-sm bg-primary-subtle hover-scale" '
+                        . 'onclick="showPurchaseItems(\'' . e($row->code) . '\')" '
+                        . 'data-bs-toggle="tooltip" title="Lihat item pembelian">'
+                        . '<i class="mdi mdi-eye-outline fs-14 text-primary"></i>'
+                        . '</button>';
                 })
-                ->editColumn('totalItem', function ($row) {
-                    return number_format((float) $row->totalItem, 0, ',', '.');
+                ->addColumn('purchaseDate', fn ($row) => $this->formatPurchaseDate($row->date, $row->time))
+                ->editColumn('dueDate', function ($row) {
+                    $label = Carbon::parse($row->effectiveDueDate)->format('d-m-Y');
+
+                    if ($row->dueDateSource !== 'actual') {
+                        $label .= '<small class="d-block text-muted">Estimasi dari tanggal PO</small>';
+                    }
+
+                    return $label;
                 })
-                ->editColumn('totalQty', function ($row) {
-                    return number_format((float) $row->totalQty, 1, ',', '.');
-                })
-                ->editColumn('totalAmount', function ($row) {
-                    return number_format((float) $row->totalAmount, 0, ',', '.');
-                })
-                ->rawColumns(['action', 'purchaseDate', 'dueDate', 'warehouseName', 'totalItem', 'totalQty', 'totalAmount'])
+                ->addColumn('dueStatus', fn ($row) => $this->dueStatusBadge($row))
+                ->editColumn('warehouseName', fn ($row) => e($row->warehouseName ?: '-'))
+                ->editColumn('totalItem', fn ($row) => number_format((float) $row->totalItem, 0, ',', '.'))
+                ->editColumn('billingAmount', fn ($row) => $this->formatCurrency($row->billingAmount))
+                ->editColumn('paidAmountValue', fn ($row) => $this->formatCurrency($row->paidAmountValue))
+                ->editColumn('remainingAmount', fn ($row) => '<strong>' . $this->formatCurrency($row->remainingAmount) . '</strong>')
+                ->rawColumns(['action', 'dueDate', 'dueStatus', 'remainingAmount'])
                 ->toJson();
         }
     }
@@ -179,6 +219,12 @@ class SupplierPurchaseController extends Controller
             'details' => $details,
             'totalQty' => (float) $details->sum('qty'),
             'totalAmount' => (float) $details->sum('subtotal'),
+            'billingAmount' => (float) ($purchase->nominal ?: $details->sum('subtotal')),
+            'paidAmount' => (float) ($purchase->paidAmount ?? 0),
+            'remainingAmount' => max(0, (float) ($purchase->nominal ?: $details->sum('subtotal')) - (float) ($purchase->paidAmount ?? 0)),
+            'dueDate' => $this->effectiveDueDate($purchase->dueDate, $purchase->date)->format('d-m-Y'),
+            'dueDateEstimated' => ! $this->hasValidDueDate($purchase->dueDate),
+            'dueDateSource' => $this->dueDateSource($purchase->dueDate, $purchase->date),
         ]);
     }
 
@@ -189,7 +235,11 @@ class SupplierPurchaseController extends Controller
 
     public function pdfSupplier(Request $request)
     {
-        $rows = $this->summaryQuery($request)->get();
+        $rows = SupplierPurchaseReport::rowsForFilters(
+            $request->startDate,
+            $request->endDate,
+            $request->supplierCode
+        );
 
         $supplierName = null;
         if ($request->filled('supplierCode')) {
@@ -230,9 +280,12 @@ class SupplierPurchaseController extends Controller
             ->whereNull('deleted_at')
             ->firstOrFail();
 
-        $summary = $this->detailSummaryQuery($supplierCode, $request)->first();
-
-        $rows = $this->detailRowsQuery($supplierCode, $request)->get();
+        $data = SupplierPurchaseDetailReport::dataForFilters(
+            $supplierCode,
+            $request->startDate,
+            $request->endDate,
+            $request->purchaseCode
+        );
 
         $mpdf = new Mpdf([
             'orientation' => 'L',
@@ -243,11 +296,13 @@ class SupplierPurchaseController extends Controller
         $mpdf->WriteHTML(
             view($this->view . 'report.supplier-detail-pdf')
                 ->with('supplier', $supplier)
-                ->with('rows', $rows)
-                ->with('totalPurchase', (int) ($summary->totalPurchase ?? 0))
-                ->with('totalItem', (int) ($summary->totalItem ?? 0))
-                ->with('totalQty', (float) ($summary->totalQty ?? 0))
-                ->with('totalAmount', (float) ($summary->totalAmount ?? 0))
+                ->with('rows', $data['rows'])
+                ->with('totalPurchase', $data['totalPurchase'])
+                ->with('totalItem', $data['totalItem'])
+                ->with('totalQty', $data['totalQty'])
+                ->with('totalAmount', $data['totalAmount'])
+                ->with('totalPaid', $data['totalPaid'])
+                ->with('totalRemaining', $data['totalRemaining'])
                 ->with('startDate', $request->startDate)
                 ->with('endDate', $request->endDate)
         );
@@ -265,6 +320,8 @@ class SupplierPurchaseController extends Controller
                 DB::raw('COUNT(DISTINCT purchase_detail.itemCode) as totalItem'),
                 DB::raw('COALESCE(SUM(COALESCE(NULLIF(purchase_detail.receivedQty, 0), purchase_detail.qty)), 0) as totalQty'),
                 DB::raw('COALESCE(SUM(COALESCE(purchase_detail.price, 0) * COALESCE(NULLIF(purchase_detail.receivedQty, 0), purchase_detail.qty)), 0) as totalAmount'),
+                DB::raw('COALESCE(pa.totalPaid, 0) as totalPaid'),
+                DB::raw('COALESCE(pa.unpaidCount, 0) as unpaidCount'),
             ])
             ->join('supplier', function ($join) {
                 $join->on('supplier.code', '=', 'purchase.supplierCode')
@@ -274,12 +331,35 @@ class SupplierPurchaseController extends Controller
                 $join->on('purchase_detail.purchaseCode', '=', 'purchase.code')
                     ->whereNull('purchase_detail.deleted_at');
             })
+            ->leftJoinSub($this->paymentAggregate($request), 'pa', 'pa.supplierCode', '=', 'supplier.code')
             ->whereNull('purchase.deleted_at')
-            ->groupBy('supplier.code', 'supplier.name')
+            ->groupBy('supplier.code', 'supplier.name', 'pa.totalPaid', 'pa.unpaidCount')
             ->orderBy('supplier.name');
 
         if ($request->filled('supplierCode')) {
             $query->where('supplier.code', $request->supplierCode);
+        }
+
+        $this->applyDateFilter($query, $request->startDate, $request->endDate);
+
+        return $query;
+    }
+
+    /**
+     * Agregat pembayaran (terbayar & jumlah PO belum lunas) per supplier.
+     * Dipakai agar laporan per supplier juga menampilkan status hutang.
+     */
+    private function paymentAggregate(Request $request): QueryBuilder
+    {
+        $query = DB::table('purchase')
+            ->whereNull('purchase.deleted_at')
+            ->groupBy('purchase.supplierCode')
+            ->selectRaw('purchase.supplierCode as supplierCode')
+            ->selectRaw('COALESCE(SUM(COALESCE(purchase.paidAmount, 0)), 0) as totalPaid')
+            ->selectRaw("COALESCE(SUM(CASE WHEN purchase.paymentStatus <> 'Paid' THEN 1 ELSE 0 END), 0) as unpaidCount");
+
+        if ($request->filled('supplierCode')) {
+            $query->where('purchase.supplierCode', $request->supplierCode);
         }
 
         $this->applyDateFilter($query, $request->startDate, $request->endDate);
@@ -314,6 +394,18 @@ class SupplierPurchaseController extends Controller
 
     private function detailQuery(string $supplierCode, Request $request): Builder|QueryBuilder
     {
+        $detailTotals = DB::table('purchase_detail')
+            ->whereNull('purchase_detail.deleted_at')
+            ->groupBy('purchase_detail.purchaseCode')
+            ->selectRaw('purchase_detail.purchaseCode as purchaseCode')
+            ->selectRaw('COUNT(DISTINCT purchase_detail.itemCode) as totalItem')
+            ->selectRaw('COALESCE(SUM(COALESCE(NULLIF(purchase_detail.receivedQty, 0), purchase_detail.qty, 0)), 0) as totalQty')
+            ->selectRaw('COALESCE(SUM(COALESCE(purchase_detail.price, 0) * COALESCE(NULLIF(purchase_detail.qty, 0), purchase_detail.receivedQty, 0)), 0) as detailSum');
+
+        $billing = 'COALESCE(NULLIF(purchase.nominal, 0), detail_totals.detailSum, 0)';
+        $remaining = "GREATEST({$billing} - COALESCE(purchase.paidAmount, 0), 0)";
+        $effectiveDueDate = $this->effectiveDueDateExpression();
+
         $query = Purchase::query()
             ->select([
                 'purchase.code',
@@ -321,21 +413,22 @@ class SupplierPurchaseController extends Controller
                 'purchase.time',
                 'purchase.dueDate',
                 'warehouse.name as warehouseName',
-                DB::raw('COUNT(DISTINCT purchase_detail.itemCode) as totalItem'),
-                DB::raw('COALESCE(SUM(COALESCE(NULLIF(purchase_detail.receivedQty, 0), purchase_detail.qty)), 0) as totalQty'),
-                DB::raw('COALESCE(SUM(COALESCE(purchase_detail.price, 0) * COALESCE(NULLIF(purchase_detail.receivedQty, 0), purchase_detail.qty)), 0) as totalAmount'),
             ])
+            ->selectRaw('COALESCE(detail_totals.totalItem, 0) as totalItem')
+            ->selectRaw('COALESCE(detail_totals.totalQty, 0) as totalQty')
+            ->selectRaw("{$billing} as billingAmount")
+            ->selectRaw('COALESCE(purchase.paidAmount, 0) as paidAmountValue')
+            ->selectRaw("{$remaining} as remainingAmount")
+            ->selectRaw("{$effectiveDueDate} as effectiveDueDate")
+            ->selectRaw("DATEDIFF({$effectiveDueDate}, CURRENT_DATE) as daysToDue")
+            ->selectRaw("CASE WHEN YEAR(purchase.dueDate) BETWEEN 2020 AND 2030 THEN 'actual' WHEN YEAR(purchase.date) BETWEEN 1000 AND 9999 THEN 'purchase_date' ELSE 'today' END as dueDateSource")
             ->leftJoin('warehouse', function ($join) {
                 $join->on('warehouse.code', '=', 'purchase.warehouseCode')
                     ->whereNull('warehouse.deleted_at');
             })
-            ->leftJoin('purchase_detail', function ($join) {
-                $join->on('purchase_detail.purchaseCode', '=', 'purchase.code')
-                    ->whereNull('purchase_detail.deleted_at');
-            })
+            ->leftJoinSub($detailTotals, 'detail_totals', 'detail_totals.purchaseCode', '=', 'purchase.code')
             ->where('purchase.supplierCode', $supplierCode)
             ->whereNull('purchase.deleted_at')
-            ->groupBy('purchase.code', 'purchase.date', 'purchase.time', 'purchase.dueDate', 'warehouse.name')
             ->orderByDesc('purchase.date')
             ->orderByDesc('purchase.time');
 
@@ -380,11 +473,103 @@ class SupplierPurchaseController extends Controller
         $formattedDate = Carbon::parse($date)->format('d-m-Y');
         $formattedTime = $time ? Carbon::parse($time)->format('H:i') : null;
 
-        if (! $formattedTime) {
-            return $formattedDate;
+        return $formattedTime ? $formattedDate . ' ' . $formattedTime : $formattedDate;
+    }
+
+    private function summaryStats($rows): array
+    {
+        return [
+            'supplierCount' => $rows->count(),
+            'totalRemaining' => (float) $rows->sum('totalRemaining'),
+            'dueSoonAmount' => (float) $rows->sum('dueSoonAmount'),
+            'dueSoonCount' => (int) $rows->sum('dueSoonCount'),
+            'overdueAmount' => (float) $rows->sum('overdueAmount'),
+            'overdueCount' => (int) $rows->sum('overdueCount'),
+            'agingOver90' => (float) $rows->sum('agingOver90'),
+            'unpaidCount' => (int) $rows->sum('unpaidCount'),
+        ];
+    }
+
+    private function formatCurrency($amount): string
+    {
+        return 'Rp ' . number_format((float) $amount, 0, ',', '.');
+    }
+
+    private function dueStatusBadge($row): string
+    {
+        if ((float) $row->remainingAmount <= 0) {
+            return '<span class="badge bg-success-subtle text-success-emphasis">Lunas</span>';
         }
 
-        return $formattedDate . ' ' . $formattedTime;
+        $days = (int) $row->daysToDue;
+
+        if ($days < 0) {
+            return '<span class="badge bg-danger-subtle text-danger-emphasis">Overdue ' . abs($days) . ' hari</span>';
+        }
+
+        if ($days === 0) {
+            return '<span class="badge bg-danger-subtle text-danger-emphasis">Jatuh tempo hari ini</span>';
+        }
+
+        if ($days <= 7) {
+            return '<span class="badge bg-warning-subtle text-warning-emphasis">Jatuh tempo ' . $days . ' hari</span>';
+        }
+
+        return '<span class="badge bg-info-subtle text-info-emphasis">Belum jatuh tempo</span>';
+    }
+
+    private function effectiveDueDateExpression(): string
+    {
+        return 'COALESCE(CASE WHEN YEAR(purchase.dueDate) BETWEEN 2020 AND 2030 THEN DATE(purchase.dueDate) END, CASE WHEN YEAR(purchase.date) BETWEEN 1000 AND 9999 THEN DATE(purchase.date) END, CURRENT_DATE)';
+    }
+
+    private function hasValidDueDate($dueDate): bool
+    {
+        if (! $dueDate) {
+            return false;
+        }
+
+        try {
+            return Carbon::parse($dueDate)->year >= 2020 && Carbon::parse($dueDate)->year <= 2030;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function effectiveDueDate($dueDate, $purchaseDate): Carbon
+    {
+        if ($this->hasValidDueDate($dueDate)) {
+            return Carbon::parse($dueDate)->startOfDay();
+        }
+
+        if ($purchaseDate) {
+            try {
+                return Carbon::parse($purchaseDate)->startOfDay();
+            } catch (\Throwable) {
+                // Fall through to today when the stored purchase date is invalid.
+            }
+        }
+
+        return Carbon::today();
+    }
+
+    private function dueDateSource($dueDate, $purchaseDate): string
+    {
+        if ($this->hasValidDueDate($dueDate)) {
+            return 'actual';
+        }
+
+        if ($purchaseDate) {
+            try {
+                Carbon::parse($purchaseDate);
+
+                return 'purchase_date';
+            } catch (\Throwable) {
+                // Fall through to today's date.
+            }
+        }
+
+        return 'today';
     }
 
     private function applyDateFilter(Builder|QueryBuilder $query, ?string $startDate, ?string $endDate): void

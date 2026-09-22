@@ -18,6 +18,7 @@ class PurchasePaymentHistory extends Model
 
     protected $fillable = [
         'purchaseCode',
+        'batch_code',
         'amount',
         'paymentDate',
         'userBankCode',
@@ -27,6 +28,11 @@ class PurchasePaymentHistory extends Model
     public function purchase()
     {
         return $this->belongsTo(Purchase::class, 'purchaseCode', 'code');
+    }
+
+    public function batch()
+    {
+        return $this->belongsTo(SupplierPaymentBatch::class, 'batch_code', 'code');
     }
 
     public function userBank()

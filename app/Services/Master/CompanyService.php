@@ -27,6 +27,11 @@ class CompanyService
         return $this->service->where('id', $id)->first();
     }
 
+    public function getByCode($code)
+    {
+        return $this->service->where('code', $code)->first();
+    }
+
     public function store($request, $title)
     {
         $data = $this->service->create([

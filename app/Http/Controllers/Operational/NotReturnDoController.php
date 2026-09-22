@@ -71,7 +71,7 @@ class NotReturnDoController extends Controller
         $this->orderSvc = $orderSvc;
         $this->routeTypeSvc = $routeTypeSvc;
         $this->materialSvc = $materialSvc;
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') == 'en' ? ($this->menuSvc?->name ?? 'Not Return Do') : ($this->menuSvc?->nama ?? 'Not Return Do');
         $this->view = 'operational.not-return-do.';
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Models\Operational;
 
-use App\Models\Data\FleetDriver;
 use App\Models\Data\Route;
 use App\Models\Finance\OrderPayment;
 use App\Models\Finance\OrderPaymentHistory;
@@ -25,6 +24,7 @@ class Order extends Model
     protected $table = 'order';
 
     public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $casts = [
         'routeAmount' => 'decimal:2',
@@ -48,7 +48,6 @@ class Order extends Model
         'notes',
         'salesOrder',
         'sto',
-        'fleetDriverCode',
         'routeCode',
         'qty',
         'routeCode',
@@ -79,11 +78,6 @@ class Order extends Model
     public function material()
     {
         return $this->belongsTo(Material::class, 'materialCode', 'code');
-    }
-
-    public function fleetDriver()
-    {
-        return $this->belongsTo(FleetDriver::class, 'fleetDriverCode', 'code');
     }
 
     public function driver()

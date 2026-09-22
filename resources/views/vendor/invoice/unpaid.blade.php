@@ -199,7 +199,7 @@
         min-width: 1180px;
         width: max-content !important;
     }
-    .vendor-payment-workbench .invoice-table tbody td:nth-child(n+9):nth-child(-n+13) { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+    .vendor-payment-workbench .invoice-table tbody td:nth-child(n+10):nth-child(-n+14) { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
     .vendor-payment-workbench .form-check-input:focus-visible,
     .vendor-payment-workbench .btn:focus-visible,
     .payment-review-modal .form-control:focus-visible,
@@ -333,6 +333,7 @@
                             <th class="text-center"><input class="form-check-input" type="checkbox" id="selectAllNotas" aria-label="Pilih semua nota pada halaman tabel ini" title="Pilih semua nota pada halaman ini"></th>
                             <th class="text-center" style="width: 170px;">Aksi</th>
                             <th class="text-center" style="width: 45px;">No</th>
+                            <th class="text-center">Status Bayar</th>
                             <th>No Nota</th>
                             <th>Tanggal Nota</th>
                             <th>Vendor (Perusahaan Kendaraan)</th>
@@ -344,7 +345,6 @@
                             <th class="text-end">Claim</th>
                             <th class="text-end">Terbayar</th>
                             <th class="text-end">Sisa</th>
-                            <th class="text-center">Status Bayar</th>
                         </tr>
                     </thead>
                     <tbody></tbody>

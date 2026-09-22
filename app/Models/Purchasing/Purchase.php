@@ -5,6 +5,7 @@ namespace App\Models\Purchasing;
 use App\Models\Bank\UserBank;
 use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
+use App\Models\Warehouse\Maintenance;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -61,5 +62,20 @@ class Purchase extends Model
     public function paymentHistories()
     {
         return $this->hasMany(PurchasePaymentHistory::class, 'purchaseCode', 'code');
+    }
+
+    /**
+     * Batch pembayaran terakhir yang membayar pembelian ini
+     * (paymentCode = kode batch; null untuk data lama / belum dibayar).
+     */
+    public function paymentBatch()
+    {
+        return $this->belongsTo(SupplierPaymentBatch::class, 'paymentCode', 'code');
+    }
+
+    public function maintenances()
+    {
+        return $this->belongsToMany(Maintenance::class, 'maintenance_purchase', 'purchase_id', 'maintenance_id')
+            ->withTimestamps();
     }
 }

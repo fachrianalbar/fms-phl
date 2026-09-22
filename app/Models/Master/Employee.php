@@ -2,7 +2,6 @@
 
 namespace App\Models\Master;
 
-use App\Models\Operational\DownPayment;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -30,17 +29,30 @@ class Employee extends Model
         'address',
         'photo',
         'employeeStatus',
+        'status',
         'nik',
         'provinceId',
         'cityId',
         'districtId',
-        'address',
         'birthPlace',
-        'gender',
         'citizenship',
         'bankCode',
         'accountNumber',
     ];
+
+    protected $casts = [
+        'status' => 'integer',
+    ];
+
+    public function isActive(): bool
+    {
+        return (int) $this->status === 1;
+    }
+
+    public function isDriver(): bool
+    {
+        return in_array($this->positionCode, ['KP_240823034043', 'FPS250612034049']);
+    }
 
     public function position()
     {
@@ -60,11 +72,6 @@ class Employee extends Model
     public function district()
     {
         return $this->belongsTo(District::class, 'districtId', 'id');
-    }
-
-    public function downPayment()
-    {
-        return $this->hasMany(DownPayment::class, 'driverCode', 'code');
     }
 
     public function bank()
