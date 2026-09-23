@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\FleetExport;
 use App\Http\Controllers\Controller;
 use App\Models\Master\Fleet;
+use App\Models\Master\FleetBrand;
+use App\Models\Master\FleetCompany;
 use App\Models\Master\FleetPicture;
+use App\Models\Master\FleetType;
+use App\Models\Operational\Order;
+use App\Models\Warehouse\Maintenance;
 use App\Services\Master\EmployeeService;
 use App\Services\Master\FleetBrandService;
 use App\Services\Master\FleetCompanyService;
@@ -16,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class FleetController extends Controller
@@ -54,9 +62,16 @@ class FleetController extends Controller
      */
     public function index()
     {
+        $brands = $this->fleetBrandSvc->findAll();
+        $types = $this->fleetTypeSvc->findAll();
+        $companies = $this->fleetCompanySvc->findAll();
+
         return view($this->view.'index')
             ->with('view', $this->view)
-            ->with('title', $this->title);
+            ->with('title', $this->title)
+            ->with('brands', $brands)
+            ->with('types', $types)
+            ->with('companies', $companies);
     }
 
     /**
@@ -113,7 +128,52 @@ class FleetController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $fleet = Fleet::where('id', $id)
+            ->with(['brand', 'type', 'company', 'driver.position', 'pictures'])
+            ->first();
+
+        if (! $fleet) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+        }
+
+        $totalOrders = Order::where('fleetCode', $fleet->code)->count();
+
+        $maintenanceStats = DB::table('maintenance')
+            ->leftJoin('maintenance_detail', function ($join) {
+                $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
+                    ->whereNull('maintenance_detail.deleted_at');
+            })
+            ->where('maintenance.fleetCode', $fleet->code)
+            ->whereNull('maintenance.deleted_at')
+            ->selectRaw('COUNT(DISTINCT maintenance.code) as totalMaintenance, COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost')
+            ->first();
+
+        $totalMaintenance = $maintenanceStats->totalMaintenance ?? 0;
+        $totalMaintenanceCost = $maintenanceStats->totalCost ?? 0;
+
+        $recentMaintenances = DB::table('maintenance')
+            ->where('fleetCode', $fleet->code)
+            ->whereNull('deleted_at')
+            ->orderBy('date', 'desc')
+            ->limit(10)
+            ->get();
+
+        $recentOrders = DB::table('order')
+            ->where('fleetCode', $fleet->code)
+            ->whereNull('deleted_at')
+            ->orderBy('orderDate', 'desc')
+            ->limit(10)
+            ->get();
+
+        return view($this->view.'show')
+            ->with('view', $this->view)
+            ->with('title', $this->title)
+            ->with('fleet', $fleet)
+            ->with('totalOrders', $totalOrders)
+            ->with('totalMaintenance', $totalMaintenance)
+            ->with('totalMaintenanceCost', $totalMaintenanceCost)
+            ->with('recentMaintenances', $recentMaintenances)
+            ->with('recentOrders', $recentOrders);
     }
 
     /**
@@ -200,98 +260,204 @@ class FleetController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $query = $this->buildFilteredQuery($request);
 
-            return Datatables::of($data)
+            return Datatables::of($query)
                 ->addIndexColumn()
+                ->editColumn('plateNumber', function ($row) {
+                    return '<span class="font-monospace fw-bold text-dark">'.$row->plateNumber.'</span>';
+                })
+                ->editColumn('code', function ($row) {
+                    return '<span class="font-monospace text-muted" style="font-size: 11.5px;">'.$row->code.'</span>';
+                })
+                ->editColumn('vehicleRegistrationDueDate', function ($row) {
+                    if (! $row->vehicleRegistrationDueDate) {
+                        return '-';
+                    }
+
+                    return '<span class="font-monospace text-dark">'.\Carbon\Carbon::parse($row->vehicleRegistrationDueDate)->format('d/m/Y').'</span>';
+                })
                 ->editColumn('company.name', function ($row) {
-                    $company = '';
-
-                    if (isset($row->company->name)) {
-                        $company = $row->company->name;
-                    }
-
-                    return $company;
-                })
-                ->editColumn('company.address', function ($row) {
-                    $company = '';
-
-                    if (isset($row->company->address)) {
-                        $company = $row->company->address;
-                    }
-
-                    return $company;
-                })
-                ->editColumn('brand.name', function ($row) {
-                    $brand = '';
-
-                    if (isset($row->brand->name)) {
-                        $brand = $row->brand->name;
-                    }
-
-                    return $brand;
-                })
-                ->editColumn('type.name', function ($row) {
-                    $type = '';
-
-                    if (isset($row->type->name)) {
-                        $type = $row->type->name;
-                    }
-
-                    return $type;
+                    return $row->company?->name ?? '-';
                 })
                 ->editColumn('company.type', function ($row) {
-                    $type = '';
-
-                    if (isset($row->company->type)) {
-                        $type = $row->company->type;
+                    $type = $row->company?->type;
+                    if (! $type) {
+                        return '-';
                     }
 
-                    return $type;
+                    $badgeClass = strtolower($type) === 'internal'
+                        ? 'bg-primary-subtle text-primary'
+                        : 'bg-warning-subtle text-warning';
+
+                    return '<span class="badge '.$badgeClass.' px-2 py-1" style="border-radius: 6px; font-weight: 600; font-size: 11px;">'.$type.'</span>';
                 })
-                ->editColumn('vehicleRegistrationNumber', function ($row) {
-                    if (isset($row->vehicleRegistrationNumber)) {
-                        $imageUrl = url('storage/fleet/vehicleRegistrationNumber/'.$row->vehicleRegistrationNumber);
-
-                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
-                    }
-
-                    return '';
+                ->editColumn('company.address', function ($row) {
+                    return $row->company?->address ?? '-';
                 })
-                ->editColumn('insurance', function ($row) {
-                    if (isset($row->insurance)) {
-                        $imageUrl = url('storage/fleet/insurance/'.$row->insurance);
-
-                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
-                    }
-
-                    return '';
+                ->editColumn('brand.name', function ($row) {
+                    return $row->brand?->name
+                        ? '<span class="badge bg-light text-dark px-2 py-1 border" style="border-radius: 6px; font-weight: 600; font-size: 11px;">'.$row->brand->name.'</span>'
+                        : '-';
                 })
-                ->editColumn('barcode', function ($row) {
-                    if (isset($row->barcode)) {
-                        $imageUrl = url('storage/fleet/barcode/'.$row->barcode);
-
-                        return '<img onclick="showModal(\''.$imageUrl.'\')" style="cursor: pointer" src="'.$imageUrl.'" width="150px" height="150px" />';
-                    }
-
-                    return '';
+                ->editColumn('type.name', function ($row) {
+                    return $row->type?->name ?? '-';
+                })
+                ->editColumn('frameNumber', function ($row) {
+                    return $row->frameNumber ? '<span class="font-monospace text-muted" style="font-size: 11.5px;">'.$row->frameNumber.'</span>' : '-';
+                })
+                ->editColumn('engineNumber', function ($row) {
+                    return $row->engineNumber ? '<span class="font-monospace text-muted" style="font-size: 11.5px;">'.$row->engineNumber.'</span>' : '-';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
+                    $showUrl = route($this->view.'show', $row->id);
+                    $editUrl = route($this->view.'edit', $row->id);
+                    $escapedId = e($row->id);
 
-        <input class="fleet-checkbox" type="checkbox" name="fleet[]" data-id="'.$row->id.'" value="'.$row->id.'">
-    </td>';
+                    $btn = '<div class="d-flex align-items-center justify-content-center gap-1">'
+                        .'<a href="'.$showUrl.'" class="btn btn-icon btn-sm bg-info-subtle" data-bs-toggle="tooltip" title="Detail">'
+                        .'<i class="mdi mdi-eye-outline fs-14 text-info"></i></a>'
+                        .'<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle" data-bs-toggle="tooltip" title="Edit">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>'
+                        .'<button type="button" class="btn btn-icon btn-sm bg-danger-subtle" onclick="deleteData(\''.$escapedId.'\')" data-bs-toggle="tooltip" title="Delete">'
+                        .'<i class="mdi mdi-delete fs-14 text-danger"></i></button>'
+                        .'<input class="form-check-input fleet-checkbox ms-1" type="checkbox" name="fleet[]" data-id="'.$escapedId.'" value="'.$escapedId.'" style="cursor: pointer;">'
+                        .'</div>';
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'barcode', 'insurance', 'type.name', 'brand.name', 'company.name', 'company.address', 'company.type',  'vehicleRegistrationNumber'])
+                ->rawColumns(['action', 'plateNumber', 'code', 'vehicleRegistrationDueDate', 'company.name', 'company.type', 'company.address', 'brand.name', 'type.name', 'frameNumber', 'engineNumber'])
                 ->toJson();
         }
+    }
+
+    /**
+     * Build filtered query for Fleet list.
+     */
+    private function buildFilteredQuery(Request $request)
+    {
+        $query = $this->service->findAllQuery();
+
+        if ($request->filled('fleetBrandCode')) {
+            $query->where('fleetBrandCode', $request->fleetBrandCode);
+        }
+
+        if ($request->filled('fleetTypeCode')) {
+            $query->where('fleetTypeCode', $request->fleetTypeCode);
+        }
+
+        if ($request->filled('fleetCompanyCode')) {
+            $query->where('fleetCompanyCode', $request->fleetCompanyCode);
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Export Excel for Fleet list.
+     */
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new FleetExport($request), 'Fleet-Report.xlsx');
+    }
+
+    /**
+     * Export PDF for Fleet list.
+     */
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->buildFilteredQuery($request)->get();
+
+        $brandFilterName = null;
+        if ($request->filled('fleetBrandCode')) {
+            $b = FleetBrand::where('code', $request->fleetBrandCode)->first();
+            $brandFilterName = $b ? $b->name : null;
+        }
+
+        $typeFilterName = null;
+        if ($request->filled('fleetTypeCode')) {
+            $t = FleetType::where('code', $request->fleetTypeCode)->first();
+            $typeFilterName = $t ? $t->name : null;
+        }
+
+        $companyFilterName = null;
+        if ($request->filled('fleetCompanyCode')) {
+            $c = FleetCompany::where('code', $request->fleetCompanyCode)->first();
+            $companyFilterName = $c ? $c->name : null;
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view.'report.fleet-pdf')
+                ->with('rows', $rows)
+                ->with('brandFilterName', $brandFilterName)
+                ->with('typeFilterName', $typeFilterName)
+                ->with('companyFilterName', $companyFilterName)
+                ->with('startDate', $request->startDate)
+                ->with('endDate', $request->endDate)
+                ->render()
+        );
+
+        return $mpdf->Output('Fleet-Report.pdf', 'I');
+    }
+
+    /**
+     * Export PDF for Fleet individual profile.
+     */
+    public function exportDetailPdf(string $id)
+    {
+        $fleet = Fleet::where('id', $id)
+            ->with(['brand', 'type', 'company', 'driver.position', 'pictures'])
+            ->first();
+
+        if (! $fleet) {
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+        }
+
+        $totalOrders = Order::where('fleetCode', $fleet->code)->count();
+
+        $maintenanceStats = DB::table('maintenance')
+            ->leftJoin('maintenance_detail', function ($join) {
+                $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
+                    ->whereNull('maintenance_detail.deleted_at');
+            })
+            ->where('maintenance.fleetCode', $fleet->code)
+            ->whereNull('maintenance.deleted_at')
+            ->selectRaw('COUNT(DISTINCT maintenance.code) as totalMaintenance, COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost')
+            ->first();
+
+        $totalMaintenance = $maintenanceStats->totalMaintenance ?? 0;
+        $totalMaintenanceCost = $maintenanceStats->totalCost ?? 0;
+
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format' => 'A4',
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view.'report.fleet-detail-pdf')
+                ->with('fleet', $fleet)
+                ->with('totalOrders', $totalOrders)
+                ->with('totalMaintenance', $totalMaintenance)
+                ->with('totalMaintenanceCost', $totalMaintenanceCost)
+                ->render()
+        );
+
+        return $mpdf->Output('Fleet-'.$fleet->plateNumber.'.pdf', 'I');
     }
 
     public function fleetDriver($code)

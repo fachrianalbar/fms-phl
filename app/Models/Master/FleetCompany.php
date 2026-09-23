@@ -30,4 +30,9 @@ class FleetCompany extends Model
     {
         return $this->hasMany(RoutePriceExternal::class, 'fleet_company_id', 'id');
     }
+
+    public function fleets()
+    {
+        return $this->hasMany(Fleet::class, 'fleetCompanyCode', 'code');
+    }
 }

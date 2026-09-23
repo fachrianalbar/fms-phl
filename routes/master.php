@@ -20,13 +20,24 @@ use Illuminate\Support\Facades\Route;
 // Route::middleware(['access'])->group(function () {
 Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleets', FleetController::class);
+    Route::get('fleets-export/excel', [FleetController::class, 'exportExcel'])->name('fleets.export-excel');
+    Route::get('fleets-export/pdf', [FleetController::class, 'exportPdf'])->name('fleets.export-pdf');
+    Route::get('fleets/{id}/export/pdf', [FleetController::class, 'exportDetailPdf'])->name('fleets.detail-export-pdf');
     Route::delete('destroy-multiple-fleets', [FleetController::class, 'destroyMultiple'])->name('fleets.destroy-multiple');
     Route::delete('fleet-picture/{id}', [FleetController::class, 'deleteFleetPicture'])->name('fleet-picture.destroy');
     Route::resource('position', PositionController::class);
     Route::resource('employee', EmployeeController::class);
     Route::post('employee/{id}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
     Route::resource('fleet-type', FleetTypeController::class);
+    Route::get('fleet-type-export/excel', [FleetTypeController::class, 'exportExcel'])->name('fleet-type.export-excel');
+    Route::get('fleet-type-export/pdf', [FleetTypeController::class, 'exportPdf'])->name('fleet-type.export-pdf');
+    Route::get('fleet-type/{id}/export/excel', [FleetTypeController::class, 'exportDetailExcel'])->name('fleet-type.detail-export-excel');
+    Route::get('fleet-type/{id}/export/pdf', [FleetTypeController::class, 'exportDetailPdf'])->name('fleet-type.detail-export-pdf');
     Route::resource('fleet-brand', FleetBrandController::class);
+    Route::get('fleet-brand-export/excel', [FleetBrandController::class, 'exportExcel'])->name('fleet-brand.export-excel');
+    Route::get('fleet-brand-export/pdf', [FleetBrandController::class, 'exportPdf'])->name('fleet-brand.export-pdf');
+    Route::get('fleet-brand/{id}/export/excel', [FleetBrandController::class, 'exportDetailExcel'])->name('fleet-brand.detail-export-excel');
+    Route::get('fleet-brand/{id}/export/pdf', [FleetBrandController::class, 'exportDetailPdf'])->name('fleet-brand.detail-export-pdf');
     Route::resource('unit', UnitController::class);
     Route::resource('company', CompanyController::class);
     Route::resource('customer', CustomerController::class);
@@ -42,6 +53,10 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('material', MaterialController::class);
     Route::resource('transaction-type', TransactionTypeController::class);
     Route::resource('fleet-company', FleetCompanyController::class);
+    Route::get('fleet-company-export/excel', [FleetCompanyController::class, 'exportExcel'])->name('fleet-company.export-excel');
+    Route::get('fleet-company-export/pdf', [FleetCompanyController::class, 'exportPdf'])->name('fleet-company.export-pdf');
+    Route::get('fleet-company/{id}/export/excel', [FleetCompanyController::class, 'exportDetailExcel'])->name('fleet-company.detail-export-excel');
+    Route::get('fleet-company/{id}/export/pdf', [FleetCompanyController::class, 'exportDetailPdf'])->name('fleet-company.detail-export-pdf');
 
     // Menu routes
     Route::resource('menu', MenuController::class);
@@ -54,7 +69,9 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('employee', [EmployeeController::class, 'datatable'])->name('employee');
     Route::get('fleets', [FleetController::class, 'datatable'])->name('fleets');
     Route::get('fleet-brand', [FleetBrandController::class, 'datatable'])->name('fleet-brand');
+    Route::get('fleet-brand/{id}/fleets', [FleetBrandController::class, 'datatableFleets'])->name('fleet-brand.fleets');
     Route::get('fleet-type', [FleetTypeController::class, 'datatable'])->name('fleet-type');
+    Route::get('fleet-type/{id}/fleets', [FleetTypeController::class, 'datatableFleets'])->name('fleet-type.fleets');
     Route::get('unit', [UnitController::class, 'datatable'])->name('unit');
     Route::get('company', [CompanyController::class, 'datatable'])->name('company');
     Route::get('customer', [CustomerController::class, 'datatable'])->name('customer');
@@ -64,6 +81,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('material', [MaterialController::class, 'datatable'])->name('material');
     Route::get('transaction-type', [TransactionTypeController::class, 'datatable'])->name('transaction-type');
     Route::get('fleet-company', [FleetCompanyController::class, 'datatable'])->name('fleet-company');
+    Route::get('fleet-company/{id}/fleets', [FleetCompanyController::class, 'datatableFleets'])->name('fleet-company.fleets');
 
     // Menu datatables
     Route::get('menu', [MenuController::class, 'datatable'])->name('menu');

@@ -19,12 +19,22 @@ class FleetCompanyService
 
     public function findAll()
     {
-        return $this->service->get();
+        return $this->service->orderBy('name')->get();
+    }
+
+    public function findAllQuery()
+    {
+        return $this->service->query()->withCount('fleets');
     }
 
     public function getById($id)
     {
         return $this->service->where('id', $id)->first();
+    }
+
+    public function getByIdWithFleets($id)
+    {
+        return $this->service->where('id', $id)->with(['fleets.brand', 'fleets.type'])->first();
     }
 
     public function store($request, $title)
@@ -34,7 +44,7 @@ class FleetCompanyService
             'type' => $request->type,
             'accountNumber' => $request->accountNumber,
             'bankName' => $request->bankName,
-            'pph' => $request->pph,
+            'pph' => $request->pph ?? 0,
             'code' => GenerateCode::generateCode('FFC'),
         ]);
 
@@ -50,7 +60,7 @@ class FleetCompanyService
             'type' => $request->type,
             'accountNumber' => $request->accountNumber,
             'bankName' => $request->bankName,
-            'pph' => $request->pph,
+            'pph' => $request->pph ?? 0,
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

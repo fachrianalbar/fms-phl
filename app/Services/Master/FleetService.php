@@ -22,12 +22,17 @@ class FleetService
 
     public function findAll()
     {
-        return $this->service->with(['type', 'brand'])->get();
+        return $this->service->with(['type', 'brand', 'company', 'driver'])->get();
+    }
+
+    public function findAllQuery()
+    {
+        return $this->service->query()->with(['type', 'brand', 'company', 'driver']);
     }
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->with(['pictures'])->first();
+        return $this->service->where('id', $id)->with(['pictures', 'type', 'brand', 'company', 'driver'])->first();
     }
 
     public function store($request, $title)

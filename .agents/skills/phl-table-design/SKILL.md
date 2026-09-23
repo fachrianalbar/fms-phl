@@ -27,6 +27,7 @@ Standar referensi visual utama proyek ini:
 4. **JANGAN biarkan angka nominal/kuantitas rata kiri.** Selalu gunakan `text-end` dan font monospace/tabular-nums.
 5. **Gunakan kartu KPI (Summary Tiles) bergradasi lembut** di halaman detail atau agregasi (Total Transaksi, Total Qty, Total Biaya/Gaji).
 6. **Selalu sinkronkan parameter filter ke tombol Export (Excel & PDF)** agar file yang diunduh sesuai dengan data yang sedang difilter.
+7. **Standarisasi tinggi elemen filter bar secara seragam (38px).** JANGAN biarkan tinggi Select2 (38px), input Flatpickr (~31px dari `form-control-sm`), dan tombol filter (~31px dari `btn-sm`) berbeda tinggi/belang-belang. Terapkan kelas terstandarisasi `.filter-control`, `.filter-label`, `.btn-filter-primary`, dan `.btn-filter-reset` (kotak 38px x 38px) agar tampilan presisi, rapi, dan seimbang.
 
 ---
 
@@ -97,7 +98,7 @@ Standar referensi visual utama proyek ini:
 
 ## 3. Komponen Filter Bar Terstandarisasi
 
-Panel filter selalu terbuka, berada tepat di atas tabel:
+Panel filter selalu terbuka, berada tepat di atas tabel. Seluruh elemen input (Select2, Flatpickr) dan tombol aksi (Filter & Reset) **wajib seragam memiliki tinggi 38px** dan radius 8px:
 
 ```blade
 <div class="card border-0 mb-4"
@@ -106,8 +107,8 @@ Panel filter selalu terbuka, berada tepat di atas tabel:
         <form id="filterForm">
             <div class="row g-2 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;">Label Dropdown</label>
-                    <select class="form-select form-select-sm select2-filter" name="fieldName" id="fieldName" style="width: 100%;">
+                    <label class="filter-label" for="fieldName">Label Dropdown</label>
+                    <select class="form-select select2-filter" name="fieldName" id="fieldName" style="width: 100%;">
                         <option value="">Semua Opsi</option>
                         @foreach ($options as $item)
                             <option value="{{ $item->code }}">{{ $item->name }}</option>
@@ -115,28 +116,25 @@ Panel filter selalu terbuka, berada tepat di atas tabel:
                     </select>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;">Dari Tanggal</label>
-                    <input class="form-control form-control-sm" name="startDate" id="startDate"
-                        type="text" placeholder="Pilih Tanggal Mulai"
-                        style="border-radius: 8px; background: #fff;">
+                <div class="col-md-3">
+                    <label class="filter-label" for="startDate">Dari Tanggal</label>
+                    <input class="form-control filter-control" name="startDate" id="startDate"
+                        type="text" placeholder="Pilih Tanggal Mulai">
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;">Sampai Tanggal</label>
-                    <input class="form-control form-control-sm" name="endDate" id="endDate"
-                        type="text" placeholder="Pilih Tanggal Akhir"
-                        style="border-radius: 8px; background: #fff;">
+                <div class="col-md-3">
+                    <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                    <input class="form-control filter-control" name="endDate" id="endDate"
+                        type="text" placeholder="Pilih Tanggal Akhir">
                 </div>
 
-                <div class="col-md-2 d-flex gap-2">
-                    <button class="btn btn-sm btn-primary w-100" style="border-radius: 8px; font-weight: 600;"
-                        type="submit" id="btnFilter">
-                        <i class="mdi mdi-filter me-1"></i> Filter
+                <div class="col-md-3 col-lg-2 d-flex gap-2">
+                    <button class="btn btn-filter-primary flex-grow-1" type="submit" id="btnFilter">
+                        <i class="mdi mdi-filter fs-14"></i> Filter
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;"
-                        id="btnResetFilter" title="Reset Filter">
-                        <i class="mdi mdi-refresh"></i>
+                    <button type="button" class="btn btn-filter-reset" id="btnResetFilter"
+                        data-bs-toggle="tooltip" title="Reset Filter">
+                        <i class="mdi mdi-refresh fs-16"></i>
                     </button>
                 </div>
             </div>
@@ -144,6 +142,7 @@ Panel filter selalu terbuka, berada tepat di atas tabel:
     </div>
 </div>
 ```
+*(Catatan: Jangan gunakan `.form-control-sm` atau `.btn-sm` pada form filter karena menghasilkan tinggi ~31px yang timpang dengan Select2 (38px). Selalu gunakan kelas `.filter-control`, `.btn-filter-primary`, dan `.btn-filter-reset`)*
 
 ---
 
@@ -320,7 +319,113 @@ Sertakan CSS ter-scope berikut di section `@push('style')`:
 .summary-success { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-color: #a7f3d0; color: #065f46; }
 .summary-warning { background: linear-gradient(135deg, #fefce8, #fef9c3); border-color: #fde68a; color: #92400e; }
 
-/* ── Select2 Theme Matching ── */
+/* ── Standarisasi Seragam Filter Bar (Tinggi Presisi: 38px) ── */
+.filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Input Tanggal Flatpickr dengan Ikon Kalender Elegan */
+.filter-control {
+    height: 38px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    color: #334155 !important;
+    background-color: #ffffff !important;
+    padding: 0 12px 0 36px !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 15px 15px;
+    transition: all 0.2s ease !important;
+}
+
+.filter-control::placeholder {
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+}
+
+.filter-control:hover {
+    border-color: #94a3b8 !important;
+}
+
+.filter-control:focus {
+    border-color: #818cf8 !important;
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+}
+
+/* Tombol Filter Utama (Gradient Modern) */
+.btn-filter-primary {
+    height: 38px !important;
+    background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 0 16px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+    transition: all 0.2s ease !important;
+    white-space: nowrap !important;
+}
+
+.btn-filter-primary:hover {
+    background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-filter-primary:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 3px rgba(79, 70, 229, 0.2) !important;
+}
+
+/* Tombol Reset Filter Presisi Kotak 38px x 38px */
+.btn-filter-reset {
+    height: 38px !important;
+    width: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #64748b !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-filter-reset:hover {
+    background: #fff1f2 !important;
+    color: #e11d48 !important;
+    border-color: #fecdd3 !important;
+    box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-filter-reset:hover i {
+    transform: rotate(-45deg);
+    transition: transform 0.2s ease;
+}
+
+.btn-filter-reset:active {
+    transform: translateY(0) !important;
+}
+
+/* ── Select2 Theme Matching Seragam 38px ── */
 .select2-container--default .select2-selection--single {
     border: 1px solid #cbd5e1 !important;
     border-radius: 8px !important;
@@ -330,18 +435,23 @@ Sertakan CSS ter-scope berikut di section `@push('style')`:
     background-color: #ffffff !important;
     transition: all 0.2s ease !important;
 }
+.select2-container--default .select2-selection--single:hover {
+    border-color: #94a3b8 !important;
+}
 .select2-container--default .select2-selection--single .select2-selection__rendered {
     color: #334155 !important;
     font-size: 13px !important;
-    line-height: normal !important;
-    padding-left: 10px !important;
+    line-height: 36px !important;
+    padding-left: 12px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__placeholder {
     color: #94a3b8 !important;
+    font-size: 13px !important;
 }
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 36px !important;
-    right: 8px !important;
+    right: 10px !important;
+    top: 1px !important;
 }
 .select2-container--default.select2-container--open .select2-selection--single,
 .select2-container--default.select2-container--focus .select2-selection--single {
@@ -520,10 +630,115 @@ $(document).ready(function() {
 Saat user meminta memperbaiki desain suatu halaman tabel/report:
 - [ ] Ubah kontainer menjadi `.card.border-0.shadow-sm` dengan radius 16px.
 - [ ] Hapus collapse accordion; buat filter bar terbuka dengan background `#f8fafc`.
+- [ ] **Pastikan tinggi seluruh kontrol filter bar seragam 38px** (Select2, Flatpickr `.filter-control`, `.btn-filter-primary`, dan `.btn-filter-reset` kotak 38px x 38px).
 - [ ] Ganti semua `<input type="date">` native dengan Flatpickr (`Y-m-d`).
 - [ ] Inisialisasi dropdown filter dengan Select2 terstandarisasi.
 - [ ] Hapus `table-striped`, terapkan border `#e2e8f0` dan header uppercase `#f8fafc`.
 - [ ] Pasang rata kanan (`text-end`) dan monospace pada kuantitas dan nominal Rupiah.
-- [ ] Pasang kartu ringkasan KPI (Summary Tiles) bila ada agregasi angka.
+- [ ] Pasang kartu ringkasan KPI (Summary Tiles) bila ada agregasi angka atau di halaman detail.
+- [ ] Tambahkan banner profil entitas (`.avatar-badge-entity`) pada halaman detail.
 - [ ] Hubungkan sinkronisasi parameter URL ke tombol Export Excel & PDF.
 - [ ] Setel DataTables: `pageLength: 25`, serverSide: true, bahasa Indonesia.
+
+---
+
+## 10. Modal CRUD Terstandarisasi (Top-Center)
+
+Untuk CRUD sederhana pada halaman master/list, gunakan satu modal reusable di halaman index agar user tidak berpindah ke halaman create/edit terpisah. Modal harus muncul di area tengah-atas viewport: gunakan `.modal-dialog` dengan `margin: 6vh auto 1rem`, bukan `modal-dialog-centered` yang memposisikan modal tepat di tengah vertikal.
+
+### Markup
+
+```blade
+<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#entityCrudModal">
+    <i class="mdi mdi-plus"></i> Tambah Data
+</button>
+
+<div class="modal fade entity-crud-modal" id="entityCrudModal" tabindex="-1"
+    aria-labelledby="entityCrudModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="entityCrudForm" method="POST" action="{{ route($view . 'store') }}">
+                @csrf
+                <input type="hidden" name="_method" id="entityCrudMethod" value="POST">
+
+                <div class="modal-header entity-crud-header">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="entity-crud-icon"><i class="mdi mdi-database-edit-outline"></i></div>
+                        <div>
+                            <div class="entity-crud-eyebrow">Master data</div>
+                            <h5 class="modal-title" id="entityCrudModalLabel">Tambah Data</h5>
+                            <div class="entity-crud-subtitle" id="entityCrudSubtitle">Tambahkan data baru.</div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+
+                <div class="modal-body">
+                    {{-- Field CRUD --}}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn entity-crud-cancel" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn entity-crud-submit">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+```
+
+Untuk tombol edit dari DataTables, gunakan `button` (bukan link ke halaman edit) dengan `data-bs-toggle="modal"`, `data-bs-target`, `data-name`, dan `data-action`. Event `show.bs.modal` mengisi nilai field, mengubah `action`, serta mengatur hidden method menjadi `PUT`. Endpoint `create`/`edit` lama boleh dipertahankan sebagai fallback redirect ke index.
+
+### CSS
+
+```css
+.entity-crud-modal .modal-dialog {
+    max-width: 560px;
+    margin: 6vh auto 1rem;
+}
+.entity-crud-modal .modal-content {
+    overflow: hidden;
+    border: 1px solid #dbe4ef;
+    border-radius: 18px;
+    box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+}
+.entity-crud-modal .entity-crud-header {
+    position: relative;
+    overflow: hidden;
+    padding: 20px 24px;
+    color: #fff;
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 58%, #6366f1 100%);
+}
+.entity-crud-modal .modal-body { padding: 24px; }
+.entity-crud-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #eef2f7;
+    background: #f8fafc;
+}
+.entity-crud-modal .form-control {
+    min-height: 42px;
+    border: 1px solid #cbd5e1;
+    border-radius: 9px;
+}
+```
+
+### JavaScript
+
+```javascript
+$('#entityCrudModal').on('show.bs.modal', function(event) {
+    const trigger = $(event.relatedTarget);
+    const isEdit = trigger.hasClass('js-edit-entity');
+    const form = $('#entityCrudForm');
+
+    form.attr('action', isEdit ? trigger.data('action') : "{{ route($view . 'store') }}");
+    $('#entityCrudMethod').val(isEdit ? 'PUT' : 'POST');
+    $('#entityName').val(isEdit ? trigger.data('name') : '').trigger('focus');
+});
+```
+
+Aturan UX tambahan:
+- Gunakan `maxlength` dan `required` pada field yang sesuai.
+- Fokuskan field utama saat modal terbuka.
+- Nonaktifkan tombol submit setelah submit pertama untuk mencegah duplikasi.
+- Modal wajib responsif; pada viewport kecil gunakan margin `1rem` dan padding horizontal yang lebih kecil.
+- Delete tetap menggunakan konfirmasi sebelum mengirim `DELETE`; jangan hapus langsung dari tombol tabel.

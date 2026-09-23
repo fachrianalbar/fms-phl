@@ -22,9 +22,19 @@ class FleetBrandService
         return $this->service->get();
     }
 
+    public function findAllQuery()
+    {
+        return $this->service->query()->withCount('fleets');
+    }
+
     public function getById($id)
     {
         return $this->service->where('id', $id)->first();
+    }
+
+    public function getByIdWithFleets($id)
+    {
+        return $this->service->where('id', $id)->with(['fleets.company', 'fleets.type'])->first();
     }
 
     public function store($request, $title)

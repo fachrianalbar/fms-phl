@@ -19,4 +19,9 @@ class FleetType extends Model
         'code',
         'name',
     ];
+
+    public function fleets()
+    {
+        return $this->hasMany(Fleet::class, 'fleetTypeCode', 'code');
+    }
 }

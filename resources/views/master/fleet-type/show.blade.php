@@ -16,14 +16,13 @@
         href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 
     <style>
-        /* ── Scoped Table Styling ── */
-        #dt {
+        /* ── Scoped Table Styling (Tanpa Striped) ── */
+        #dt-fleets {
             border-collapse: separate;
             border-spacing: 0;
             border-radius: 12px;
@@ -31,7 +30,7 @@
             border: 1px solid #e2e8f0;
         }
 
-        #dt thead th {
+        #dt-fleets thead th {
             background-color: #f8fafc;
             color: #475569;
             font-size: 12px;
@@ -45,7 +44,7 @@
             vertical-align: middle;
         }
 
-        #dt tbody td {
+        #dt-fleets tbody td {
             padding: 11px 12px;
             border-bottom: 1px solid #f1f5f9;
             color: #334155;
@@ -54,15 +53,15 @@
             vertical-align: middle;
         }
 
-        #dt tbody tr {
+        #dt-fleets tbody tr {
             transition: background-color 0.15s ease;
         }
 
-        #dt tbody tr:hover {
+        #dt-fleets tbody tr:hover {
             background-color: #f8fafc !important;
         }
 
-        /* ── Tombol Icon Ramping Header / Aksi Tabel ── */
+        /* ── Tombol Icon Ramping Header ── */
         .btn-icon {
             border-radius: 8px !important;
             padding: 6px 10px;
@@ -72,6 +71,67 @@
 
         .btn-icon:hover {
             transform: translateY(-1px);
+        }
+
+        /* ── Avatar Badge Entitas ── */
+        .avatar-badge-entity {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+            flex-shrink: 0;
+        }
+
+        /* ── Summary KPI Cards ── */
+        .summary-card {
+            border-radius: 12px;
+            padding: 18px 20px;
+            border: 1px solid transparent;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-card h5 {
+            font-size: 12px;
+            margin-bottom: 6px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .summary-card h3 {
+            font-size: 22px;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+        }
+
+        .summary-primary {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            border-color: #c7d2fe;
+            color: #3730a3;
+        }
+
+        .summary-success {
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-color: #a7f3d0;
+            color: #065f46;
+        }
+
+        .summary-warning {
+            background: linear-gradient(135deg, #fefce8, #fef9c3);
+            border-color: #fde68a;
+            color: #92400e;
         }
 
         /* ── Standarisasi Seragam Filter Bar (Tinggi Presisi: 38px) ── */
@@ -232,19 +292,19 @@
         }
 
         /* ── DataTables Inputs & Pagination ── */
-        #dt_wrapper .dataTables_filter input {
+        #dt-fleets_wrapper .dataTables_filter input {
             border-radius: 8px;
             font-size: 12px;
         }
 
-        #dt_wrapper .dataTables_length select {
+        #dt-fleets_wrapper .dataTables_length select {
             border-radius: 8px;
             font-size: 12px;
         }
 
-        #dt_wrapper .dataTables_info,
-        #dt_wrapper .dataTables_length,
-        #dt_wrapper .dataTables_filter {
+        #dt-fleets_wrapper .dataTables_info,
+        #dt-fleets_wrapper .dataTables_length,
+        #dt-fleets_wrapper .dataTables_filter {
             color: #64748b;
             font-size: 12px;
         }
@@ -259,39 +319,29 @@
                 style="border-color: #e2e8f0;">
                 <div>
                     <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                        <i class="mdi mdi-truck text-primary fs-20"></i>
-                        {{ $title }} Data
+                        <i class="mdi mdi-truck-cargo-container text-primary fs-20"></i>
+                        Detail Tipe Armada: {{ $type->name }}
                     </h4>
-                    <small class="text-muted">Master data armada operasional, spesifikasi teknis, kepemilikan, dan masa berlaku dokumen</small>
+                    <small class="text-muted">Profil tipe armada dan daftar armada terdaftar dengan tipe ini</small>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
                     {{-- Tombol Export Excel --}}
-                    <a href="{{ route($view . 'export-excel') }}" target="_blank" id="export-excel"
+                    <a href="{{ route($view . 'detail-export-excel', $type->id) }}" target="_blank" id="export-excel"
                         class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
                         <i class="mdi mdi-file-excel fs-14 text-success"></i>
                     </a>
 
                     {{-- Tombol Export PDF --}}
-                    <a href="{{ route($view . 'export-pdf') }}" target="_blank" id="export-pdf"
+                    <a href="{{ route($view . 'detail-export-pdf', $type->id) }}" target="_blank" id="export-pdf"
                         class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
                         <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
                     </a>
 
-                    {{-- Tombol Hapus Terpilih --}}
-                    <form action="{{ route($view . 'destroy-multiple') }}" method="POST" id="form-hapus-data" class="d-inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1" id="btn-hapus-data"
-                            style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
-                            <i class="mdi mdi-trash-can-outline"></i> {{ __('general.delete_data') }}
-                        </button>
-                    </form>
-
-                    {{-- Tombol Tambah Data: mengarah ke halaman FORM bukan modal --}}
-                    <a href="{{ route($view . 'create') }}" class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    {{-- Tombol Kembali --}}
+                    <a href="{{ route($view . 'index') }}" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
                         style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
-                        <i class="mdi mdi-plus"></i> {{ __('general.add_data') }}
+                        <i class="mdi mdi-arrow-left"></i> {{ __('general.back_to_list') }}
                     </a>
                 </div>
             </div>
@@ -299,59 +349,107 @@
             <div class="card-body p-4">
                 @include('partials.alert')
 
-                {{-- Filter Bar Terbuka (Selalu Tampil & Ukuran Seragam Presisi 38px) --}}
+                {{-- 1. Banner Profil Entitas --}}
+                <div class="card border-0 mb-4"
+                    style="background: #ffffff; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    <div class="card-body p-3">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar-badge-entity">
+                                    <i class="mdi mdi-truck-cargo-container fs-22 text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fs-16 fw-bold text-dark">{{ $type->name }}</span>
+                                        <span class="badge bg-primary-subtle text-primary px-2 py-1"
+                                            style="border-radius: 6px; font-weight: 600; font-size: 11px;">
+                                            Tipe Armada
+                                        </span>
+                                    </div>
+                                    <div class="text-muted small mt-1">
+                                        <i class="mdi mdi-identifier me-1"></i>Kode Tipe: <span class="font-monospace fw-semibold">{{ $type->code }}</span>
+                                        <span class="mx-2">•</span>
+                                        <i class="mdi mdi-calendar-check me-1"></i>Terdaftar: <span class="font-monospace">{{ $type->created_at ? $type->created_at->format('d/m/Y H:i') : '-' }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="filterPeriodBadge" class="d-none align-items-center gap-2 bg-light px-3 py-2 rounded-3 border" style="font-size: 12.5px;">
+                                <i class="mdi mdi-calendar-range text-primary fs-16"></i>
+                                <span>Filter Periode: <strong id="filterPeriodText">-</strong></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 2. Kartu KPI Summary (Summary Tiles) --}}
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="summary-card summary-primary">
+                            <i class="mdi mdi-truck float-end fs-24 opacity-50"></i>
+                            <h5>Total Armada</h5>
+                            <h3>{{ number_format($totalFleets, 0, ',', '.') }} <span class="fs-14 fw-normal opacity-75">Unit</span></h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card summary-success">
+                            <i class="mdi mdi-truck-flatbed float-end fs-24 opacity-50"></i>
+                            <h5>Merek Armada Terdaftar</h5>
+                            <h3>{{ number_format($totalBrands, 0, ',', '.') }} <span class="fs-14 fw-normal opacity-75">Merek</span></h3>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-card summary-warning">
+                            <i class="mdi mdi-office-building float-end fs-24 opacity-50"></i>
+                            <h5>Perusahaan Armada</h5>
+                            <h3>{{ number_format($totalCompanies, 0, ',', '.') }} <span class="fs-14 fw-normal opacity-75">Perusahaan</span></h3>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- 3. Filter Bar Terbuka (Ukuran Seragam Presisi 38px) --}}
                 <div class="card border-0 mb-4"
                     style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
                     <div class="card-body p-3">
                         <form id="filterForm">
                             <div class="row g-2 align-items-end">
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="filter-label" for="fleetBrandCode">Merek Armada</label>
-                                    <select class="form-select select2-filter" name="fleetBrandCode" id="fleetBrandCode" style="width: 100%;">
-                                        <option value="">Semua Merek Armada</option>
-                                        @foreach ($brands as $item)
+                                    <select class="form-select select2-filter" name="fleetBrandCode"
+                                        id="fleetBrandCode" style="width: 100%;">
+                                        <option value="">Semua Merek</option>
+                                        @foreach ($fleetBrands as $item)
                                             <option value="{{ $item->code }}">{{ $item->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
 
-                                <div class="col-md-4">
-                                    <label class="filter-label" for="fleetTypeCode">Tipe Armada</label>
-                                    <select class="form-select select2-filter" name="fleetTypeCode" id="fleetTypeCode" style="width: 100%;">
-                                        <option value="">Semua Tipe Armada</option>
-                                        @foreach ($types as $item)
-                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <label class="filter-label" for="fleetCompanyCode">Perusahaan Armada</label>
-                                    <select class="form-select select2-filter" name="fleetCompanyCode" id="fleetCompanyCode" style="width: 100%;">
+                                    <select class="form-select select2-filter" name="fleetCompanyCode"
+                                        id="fleetCompanyCode" style="width: 100%;">
                                         <option value="">Semua Perusahaan</option>
-                                        @foreach ($companies as $item)
+                                        @foreach ($fleetCompanies as $item)
                                             <option value="{{ $item->code }}">
                                                 {{ $item->name }}{{ $item->type ? ' (' . $item->type . ')' : '' }}
                                             </option>
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
 
-                            <div class="row g-2 align-items-end mt-2">
-                                <div class="col-md-4">
-                                    <label class="filter-label" for="startDate">Dari Tanggal (Dibuat)</label>
+                                <div class="col-md-2">
+                                    <label class="filter-label" for="startDate">Dari Tanggal</label>
                                     <input class="form-control filter-control" name="startDate" id="startDate"
                                         type="text" placeholder="Pilih Tanggal Mulai">
                                 </div>
 
-                                <div class="col-md-4">
-                                    <label class="filter-label" for="endDate">Sampai Tanggal (Dibuat)</label>
+                                <div class="col-md-2">
+                                    <label class="filter-label" for="endDate">Sampai Tanggal</label>
                                     <input class="form-control filter-control" name="endDate" id="endDate"
                                         type="text" placeholder="Pilih Tanggal Akhir">
                                 </div>
 
-                                <div class="col-md-4 d-flex gap-2">
+                                <div class="col-md-2 d-flex gap-2">
                                     <button class="btn btn-filter-primary flex-grow-1" type="submit" id="btnFilter">
                                         <i class="mdi mdi-filter fs-14"></i> Filter
                                     </button>
@@ -365,23 +463,19 @@
                     </div>
                 </div>
 
-                {{-- Table (Tanpa striped, border halus, thead uppercase) --}}
+                {{-- 4. Tabel Rincian Armada (Tanpa striped) --}}
                 <div class="table-responsive custom-scrollbar">
-                    <table class="table align-middle w-100 mb-0" id="dt">
+                    <table class="table align-middle w-100 mb-0" id="dt-fleets">
                         <thead>
                             <tr>
-                                <th style="width: 120px;" class="text-center">Aksi</th>
-                                <th style="width: 50px;" class="text-center">No</th>
-                                <th style="width: 130px;">{{ __('menu_fleet.plate_number') }}</th>
-                                <th style="width: 110px;">Kode</th>
-                                <th style="width: 130px;" class="text-center">{{ __('menu_fleet.vehicle_registration_due_date') }}</th>
-                                <th style="width: 180px;">{{ __('menu_fleet.company') }}</th>
-                                <th style="width: 90px;" class="text-center">{{ __('menu_fleet.company_type') }}</th>
-                                <th style="width: 180px;">{{ __('menu_fleet.address') }}</th>
-                                <th style="width: 120px;">{{ __('menu_fleet.brand') }}</th>
-                                <th style="width: 120px;">{{ __('menu_fleet.type') }}</th>
-                                <th style="width: 130px;">{{ __('menu_fleet.frame_number') }}</th>
-                                <th style="width: 130px;">{{ __('menu_fleet.engine_number') }}</th>
+                                <th style="width: 5%;" class="text-center">No</th>
+                                <th style="width: 15%;">Nomor Polisi (Plat)</th>
+                                <th style="width: 12%;">Kode Armada</th>
+                                <th style="width: 15%;">Merek Armada</th>
+                                <th style="width: 20%;">Perusahaan Armada</th>
+                                <th style="width: 8%;" class="text-center">Tahun</th>
+                                <th style="width: 12%;">No. Mesin</th>
+                                <th style="width: 13%;">No. Rangka</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -389,29 +483,7 @@
                 </div>
             </div>
         </div>
-
-        {{-- Modal Image Preview --}}
-        <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel"
-            aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow" style="border-radius: 16px; overflow: hidden;">
-                    <div class="modal-header bg-white py-3 border-bottom">
-                        <h5 class="modal-title fw-bold text-dark" id="imageModalLabel">Preview Gambar</h5>
-                        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-3 text-center bg-light">
-                        <img id="modalImage" src="" alt="Image Preview" class="img-fluid rounded" style="max-height: 70vh; object-fit: contain;" />
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-
-    {{-- Form Single Delete --}}
-    <form id="delete-form" method="post">
-        @csrf
-        @method('DELETE')
-    </form>
 @endsection
 
 @push('script')
@@ -437,17 +509,19 @@
     <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 
-    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-
     <script>
-        let selectedFleets = [];
         let filterStartPicker;
         let filterEndPicker;
 
         $(document).ready(function() {
             // 1. Inisialisasi Select2
-            $('.select2-filter').select2({
-                placeholder: 'Semua Opsi',
+            $('#fleetBrandCode').select2({
+                placeholder: 'Semua Merek',
+                allowClear: true
+            });
+
+            $('#fleetCompanyCode').select2({
+                placeholder: 'Semua Perusahaan',
                 allowClear: true
             });
 
@@ -457,6 +531,7 @@
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
                     if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+                    updatePeriodBadge();
                 }
             });
 
@@ -465,173 +540,137 @@
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
                     if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                    updatePeriodBadge();
                 }
             });
 
-            // 3. Sinkronisasi parameter filter ke tombol Export Excel & PDF
+            function updatePeriodBadge() {
+                const start = $('#startDate').val();
+                const end = $('#endDate').val();
+                if (start || end) {
+                    const startFmt = start ? formatDate(start) : 'Awal';
+                    const endFmt = end ? formatDate(end) : 'Sekarang';
+                    $('#filterPeriodText').text(startFmt + ' s/d ' + endFmt);
+                    $('#filterPeriodBadge').removeClass('d-none').addClass('d-flex');
+                } else {
+                    $('#filterPeriodBadge').removeClass('d-flex').addClass('d-none');
+                }
+            }
+
+            function formatDate(str) {
+                const parts = str.split('-');
+                if (parts.length === 3) {
+                    return parts[2] + '/' + parts[1] + '/' + parts[0];
+                }
+                return str;
+            }
+
+            // 3. Sinkronisasi Tombol Export Excel & PDF
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                const brandCode = $('#fleetBrandCode').val();
-                const typeCode = $('#fleetTypeCode').val();
-                const companyCode = $('#fleetCompanyCode').val();
+                const fleetBrandCode = $('#fleetBrandCode').val();
+                const fleetCompanyCode = $('#fleetCompanyCode').val();
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
 
-                if (brandCode) params.set('fleetBrandCode', brandCode);
-                if (typeCode) params.set('fleetTypeCode', typeCode);
-                if (companyCode) params.set('fleetCompanyCode', companyCode);
+                if (fleetBrandCode) params.set('fleetBrandCode', fleetBrandCode);
+                if (fleetCompanyCode) params.set('fleetCompanyCode', fleetCompanyCode);
                 if (startDate) params.set('startDate', startDate);
                 if (endDate) params.set('endDate', endDate);
 
                 const qs = params.toString() ? '?' + params.toString() : '';
-                $('#export-excel').attr('href', "{{ route($view . 'export-excel') }}" + qs);
-                $('#export-pdf').attr('href', "{{ route($view . 'export-pdf') }}" + qs);
+                $('#export-pdf').attr('href', "{{ route($view . 'detail-export-pdf', $type->id) }}" + qs);
+                $('#export-excel').attr('href', "{{ route($view . 'detail-export-excel', $type->id) }}" + qs);
             }
 
-            // 4. Inisialisasi DataTables
-            const table = $('#dt').DataTable({
+            // 4. DataTables (Tanpa Striped, ServerSide, Bahasa Indonesia)
+            const table = $('#dt-fleets').DataTable({
                 processing: true,
                 serverSide: true,
                 destroy: true,
                 pageLength: 25,
                 ajax: {
-                    url: "{{ route('dt.fleets') }}",
+                    url: "{{ route('dt.fleet-type.fleets', $type->id) }}",
                     data: function(d) {
                         d.fleetBrandCode = $('#fleetBrandCode').val();
-                        d.fleetTypeCode = $('#fleetTypeCode').val();
                         d.fleetCompanyCode = $('#fleetCompanyCode').val();
                         d.startDate = $('#startDate').val();
                         d.endDate = $('#endDate').val();
                     }
                 },
-                columns: [
-                    { data: 'action', className: 'text-center align-middle', orderable: false, searchable: false },
-                    { data: 'DT_RowIndex', className: 'text-center align-middle', orderable: false, searchable: false },
-                    { data: 'plateNumber', className: 'align-middle' },
-                    { data: 'code', className: 'align-middle' },
-                    { data: 'vehicleRegistrationDueDate', className: 'text-center align-middle' },
-                    { data: 'company.name', className: 'align-middle' },
-                    { data: 'company.type', className: 'text-center align-middle' },
-                    { data: 'company.address', className: 'align-middle' },
-                    { data: 'brand.name', className: 'align-middle' },
-                    { data: 'type.name', className: 'align-middle' },
-                    { data: 'frameNumber', className: 'align-middle' },
-                    { data: 'engineNumber', className: 'align-middle' }
+                columns: [{
+                        data: 'DT_RowIndex',
+                        className: 'text-center align-middle'
+                    },
+                    {
+                        data: 'plateNumber',
+                        className: 'align-middle'
+                    },
+                    {
+                        data: 'code',
+                        className: 'align-middle'
+                    },
+                    {
+                        data: 'brandName',
+                        className: 'align-middle'
+                    },
+                    {
+                        data: 'companyName',
+                        className: 'align-middle'
+                    },
+                    {
+                        data: 'year',
+                        className: 'text-center align-middle'
+                    },
+                    {
+                        data: 'engineNumber',
+                        className: 'align-middle'
+                    },
+                    {
+                        data: 'frameNumber',
+                        className: 'align-middle'
+                    }
+                ],
+                columnDefs: [{
+                        searchable: false,
+                        targets: [0, 5, 6, 7]
+                    },
+                    {
+                        orderable: false,
+                        targets: [0]
+                    }
                 ],
                 order: [
-                    [2, 'asc']
+                    [1, 'asc']
                 ],
                 language: {
                     search: 'Cari:',
                     lengthMenu: 'Tampilkan _MENU_ data',
                     info: 'Menampilkan _START_ - _END_ dari _TOTAL_ data',
-                    infoEmpty: 'Tidak ada data',
-                    zeroRecords: 'Data tidak ditemukan',
-                    processing: '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat data...'
+                    infoEmpty: 'Tidak ada armada',
+                    zeroRecords: 'Armada tidak ditemukan',
+                    processing: '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat armada...'
                 }
             });
 
-            // 5. Submit Filter
+            // 5. Submit Filter Form
             $('#filterForm').on('submit', function(e) {
                 e.preventDefault();
                 syncExportUrls();
                 table.ajax.reload();
             });
 
-            // 6. Reset Filter
+            // 6. Reset Filter Form
             $('#btnResetFilter').on('click', function() {
+                $('#filterForm')[0].reset();
                 $('#fleetBrandCode').val('').trigger('change');
-                $('#fleetTypeCode').val('').trigger('change');
                 $('#fleetCompanyCode').val('').trigger('change');
                 if (filterStartPicker) filterStartPicker.clear();
                 if (filterEndPicker) filterEndPicker.clear();
+                updatePeriodBadge();
                 syncExportUrls();
                 table.ajax.reload();
             });
-
-            // 7. Checkbox state & draw event
-            $(document).on('change', '.fleet-checkbox', function() {
-                const fleetId = $(this).val();
-
-                if ($(this).is(':checked')) {
-                    if (!selectedFleets.includes(fleetId)) {
-                        selectedFleets.push(fleetId);
-                    }
-                } else {
-                    selectedFleets = selectedFleets.filter(id => id !== fleetId);
-                }
-            });
-
-            $('#dt').on('draw.dt', function() {
-                $('.fleet-checkbox').each(function() {
-                    const fleetId = $(this).val();
-                    if (selectedFleets.includes(fleetId)) {
-                        $(this).prop('checked', true);
-                    }
-                });
-            });
-
-            // 8. Hapus multiple data
-            $('#btn-hapus-data').on('click', function(e) {
-                e.preventDefault();
-                const form = $('#form-hapus-data');
-
-                if (selectedFleets.length === 0) {
-                    swal({
-                        title: "{{ __('general.warning') }}",
-                        text: "{{ __('menu_fleet.delete_validation') }}",
-                        icon: "warning",
-                    });
-                } else {
-                    swal({
-                        title: "{{ __('general.are_you_sure') }}",
-                        text: "{{ __('general.want_to_delete_this_data') }}",
-                        icon: "warning",
-                        buttons: true,
-                        dangerMode: true,
-                    }).then((willDelete) => {
-                        if (willDelete) {
-                            form.find('input[name="fleet[]"]').remove();
-                            selectedFleets.forEach(function(id) {
-                                $('<input>').attr({
-                                    type: 'hidden',
-                                    name: 'fleet[]',
-                                    value: id
-                                }).appendTo(form);
-                            });
-                            form.submit();
-                        } else {
-                            swal("{{ __('general.your_data_is_save') }}");
-                        }
-                    });
-                }
-            });
         });
-
-        // 9. Modal Image Preview
-        function showModal(imageUrl) {
-            document.getElementById('modalImage').src = imageUrl;
-            $('.bd-example-modal-xl').modal('show');
-        }
-
-        // 10. Single Delete Data
-        function deleteData(uuid) {
-            var url = '{{ route($view . 'index') }}/' + uuid;
-            $('#delete-form').attr('action', url);
-
-            swal({
-                title: "{{ __('general.are_you_sure') }}",
-                text: "{{ __('general.want_to_delete_this_data') }}",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willDelete) => {
-                if (willDelete) {
-                    $('#delete-form').submit();
-                } else {
-                    swal("{{ __('general.your_data_is_save') }}");
-                }
-            });
-        }
     </script>
 @endpush
