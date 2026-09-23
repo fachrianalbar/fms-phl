@@ -44,6 +44,7 @@
     </style>
 
     @stack('style')
+    <link href="{{ asset('assets/css/dark-mode-overrides.css') }}" rel="stylesheet" type="text/css" />
 
 </head>
 

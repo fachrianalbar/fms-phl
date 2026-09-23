@@ -10,15 +10,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('vendor_nota_sequence', function (Blueprint $table) {
-            $table->string('prefix', 10)->primary();
-            $table->unsignedInteger('year');
-            $table->unsignedInteger('last_sequence')->default(0);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('vendor_nota_sequence')) {
+            Schema::create('vendor_nota_sequence', function (Blueprint $table) {
+                $table->string('prefix', 10)->primary();
+                $table->unsignedInteger('year');
+                $table->unsignedInteger('last_sequence')->default(0);
+                $table->timestamps();
+            });
+        }
 
         $year = (int) Carbon::now()->format('Y');
         foreach (['P', 'PHL', 'WTMS'] as $prefix) {
+            if (DB::table('vendor_nota_sequence')->where('prefix', $prefix)->exists()) {
+                continue;
+            }
+
             $lastSequence = 0;
             $notas = DB::table('vendor_payment')
                 ->where('nota_number', 'like', $prefix . '/%/' . $year)

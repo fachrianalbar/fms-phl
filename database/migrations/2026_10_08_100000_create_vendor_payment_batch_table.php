@@ -14,25 +14,27 @@ return new class extends Migration
             });
         }
 
-        Schema::create('vendor_payment_batch', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('code', 30)->unique();
-            $table->uuid('request_key')->unique();
-            $table->char('payload_hash', 64);
-            $table->string('status', 20)->default('active')->index();
-            $table->date('payment_date');
-            $table->string('user_bank_code', 50)->index();
-            $table->unsignedBigInteger('amount');
-            $table->unsignedInteger('nota_count');
-            $table->unsignedInteger('order_count');
-            $table->unsignedInteger('fully_paid_count')->default(0);
-            $table->unsignedInteger('partial_count')->default(0);
-            $table->string('description')->nullable();
-            $table->timestamp('cancelled_at')->nullable();
-            $table->timestamps();
+        if (! Schema::hasTable('vendor_payment_batch')) {
+            Schema::create('vendor_payment_batch', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('code', 30)->unique();
+                $table->uuid('request_key')->unique();
+                $table->char('payload_hash', 64);
+                $table->string('status', 20)->default('active')->index();
+                $table->date('payment_date');
+                $table->string('user_bank_code', 50)->index();
+                $table->unsignedBigInteger('amount');
+                $table->unsignedInteger('nota_count');
+                $table->unsignedInteger('order_count');
+                $table->unsignedInteger('fully_paid_count')->default(0);
+                $table->unsignedInteger('partial_count')->default(0);
+                $table->string('description')->nullable();
+                $table->timestamp('cancelled_at')->nullable();
+                $table->timestamps();
 
-            $table->index('payment_date');
-        });
+                $table->index('payment_date');
+            });
+        }
     }
 
     public function down(): void

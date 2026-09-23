@@ -13,26 +13,28 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('invoice_payment_transaction', function (Blueprint $table) {
-            $table->charset = 'utf8mb4';
-            $table->collation = 'utf8mb4_0900_ai_ci'; // samakan dengan tabel lama (MySQL 8 default)
+        if (! Schema::hasTable('invoice_payment_transaction')) {
+            Schema::create('invoice_payment_transaction', function (Blueprint $table) {
+                $table->charset = 'utf8mb4';
+                $table->collation = 'utf8mb4_0900_ai_ci'; // samakan dengan tabel lama (MySQL 8 default)
 
-            $table->uuid('id')->primary();
-            $table->string('code', 30)->nullable()->unique();
-            $table->date('paymentDate')->nullable();
-            $table->string('customerCode', 30)->nullable();
-            $table->string('userBankCode', 30)->nullable();
-            $table->bigInteger('amount')->default(0); // total uang riil diterima (kas masuk)
-            $table->bigInteger('totalClaim')->default(0); // total claim (pengurang tagihan, tidak masuk kas)
-            $table->text('description')->nullable();
-            $table->string('paymentReceipt', 255)->nullable();
-            $table->timestamps();
-            $table->softDeletes();
+                $table->uuid('id')->primary();
+                $table->string('code', 30)->nullable()->unique();
+                $table->date('paymentDate')->nullable();
+                $table->string('customerCode', 30)->nullable();
+                $table->string('userBankCode', 30)->nullable();
+                $table->bigInteger('amount')->default(0); // total uang riil diterima (kas masuk)
+                $table->bigInteger('totalClaim')->default(0); // total claim (pengurang tagihan, tidak masuk kas)
+                $table->text('description')->nullable();
+                $table->string('paymentReceipt', 255)->nullable();
+                $table->timestamps();
+                $table->softDeletes();
 
-            $table->index('customerCode');
-            $table->index('userBankCode');
-            $table->index('paymentDate');
-        });
+                $table->index('customerCode');
+                $table->index('userBankCode');
+                $table->index('paymentDate');
+            });
+        }
     }
 
     public function down(): void

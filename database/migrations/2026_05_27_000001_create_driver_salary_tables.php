@@ -11,30 +11,34 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('driver_salary', function (Blueprint $table) {
-            $table->string('id', 36)->primary();
-            $table->string('code', 30)->unique();
-            $table->string('driverCode', 30)->nullable();
-            $table->date('startDate')->nullable();
-            $table->date('endDate')->nullable();
-            $table->decimal('totalSalary', 15, 2)->default(0);
-            $table->decimal('totalAdjustment', 15, 2)->default(0);
-            $table->decimal('grandTotal', 15, 2)->default(0);
-            $table->text('notes')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-        });
+        if (! Schema::hasTable('driver_salary')) {
+            Schema::create('driver_salary', function (Blueprint $table) {
+                $table->string('id', 36)->primary();
+                $table->string('code', 30)->unique();
+                $table->string('driverCode', 30)->nullable();
+                $table->date('startDate')->nullable();
+                $table->date('endDate')->nullable();
+                $table->decimal('totalSalary', 15, 2)->default(0);
+                $table->decimal('totalAdjustment', 15, 2)->default(0);
+                $table->decimal('grandTotal', 15, 2)->default(0);
+                $table->text('notes')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
 
-        Schema::create('driver_salary_detail', function (Blueprint $table) {
-            $table->string('id', 36)->primary();
-            $table->string('code', 30)->unique();
-            $table->string('driverSalaryCode', 30)->nullable();
-            $table->date('date')->nullable();
-            $table->text('description')->nullable();
-            $table->enum('type', ['addition', 'deduction'])->default('addition');
-            $table->decimal('nominal', 15, 2)->default(0);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('driver_salary_detail')) {
+            Schema::create('driver_salary_detail', function (Blueprint $table) {
+                $table->string('id', 36)->primary();
+                $table->string('code', 30)->unique();
+                $table->string('driverSalaryCode', 30)->nullable();
+                $table->date('date')->nullable();
+                $table->text('description')->nullable();
+                $table->enum('type', ['addition', 'deduction'])->default('addition');
+                $table->decimal('nominal', 15, 2)->default(0);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

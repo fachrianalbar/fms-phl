@@ -19,7 +19,7 @@ class ItemService
 
     public function findAll()
     {
-        return $this->service->with(['unit', 'category', 'location', 'warehouse', 'supplier'])->orderBy('code', 'asc');
+        return $this->service->with(['unit', 'category', 'warehouse', 'supplier'])->orderBy('code', 'asc');
     }
 
     public function getById($id)

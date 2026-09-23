@@ -40,32 +40,36 @@ return new class extends Migration
             });
         }
 
-        Schema::create('order_payment_batch', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('code', 30)->unique();
-            $table->uuid('request_key')->unique();
-            $table->char('payload_hash', 64);
-            $table->string('status', 20)->default('active')->index();
-            $table->date('payment_date');
-            $table->string('user_bank_code', 50)->index();
-            $table->unsignedBigInteger('amount');
-            $table->unsignedInteger('nota_count');
-            $table->unsignedInteger('order_count');
-            $table->unsignedInteger('fully_paid_count')->default(0);
-            $table->unsignedInteger('partial_count')->default(0);
-            $table->string('description')->nullable();
-            $table->timestamp('cancelled_at')->nullable();
-            $table->timestamps();
+        if (! Schema::hasTable('order_payment_batch')) {
+            Schema::create('order_payment_batch', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('code', 30)->unique();
+                $table->uuid('request_key')->unique();
+                $table->char('payload_hash', 64);
+                $table->string('status', 20)->default('active')->index();
+                $table->date('payment_date');
+                $table->string('user_bank_code', 50)->index();
+                $table->unsignedBigInteger('amount');
+                $table->unsignedInteger('nota_count');
+                $table->unsignedInteger('order_count');
+                $table->unsignedInteger('fully_paid_count')->default(0);
+                $table->unsignedInteger('partial_count')->default(0);
+                $table->string('description')->nullable();
+                $table->timestamp('cancelled_at')->nullable();
+                $table->timestamps();
 
-            $table->index('payment_date');
-        });
+                $table->index('payment_date');
+            });
+        }
 
-        Schema::create('order_payment_nota_sequence', function (Blueprint $table) {
-            $table->string('prefix', 10)->primary();
-            $table->unsignedInteger('year');
-            $table->unsignedInteger('last_sequence')->default(0);
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('order_payment_nota_sequence')) {
+            Schema::create('order_payment_nota_sequence', function (Blueprint $table) {
+                $table->string('prefix', 10)->primary();
+                $table->unsignedInteger('year');
+                $table->unsignedInteger('last_sequence')->default(0);
+                $table->timestamps();
+            });
+        }
 
         // Seed urutan nota DP dari data yang sudah ada (normalnya masih kosong).
         $year = (int) Carbon::now()->format('Y');

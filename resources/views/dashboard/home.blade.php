@@ -34,6 +34,7 @@
 @endpush
 
 @section('content')
+<div class="dashboard-page">
 <!-- Filter Section -->
 <div class="row mb-4">
     <div class="col-12">
@@ -378,6 +379,7 @@
         </div>
     </div>
 </div>
+</div>
 @endsection
 
 @push('script')
@@ -396,6 +398,9 @@
     // Initialize Order Statistics Chart
     function initOrderChart() {
         const ctx = document.getElementById('orderChart').getContext('2d');
+        const isDarkTheme = document.documentElement.dataset.bsTheme === 'dark';
+        const chartTextColor = isDarkTheme ? '#f8fafc' : '#334155';
+        const chartGridColor = isDarkTheme ? 'rgba(226, 232, 240, 0.24)' : 'rgba(148, 163, 184, 0.25)';
 
         // Data from controller
         const monthlyOrderData = @json($monthlyOrderData);
@@ -427,19 +432,29 @@
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Statistik Order per Bulan'
+                        text: 'Statistik Order per Bulan',
+                        color: chartTextColor
                     },
                     legend: {
                         display: true,
-                        position: 'top'
+                        position: 'top',
+                        labels: {
+                            color: chartTextColor
+                        }
                     }
                 },
                 scales: {
+                    x: {
+                        ticks: { color: chartTextColor },
+                        grid: { color: chartGridColor }
+                    },
                     y: {
                         beginAtZero: true,
                         ticks: {
+                            color: chartTextColor,
                             stepSize: 1
-                        }
+                        },
+                        grid: { color: chartGridColor }
                     }
                 }
             }

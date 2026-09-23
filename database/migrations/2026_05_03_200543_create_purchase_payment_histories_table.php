@@ -11,20 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('purchase_payment_histories', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('purchaseCode')->nullable();
-            $table->double('amount')->default(0);
-            $table->date('paymentDate')->nullable();
-            $table->string('userBankCode')->nullable();
-            $table->text('description')->nullable();
-            $table->timestamps();
-            $table->softDeletes();
-        });
-        
+        if (! Schema::hasTable('purchase_payment_histories')) {
+            Schema::create('purchase_payment_histories', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('purchaseCode')->nullable();
+                $table->double('amount')->default(0);
+                $table->date('paymentDate')->nullable();
+                $table->string('userBankCode')->nullable();
+                $table->text('description')->nullable();
+                $table->timestamps();
+                $table->softDeletes();
+            });
+        }
+
         Schema::table('purchase', function (Blueprint $table) {
-            $table->double('paidAmount')->default(0)->after('nominal');
-            $table->string('paymentStatus')->default('Unpaid')->after('paidAmount');
+            if (! Schema::hasColumn('purchase', 'paidAmount')) {
+                $table->double('paidAmount')->default(0)->after('nominal');
+            }
+
+            if (! Schema::hasColumn('purchase', 'paymentStatus')) {
+                $table->string('paymentStatus')->default('Unpaid')->after('paidAmount');
+            }
         });
     }
 
