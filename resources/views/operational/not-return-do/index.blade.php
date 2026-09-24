@@ -20,7 +20,8 @@
 
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
-    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
 
     <style>
         /* Modal */
@@ -255,142 +256,412 @@
         .text-teal {
             color: #667eea !important;
         }
+
+        /* PHL table standard */
+        .not-return-do-card {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .not-return-do-card > .card-header {
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 18px 22px;
+        }
+        .not-return-do-title {
+            color: #0f172a;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+        }
+        .not-return-do-subtitle {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .not-return-do-filter {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+        .not-return-do-filter-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+        .not-return-do-filter-header:hover { background: #f1f5f9; }
+        .not-return-do-filter-heading { align-items: center; display: flex; gap: 8px; }
+        .not-return-do-filter-heading i { color: #4f46e5; font-size: 17px; }
+        .not-return-do-filter-heading strong { font-size: 13px; font-weight: 700; }
+        .not-return-do-filter-heading small { color: #94a3b8; font-size: 11px; font-weight: 400; }
+        .not-return-do-filter-chevron { transition: transform .2s ease; }
+        .not-return-do-filter-header[aria-expanded="true"] .not-return-do-filter-chevron { transform: rotate(180deg); }
+        .not-return-do-filter .filter-collapse { border-top: 1px solid #e2e8f0; }
+        .not-return-do-filter .filter-collapse-body { padding: 16px; }
+        .not-return-do-filter .row { --bs-gutter-y: .75rem; }
+        .filter-label {
+            color: #64748b;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .filter-control,
+        .not-return-do-filter .form-control {
+            background-color: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #334155 !important;
+            font-size: 13px !important;
+            height: 38px !important;
+        }
+        .filter-control { padding: 0 12px 0 36px !important; }
+        .not-return-do-filter .form-control[name="shipmentNumber"] { padding-left: 12px !important; }
+        .btn-filter-primary {
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+            border: 0 !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            display: inline-flex;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
+            height: 38px;
+            justify-content: center;
+            padding: 0 16px;
+            white-space: nowrap;
+        }
+        .btn-filter-reset {
+            align-items: center;
+            background: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #64748b !important;
+            display: inline-flex;
+            height: 38px;
+            justify-content: center;
+            min-width: 38px;
+            padding: 0 !important;
+        }
+        .select2-container { width: 100% !important; }
+        .select2-container--default .select2-selection--single {
+            align-items: center;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            display: flex;
+            height: 38px !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #334155 !important;
+            font-size: 13px;
+            line-height: 36px;
+            padding-left: 12px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+        #dt {
+            border: 1px solid #e2e8f0;
+            border-collapse: separate;
+            border-radius: 12px;
+            border-spacing: 0;
+            overflow: hidden;
+        }
+        #dt thead th {
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            color: #475569;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .45px;
+            padding: 13px 12px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        #dt tbody td {
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 12.5px;
+            padding: 11px 12px;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        #dt tbody tr:hover { background: #f8fafc !important; }
+        html[data-bs-theme="dark"] #dt tbody tr:hover { background: rgba(255, 255, 255, 0.04) !important; }
+        #dt tbody tr:last-child td { border-bottom: 0; }
+        #dt_wrapper .dataTables_info,
+        #dt_wrapper .dataTables_length,
+        #dt_wrapper .dataTables_filter { color: #64748b; font-size: 12px; }
+        #dt_wrapper .dataTables_filter input,
+        #dt_wrapper .dataTables_length select { border-radius: 8px; font-size: 12px; }
+        #dt .text-end { font-variant-numeric: tabular-nums; }
+        .btn-icon { border-radius: 8px !important; }
+        @media (max-width: 767.98px) {
+            .not-return-do-card > .card-header { padding: 16px; }
+            .not-return-do-actions { width: 100%; }
+        }
+
+        /* ── Dark mode ─────────────────────────────── */
+        /* Detail modal */
+        html[data-bs-theme="dark"] #detailModal .modal-header {
+            background: var(--bs-tertiary-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #detailModal .modal-title {
+            color: var(--bs-heading-color);
+        }
+        html[data-bs-theme="dark"] #detailModal .modal-body {
+            background: var(--bs-card-bg);
+        }
+        html[data-bs-theme="dark"] #detailModal .modal-footer {
+            background: var(--bs-secondary-bg);
+            border-top-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .detail-order-card {
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .card-header-custom {
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-body-color);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .info-item {
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .info-item:nth-child(odd) {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        html[data-bs-theme="dark"] .info-item label {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .info-item p {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-section {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .form-label-custom {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom:focus {
+            background: var(--bs-secondary-bg);
+            border-color: #818cf8;
+        }
+        html[data-bs-theme="dark"] .form-hint {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .btn-cancel {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+
+        /* List card & filter */
+        html[data-bs-theme="dark"] .not-return-do-card > .card-header {
+            background: var(--bs-card-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .not-return-do-title {
+            color: var(--bs-heading-color);
+        }
+        html[data-bs-theme="dark"] .not-return-do-filter {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .not-return-do-filter-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .not-return-do-filter-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+        html[data-bs-theme="dark"] .not-return-do-filter .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .not-return-do-filter .form-control {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        /* Table */
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt thead th {
+            background: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+        html[data-bs-theme="dark"] #dt .shipment-detail-list {
+            border-top-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #dt .shipment-detail-item {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] #dt .shipment-detail-name {
+            color: var(--bs-body-color);
+        }
     </style>
 @endpush
 
 @section('content')
     <form class="col-sm-12" method="POST" action="{{ route('operational.not-return-do.confirm-do') }}">
-        <div class="card">
+        <div class="card border-0 shadow-sm not-return-do-card">
             @csrf
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Data</h4>
-
-                <div class="d-flex align-items-center gap-3">
-                    <div class="accordion-item ">
-                        <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
-                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            <i class="mdi mdi-magnify fs-14 text-dark"></i>
-                        </a>
-
-
-                    </div>
-
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h4 class="not-return-do-title"><i class="mdi mdi-file-cancel-outline text-primary me-2"></i>{{ $title }}</h4>
+                    <div class="not-return-do-subtitle">Daftar delivery order yang belum menerima dokumen return.</div>
+                </div>
+                <div class="not-return-do-actions d-flex align-items-center gap-2">
+                    <a href="{{ route('operational.not-return-do.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route('operational.not-return-do.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
                     <button type="button" id="saveOrder" class="btn btn-primary" style="display: none;">
                         <i class="mdi mdi-calendar-check"></i> {{ __('menu_not_return_do.confirm_return') }}
                     </button>
-
                 </div>
-
-
-
             </div>
 
-            <div class="card-header">
-                <div class="accordion-collapse collapse" id="collapseTwo" aria-labelledby="headingTwo"
-                    data-bs-parent="#simpleaccordion">
-                    <div class="accordion-body col-md-12">
-                        <div id="filterForm" class="g-3">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.plate_number') }}</label>
-                                    <select class="js-example-basic-single" name="plateNumber" id="plateNumber">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($fleet as $item)
-                                            @php
-                                                $plateVal = is_array($item) ? ($item['plateNumber'] ?? '') : ($item->plateNumber ?? '');
-                                            @endphp
-                                            <option value="{{ $plateVal }}">
-                                                {{ $plateVal }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+            <div class="card-body pt-3 pb-0">
+                <div class="not-return-do-filter">
+                    <button type="button" class="not-return-do-filter-header" data-bs-toggle="collapse"
+                        data-bs-target="#notReturnDoFilterCollapse" aria-expanded="false"
+                        aria-controls="notReturnDoFilterCollapse">
+                        <span class="not-return-do-filter-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar DO</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down not-return-do-filter-chevron"></i>
+                    </button>
 
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.driver') }}</label>
-                                    <select class="js-example-basic-single" name="driverName" id="driverName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($driver as $item)
-                                            @php
-                                                $driverVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
-                                            @endphp
-                                            <option value="{{ $driverVal }}">{{ $driverVal }}</option>
-                                        @endforeach
-                                    </select>
+                    <div class="collapse filter-collapse" id="notReturnDoFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="plateNumber">{{ __('menu_order.plate_number') }}</label>
+                                        <select class="form-select select2-filter" name="plateNumber" id="plateNumber">
+                                            <option value="">{{ __('general.choose') }}...</option>
+                                            @foreach ($fleet as $item)
+                                                @php $plateVal = is_array($item) ? ($item['plateNumber'] ?? '') : ($item->plateNumber ?? ''); @endphp
+                                                <option value="{{ $plateVal }}">{{ $plateVal }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="driverName">{{ __('menu_order.driver') }}</label>
+                                        <select class="form-select select2-filter" name="driverName" id="driverName">
+                                            <option value="">{{ __('general.choose') }}...</option>
+                                            @foreach ($driver as $item)
+                                                @php $driverVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                <option value="{{ $driverVal }}">{{ $driverVal }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="customerName">{{ __('menu_order.customer') }}</label>
+                                        <select class="form-select select2-filter" name="customerName" id="customerName">
+                                            <option value="">{{ __('general.choose') }}...</option>
+                                            @foreach ($customer as $item)
+                                                @php $customerVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                <option value="{{ $customerVal }}">{{ $customerVal }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="fleetTypeName">{{ __('menu_order.fleet_type') }}</label>
+                                        <select class="form-select select2-filter" name="fleetTypeName" id="fleetTypeName">
+                                            <option value="">{{ __('general.choose') }}...</option>
+                                            @foreach ($fleetType as $item)
+                                                @php $fleetTypeVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                <option value="{{ $fleetTypeVal }}">{{ $fleetTypeVal }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="shipmentNumber">{{ __('menu_order.shipment_no') }}</label>
+                                        <input class="form-control" name="shipmentNumber" id="shipmentNumber" type="text" placeholder="Cari shipment...">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate" type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text" placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="orderTypeCode">Tipe Order</label>
+                                        <select class="form-select select2-filter" name="orderTypeCode" id="orderTypeCode">
+                                            <option value="">Semua Tipe Order</option>
+                                            @foreach ($orderType as $item)
+                                                @php $typeCode = is_array($item) ? ($item['code'] ?? '') : ($item->code ?? ''); @endphp
+                                                <option value="{{ $typeCode }}">{{ $typeCode }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-6 col-md-8">
+                                        <label class="filter-label" for="destination">{{ __('menu_order.destination') }}</label>
+                                        <select class="form-select select2-filter" name="destination" id="destination">
+                                            <option value="">{{ __('general.choose') }}...</option>
+                                            @foreach ($location as $item)
+                                                @php $locVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                <option value="{{ $locVal }}">{{ $locVal }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-6 col-md-4 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter" data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.customer') }}</label>
-                                    <select class="js-example-basic-single" name="customerName" id="customerName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($customer as $item)
-                                            @php
-                                                $customerVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
-                                            @endphp
-                                            <option value="{{ $customerVal }}">{{ $customerVal }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.fleet_type') }}</label>
-                                    <select class="js-example-basic-single" name="fleetTypeName" id="fleetTypeName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($fleetType as $item)
-                                            @php
-                                                $fleetTypeVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
-                                            @endphp
-                                            <option value="{{ $fleetTypeVal }}">{{ $fleetTypeVal }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.shipment_no') }}</label>
-                                    <input class="form-control" name="shipmentNumber" type="text"
-                                        placeholder="Shipment Number">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label" for="name">{{ __('menu_order.order_date') }}</label>
-                                    <input class="form-control" name="startDate" id="datetime-local" type="date"
-                                        placeholder="Start Date">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label" for="name"></label>
-                                    <input class="form-control" name="endDate" id="datetime-local" type="date"
-                                        placeholder="End Date">
-                                </div>
-                            </div>
-
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">{{ __('menu_order.destination') }}</label>
-                                    <select class="js-example-basic-single" name="destination" id="destination">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($location as $item)
-                                            @php
-                                                $locVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? '');
-                                            @endphp
-                                            <option value="{{ $locVal }}">{{ $locVal }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary mt-3" type="button" id="btnFilter">Filter</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card-body">
+            <div class="card-body pt-0">
                 @include('partials.alert')
                 <div class="table-responsive custom-scrollbar">
                     <style>
@@ -426,7 +697,7 @@
                             color: #39424e;
                         }
                     </style>
-                    <table class="table table-striped w-100 nowrap" id="dt">
+                    <table class="table align-middle w-100 nowrap mb-0" id="dt">
                         <thead>
                             <tr>
                                 <th>Aksi</th>
@@ -710,166 +981,162 @@
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
 
-    <!-- Flatpickr for date-time picker -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
 
     <script>
         $(document).ready(function() {
-            // Initialize Flatpickr for date-time picker in modal
-            flatpickr("#returnDate", {
-                enableTime: true,
-                dateFormat: "d/m/Y, H:i",
-                time_24hr: true,
-                minuteIncrement: 1,
-                placeholder: "DD/MM/YYYY, HH:MM"
+            const $filterForm = $('#filterForm');
+            let filterStartPicker;
+            let filterEndPicker;
+
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
             });
+
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    filterEndPicker.set('minDate', dateStr || null);
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    filterStartPicker.set('maxDate', dateStr || null);
+                }
+            });
+
+            function getFilters() {
+                return {
+                    plateNumber: $('#plateNumber').val() || '',
+                    customerName: $('#customerName').val() || '',
+                    driverName: $('#driverName').val() || '',
+                    fleetTypeName: $('#fleetTypeName').val() || '',
+                    shipmentNumber: $('#shipmentNumber').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || '',
+                    destination: $('#destination').val() || '',
+                    orderTypeCode: $('#orderTypeCode').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(([key, value]) => {
+                    if (value) params.set(key, value);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', '{{ route('operational.not-return-do.export-excel') }}' + query);
+                $('#export-pdf').attr('href', '{{ route('operational.not-return-do.export-pdf') }}' + query);
+            }
 
             const table = $('#dt').DataTable({
                 processing: true,
                 serverSide: true,
                 destroy: true,
+                pageLength: 25,
                 ajax: {
-                    url: "{{ route('dt.not-return-do') }}",
+                    url: '{{ route('dt.not-return-do') }}',
                     data: function(d) {
-                        d.plateNumber = $('select[name="plateNumber"]').val();
-                        d.customerName = $('select[name="customerName"]').val();
-                        d.driverName = $('select[name="driverName"]').val();
-                        d.fleetTypeName = $('select[name="fleetTypeName"]').val();
-                        d.shipmentNumber = $('input[name="shipmentNumber"]').val();
-                        d.startDate = $('input[name="startDate"]').val();
-                        d.endDate = $('input[name="endDate"]').val();
-                        d.destination = $('select[name="destination"]').val();
-                        d.orderTypeCode = $('select[name="orderTypeCode"]').val();
+                        Object.assign(d, getFilters());
                     }
                 },
-                columns: [{
-                        data: 'action',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
-                        data: 'orderDate'
-                    },
-                    {
-                        data: 'fleet.plateNumber'
-                    },
-                    {
-                        data: 'route.name'
-                    },
-                    {
-                        data: 'driver.name'
-                    },
-                    {
-                        data: 'orderType'
-                    },
-                    {
-                        data: 'code'
-                    },
-                    {
-                        data: "shipmentNumber"
-                    },
-                    {
-                        data: 'customer.name'
-                    },
-                    {
-                        data: 'route.originLocation.name'
-                    },
-                    {
-                        data: 'route.destinationLocation.name'
-                    },
-                    {
-                        data: 'price'
-                    },
-                    {
-                        data: 'harga_vendor'
-                    },
-                    {
-                        data: 'status'
-                    }
+                columns: [
+                    { data: 'action', className: 'text-center align-middle', orderable: false, searchable: false },
+                    { data: 'DT_RowIndex', className: 'text-center align-middle', orderable: false, searchable: false },
+                    { data: 'orderDate', className: 'text-center align-middle' },
+                    { data: 'fleet.plateNumber', className: 'align-middle font-monospace fw-semibold' },
+                    { data: 'route.name', className: 'align-middle' },
+                    { data: 'driver.name', className: 'align-middle' },
+                    { data: 'orderType', className: 'text-center align-middle' },
+                    { data: 'code', className: 'align-middle font-monospace fw-semibold' },
+                    { data: 'shipmentNumber', className: 'align-middle font-monospace' },
+                    { data: 'customer.name', className: 'align-middle' },
+                    { data: 'route.originLocation.name', className: 'align-middle' },
+                    { data: 'route.destinationLocation.name', className: 'align-middle' },
+                    { data: 'price', className: 'text-end align-middle font-monospace fw-semibold' },
+                    { data: 'harga_vendor', className: 'text-end align-middle font-monospace fw-semibold' },
+                    { data: 'status', className: 'text-center align-middle' }
                 ],
-                columnDefs: [{
-                        searchable: false,
-                        targets: [0, 1]
-                    },
-                    {
-                        orderable: false,
-                        targets: [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
-                    },
+                columnDefs: [
+                    { orderable: false, targets: [0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] }
                 ],
-                order: [
-                    [2, 'asc']
-                ],
-            });
-        });
-
-
-        // ---------- Helpers ----------
-        function setAllOnPage(checked) {
-            // No longer needed with button actions
-        }
-
-        function syncHeaderState() {
-            // No longer needed with button actions
-        }
-
-        // ---------- Submit handler for bulk action ----------
-        const saveOrderBtn = document.getElementById('saveOrder');
-        if (saveOrderBtn) {
-            saveOrderBtn.addEventListener('click', function(event) {
-                event.preventDefault();
-                swal({
-                    title: "{{ __('general.warning') }}",
-                    text: "Please use action button on each row to process returns",
-                    icon: "info",
-                });
-            });
-        }
-
-        // ---------- DataTable init ----------
-        $(function() {
-
-
-            // Filter button
-            $('#btnFilter').on('click', function() {
-                table.ajax.reload();
-            });
-
-            // When table draws (paging/sorting/filter), no need to restore checkbox states
-            $('#dt').on('draw.dt', function() {
-                // No checkbox restoration needed
-            });
-        });
-
-        // ---------- Header CheckAll (no longer needed) ----------
-        $(document).on('click', '#checkAll', function() {
-            // No longer needed
-        });
-
-        // ========== ROLLBACK STATUS FUNCTIONALITY ==========
-        $(document).on('click', '.rollback-btn', function() {
-            const id = $(this).data('id');
-            const shipment = $(this).data('shipment');
-
-            swal({
-                title: "Apakah Anda yakin?",
-                text: `Ingin mengembalikan status pesanan ${shipment}?`,
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willRollback) => {
-                if (willRollback) {
-                    // Redirect ke route rollback
-                    window.location.href =
-                        "{{ route('operational.not-return-do.rollback-status', ':id') }}".replace(':id',
-                            id);
+                order: [[2, 'asc']],
+                language: {
+                    search: 'Cari:',
+                    lengthMenu: 'Tampilkan _MENU_ data',
+                    info: 'Menampilkan _START_ - _END_ dari _TOTAL_ data',
+                    infoEmpty: 'Tidak ada data',
+                    zeroRecords: 'Data tidak ditemukan',
+                    processing: '<span class="spinner-border spinner-border-sm text-primary me-1"></span> Memuat data...'
                 }
+            });
+
+            function reloadWithFilters() {
+                syncExportUrls();
+                table.ajax.reload(null, true);
+            }
+
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#shipmentNumber').on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+            $('#btnResetFilter').on('click', function() {
+                $filterForm.find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                filterStartPicker.clear();
+                filterEndPicker.clear();
+                filterStartPicker.set('maxDate', null);
+                filterEndPicker.set('minDate', null);
+                reloadWithFilters();
+            });
+
+            syncExportUrls();
+
+            // Date-time picker for the return modal remains independent from report filters.
+            flatpickr('#returnDate', {
+                enableTime: true,
+                dateFormat: 'd/m/Y, H:i',
+                time_24hr: true,
+                minuteIncrement: 1
+            });
+
+            const saveOrderBtn = document.getElementById('saveOrder');
+            if (saveOrderBtn) {
+                saveOrderBtn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    swal({
+                        title: '{{ __('general.warning') }}',
+                        text: 'Please use action button on each row to process returns',
+                        icon: 'info'
+                    });
+                });
+            }
+
+            $(document).on('click', '.rollback-btn', function() {
+                const id = $(this).data('id');
+                const shipment = $(this).data('shipment');
+                swal({
+                    title: 'Apakah Anda yakin?',
+                    text: `Ingin mengembalikan status pesanan ${shipment}?`,
+                    icon: 'warning',
+                    buttons: true,
+                    dangerMode: true
+                }).then((willRollback) => {
+                    if (willRollback) {
+                        window.location.href = '{{ route('operational.not-return-do.rollback-status', ':id') }}'.replace(':id', id);
+                    }
+                });
             });
         });
     </script>

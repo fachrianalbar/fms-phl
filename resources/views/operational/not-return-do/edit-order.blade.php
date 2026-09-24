@@ -155,6 +155,45 @@
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
             color: #ffffff;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .card-custom {
+            background: var(--bs-card-bg);
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] .card-custom .card-header {
+            background: var(--bs-card-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .form-label-custom {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom:focus {
+            background-color: var(--bs-tertiary-bg);
+            border-color: #3b82f6;
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom[readonly] {
+            background-color: var(--bs-tertiary-bg);
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .toggle-master-price-box {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .toggle-master-price-box:hover {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .sticky-bottom-bar {
+            background: rgba(31, 32, 40, 0.92);
+            border-color: var(--bs-border-color);
+        }
     </style>
 @endpush
 

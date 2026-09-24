@@ -1,6 +1,6 @@
 ---
 name: phl-table-design
-description: Standard UI design system for B2B data tables, reports, filter bars, KPI summary cards, and detail pages in the PHL project (Bootstrap 5, DataTables, Flatpickr, Select2). Use this skill whenever the user says "perbaiki design", "perbaiki tampilan", "standarisasi tabel", "desain table", or asks to redesign/improve any report or table page.
+description: Standard UI design system for B2B data tables, reports, filter bars, KPI summary cards, and detail pages in the PHL project (Bootstrap 5, DataTables, Flatpickr, Select2). Includes the canonical filter-card standard (light + dark mode) referenced from operational/not-return-do. Use this skill whenever the user says "perbaiki design", "perbaiki tampilan", "standarisasi tabel", "desain table", "perbaiki filter", "standarisasi filter", "desain filter", "filter masih putih", "filter tidak muncul di dark mode", or asks to redesign/improve any report, table, or filter page.
 ---
 
 # PHL B2B Table & Report Design Standard
@@ -15,6 +15,7 @@ Standar referensi visual utama proyek ini:
 - `resources/views/report/driver-salary/index.blade.php`
 - `resources/views/report/maintenance-fleet/index.blade.php`
 - `resources/views/report/maintenance-fleet/show.blade.php`
+- `resources/views/operational/not-return-do/index.blade.php` ← **referensi FILTER (standar filter card, lihat §3)**
 - `docs/table-standard.md`
 
 ---
@@ -22,7 +23,7 @@ Standar referensi visual utama proyek ini:
 ## 1. Prinsip Utama (Anti-Default Discipline)
 
 1. **JANGAN gunakan `table-striped` default.** Gunakan garis batas tipis (`#f1f5f9`), rounded corner (`12px`), dan hover state yang halus (`#f8fafc`).
-2. **JANGAN sembunyikan filter di accordion tertutup.** Gunakan panel filter terbuka yang rapi dengan background soft (`#f8fafc`).
+2. **Gunakan filter card collapse yang rapi.** Filter boleh tertutup secara default agar halaman tabel lebih ringkas, tetapi header toggle harus selalu terlihat, mudah dipahami, dan menggunakan background soft (`#f8fafc`).
 3. **JANGAN gunakan `<input type="date">` biasa.** Selalu gunakan Flatpickr dengan format standar backend `Y-m-d`.
 4. **JANGAN biarkan angka nominal/kuantitas rata kiri.** Selalu gunakan `text-end` dan font monospace/tabular-nums.
 5. **Gunakan kartu KPI (Summary Tiles) bergradasi lembut** di halaman detail atau agregasi (Total Transaksi, Total Qty, Total Biaya/Gaji).
@@ -96,53 +97,279 @@ Standar referensi visual utama proyek ini:
 
 ---
 
-## 3. Komponen Filter Bar Terstandarisasi
+## 3. Komponen Filter Card Collapse Terstandarisasi
 
-Panel filter selalu terbuka, berada tepat di atas tabel. Seluruh elemen input (Select2, Flatpickr) dan tombol aksi (Filter & Reset) **wajib seragam memiliki tinggi 38px** dan radius 8px:
+> **Standar referensi visual (mutlak):** `resources/views/operational/not-return-do/index.blade.php`
+> — CSS terang `~L281–368`, CSS gelap `~L471–506`, markup `~L561–661`, JS `~L958–1143`.
+> Setiap filter baru / perbaikan filter di halaman mana pun **wajib** mengikuti anatomi, ukuran, dan perilaku persis seperti halaman referensi ini, **termasuk dark mode**.
+
+Filter ditempatkan tepat di atas tabel di dalam `.card-body`, sebagai panel collapse yang **tertutup secara default**. Header panel selalu terlihat sebagai trigger sehingga halaman tidak kehilangan akses ke filter. Gunakan `data-bs-toggle="collapse"`, `aria-expanded="false"`, dan ID target yang unik per halaman. Seluruh elemen input (Select2, Flatpickr) dan tombol aksi (Terapkan & Reset) **wajib seragam 38px tinggi dan radius 8px**.
+
+### Anatomi standar (urutan wajib)
+
+1. **Panel** — background `#f8fafc`, border `1px #e2e8f0`, radius `12px`, `margin: 0 0 20px`, `overflow: hidden`.
+2. **Header button** — full width, `padding: 12px 16px`, flex space-between, hover `#f1f5f9`.
+   - Heading: ikon `mdi-filter-variant` (#4f46e5, 17px) + `<strong>Filter Data</strong>` (13px/700) + `<small>` hint (11px, #94a3b8).
+   - Chevron `mdi-chevron-down` yang berotasi 180° saat `[aria-expanded="true"]`.
+3. **Collapse body** — border-top `1px #e2e8f0`, padding `16px`; `#filterForm` berisi `.row.g-3` (`--bs-gutter-y: .75rem`).
+4. **Field** — `col-xl-3 col-md-6` untuk dropdown/date, label `.filter-label` + kontrol 38px.
+5. **Aksi** — kolom terakhir `col-xl-6 col-md-4 d-flex align-items-end justify-content-md-end gap-2` berisi tombol Terapkan Filter + Reset.
+
+### Markup
 
 ```blade
-<div class="card border-0 mb-4"
-    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-    <div class="card-body p-3">
-        <form id="filterForm">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-3">
-                    <label class="filter-label" for="fieldName">Label Dropdown</label>
-                    <select class="form-select select2-filter" name="fieldName" id="fieldName" style="width: 100%;">
-                        <option value="">Semua Opsi</option>
-                        @foreach ($options as $item)
-                            <option value="{{ $item->code }}">{{ $item->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+<div class="card-body pt-3 pb-0">
+    <div class="filter-card">                        {{-- panel --}}
+        <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+            data-bs-target="#uniqueFilterCollapse" aria-expanded="false" aria-controls="uniqueFilterCollapse">
+            <span class="filter-card-heading">
+                <i class="mdi mdi-filter-variant"></i>
+                <strong>Filter Data</strong>
+                <small>Gunakan filter untuk mempersempit daftar</small>
+            </span>
+            <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+        </button>
 
-                <div class="col-md-3">
-                    <label class="filter-label" for="startDate">Dari Tanggal</label>
-                    <input class="form-control filter-control" name="startDate" id="startDate"
-                        type="text" placeholder="Pilih Tanggal Mulai">
-                </div>
+        <div class="collapse filter-collapse" id="uniqueFilterCollapse">
+            <div class="filter-collapse-body">
+                <div id="filterForm">
+                    <div class="row g-3">
+                        <div class="col-xl-3 col-md-6">
+                            <label class="filter-label" for="fieldName">Label Dropdown</label>
+                            <select class="form-select select2-filter" name="fieldName" id="fieldName">
+                                <option value="">Semua Opsi</option>
+                                @foreach ($options as $item)
+                                    <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                <div class="col-md-3">
-                    <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                    <input class="form-control filter-control" name="endDate" id="endDate"
-                        type="text" placeholder="Pilih Tanggal Akhir">
-                </div>
+                        <div class="col-xl-3 col-md-6">
+                            <label class="filter-label" for="startDate">Dari Tanggal</label>
+                            <input class="form-control filter-control" name="startDate" id="startDate"
+                                type="text" placeholder="Pilih tanggal mulai">
+                        </div>
 
-                <div class="col-md-3 col-lg-2 d-flex gap-2">
-                    <button class="btn btn-filter-primary flex-grow-1" type="submit" id="btnFilter">
-                        <i class="mdi mdi-filter fs-14"></i> Filter
-                    </button>
-                    <button type="button" class="btn btn-filter-reset" id="btnResetFilter"
-                        data-bs-toggle="tooltip" title="Reset Filter">
-                        <i class="mdi mdi-refresh fs-16"></i>
-                    </button>
+                        <div class="col-xl-3 col-md-6">
+                            <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                            <input class="form-control filter-control" name="endDate" id="endDate"
+                                type="text" placeholder="Pilih tanggal akhir">
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                            <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                            </button>
+                            <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                data-bs-toggle="tooltip" title="Reset Filter">
+                                <i class="mdi mdi-refresh"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 ```
-*(Catatan: Jangan gunakan `.form-control-sm` atau `.btn-sm` pada form filter karena menghasilkan tinggi ~31px yang timpang dengan Select2 (38px). Selalu gunakan kelas `.filter-control`, `.btn-filter-primary`, dan `.btn-filter-reset`)*
+
+Catatan markup:
+- `#filterForm` adalah `<div>`, **bukan** `<form>`, dan tombol Terapkan bertipe `type="button"` — handler diikat ke event `click` (bukan `submit`) agar Enter di input tidak memicu reload halaman.
+- Jangan gunakan `.form-control-sm` / `.btn-sm` — tingginya ~31px dan membuat baris filter belang-belang. Semua kontrol wajib 38px.
+- Jika halaman memakai prefix kelas sendiri (mis. `.not-return-do-filter*`), nilainya harus **identik** dengan standar ini.
+
+### CSS terang (copy-paste)
+
+```css
+.filter-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin: 0 0 20px;
+    overflow: hidden;
+}
+.filter-card-header {
+    align-items: center;
+    background: #f8fafc;
+    border: 0;
+    color: #334155;
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 16px;
+    text-align: left;
+    width: 100%;
+}
+.filter-card-header:hover { background: #f1f5f9; }
+.filter-card-heading { align-items: center; display: flex; gap: 8px; }
+.filter-card-heading i { color: #4f46e5; font-size: 17px; }
+.filter-card-heading strong { font-size: 13px; font-weight: 700; }
+.filter-card-heading small { color: #94a3b8; font-size: 11px; font-weight: 400; }
+.filter-card-chevron { transition: transform .2s ease; }
+.filter-card-header[aria-expanded="true"] .filter-card-chevron { transform: rotate(180deg); }
+.filter-card .filter-collapse { border-top: 1px solid #e2e8f0; }
+.filter-card .filter-collapse-body { padding: 16px; }
+.filter-card .row { --bs-gutter-y: .75rem; }
+
+.filter-label { color: #64748b; display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+.filter-control,
+.filter-card .form-control {
+    background-color: #fff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    color: #334155 !important;
+    font-size: 13px !important;
+    height: 38px !important;
+}
+.filter-control { padding: 0 12px 0 36px !important; }
+.filter-card .form-control[name="shipmentNumber"] { padding-left: 12px !important; }
+
+.btn-filter-primary {
+    align-items: center;
+    background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+    border: 0 !important;
+    border-radius: 8px !important;
+    color: #fff !important;
+    display: inline-flex;
+    font-size: 13px;
+    font-weight: 600;
+    gap: 6px;
+    height: 38px;
+    justify-content: center;
+    padding: 0 16px;
+    white-space: nowrap;
+}
+.btn-filter-reset {
+    align-items: center;
+    background: #fff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    color: #64748b !important;
+    display: inline-flex;
+    height: 38px;
+    justify-content: center;
+    min-width: 38px;
+    padding: 0 !important;
+}
+
+.select2-container { width: 100% !important; }
+.select2-container--default .select2-selection--single {
+    align-items: center;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    display: flex;
+    height: 38px !important;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: #334155 !important;
+    font-size: 13px;
+    line-height: 36px;
+    padding-left: 12px;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
+```
+
+### CSS gelap (WAJIB — jangan pernah dilewatkan)
+
+> **Aturan keras:** setiap filter **wajib** menyertakan blok `html[data-bs-theme="dark"]` di bawah ini. Tanpa blok ini, panel filter tetap putih/terang di dark mode — bug yang paling sering muncul. Selalu scope di bawah `html[data-bs-theme="dark"]` dan jangan mengubah mode terang.
+
+```css
+html[data-bs-theme="dark"] .filter-card { background: var(--bs-secondary-bg); border-color: var(--bs-border-color); }
+html[data-bs-theme="dark"] .filter-card-header { background: var(--bs-secondary-bg); color: var(--bs-body-color); }
+html[data-bs-theme="dark"] .filter-card-header:hover { background: var(--bs-tertiary-bg); }
+html[data-bs-theme="dark"] .filter-card .filter-collapse { border-top-color: var(--bs-border-color); }
+html[data-bs-theme="dark"] .filter-label { color: var(--bs-secondary-color); }
+html[data-bs-theme="dark"] .filter-control,
+html[data-bs-theme="dark"] .filter-card .form-control {
+    background-color: var(--bs-tertiary-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+html[data-bs-theme="dark"] .btn-filter-reset {
+    background: var(--bs-tertiary-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+```
+
+Catatan dark mode:
+- `.btn-filter-primary` memakai gradient ungu — aman di kedua mode, **tidak perlu** override gelap.
+- Kotak Select2 sudah ditangani global di `public/assets/css/dark-mode-overrides.css`; cukup andalkan token, jangan dobel-style.
+- **Jangan** menulis `border: … !important` inline di blade. Inline `!important` mengalahkan semua stylesheet (termasuk `!important`), sehingga dark mode tidak bisa menimpanya. Set border lewat CSS/kelas atau gunakan `var(--bs-border-color)`.
+- Token dark mode proyek: `--bs-secondary-bg` (#1f2028), `--bs-tertiary-bg` (#282e39), `--bs-body-color`, `--bs-border-color`.
+
+### JavaScript behavior
+
+```javascript
+$('.select2-filter').select2({ placeholder: 'Semua pilihan', allowClear: true, width: '100%' });
+
+let startPicker, endPicker;
+startPicker = flatpickr('#startDate', {
+    dateFormat: 'Y-m-d', allowInput: true,
+    onChange: function (d, dateStr) { if (endPicker) endPicker.set('minDate', dateStr || null); }
+});
+endPicker = flatpickr('#endDate', {
+    dateFormat: 'Y-m-d', allowInput: true,
+    onChange: function (d, dateStr) { if (startPicker) startPicker.set('maxDate', dateStr || null); }
+});
+
+function getFilters() {
+    return { /* satu key per field filter, '' bila kosong */ };
+}
+
+function syncExportUrls() {
+    const params = new URLSearchParams();
+    Object.entries(getFilters()).forEach(function (entry) {
+        if (entry[1]) params.set(entry[0], entry[1]);
+    });
+    const query = params.toString() ? '?' + params.toString() : '';
+    $('#export-excel').attr('href', '{{ route('...export-excel') }}' + query);
+    $('#export-pdf').attr('href', '{{ route('...export-pdf') }}' + query);
+}
+
+function reloadWithFilters() { syncExportUrls(); table.ajax.reload(null, true); }
+
+$('#btnFilter').on('click', reloadWithFilters);
+$('#searchField').on('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); reloadWithFilters(); }
+});
+$('#btnResetFilter').on('click', function () {
+    $('#filterForm').find('input').val('');
+    $('.select2-filter').val('').trigger('change');
+    startPicker.clear();
+    endPicker.clear();
+    startPicker.set('maxDate', null);
+    endPicker.set('minDate', null);
+    reloadWithFilters();
+});
+
+syncExportUrls(); // sinkron saat halaman pertama dimuat
+```
+
+Perilaku wajib:
+- DataTables `ajax.data` harus `Object.assign(d, getFilters())` agar parameter filter terkirim ke server.
+- Export Excel/PDF selalu disinkronkan dengan filter aktif via `syncExportUrls()`, termasuk saat halaman pertama dimuat.
+- Reset wajib: kosongkan input, reset Select2 (`.val('').trigger('change')`), `clear()` kedua picker, hapus batas `minDate`/`maxDate`, sinkron export, lalu reload.
+- Picker dua arah dideklarasikan dalam scope yang sama agar callback bisa mengatur `minDate`/`maxDate`.
+- Jangan menginisialisasi ulang DataTables saat panel dibuka/ditutup — cukup `ajax.reload`.
+
+### Checklist penerapan filter (per halaman)
+
+- [ ] Panel `.filter-card` di dalam `.card-body` tepat di atas tabel; collapse tertutup default; header tetap terlihat.
+- [ ] Semua kontrol 38px / radius 8px; tidak ada `.form-control-sm` / `.btn-sm`.
+- [ ] Tombol Terapkan = `.btn-filter-primary`; Reset = `.btn-filter-reset` (kotak 38×38, ikon `mdi-refresh`).
+- [ ] Blok `html[data-bs-theme="dark"]` untuk panel, header, label, kontrol, dan tombol reset sudah ada.
+- [ ] `getFilters()` mengembalikan semua field; `ajax.data` merge filter.
+- [ ] `syncExportUrls()` dipanggil saat init dan tiap reload.
+- [ ] Tidak ada `border … !important` inline di elemen filter.
+- [ ] Diuji di mode terang **dan** gelap.
+
+### Prompt siap pakai — perbaiki filter (konsisten)
+
+Cukup ganti `[LINK ROUTE]` dengan URL modul yang mau diperbaiki, lalu kirim. Prompt satu paragraf ini mengunci semua perbaikan filter ke standar §3.
+
+```text
+Perbaiki filter di halaman [LINK ROUTE] agar konsisten dengan standar filter PHL (skill `phl-table-design` §3, referensi visual `resources/views/operational/not-return-do/index.blade.php`): jadikan panel collapse `.filter-card` tertutup default tepat di atas tabel (header `.filter-card-header` dengan ikon `mdi-filter-variant` + "Filter Data" + hint + chevron yang berotasi saat terbuka) berisi `.filter-collapse` > `.filter-collapse-body` > `#filterForm` (DIV, bukan `<form>`) > `.row.g-3` dengan field `col-xl-3 col-md-6` dan label `.filter-label`; semua kontrol 38px/radius 8px tanpa `.form-control-sm`/`.form-select-sm`/`.btn-sm`, date pakai Flatpickr format `Y-m-d`; tombol Terapkan `.btn-filter-primary` (ikon `mdi-filter-outline`) dan Reset `.btn-filter-reset` (kotak 38×38, ikon `mdi-refresh`); WAJIB sertakan blok `html[data-bs-theme="dark"]` untuk panel/header/label/kontrol/tombol reset memakai token `--bs-secondary-bg`/`--bs-tertiary-bg`/`--bs-body-color`/`--bs-border-color` dan hapus `border … !important` inline bila ada; JS pertahankan field & endpoint yang ada (`getFilters()` → `ajax.data`, `syncExportUrls()` ke `#export-excel`/`#export-pdf` dipanggil saat init + tiap reload, Terapkan & Enter → reload, Reset bersihkan input + Select2 + Flatpickr + min/maxDate lalu reload); jangan ubah logika backend, kolom DataTable, nama field, atau route, dan jangan sentuh halaman lain; setelah selesai jalankan checklist §3 dan konfirmasi sudah dicek di mode terang & gelap.
+```
 
 ---
 

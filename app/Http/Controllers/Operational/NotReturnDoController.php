@@ -20,8 +20,12 @@ use App\Services\Master\UnitService;
 use App\Services\MenuService;
 use App\Services\Operational\NotReturnDoService;
 use App\Services\Operational\OrderService;
+use App\Exports\NotReturnDoReport;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\DataTables;
@@ -231,42 +235,67 @@ class NotReturnDoController extends Controller
         return redirect()->route('operational.not-return-do.edit-order', $code);
     }
 
+    private function filteredQuery(Request $request)
+    {
+        $filters = [
+            'fleet_plateNumber' => $request->plateNumber,
+            'customer_name' => $request->customerName,
+            'driver_name' => $request->driverName,
+            'fleetType_name' => $request->fleetTypeName,
+            'shipmentNumber' => $request->shipmentNumber,
+            'destination' => $request->destination,
+            'orderTypeCode' => $request->orderTypeCode,
+        ];
+
+        $relations = [
+            'fleet_plateNumber' => 'fleet.plateNumber',
+            'customer_name' => 'customer.name',
+            'driver_name' => 'driver.name',
+            'fleetType_name' => 'fleet.type.name',
+            'destination' => 'route.destinationLocation.name',
+        ];
+
+        $dateFilters = [
+            'orderDate' => [
+                'start' => $request->startDate,
+                'end' => $request->endDate,
+            ],
+        ];
+
+        return FilterHelper::applyFilters(
+            $this->service->datatable(),
+            $filters,
+            $relations,
+            $dateFilters
+        );
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(new NotReturnDoReport($request), 'Not-Return-DO-Report.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $orders = $this->filteredQuery($request)->get();
+        $pdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'default_font' => 'sans-serif',
+        ]);
+
+        $pdf->WriteHTML(View::make('operational.not-return-do.report.not-return-do-pdf', [
+            'orders' => $orders,
+            'title' => 'Not Return DO',
+        ])->render());
+
+        return $pdf->Output('Not-Return-DO-Report.pdf', 'I');
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'fleet_plateNumber' => $request->plateNumber,
-                'customer_name' => $request->customerName,
-                'driver_name' => $request->driverName,
-                'fleetType_name' => $request->fleetTypeName,
-                'shipmentNumber' => $request->shipmentNumber,
-                // 'origin' => $request->origin,
-                'destination' => $request->destination,
-                'orderTypeCode' => $request->orderTypeCode,
-
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
-                'customer_name' => 'customer.name',
-                'driver_name' => 'driver.name',
-                'fleetType_name' => 'fleet.type.name',
-                // 'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name',
-            ];
-
-            $dateFilters = [
-                'orderDate' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->filteredQuery($request);
 
             return DataTables::of($data)
                 ->addIndexColumn()

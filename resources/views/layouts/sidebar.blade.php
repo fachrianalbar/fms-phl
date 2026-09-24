@@ -24,6 +24,7 @@
         // Faktur (Piutang / AR)
         'invoice/create' => 'mdi-file-plus-outline',
         'invoice/unpaid' => 'mdi-cash-remove',
+        'invoice/partial' => 'mdi-cash-clock',
         'invoice/paid' => 'mdi-cash-check',
         'invoice/payment' => 'mdi-credit-card-outline',
         'invoice/payment-transaction' => 'mdi-receipt-text-check-outline',
@@ -31,6 +32,7 @@
         // Vendor (Hutang / AP)
         'vendor/order/waiting' => 'mdi-tray-full',
         'vendor/invoice/unpaid' => 'mdi-cash-remove',
+        'vendor/invoice/partial' => 'mdi-cash-clock',
         'vendor/invoice/paid' => 'mdi-cash-check',
         'vendor/payment' => 'mdi-credit-card-outline',
 

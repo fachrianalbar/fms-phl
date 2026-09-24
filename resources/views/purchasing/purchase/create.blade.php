@@ -356,6 +356,37 @@
         font-size: 0.9rem;
         padding: 2rem 1rem;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .purchase-card .card-header h4 {
+        color: var(--bs-heading-color);
+    }
+    html[data-bs-theme="dark"] .form-label-custom {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .purchase-table .row-number {
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .purchase-table-wrapper {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .purchase-table tbody tr {
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .btn-back {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .btn-back:hover {
+        background: var(--bs-secondary-bg);
+        border-color: #667eea;
+        color: #a89fff;
+    }
+    html[data-bs-theme="dark"] .empty-state-text {
+        color: var(--bs-secondary-color);
+    }
 </style>
 @endpush
 

@@ -29,8 +29,14 @@ class InvoicePaymentTransactionService
 
     protected $mutation;
 
-    public function __construct(InvoicePaymentTransaction $transaction, Invoice $invoice, InvoicePayment $payment, InvoicePaymentClaim $claim, Mutation $mutation)
-    {
+    public function __construct(
+        InvoicePaymentTransaction $transaction,
+        Invoice $invoice,
+        InvoicePayment $payment,
+        InvoicePaymentClaim $claim,
+        Mutation $mutation,
+        private InvoiceService $invoiceService,
+    ) {
         $this->service = $transaction;
         $this->invoice = $invoice;
         $this->payment = $payment;
@@ -68,12 +74,9 @@ class InvoicePaymentTransactionService
      */
     public function getOpenInvoicesByCustomer(string $customerCode)
     {
-        return $this->invoice->with(['payments', 'claims'])
+        return $this->invoiceService->paymentStateQuery('open')
+            ->with(['payments', 'claims'])
             ->where('customerCode', $customerCode)
-            ->where(function ($q) {
-                $q->whereNull('status')
-                    ->orWhere('status', '!=', Invoice::STATUS_FULL);
-            })
             ->orderBy('invoiceDate', 'asc')
             ->orderBy('created_at', 'asc')
             ->get();

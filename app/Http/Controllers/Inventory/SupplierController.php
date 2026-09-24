@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Exports\SupplierExport;
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Supplier;
 use App\Services\Inventory\SupplierService;
 use App\Services\MenuService;
 use App\Services\UniqueCodeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class SupplierController extends Controller
@@ -33,19 +37,25 @@ class SupplierController extends Controller
      */
     public function index()
     {
+        $suppliers = Supplier::query()
+            ->orderBy('code', 'asc')
+            ->select(['code', 'name'])
+            ->get();
+
         return view($this->view.'index')
             ->with('view', $this->view)
-            ->with('title', $this->title);
+            ->with('title', $this->title)
+            ->with('suppliers', $suppliers);
     }
 
     /**
      * Show the form for creating a new resource.
+     * CRUD dialihkan ke modal pada halaman index; endpoint ini dipertahankan
+     * sebagai fallback redirect agar URL lama tidak 404.
      */
     public function create()
     {
-        return view($this->view.'create')
-            ->with('view', $this->view)
-            ->with('title', $this->title);
+        return redirect()->route($this->view.'index');
     }
 
     /**
@@ -87,16 +97,9 @@ class SupplierController extends Controller
      */
     public function edit(string $id)
     {
-        $data = $this->service->getById($id);
-
-        if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
-        }
-
-        return view($this->view.'edit')
-            ->with('view', $this->view)
-            ->with('title', $this->title)
-            ->with('data', $data);
+        // CRUD dialihkan ke modal pada halaman index; endpoint ini dipertahankan
+        // sebagai fallback redirect agar URL lama tidak 404.
+        return redirect()->route($this->view.'index');
     }
 
     /**
@@ -138,29 +141,119 @@ class SupplierController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $query = Supplier::query()->orderBy('code', 'asc');
 
-            return Datatables::of($data)
+            if ($request->filled('supplierCode')) {
+                $query->where('code', $request->supplierCode);
+            }
+
+            if ($request->filled('startDate')) {
+                $query->whereDate('created_at', '>=', $request->startDate);
+            }
+
+            if ($request->filled('endDate')) {
+                $query->whereDate('created_at', '<=', $request->endDate);
+            }
+
+            return Datatables::of($query)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && ! empty($request->search['value'])) {
+                        $search = strtolower($request->search['value']);
+                        $query->where(function ($q) use ($search) {
+                            $q->whereRaw('LOWER(code) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(address) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(pic) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(phone) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('LOWER(email) LIKE ?', ['%'.$search.'%']);
+                        });
+                    }
+                })
+                ->editColumn('ppn', function ($row) {
+                    return $row->ppn !== null && $row->ppn !== '' ? $row->ppn : '-';
+                })
+                ->editColumn('pph', function ($row) {
+                    return $row->pph !== null && $row->pph !== '' ? $row->pph : '-';
+                })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
+                    $editUrl = route($this->view.'update', $row->id);
 
-        <a href="javascript:deleteData(\''.$row->id.'\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
+                    $btn = '<div class="d-inline-flex gap-1">'
+                        .'<button type="button"'
+                        .' class="btn btn-icon btn-sm bg-primary-subtle js-edit-supplier"'
+                        .' data-bs-toggle="modal" data-bs-target="#supplierCrudModal"'
+                        .' data-action="'.$editUrl.'"'
+                        .' data-code="'.e($row->code).'"'
+                        .' data-name="'.e($row->name).'"'
+                        .' data-pic="'.e($row->pic ?? '').'"'
+                        .' data-address="'.e($row->address ?? '').'"'
+                        .' data-email="'.e($row->email ?? '').'"'
+                        .' data-phone="'.e($row->phone ?? '').'"'
+                        .' data-ppn="'.e($row->ppn ?? '').'"'
+                        .' data-pph="'.e($row->pph ?? '').'"'
+                        .' title="Edit">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i>'
+                        .'</button>'
+                        .'<a href="javascript:deleteData(\''.$row->id.'\')"'
+                        .' class="btn btn-icon btn-sm bg-danger-subtle"'
+                        .' data-bs-toggle="tooltip" title="Delete">'
+                        .'<i class="mdi mdi-delete fs-14 text-danger"></i>'
+                        .'</a>'
+                        .'</div>';
 
                     return $btn;
                 })
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function excelSupplier(Request $request)
+    {
+        return Excel::download(new SupplierExport($request), 'Supplier-Report.xlsx');
+    }
+
+    public function pdfSupplier(Request $request)
+    {
+        $query = Supplier::query()->orderBy('code', 'asc');
+
+        if ($request->filled('supplierCode')) {
+            $query->where('code', $request->supplierCode);
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        $suppliers = $query->get();
+        $supplierName = null;
+
+        if ($request->filled('supplierCode')) {
+            $supplierName = Supplier::query()->where('code', $request->supplierCode)->value('name');
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
+
+        $mpdf->WriteHTML(
+            view($this->view.'report.supplier-pdf')
+                ->with('suppliers', $suppliers)
+                ->with('supplierName', $supplierName)
+                ->with('startDate', $request->startDate)
+                ->with('endDate', $request->endDate)
+        );
+
+        return $mpdf->Output('Supplier-Report.pdf', 'I');
     }
 }

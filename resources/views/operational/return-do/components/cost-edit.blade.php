@@ -124,6 +124,53 @@
         color: #4f46e5;
         font-weight: 700;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .modern-cost-table thead th {
+        background-color: var(--bs-tertiary-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-bottom-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table tbody tr.cost-row {
+        background-color: var(--bs-card-bg);
+    }
+    html[data-bs-theme="dark"] .modern-cost-table tbody tr.cost-row:hover {
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table .form-control {
+        background-color: var(--bs-secondary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .modern-cost-table .form-control:focus {
+        background-color: var(--bs-tertiary-bg);
+        border-color: #a5b4fc;
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .modern-cost-table .select2-container--default .select2-selection--single {
+        background-color: var(--bs-secondary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--bs-body-color) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table .select2-container--default .select2-selection--single:focus {
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table tfoot tr {
+        background-color: rgba(99, 102, 241, 0.12) !important;
+    }
+    html[data-bs-theme="dark"] .modern-cost-table tfoot td {
+        border-top-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .badge-indigo {
+        background-color: rgba(99, 102, 241, 0.2) !important;
+        color: #a5b4fc !important;
+        border-color: rgba(99, 102, 241, 0.35);
+    }
+    html[data-bs-theme="dark"] #internalCostTotal {
+        color: #a5b4fc;
+    }
 </style>
 
 <div class="row g-3">

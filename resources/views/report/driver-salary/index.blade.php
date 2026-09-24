@@ -113,11 +113,51 @@
             font-weight: 700;
         }
 
+        /* ── Modal form controls styling ── */
+        #processSalaryModal .modal-section .form-label,
+        #editSalaryModal .modal-section .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+        #processSalaryModal .input-group .input-group-text,
+        #editSalaryModal .input-group .input-group-text {
+            background-color: #f8fafc;
+            border-color: #cbd5e1;
+            color: #64748b;
+            height: 38px;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            border-radius: 8px 0 0 8px;
+            transition: all 0.2s ease;
+        }
+        #processSalaryModal .input-group input.form-control,
+        #editSalaryModal .input-group input.form-control {
+            background-color: #fff;
+            border-color: #cbd5e1;
+            color: #334155;
+            height: 38px;
+            font-size: 14px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.2s ease;
+        }
+        #processSalaryModal textarea.form-control,
+        #editSalaryModal textarea.form-control {
+            background-color: #fff;
+            border-color: #cbd5e1;
+            color: #334155;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
         /* ── Order preview table inside modal ── */
-        #orderPreviewTable {
+        #orderPreviewTable, #editOrderPreviewTable {
             font-size: 13px;
         }
-        #orderPreviewTable thead th {
+        #orderPreviewTable thead th, #editOrderPreviewTable thead th {
             background: #f1f5f9;
             border-bottom: 2px solid #cbd5e1;
             font-weight: 600;
@@ -127,11 +167,15 @@
             color: #475569;
             padding: 10px 12px;
         }
-        #orderPreviewTable tbody tr {
+        #orderPreviewTable tbody tr, #editOrderPreviewTable tbody tr {
             transition: background-color 0.15s ease;
         }
-        #orderPreviewTable tbody tr:hover {
+        #orderPreviewTable tbody tr:hover, #editOrderPreviewTable tbody tr:hover {
             background-color: #eef2ff;
+        }
+        #orderPreviewTable .order-summary-row td, #editOrderPreviewTable .order-summary-row td {
+            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+            color: #3730a3;
         }
 
         /* ── Adjustment rows ── */
@@ -147,7 +191,14 @@
             border-color: #a5b4fc;
             box-shadow: 0 2px 8px rgba(79, 70, 229, 0.08);
         }
-        .btn-remove-adj {
+        .adjustment-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 4px;
+            display: block;
+        }
+        .btn-remove-adj, .btn-remove-edit-adj {
             width: 32px;
             height: 32px;
             padding: 0;
@@ -158,8 +209,9 @@
             border: 1px solid #fca5a5;
             color: #ef4444;
             transition: all 0.2s ease;
+            background: transparent;
         }
-        .btn-remove-adj:hover {
+        .btn-remove-adj:hover, .btn-remove-edit-adj:hover {
             background: #ef4444;
             color: #fff;
             border-color: #ef4444;
@@ -171,7 +223,7 @@
             padding: 18px 16px;
             text-align: center;
             border: 1px solid transparent;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .summary-card:hover {
             transform: translateY(-2px);
@@ -179,20 +231,30 @@
         .summary-card h5 {
             font-size: 12px;
             margin-bottom: 6px;
-            opacity: 0.75;
+            opacity: 0.85;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-weight: 600;
+            color: inherit !important;
         }
         .summary-card h3 {
             font-size: 20px;
             font-weight: 800;
             margin: 0;
             letter-spacing: -0.5px;
+            color: inherit !important;
         }
         .summary-salary { background: linear-gradient(135deg, #eef2ff, #e0e7ff); border-color: #c7d2fe; color: #3730a3; }
         .summary-adj    { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border-color: #a7f3d0; color: #065f46; }
         .summary-grand  { background: linear-gradient(135deg, #fefce8, #fef9c3); border-color: #fde68a; color: #92400e; }
+
+        /* ── Alerts inside modal ── */
+        .modal-info-alert {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-radius: 10px;
+            padding: 14px 16px;
+        }
 
         /* ── No data state ── */
         .empty-state {
@@ -284,14 +346,6 @@
         #editSalaryModal .input-group:focus-within .select2-container--default .select2-selection--single {
             border-color: #818cf8 !important;
         }
-        #processSalaryModal .input-group .input-group-text, #editSalaryModal .input-group .input-group-text {
-            border-color: #cbd5e1;
-            transition: all 0.2s ease;
-        }
-        #processSalaryModal .input-group input.form-control, #editSalaryModal .input-group input.form-control {
-            border-color: #cbd5e1;
-            transition: all 0.2s ease;
-        }
         #processSalaryModal .input-group input.form-control:focus, #editSalaryModal .input-group input.form-control:focus {
             box-shadow: none !important;
         }
@@ -328,6 +382,331 @@
         #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder,
         #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder {
             color: #94a3b8 !important;
+        }
+
+        /* ══════════════════════════════════════════════════════════════ */
+        /* ── Dark Mode Styling for Process & Edit Salary Modals ─────── */
+        /* ══════════════════════════════════════════════════════════════ */
+        html[data-bs-theme="dark"] #processSalaryModal .modal-content,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-content {
+            background-color: var(--bs-secondary-bg);
+            border: 1px solid var(--bs-border-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body {
+            background-color: var(--bs-body-bg);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body::-webkit-scrollbar-track,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body::-webkit-scrollbar-track {
+            background: var(--bs-body-bg);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body::-webkit-scrollbar-thumb,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body::-webkit-scrollbar-thumb {
+            background: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body::-webkit-scrollbar-thumb:hover,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body::-webkit-scrollbar-thumb:hover {
+            background: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-footer,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-footer {
+            background-color: var(--bs-secondary-bg);
+            border-top: 1px solid var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .btn-light,
+        html[data-bs-theme="dark"] #editSalaryModal .btn-light {
+            background-color: var(--bs-tertiary-bg);
+            border: 1px solid var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .btn-light:hover,
+        html[data-bs-theme="dark"] #editSalaryModal .btn-light:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--bs-emphasis-color);
+        }
+
+        /* Dark mode sections */
+        html[data-bs-theme="dark"] #processSalaryModal .modal-section,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-section {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-section-title,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-section-title {
+            color: var(--bs-emphasis-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-section-title i,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-section-title i {
+            color: #818cf8;
+        }
+
+        /* Dark mode form controls */
+        html[data-bs-theme="dark"] #processSalaryModal .modal-section .form-label,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-section .form-label {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .input-group .input-group-text,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group .input-group-text {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-secondary-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .input-group input.form-control,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group input.form-control {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal textarea.form-control,
+        html[data-bs-theme="dark"] #editSalaryModal textarea.form-control {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .form-control::placeholder,
+        html[data-bs-theme="dark"] #editSalaryModal .form-control::placeholder {
+            color: var(--bs-secondary-color) !important;
+            opacity: 0.6;
+        }
+
+        /* Dark mode Select2 inside modal */
+        html[data-bs-theme="dark"] #processSalaryModal .input-group .select2-wrapper .select2-selection--single,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group .select2-wrapper .select2-selection--single {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__rendered,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__rendered {
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group .select2-wrapper .select2-selection--single .select2-selection__placeholder {
+            color: var(--bs-secondary-color) !important;
+            opacity: 0.6;
+        }
+        html[data-bs-theme="dark"] .select2-dropdown {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__arrow b {
+            border-color: var(--bs-secondary-color) transparent transparent transparent !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+            border-color: transparent transparent var(--bs-secondary-color) transparent !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-search--dropdown {
+            background-color: var(--bs-secondary-bg) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-search--dropdown .select2-search__field {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-results__option {
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-results__option[aria-selected="true"] {
+            background-color: rgba(79, 70, 229, 0.25) !important;
+            color: #a5b4fc !important;
+        }
+
+        /* Dark mode adjustments section */
+        html[data-bs-theme="dark"] .btn-add-adj {
+            border-color: #6366f1;
+            color: #a5b4fc;
+        }
+        html[data-bs-theme="dark"] .btn-add-adj:hover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: #818cf8;
+            color: #c7d2fe;
+        }
+        html[data-bs-theme="dark"] .adjustment-row {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .adjustment-row:hover {
+            border-color: #6366f1;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
+        }
+        html[data-bs-theme="dark"] .adjustment-label {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .adjustment-row .form-control,
+        html[data-bs-theme="dark"] .adjustment-row .form-select {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .adjustment-row .form-control:focus,
+        html[data-bs-theme="dark"] .adjustment-row .form-select:focus {
+            border-color: #818cf8;
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .btn-remove-adj,
+        html[data-bs-theme="dark"] .btn-remove-edit-adj {
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+        html[data-bs-theme="dark"] .btn-remove-adj:hover,
+        html[data-bs-theme="dark"] .btn-remove-edit-adj:hover {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+        }
+        html[data-bs-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+        }
+
+        /* Dark mode order preview table */
+        html[data-bs-theme="dark"] #orderPreviewTable,
+        html[data-bs-theme="dark"] #editOrderPreviewTable {
+            --bs-table-bg: var(--bs-secondary-bg);
+            --bs-table-border-color: var(--bs-border-color);
+            --bs-table-color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #orderPreviewTable thead th,
+        html[data-bs-theme="dark"] #editOrderPreviewTable thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            --bs-table-bg: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #orderPreviewTable tbody td,
+        html[data-bs-theme="dark"] #editOrderPreviewTable tbody td {
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #orderPreviewTable tbody tr:hover > td,
+        html[data-bs-theme="dark"] #editOrderPreviewTable tbody tr:hover > td {
+            --bs-table-bg-state: rgba(255, 255, 255, 0.05);
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        html[data-bs-theme="dark"] #orderPreviewTable .order-summary-row td,
+        html[data-bs-theme="dark"] #editOrderPreviewTable .order-summary-row td {
+            --bs-table-bg: rgba(79, 70, 229, 0.18) !important;
+            background-color: rgba(79, 70, 229, 0.18) !important;
+            color: #a5b4fc !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        /* Dark mode alerts */
+        html[data-bs-theme="dark"] .modal-info-alert {
+            background: rgba(14, 165, 233, 0.15) !important;
+            color: #7dd3fc !important;
+            border: 1px solid rgba(14, 165, 233, 0.3) !important;
+        }
+
+        /* Dark mode summary KPI tiles (High Contrast & Vibrant) */
+        html[data-bs-theme="dark"] .summary-salary {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(99, 102, 241, 0.12));
+            border-color: rgba(129, 140, 248, 0.35);
+            color: #a5b4fc;
+        }
+        html[data-bs-theme="dark"] .summary-salary h5 {
+            color: #818cf8 !important;
+        }
+        html[data-bs-theme="dark"] .summary-salary h3 {
+            color: #c7d2fe !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-adj {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.12));
+            border-color: rgba(52, 211, 153, 0.35);
+            color: #6ee7b7;
+        }
+        html[data-bs-theme="dark"] .summary-adj h5 {
+            color: #34d399 !important;
+        }
+        html[data-bs-theme="dark"] .summary-adj h3 {
+            color: #a7f3d0 !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-grand {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.12));
+            border-color: rgba(251, 191, 36, 0.35);
+            color: #fde68a;
+        }
+        html[data-bs-theme="dark"] .summary-grand h5 {
+            color: #fbbf24 !important;
+        }
+        html[data-bs-theme="dark"] .summary-grand h3 {
+            color: #fef08a !important;
+        }
+
+        /* Dark mode Flatpickr */
+        html[data-bs-theme="dark"] .flatpickr-calendar {
+            background: #1f2028;
+            border: 1px solid var(--bs-border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        html[data-bs-theme="dark"] .flatpickr-calendar.arrowTop:before,
+        html[data-bs-theme="dark"] .flatpickr-calendar.arrowTop:after {
+            border-bottom-color: #1f2028;
+        }
+        html[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom:before,
+        html[data-bs-theme="dark"] .flatpickr-calendar.arrowBottom:after {
+            border-top-color: #1f2028;
+        }
+        html[data-bs-theme="dark"] .flatpickr-months {
+            background: transparent;
+        }
+        html[data-bs-theme="dark"] .flatpickr-months .flatpickr-month,
+        html[data-bs-theme="dark"] .flatpickr-current-month,
+        html[data-bs-theme="dark"] .flatpickr-current-month .cur-month,
+        html[data-bs-theme="dark"] .flatpickr-current-month input.cur-year {
+            color: var(--bs-emphasis-color);
+            fill: var(--bs-emphasis-color);
+        }
+        html[data-bs-theme="dark"] .flatpickr-months .flatpickr-prev-month,
+        html[data-bs-theme="dark"] .flatpickr-months .flatpickr-next-month {
+            color: var(--bs-body-color);
+            fill: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .flatpickr-months .flatpickr-prev-month:hover svg,
+        html[data-bs-theme="dark"] .flatpickr-months .flatpickr-next-month:hover svg {
+            fill: #818cf8;
+        }
+        html[data-bs-theme="dark"] span.flatpickr-weekday {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .flatpickr-day {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .flatpickr-day:hover,
+        html[data-bs-theme="dark"] .flatpickr-day:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: transparent;
+        }
+        html[data-bs-theme="dark"] .flatpickr-day.today {
+            border-color: #6366f1;
+        }
+        html[data-bs-theme="dark"] .flatpickr-day.selected,
+        html[data-bs-theme="dark"] .flatpickr-day.startRange,
+        html[data-bs-theme="dark"] .flatpickr-day.endRange {
+            background: #4f46e5;
+            border-color: #4f46e5;
+            color: #ffffff;
+        }
+        html[data-bs-theme="dark"] .flatpickr-day.inRange {
+            background: rgba(79, 70, 229, 0.25);
+            border-color: transparent;
+            box-shadow: -5px 0 0 rgba(79, 70, 229, 0.25), 5px 0 0 rgba(79, 70, 229, 0.25);
+        }
+        html[data-bs-theme="dark"] .flatpickr-day.prevMonthDay,
+        html[data-bs-theme="dark"] .flatpickr-day.nextMonthDay {
+            color: var(--bs-secondary-color);
+            opacity: 0.35;
+        }
+        html[data-bs-theme="dark"] .flatpickr-day.flatpickr-disabled {
+            color: var(--bs-secondary-color);
+            opacity: 0.2;
         }
         /* ── Main processed table premium styling ── */
         #dtProcessed {
@@ -421,6 +800,37 @@
             border-radius: 6px !important;
             padding: 6px 10px !important;
         }
+
+        /* ── Dark mode: main processed table (id selector beats global .table) ── */
+        html[data-bs-theme="dark"] #dtProcessed {
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dtProcessed thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dtProcessed tbody td {
+            color: var(--bs-body-color);
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dtProcessed tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* ── Dark mode: empty state ── */
+        html[data-bs-theme="dark"] .empty-state i {
+            color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .empty-state p {
+            color: var(--bs-secondary-color);
+        }
+
+        /* ── Dark mode: filter bar follows the dark surface ── */
+        html[data-bs-theme="dark"] .card.border-0.mb-4 .form-label,
+        html[data-bs-theme="dark"] .card.border-0.mb-4 .text-muted {
+            color: var(--bs-secondary-color) !important;
+        }
     </style>
 @endpush
 
@@ -452,7 +862,7 @@
                 @include('partials.alert')
 
                 {{-- Filter Bar --}}
-                <div class="card border-0 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                <div class="card border-0 mb-4" style="background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color) !important; border-radius: 12px;">
                     <div class="card-body p-3">
                         <div class="row g-2 align-items-end">
                             <div class="col-md-4">
@@ -530,9 +940,9 @@
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Nama Supir <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Nama Supir <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text">
                                             <i class="mdi mdi-account fs-16"></i>
                                         </span>
                                         <div class="flex-grow-1 select2-wrapper">
@@ -546,21 +956,21 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Mulai <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text border-end-0">
                                             <i class="mdi mdi-calendar-range fs-16"></i>
                                         </span>
-                                        <input class="form-control border-start-0 bg-white" name="startDate" id="modalStartDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                        <input class="form-control border-start-0" name="startDate" id="modalStartDate" type="text" placeholder="Pilih Tanggal" required>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Akhir <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Tanggal Akhir <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text border-end-0">
                                             <i class="mdi mdi-calendar-range fs-16"></i>
                                         </span>
-                                        <input class="form-control border-start-0 bg-white" name="endDate" id="modalEndDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                        <input class="form-control border-start-0" name="endDate" id="modalEndDate" type="text" placeholder="Pilih Tanggal" required>
                                     </div>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
@@ -596,7 +1006,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div id="noOrderAlert" class="alert alert-info border-0 shadow-sm mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                <div id="noOrderAlert" class="alert modal-info-alert border-0 shadow-sm mb-0" style="display:none;">
                                     <div class="d-flex align-items-center">
                                         <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
                                         <div>
@@ -651,7 +1061,7 @@
                             {{-- Notes --}}
                             <div class="modal-section" style="margin-bottom: 0;">
                                 <label class="form-label fw-semibold">Catatan <span class="text-muted fw-normal">(Opsional)</span></label>
-                                <textarea class="form-control" name="notes" rows="2" placeholder="Catatan tambahan..." style="border-radius:8px;"></textarea>
+                                <textarea class="form-control" name="notes" rows="2" placeholder="Catatan tambahan..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -693,9 +1103,9 @@
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Nama Supir <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Nama Supir <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text">
                                             <i class="mdi mdi-account fs-16"></i>
                                         </span>
                                         <div class="flex-grow-1 select2-wrapper">
@@ -709,21 +1119,21 @@
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Mulai <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Tanggal Mulai <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text border-end-0">
                                             <i class="mdi mdi-calendar-range fs-16"></i>
                                         </span>
-                                        <input class="form-control border-start-0 bg-white" name="startDate" id="editStartDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                        <input class="form-control border-start-0" name="startDate" id="editStartDate" type="text" placeholder="Pilih Tanggal" required>
                                     </div>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label fw-semibold" style="font-size: 13px; color: #475569;">Tanggal Akhir <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-semibold">Tanggal Akhir <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <span class="input-group-text bg-light border-end-0" style="border-radius: 8px 0 0 8px; border-color: #cbd5e1; height: 38px; color: #64748b; padding: 0 12px; display: flex; align-items: center;">
+                                        <span class="input-group-text border-end-0">
                                             <i class="mdi mdi-calendar-range fs-16"></i>
                                         </span>
-                                        <input class="form-control border-start-0 bg-white" name="endDate" id="editEndDate" type="text" placeholder="Pilih Tanggal" required style="border-radius: 0 8px 8px 0; border-color: #cbd5e1; height: 38px; font-size: 14px; color: #334155;">
+                                        <input class="form-control border-start-0" name="endDate" id="editEndDate" type="text" placeholder="Pilih Tanggal" required>
                                     </div>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
@@ -759,7 +1169,7 @@
                                         </table>
                                     </div>
                                 </div>
-                                <div id="editNoOrderAlert" class="alert alert-info border-0 shadow-sm mb-0" style="background:#e0f2fe; color:#0369a1; border-radius:10px; padding:14px 16px; display:none;">
+                                <div id="editNoOrderAlert" class="alert modal-info-alert border-0 shadow-sm mb-0" style="display:none;">
                                     <div class="d-flex align-items-center">
                                         <i class="mdi mdi-information-outline me-3" style="font-size:24px;"></i>
                                         <div>
@@ -814,7 +1224,7 @@
                             {{-- Notes --}}
                             <div class="modal-section" style="margin-bottom: 0;">
                                 <label class="form-label fw-semibold">Catatan <span class="text-muted fw-normal">(Opsional)</span></label>
-                                <textarea class="form-control" name="notes" id="editNotes" rows="2" placeholder="Catatan tambahan..." style="border-radius:8px;"></textarea>
+                                <textarea class="form-control" name="notes" id="editNotes" rows="2" placeholder="Catatan tambahan..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -1048,22 +1458,22 @@
                     <div class="adjustment-row" data-index="${adjIndex}">
                         <div class="row g-2 align-items-end">
                             <div class="col-md-2">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tanggal</label>
+                                <label class="form-label adjustment-label">Tanggal</label>
                                 <input type="date" class="form-control form-control-sm" name="adjustments[${adjIndex}][date]" value="${formattedDate}" required style="border-radius:6px;">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Deskripsi</label>
+                                <label class="form-label adjustment-label">Deskripsi</label>
                                 <input type="text" class="form-control form-control-sm" name="adjustments[${adjIndex}][description]" value="${description}" placeholder="Contoh: Potong utang, Bonus, dll" required style="border-radius:6px;">
                             </div>
                             <div class="col-md-2">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tipe</label>
+                                <label class="form-label adjustment-label">Tipe</label>
                                 <select class="form-select form-select-sm adj-type" name="adjustments[${adjIndex}][type]" required style="border-radius:6px;">
                                     <option value="addition" ${type === 'addition' ? 'selected' : ''}>➕ Penambah</option>
                                     <option value="deduction" ${type === 'deduction' ? 'selected' : ''}>➖ Pengurang</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Nominal (Rp)</label>
+                                <label class="form-label adjustment-label">Nominal (Rp)</label>
                                 <input type="text" class="form-control form-control-sm adj-nominal" name="adjustments[${adjIndex}][nominal]" value="${nominal}" placeholder="0" oninput="formatAngka(this)" required style="border-radius:6px;">
                             </div>
                             <div class="col-md-1 d-flex justify-content-center">
@@ -1141,9 +1551,9 @@
                                     '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
                                     '</tr>';
                             });
-                            tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                                '<td colspan="5" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                                '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
+                            tbody += '<tr class="order-summary-row">' +
+                                '<td colspan="5" class="text-end fw-bold">Total Gaji dari Order</td>' +
+                                '<td class="text-end fw-bold">Rp ' + response.totalSalaryFormatted + '</td>' +
                                 '</tr>';
 
                             $('#orderPreviewTable tbody').html(tbody);
@@ -1164,10 +1574,22 @@
             // Remove adjustment row
             $(document).on('click', '.btn-remove-adj', function() {
                 $(this).closest('.adjustment-row').remove();
-                if ($('.adjustment-row').length === 0) {
+                if ($('#adjustmentsContainer .adjustment-row').length === 0) {
                     $('#noAdjustmentHint').show();
                 }
                 recalcSummary();
+            });
+
+            $(document).on('click', '.btn-remove-edit-adj', function() {
+                $(this).closest('.adjustment-row').remove();
+                if ($('#editAdjustmentsContainer .adjustment-row').length === 0) {
+                    $('#editNoAdjustmentHint').show();
+                }
+                recalcEditSummary();
+            });
+
+            $(document).on('change keyup input', '.edit-adj-nominal, .edit-adj-type', function() {
+                recalcEditSummary();
             });
 
             // Recalculate on change
@@ -1251,9 +1673,9 @@
                                     '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
                                     '</tr>';
                             });
-                            tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                                '<td colspan="5" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                                '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + response.totalSalaryFormatted + '</td>' +
+                            tbody += '<tr class="order-summary-row">' +
+                                '<td colspan="5" class="text-end fw-bold">Total Gaji dari Order</td>' +
+                                '<td class="text-end fw-bold">Rp ' + response.totalSalaryFormatted + '</td>' +
                                 '</tr>';
 
                             $('#editOrderPreviewTable tbody').html(tbody);
@@ -1327,7 +1749,7 @@
 
         function recalcSummary() {
             let totalAdj = 0;
-            $('.adjustment-row').each(function() {
+            $('#adjustmentsContainer .adjustment-row').each(function() {
                 const type = $(this).find('.adj-type').val();
                 const rawVal = $(this).find('.adj-nominal').val() || '';
                 const nominal = parseFloat(rawVal.replace(/\./g, '')) || 0;
@@ -1387,17 +1809,25 @@
 
                         let tbody = '';
                         response.orders.forEach(function(order, idx) {
+                            let orderNumDisplay = (order.shipmentNumber && order.shipmentNumber !== '-') 
+                                ? order.shipmentNumber 
+                                : (order.orderCode || '-');
+                            let subCode = (order.shipmentNumber && order.shipmentNumber !== '-' && order.orderCode) 
+                                ? '<br><small class="text-muted">' + order.orderCode + '</small>' 
+                                : '';
+
                             tbody += '<tr>' +
                                 '<td class="text-center">' + (idx + 1) + '</td>' +
+                                '<td class="fw-semibold text-primary">' + orderNumDisplay + subCode + '</td>' +
                                 '<td>' + order.orderDate + '</td>' +
                                 '<td>' + order.plateNumber + '</td>' +
                                 '<td>' + order.routeName + '</td>' +
-                                '<td class="text-end fw-semibold">Rp ' + order.salaryFormatted + '</td>' +
+                                '<td class="text-end fw-semibold">Rp ' + (order.salaryFormatted || new Intl.NumberFormat('id-ID').format(order.salary || 0)) + '</td>' +
                                 '</tr>';
                         });
-                        tbody += '<tr style="background:linear-gradient(135deg,#eef2ff,#e0e7ff);">' +
-                            '<td colspan="4" class="text-end fw-bold" style="color:#3730a3;">Total Gaji dari Order</td>' +
-                            '<td class="text-end fw-bold" style="color:#3730a3;">Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders) + '</td>' +
+                        tbody += '<tr class="order-summary-row">' +
+                            '<td colspan="5" class="text-end fw-bold">Total Gaji dari Order</td>' +
+                            '<td class="text-end fw-bold">Rp ' + new Intl.NumberFormat('id-ID').format(editTotalSalaryFromOrders) + '</td>' +
                             '</tr>';
                         
                         $('#editOrderPreviewTable tbody').html(tbody);
@@ -1440,25 +1870,25 @@
         function addEditAdjustmentRow(date, description, type, nominal) {
             const formattedDate = date ? date.substring(0, 10) : '';
             const html = `
-                <div class="edit-adjustment-row" data-index="${editAdjIndex}">
+                <div class="adjustment-row edit-adjustment-row" data-index="${editAdjIndex}">
                     <div class="row g-2 align-items-end">
                         <div class="col-md-2">
-                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tanggal</label>
+                            <label class="form-label adjustment-label">Tanggal</label>
                             <input type="date" class="form-control form-control-sm" name="adjustments[${editAdjIndex}][date]" value="${formattedDate}" required style="border-radius:6px;">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Deskripsi</label>
+                            <label class="form-label adjustment-label">Deskripsi</label>
                             <input type="text" class="form-control form-control-sm" name="adjustments[${editAdjIndex}][description]" value="${description}" placeholder="Contoh: Potong utang, Bonus, dll" required style="border-radius:6px;">
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Tipe</label>
+                            <label class="form-label adjustment-label">Tipe</label>
                             <select class="form-select form-select-sm edit-adj-type" name="adjustments[${editAdjIndex}][type]" required style="border-radius:6px;">
                                 <option value="addition" ${type === 'addition' ? 'selected' : ''}>➕ Penambah</option>
                                 <option value="deduction" ${type === 'deduction' ? 'selected' : ''}>➖ Pengurang</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" style="font-size:12px;font-weight:600;color:#64748b;">Nominal (Rp)</label>
+                            <label class="form-label adjustment-label">Nominal (Rp)</label>
                             <input type="text" class="form-control form-control-sm edit-adj-nominal" name="adjustments[${editAdjIndex}][nominal]" value="${nominal}" placeholder="0" oninput="formatAngka(this)" required style="border-radius:6px;">
                         </div>
                         <div class="col-md-1 d-flex justify-content-center">

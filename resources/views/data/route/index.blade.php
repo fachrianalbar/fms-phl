@@ -21,131 +21,447 @@
     <!-- Select2 CSS -->
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
+
+    <style>
+        /* ── Scoped Table Styling ── */
+        #dt {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        #dt thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 13px 12px;
+            border-bottom: 2px solid #e2e8f0;
+            border-top: none;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #dt tbody td {
+            padding: 11px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 12.5px;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #dt tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        #dt tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        /* ── DataTables Inputs & Pagination ── */
+        #dt_wrapper .dataTables_filter input {
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        #dt_wrapper .dataTables_length select {
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        #dt_wrapper .dataTables_info,
+        #dt_wrapper .dataTables_length,
+        #dt_wrapper .dataTables_filter {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* ── Standar Filter Card Collapse (PHL §3) ── */
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+
+        .filter-card-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
+
+        /* ── Standarisasi Seragam Filter Bar (Tinggi Presisi: 38px) ── */
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        /* Select2 Theme Matching Seragam 38px */
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            height: 38px !important;
+            display: flex !important;
+            align-items: center !important;
+            background-color: #ffffff !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .select2-container--default .select2-selection--single:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: #334155 !important;
+            font-size: 13px !important;
+            line-height: 36px !important;
+            padding-left: 12px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__placeholder {
+            color: #94a3b8 !important;
+            font-size: 13px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px !important;
+            right: 10px !important;
+            top: 1px !important;
+        }
+
+        .select2-container--default.select2-container--open .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--single {
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
+        }
+
+        .select2-dropdown {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden !important;
+        }
+
+        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+
+        /* Tombol Filter Utama (Gradient Modern) */
+        .btn-filter-primary {
+            height: 38px !important;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 6px !important;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
+            transition: all 0.2s ease !important;
+            white-space: nowrap !important;
+        }
+
+        .btn-filter-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .btn-filter-primary:active {
+            transform: translateY(0) !important;
+            box-shadow: 0 1px 3px rgba(79, 70, 229, 0.2) !important;
+        }
+
+        /* Tombol Reset Filter Presisi Kotak 38px x 38px */
+        .btn-filter-reset {
+            height: 38px !important;
+            width: 38px !important;
+            min-width: 38px !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            color: #64748b !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .btn-filter-reset:hover {
+            background: #fff1f2 !important;
+            color: #e11d48 !important;
+            border-color: #fecdd3 !important;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15) !important;
+            transform: translateY(-1px) !important;
+        }
+
+        .btn-filter-reset:hover i {
+            transform: rotate(-45deg);
+            transition: transform 0.2s ease;
+        }
+
+        .btn-filter-reset:active {
+            transform: translateY(0) !important;
+        }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .card-header {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .filter-card .form-control,
+        html[data-bs-theme="dark"] .filter-card .form-select {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+    </style>
 @endpush
 
 @section('content')
     <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Data</h4>
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            {{-- Card Header --}}
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
+                style="border-color: #e2e8f0;">
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="mdi mdi-routes text-primary fs-20"></i>
+                        {{ $title }} Data
+                    </h4>
+                    <small class="text-muted">Daftar master rute pengiriman beserta tarif dan harga vendor</small>
+                </div>
 
-                <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2">
                     <a href="{{ route($view . 'create') }}"
-                        class="btn btn-primary btn-md d-inline-flex align-items-center gap-2"
+                        class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                        style="border-radius: 8px; font-weight: 600; padding: 7px 14px;"
                         title="{{ __('general.add_data') }}" aria-label="{{ __('general.add_data') }}">
-                        <i class="mdi mdi-plus fs-16"></i>
+                        <i class="mdi mdi-plus"></i>
                         <span class="d-none d-md-inline">{{ __('general.add_data') }}</span>
                     </a>
 
-                    <a href="#" class="btn btn-outline-primary btn-md d-inline-flex align-items-center gap-2"
-                        data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false"
-                        aria-controls="collapseTwo" title="{{ __('general.filter') }}"
-                        aria-label="{{ __('general.filter') }}">
-                        <i class="mdi mdi-magnify fs-16 text-primary"></i>
-                        <span class="d-none d-md-inline">{{ __('general.filter') }}</span>
-                    </a>
-
-                    <button type="button" class="btn btn-warning btn-md d-inline-flex align-items-center gap-2"
-                        id="btnBulkUpdatePrice" title="Penyesuaian Harga">
-                        <i class="mdi mdi-cash-multiple fs-16"></i>
+                    <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1"
+                        id="btnBulkUpdatePrice" title="Penyesuaian Harga"
+                        style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                        <i class="mdi mdi-cash-multiple"></i>
                         <span class="d-none d-md-inline">Penyesuaian Harga</span>
                     </button>
 
-                    <button type="button" class="btn btn-danger btn-md d-inline-flex align-items-center gap-2"
-                        id="btnBulkDelete" title="Hapus Terpilih">
-                        <i class="mdi mdi-delete fs-16"></i>
+                    <button type="button" class="btn btn-sm btn-danger d-inline-flex align-items-center gap-1"
+                        id="btnBulkDelete" title="Hapus Terpilih"
+                        style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                        <i class="mdi mdi-delete"></i>
                         <span class="d-none d-md-inline">Hapus Terpilih</span>
                     </button>
-
                 </div>
             </div>
 
-            <div class="card-header">
-                <div class="accordion-collapse collapse" id="collapseTwo" aria-labelledby="headingTwo"
-                    data-bs-parent="#simpleaccordion">
-                    <div class="accordion-body col-md-12">
-                        <form id="filterForm" class=" g-3">
-                            <div class="row gy-3">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="customerName">{{ __('menu_route.customer') }}</label>
-                                    <select class="js-example-basic-single form-control" name="customerName"
-                                        id="customerName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($customer as $item)
-                                            <option value="{{ $item->name }}">{{ $item->code . ' - ' . $item->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
+            <div class="card-body p-4">
+                @include('partials.alert')
 
-                                <div class="col-md-6">
-                                    <label class="form-label" for="origin">{{ __('menu_route.origin') }}</label>
-                                    <select class="js-example-basic-single form-control" name="origin" id="origin">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($location as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                {{-- Filter Bar (collapse, tertutup default) --}}
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#routeFilterCollapse" aria-expanded="false"
+                        aria-controls="routeFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar rute</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-                                <div class="col-md-6">
-                                    <label class="form-label" for="destination">{{ __('menu_route.destination') }}</label>
-                                    <select class="js-example-basic-single form-control" name="destination"
-                                        id="destination">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($location as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                    <div class="collapse filter-collapse" id="routeFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="customerName">{{ __('menu_route.customer') }}</label>
+                                        <select class="form-select select2-filter" name="customerName" id="customerName">
+                                            <option value="">Semua Pelanggan</option>
+                                            @foreach ($customer as $item)
+                                                <option value="{{ $item->name }}">{{ $item->code . ' - ' . $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label" for="fleetTypeName">{{ __('menu_route.fleet_type') }}</label>
-                                    <select class="js-example-basic-single form-control" name="fleetTypeName"
-                                        id="fleetTypeName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($fleetType as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="origin">{{ __('menu_route.origin') }}</label>
+                                        <select class="form-select select2-filter" name="origin" id="origin">
+                                            <option value="">Semua Asal</option>
+                                            @foreach ($location as $item)
+                                                <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label"
-                                        for="routeTypeName">{{ __('menu_route.load_type') }}</label>
-                                    <select class="js-example-basic-single form-control" name="routeTypeName"
-                                        id="routeTypeName">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($routeType as $item)
-                                            <option value="{{ $item->name }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="destination">{{ __('menu_route.destination') }}</label>
+                                        <select class="form-select select2-filter" name="destination" id="destination">
+                                            <option value="">Semua Tujuan</option>
+                                            @foreach ($location as $item)
+                                                <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-12 d-flex justify-content-end gap-2">
-                                    <button type="button"
-                                        class="btn btn-primary btn-md d-inline-flex align-items-center gap-2"
-                                        id="filterBtn" title="{{ __('general.filter') }}">
-                                        <i class="mdi mdi-magnify fs-16"></i>
-                                        <span>{{ __('general.filter') }}</span>
-                                    </button>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="fleetTypeName">{{ __('menu_route.fleet_type') }}</label>
+                                        <select class="form-select select2-filter" name="fleetTypeName" id="fleetTypeName">
+                                            <option value="">Semua Tipe Armada</option>
+                                            @foreach ($fleetType as $item)
+                                                <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                    <button type="button"
-                                        class="btn btn-outline-secondary btn-md d-inline-flex align-items-center gap-2"
-                                        id="resetBtn" title="{{ __('general.reset') }}">
-                                        <i class="mdi mdi-refresh fs-16"></i>
-                                        <span>{{ __('general.reset') }}</span>
-                                    </button>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="routeTypeName">{{ __('menu_route.load_type') }}</label>
+                                        <select class="form-select select2-filter" name="routeTypeName" id="routeTypeName">
+                                            <option value="">Semua Muatan</option>
+                                            @foreach ($routeType as $item)
+                                                <option value="{{ $item->name }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-9 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="card-body">
-                @include('partials.alert')
                 <div class="table-responsive custom-scrollbar">
-                    <table class="table table-striped w-100 nowrap" id="dt">
+                    <table class="table align-middle w-100 mb-0" id="dt">
                         <thead>
                             <tr>
                                 <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll">
@@ -412,18 +728,43 @@
         }
 
         $(document).ready(function() {
-            $('#dt').DataTable({
+            const $filterForm = $('#filterForm');
+
+            function getFilters() {
+                return {
+                    customerName: $('#customerName').val() || '',
+                    origin: $('#origin').val() || '',
+                    destination: $('#destination').val() || '',
+                    fleetTypeName: $('#fleetTypeName').val() || '',
+                    routeTypeName: $('#routeTypeName').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                if (!$('#export-excel').length && !$('#export-pdf').length) return;
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const qs = params.toString() ? '?' + params.toString() : '';
+                if ($('#export-excel').length) {
+                    const baseExcel = $('#export-excel').attr('href').split('?')[0];
+                    $('#export-excel').attr('href', baseExcel + qs);
+                }
+                if ($('#export-pdf').length) {
+                    const basePdf = $('#export-pdf').attr('href').split('?')[0];
+                    $('#export-pdf').attr('href', basePdf + qs);
+                }
+            }
+
+            const table = $('#dt').DataTable({
                 "processing": true,
                 "serverSide": true,
                 "destroy": true,
                 "ajax": {
                     "url": "{{ route('dt.route') }}",
                     "data": function(d) {
-                        d.customerName = $('#customerName').val();
-                        d.origin = $('#origin').val();
-                        d.destination = $('#destination').val();
-                        d.fleetTypeName = $('#fleetTypeName').val();
-                        d.routeTypeName = $('#routeTypeName').val();
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [{
@@ -485,17 +826,33 @@
             })
 
             // Init Select2 for filters
-            $('.js-example-basic-single').select2({
+            $('.select2-filter').select2({
                 placeholder: "{{ __('general.choose') }}...",
                 allowClear: true,
                 width: '100%'
             });
-            $('#dt').DataTable().ajax.reload();
 
-            // Event untuk filter button
-            $('#filterBtn').click(function() {
-                $('#dt').DataTable().ajax.reload();
+            function reloadWithFilters() {
+                syncExportUrls();
+                table.ajax.reload(null, true);
+            }
+
+            // Event untuk filter button & Enter
+            $('#btnFilter').on('click', reloadWithFilters);
+            $filterForm.on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
             });
+
+            // Event untuk reset button
+            $('#btnResetFilter').on('click', function() {
+                $('.select2-filter').val('').trigger('change');
+                reloadWithFilters();
+            });
+
+            syncExportUrls();
 
             $('#dt').on('click', '.btn-show-vendor-price', function() {
                 activeRouteId = $(this).data('route-id');
@@ -673,13 +1030,6 @@
             $('#vendorPriceTableBody').on('input', '.vendor-price-input', function() {
                 formatAngka(this);
             });
-        });
-
-        // Event untuk reset button
-        $('#resetBtn').click(function() {
-            $('#filterForm')[0].reset();
-            $('#customerName, #origin, #destination, #fleetTypeName, #routeTypeName').val('').trigger('change');
-            $('#dt').DataTable().ajax.reload();
         });
 
         // Handle Check All

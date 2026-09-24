@@ -30,7 +30,170 @@ html[data-bs-theme="dark"] .swal2-popup {
     background-color: var(--bs-secondary-bg) !important;
 }
 
-html[data-bs-theme="dark"] .bg-light,
+/* SweetAlert legacy uses fixed light-mode colors for its title and text. */
+html[data-bs-theme="dark"] .swal-modal,
+html[data-bs-theme="dark"] .swal-modal * {
+    color: #e4e9f0 !important;
+    -webkit-text-fill-color: #e4e9f0 !important;
+}
+
+html[data-bs-theme="dark"] .swal-modal .swal-title,
+html[data-bs-theme="dark"] .swal-modal .swal-text {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-bs-theme="dark"] .swal-modal .swal-footer {
+    border-top-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .swal-modal .swal-button--cancel {
+    color: #1f2937 !important;
+    background-color: #f3f4f6 !important;
+}
+
+html[data-bs-theme="dark"] .swal-modal .swal-button--cancel:hover {
+    background-color: #ffffff !important;
+}
+
+/* SweetAlert2 stores its active theme on the generated container. */
+[data-swal2-theme="dark"] {
+    --swal2-background: #1f2028 !important;
+    --swal2-color: #e4e9f0 !important;
+    --swal2-footer-color: #e4e9f0 !important;
+}
+
+[data-swal2-theme="dark"] .swal2-popup,
+[data-swal2-theme="dark"] .swal2-popup h2.swal2-title,
+[data-swal2-theme="dark"] .swal2-popup .swal2-html-container,
+[data-swal2-theme="dark"] .swal2-popup .swal2-footer {
+    color: #e4e9f0 !important;
+    -webkit-text-fill-color: #e4e9f0 !important;
+}
+
+[data-swal2-theme="dark"] .swal2-popup h2.swal2-title {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+[data-swal2-theme="dark"] .swal2-popup .swal2-cancel {
+    color: #1f2937 !important;
+}
+
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup,
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup h2.swal2-title,
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup div.swal2-html-container,
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup div.swal2-footer {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup {
+    --swal2-color: #f8fafc !important;
+    --swal2-background: #1f2028 !important;
+}
+
+html[data-bs-theme="dark"] div.swal2-container div.swal2-popup button.swal2-cancel {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+html[data-bs-theme="dark"] .swal2-container[data-swal2-theme="dark"] > .swal2-popup.swal-dark-popup,
+html[data-bs-theme="dark"] .swal2-container[data-swal2-theme="dark"] > .swal2-popup.swal-dark-popup h2.swal2-title.swal-dark-title,
+html[data-bs-theme="dark"] .swal2-container[data-swal2-theme="dark"] > .swal2-popup.swal-dark-popup div.swal2-html-container.swal-dark-html {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    opacity: 1 !important;
+}
+
+html[data-bs-theme="dark"] .swal2-container[data-swal2-theme="dark"] > .swal2-popup.swal-dark-popup {
+    background: #1f2028 !important;
+    background-color: #1f2028 !important;
+}
+
+html[data-bs-theme="dark"] .swal2-container[data-swal2-theme="dark"] > .swal2-popup.swal-dark-popup button.swal2-cancel {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+/* SweetAlert2 child nodes can inherit the app's global heading/text colors. */
+html[data-bs-theme="dark"] .swal2-popup,
+html[data-bs-theme="dark"] .swal2-popup h2.swal2-title,
+html[data-bs-theme="dark"] .swal2-popup .swal2-html-container,
+html[data-bs-theme="dark"] .swal2-popup .swal2-footer,
+.swal2-popup.swal-dark-popup,
+.swal2-popup.swal-dark-popup h2.swal2-title,
+.swal2-popup.swal-dark-popup .swal2-html-container,
+.swal2-popup.swal-dark-popup .swal2-footer {
+    --swal2-color: #f8fafc !important;
+    --swal2-title-color: #f8fafc !important;
+    --swal2-footer-color: #f8fafc !important;
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    opacity: 1 !important;
+}
+
+html[data-bs-theme="dark"] .swal2-popup *:not(button),
+.swal2-popup.swal-dark-popup *:not(button) {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+html[data-bs-theme="dark"] .swal2-popup .swal2-cancel,
+.swal2-popup.swal-dark-popup .swal2-cancel {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+/* The generate-nota popup has an explicit dark surface, so its text must not depend on the theme attribute location. */
+.swal2-popup.swal-dark-popup,
+.swal2-popup.swal-dark-popup h2.swal-dark-title,
+.swal2-popup.swal-dark-popup div.swal-dark-html,
+.swal2-popup.swal-dark-popup .swal2-footer {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+}
+
+.swal2-popup.swal-dark-popup {
+    --swal2-background: #1f2028 !important;
+    --swal2-color: #f8fafc !important;
+    --swal2-title-color: #f8fafc !important;
+    --swal2-footer-color: #f8fafc !important;
+    background: #1f2028 !important;
+    background-color: #1f2028 !important;
+}
+
+.swal2-popup.swal-dark-popup button.swal2-cancel {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
+
+/* Final SweetAlert2 foreground override: app-wide h2 rules must not win inside alerts. */
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark h2.swal2-title,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark div.swal2-html-container,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark div.swal2-footer {
+    --swal2-color: #f8fafc !important;
+    --swal2-background: #1f2028 !important;
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    background: #1f2028 !important;
+    background-color: #1f2028 !important;
+}
+
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark h2.swal2-title,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark div.swal2-html-container,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark div.swal2-footer,
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark h2.swal2-title * {
+    color: #f8fafc !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    opacity: 1 !important;
+}
+
+body.swal2-shown .swal2-container > .swal2-popup.swal-readable-dark button.swal2-cancel {
+    color: #1f2937 !important;
+    -webkit-text-fill-color: #1f2937 !important;
+}
 html[data-bs-theme="dark"] .bg-light-subtle,
 html[data-bs-theme="dark"] .card-header,
 html[data-bs-theme="dark"] .card-footer,
@@ -182,6 +345,28 @@ html[data-bs-theme="dark"] table.dataTable > tbody > tr:hover > * {
     background-color: #2a303b !important;
 }
 
+/* Safety net: tables that do not carry the .table class (DataTables detail tables,
+   custom table classes) must also follow the dark surface so none stays bright. */
+html[data-bs-theme="dark"] table:not(.table) {
+    color: var(--bs-body-color) !important;
+    background-color: transparent !important;
+    --bs-table-color: var(--bs-body-color);
+    --bs-table-bg: var(--bs-secondary-bg);
+    --bs-table-border-color: var(--bs-border-color);
+}
+
+html[data-bs-theme="dark"] table:not(.table) > :not(caption) > * > * {
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-secondary-bg) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] table:not(.table) > thead > tr > * {
+    color: #f8fafc !important;
+    background-color: #282e39 !important;
+    border-color: var(--bs-border-color) !important;
+}
+
 html[data-bs-theme="dark"] .dataTables_wrapper,
 html[data-bs-theme="dark"] .datatable-wrapper,
 html[data-bs-theme="dark"] .dataTables_info,
@@ -210,19 +395,25 @@ html[data-bs-theme="dark"] .card-footer {
     border-color: var(--bs-border-color) !important;
 }
 
-/* Keep the table filter panel bright, while its controls retain the dark surface. */
-html[data-bs-theme="dark"] .card:has(#filterForm) {
-    color: #334155 !important;
-    background: #ffffff !important;
-    border-color: #e2e8f0 !important;
+/* Filter panel: in dark mode every filter surface must be dark too — a standalone
+   filter card, and a filter card-header that shares its card with a data table, must
+   follow the dark surface instead of staying white. */
+html[data-bs-theme="dark"] .card:has(#filterForm):not(:has(table)),
+html[data-bs-theme="dark"] .card-header:has(#filterForm) {
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-tertiary-bg) !important;
+    border-color: var(--bs-border-color) !important;
 }
 
-html[data-bs-theme="dark"] .card:has(#filterForm) .card-body,
+html[data-bs-theme="dark"] .card:has(#filterForm):not(:has(table)) .card-body,
+html[data-bs-theme="dark"] #filterForm {
+    background-color: transparent !important;
+}
+
 html[data-bs-theme="dark"] #filterForm,
 html[data-bs-theme="dark"] #filterForm .form-label,
 html[data-bs-theme="dark"] #filterForm .filter-label {
-    color: #475569 !important;
-    background-color: transparent !important;
+    color: var(--bs-body-color) !important;
 }
 
 /* Sidebar navigation has a fixed white foreground for reliable readability. */
@@ -297,4 +488,16 @@ html[data-bs-theme="dark"] .dashboard-page .btn-outline-primary:hover {
     color: #ffffff;
     background-color: #6258bd;
     border-color: #756bd1;
+}
+
+/* Bootstrap "text-bg-*" utilities follow the theme colors, so their default
+   foreground can end up invisible once the palette is inverted for dark mode. */
+html[data-bs-theme="dark"] .text-bg-light {
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-tertiary-bg) !important;
+}
+
+html[data-bs-theme="dark"] .text-bg-dark {
+    color: var(--bs-body-color) !important;
+    background-color: var(--bs-secondary-bg) !important;
 }

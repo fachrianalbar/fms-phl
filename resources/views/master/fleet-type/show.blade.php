@@ -308,6 +308,50 @@
             color: #64748b;
             font-size: 12px;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt-fleets {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt-fleets thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt-fleets tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt-fleets tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        /* Inline white banner card → dark surface. */
+        html[data-bs-theme="dark"] .card[style*="background: #ffffff"] {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-primary {
+            background: var(--bs-primary-bg-subtle) !important;
+            border-color: var(--bs-primary-border-subtle) !important;
+            color: var(--bs-primary-text-emphasis) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-success {
+            background: var(--bs-success-bg-subtle) !important;
+            border-color: var(--bs-success-border-subtle) !important;
+            color: var(--bs-success-text-emphasis) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-warning {
+            background: var(--bs-warning-bg-subtle) !important;
+            border-color: var(--bs-warning-border-subtle) !important;
+            color: var(--bs-warning-text-emphasis) !important;
+        }
     </style>
 @endpush
 
@@ -409,7 +453,7 @@
 
                 {{-- 3. Filter Bar Terbuka (Ukuran Seragam Presisi 38px) --}}
                 <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    style="background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color) !important; border-radius: 12px;">
                     <div class="card-body p-3">
                         <form id="filterForm">
                             <div class="row g-2 align-items-end">

@@ -158,6 +158,21 @@
             padding: 10px 12px;
             margin-bottom: 8px;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .form-section-title {
+            color: var(--bs-heading-color) !important;
+            border-bottom-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .form-label {
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .existing-picture-item {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
     </style>
 @endpush
 

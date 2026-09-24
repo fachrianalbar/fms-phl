@@ -137,21 +137,19 @@
                     ? $order->cost->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')->sum('nominal')
                     : 0;
                 $totalBefore = $subtotal + $additionalCost;
-                $pph = $order->fleet->company->pph ?? 0;
-                $pphAmount = ($totalBefore * $pph) / 100;
-
-                // PPN & PPh dari rate nota (nominal sudah dihitung saat generate nota).
+                // Gunakan snapshot pajak pada nota agar perubahan master setelah
+                // nota dibuat tidak mengubah nilai tagihan dan PPh tidak ganda.
                 $notaPpnRate = (float) ($vendorPayment->ppn_rate ?? 0);
                 $notaPphRate = (float) ($vendorPayment->pph_rate ?? 0);
                 $notaPpnAmount = (float) ($vendorPayment->ppn_amount ?? 0);
                 $notaPphAmount = (float) ($vendorPayment->pph_amount ?? 0);
                 $notaClaimAmount = (float) ($vendorPayment->claim_amount ?? 0);
 
-                $grandTotal = $totalBefore + $notaPpnAmount - $pphAmount - $notaPphAmount - $notaClaimAmount;
+                $grandTotal = $totalBefore + $notaPpnAmount - $notaPphAmount - $notaClaimAmount;
                 $remainingTotal = $grandTotal - ($paymentHistoryTotal ?? 0);
             @endphp
 
-            @if (($order->cost && $order->cost->count() > 0) || $pph > 0 || $notaPpnAmount > 0 || $notaPphAmount > 0 || $notaClaimAmount > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
+            @if (($order->cost && $order->cost->count() > 0) || $notaPpnAmount > 0 || $notaPphAmount > 0 || $notaClaimAmount > 0 || (!empty($vendorPayment) && $paymentHistories->isNotEmpty()))
                 <tr>
                     <td colspan="7" style="text-align: center; font-weight: bold;">Jumlah</td>
                     <td style="text-align: right; font-weight: bold;">
@@ -168,13 +166,7 @@
                     </tr>
                 @endforeach
             @endif
-            @if ($pph > 0)
-                <tr>
-                    <td colspan="7" style="text-align: center;">PPH {{ number_format($pph, 2, ',', '.') }}%</td>
-                    <td style="text-align: right;">
-                        {{ number_format($pphAmount, 0, ',', '.') }}</td>
-                </tr>
-            @endif
+
             @if ($notaPpnAmount > 0)
                 <tr>
                     <td colspan="7" style="text-align: center;">PPN {{ rtrim(rtrim(number_format($notaPpnRate, 4, ',', '.'), '0'), ',') }}%</td>

@@ -239,4 +239,85 @@
         font-size: 13px !important;
     }
     .dataTables_length .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px !important; }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .stat-card {
+        background-color: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .stat-card:hover {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .stat-card .stat-label,
+    html[data-bs-theme="dark"] .stat-card .stat-desc {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .stat-card .stat-value {
+        color: var(--bs-heading-color);
+    }
+    html[data-bs-theme="dark"] .table-container-card {
+        background-color: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .table-top-bar {
+        background-color: var(--bs-card-bg);
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .filter-pill-btn:not(.active) {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .filter-pill-btn:not(.active):hover {
+        background: var(--bs-secondary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .filter-pill-btn:not(.active) .badge-pill-count {
+        background: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .bank-table thead th {
+        background: var(--bs-tertiary-bg) !important;
+        color: var(--bs-body-color) !important;
+        border-bottom-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .bank-table tbody td {
+        color: var(--bs-body-color);
+        border-bottom-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .bank-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+    }
+    html[data-bs-theme="dark"] .bank-table tbody tr.table-active {
+        background-color: rgba(59, 130, 246, 0.18) !important;
+    }
+    html[data-bs-theme="dark"] .custom-scrollbar::-webkit-scrollbar-track {
+        background: var(--bs-body-bg);
+    }
+    html[data-bs-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input {
+        background-color: var(--bs-tertiary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+        color: var(--bs-body-color) !important;
+    }
+    html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_filter input:focus {
+        background-color: var(--bs-card-bg) !important;
+        border-color: #8f86eb !important;
+    }
+    html[data-bs-theme="dark"] .dataTables_wrapper .dataTables_length select {
+        background-color: var(--bs-tertiary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+        color: var(--bs-body-color) !important;
+    }
+    html[data-bs-theme="dark"] .page-link {
+        background-color: var(--bs-card-bg) !important;
+        border-color: var(--bs-border-color) !important;
+        color: var(--bs-body-color) !important;
+    }
 </style>

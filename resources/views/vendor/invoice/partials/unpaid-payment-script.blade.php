@@ -602,11 +602,9 @@
             processing: true,
             serverSide: true,
             destroy: true,
-            scrollX: true,
-            autoWidth: false,
             pageLength: 25,
             ajax: {
-                url: "{{ route('dt.vendor-invoice.unpaid') }}",
+                url: "{{ $isPartial ? route('dt.vendor-invoice.partial') : route('dt.vendor-invoice.unpaid') }}",
             },
             columns: [
                 { data: 'select', className: 'text-center', responsivePriority: 1 },
@@ -640,7 +638,7 @@
                 searchPlaceholder: 'Cari no nota, vendor...',
                 lengthMenu: 'Tampilkan _MENU_ data',
                 info: 'Menampilkan _START_ sampai _END_ dari _TOTAL_ nota',
-                infoEmpty: 'Tidak ada nota belum lunas',
+                infoEmpty: 'Tidak ada nota {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }}',
                 zeroRecords: 'Tidak ditemukan data yang sesuai',
                 paginate: {
                     next: "<i class='mdi mdi-chevron-right'></i>",

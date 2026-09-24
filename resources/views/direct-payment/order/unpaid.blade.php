@@ -315,7 +315,91 @@
     (dipakai alur tunggal/generate-nota), sedangkan Swal = class v2 (dipakai batch/cancel).
     Kalau terbalik, v2 menimpa swal dengan class -> TypeError 'class constructors must be invoked with new'. --}}
 <script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}?v=20260923-2"></script>
+
+<script>
+    // SweetAlert legacy injects its own stylesheet at runtime; sync its text with the active theme.
+    (function syncSweetAlertTheme() {
+        if (window.swal && typeof window.swal.setDefaults === 'function') {
+            window.swal.setDefaults({ className: 'swal-dark-mode' });
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode * {
+                color: #e4e9f0 !important;
+                -webkit-text-fill-color: #e4e9f0 !important;
+            }
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-title,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-text {
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const sync = function() {
+            let savedTheme = null;
+            try {
+                savedTheme = JSON.parse(localStorage.getItem('__CONFIG__') || '{}').theme;
+            } catch (error) {
+                savedTheme = null;
+            }
+
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark' || savedTheme === 'dark';
+            const color = isDark ? '#f8fafc' : '';
+            const secondaryColor = isDark ? '#e4e9f0' : '';
+
+            document.querySelectorAll('.swal-modal').forEach(function(modal) {
+                modal.style.setProperty('color', secondaryColor, 'important');
+                modal.querySelectorAll('.swal-title, .swal-text').forEach(function(element) {
+                    element.style.setProperty('color', color, 'important');
+                    element.style.setProperty('-webkit-text-fill-color', color, 'important');
+                });
+                modal.querySelectorAll('.swal-content, .swal-footer').forEach(function(element) {
+                    element.style.setProperty('color', secondaryColor, 'important');
+                    element.style.setProperty('-webkit-text-fill-color', secondaryColor, 'important');
+                });
+            });
+
+            document.querySelectorAll('.swal2-popup').forEach(function(popup) {
+                const background = getComputedStyle(popup).backgroundColor.match(/\d+(?:\.\d+)?/g) || [];
+                const hasDarkClass = popup.classList.contains('swal-dark-popup') || popup.classList.contains('swal-readable-dark');
+                const hasDarkSurface = background.length >= 3 && (
+                    Number(background[0]) + Number(background[1]) + Number(background[2]) < 260
+                );
+                const popupIsDark = isDark || hasDarkClass || hasDarkSurface;
+                const popupColor = popupIsDark ? '#f8fafc' : '';
+
+                if (!popupIsDark) {
+                    return;
+                }
+
+                popup.classList.add('swal-readable-dark');
+                popup.style.setProperty('--swal2-color', popupColor, 'important');
+                popup.style.setProperty('--swal2-background', '#1f2028', 'important');
+                popup.style.setProperty('background', '#1f2028', 'important');
+                popup.style.setProperty('background-color', '#1f2028', 'important');
+                popup.style.setProperty('color', popupColor, 'important');
+                popup.style.setProperty('-webkit-text-fill-color', popupColor, 'important');
+                popup.querySelectorAll('h2.swal2-title, .swal2-html-container, .swal2-footer').forEach(function(element) {
+                    element.classList.add('swal-readable-dark-text');
+                    element.style.setProperty('color', popupColor, 'important');
+                    element.style.setProperty('-webkit-text-fill-color', popupColor, 'important');
+                    element.style.setProperty('opacity', '1', 'important');
+                });
+            });
+        };
+
+        new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
+        new MutationObserver(sync).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-bs-theme']
+        });
+        sync();
+    }());
+</script>
 
 {{-- Flash message server → SweetAlert2 (harus setelah sweetalert2.min.js) --}}
 @include('direct-payment.partials.flash-swal')
@@ -1545,6 +1629,42 @@
         $(this).select();
     });
 
+    function currentSwalTheme() {
+        let savedTheme = null;
+        try {
+            savedTheme = JSON.parse(localStorage.getItem('__CONFIG__') || '{}').theme;
+        } catch (error) {
+            savedTheme = null;
+        }
+
+        return document.documentElement.getAttribute('data-bs-theme') === 'dark' || savedTheme === 'dark'
+            ? 'dark'
+            : 'light';
+    }
+
+    function applyReadableSwalText(popup) {
+        const dialog = popup || Swal.getPopup();
+        if (!dialog) {
+            return;
+        }
+
+        const readableColor = '#f8fafc';
+        dialog.classList.add('swal-readable-dark');
+        dialog.style.setProperty('--swal2-color', readableColor, 'important');
+        dialog.style.setProperty('--swal2-background', '#1f2028', 'important');
+        dialog.style.setProperty('background', '#1f2028', 'important');
+        dialog.style.setProperty('background-color', '#1f2028', 'important');
+        dialog.style.setProperty('color', readableColor, 'important');
+        dialog.style.setProperty('-webkit-text-fill-color', readableColor, 'important');
+
+        dialog.querySelectorAll('h2.swal2-title, .swal2-html-container, .swal2-footer, h2.swal2-title *').forEach(function(element) {
+            element.classList.add('swal-readable-dark-text');
+            element.style.setProperty('color', readableColor, 'important');
+            element.style.setProperty('-webkit-text-fill-color', readableColor, 'important');
+            element.style.setProperty('opacity', '1', 'important');
+        });
+    }
+
     $('#generate-nota-form').on('submit', function(e) {
         e.preventDefault();
 
@@ -1553,18 +1673,33 @@
         const selectedBank = $('#notaUserBankCode').val();
 
         if (!selectedBank) {
-            swal('Peringatan', 'Pilih bank pembayaran terlebih dahulu.', 'warning');
+            Swal.fire({
+                title: 'Peringatan',
+                text: 'Pilih bank pembayaran terlebih dahulu.',
+                icon: 'warning',
+                theme: currentSwalTheme(),
+            });
             return false;
         }
 
         const tax = updateNotaTaxCalculation();
         if (tax.ppnRate < 0 || tax.pphRate < 0 || tax.ppnRate > 100 || tax.pphRate > 100) {
-            swal('Peringatan', 'Persentase PPN dan PPh harus antara 0% sampai 100%.', 'warning');
+            Swal.fire({
+                title: 'Peringatan',
+                text: 'Persentase PPN dan PPh harus antara 0% sampai 100%.',
+                icon: 'warning',
+                theme: currentSwalTheme(),
+            });
             return false;
         }
 
         if (tax.grandTotal < 0) {
-            swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.', 'warning');
+            Swal.fire({
+                title: 'Peringatan',
+                text: 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.',
+                icon: 'warning',
+                theme: currentSwalTheme(),
+            });
             return false;
         }
 
@@ -1584,20 +1719,46 @@
                 '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
         }
 
-        swal({
-            title: "Generate Nota Pembayaran?",
-            text: selectedCodes.length + " DO milik customer " + (notaOrders[0].customerName || '-') + " akan digabungkan ke dalam satu nota dan ditujukan ke akun bank yang dipilih." + taxText + "\n\nOrder yang sudah masuk nota tidak bisa dipindahkan ke nota lain.",
-            icon: "info",
-            buttons: ["Batal", "Ya, Generate Nota!"],
-        }).then((willGenerate) => {
-            if (willGenerate) {
-                swal({
-                    title: "Memproses Generate Nota...",
-                    text: "Sedang membuat nota pembayaran, mohon tunggu.",
-                    icon: "info",
-                    buttons: false,
-                    closeOnClickOutside: false,
-                    closeOnEsc: false,
+        const confirmationText = selectedCodes.length + ' DO milik customer ' + (notaOrders[0].customerName || '-') + ' akan digabungkan ke dalam satu nota dan ditujukan ke akun bank yang dipilih.' + taxText + '\n\nOrder yang sudah masuk nota tidak bisa dipindahkan ke nota lain.';
+
+        Swal.fire({
+            titleText: 'Generate Nota Pembayaran?',
+            text: confirmationText,
+            icon: 'info',
+            theme: currentSwalTheme(),
+            background: '#1f2028',
+            color: '#f8fafc',
+            customClass: {
+                popup: 'swal-dark-popup',
+                title: 'swal-dark-title',
+                htmlContainer: 'swal-dark-html',
+            },
+            didOpen: applyReadableSwalText,
+            didRender: applyReadableSwalText,
+            showCancelButton: true,
+            cancelButtonText: 'Batal',
+            confirmButtonText: 'Ya, Generate Nota!',
+            reverseButtons: true,
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Memproses Generate Nota...',
+                    text: 'Sedang membuat nota pembayaran, mohon tunggu.',
+                    icon: 'info',
+                    theme: currentSwalTheme(),
+                    background: '#1f2028',
+                    color: '#f8fafc',
+                    customClass: {
+                        popup: 'swal-dark-popup',
+                        title: 'swal-dark-title text-white',
+                        htmlContainer: 'swal-dark-html text-white',
+                    },
+                    showConfirmButton: false,
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: function() {
+                        Swal.showLoading();
+                    },
                 });
 
                 $('#generate-nota-form button[type="submit"]').prop('disabled', true);
@@ -1615,15 +1776,21 @@
 
                         if (res.success) {
                             $('#nota-modal').modal('hide');
-                            swal({
-                                title: "Berhasil!",
+                            Swal.fire({
+                                title: 'Berhasil!',
                                 text: res.message || ('Nota pembayaran berhasil di-generate: ' + (res.nota_number || '')),
-                                icon: "success",
+                                icon: 'success',
+                                theme: currentSwalTheme(),
                             }).then(() => {
                                 window.location.reload();
                             });
                         } else {
-                            swal("Gagal!", res.message || 'Terjadi kesalahan saat membuat nota.', "error");
+                            Swal.fire({
+                                title: 'Gagal!',
+                                text: res.message || 'Terjadi kesalahan saat membuat nota.',
+                                icon: 'error',
+                                theme: currentSwalTheme(),
+                            });
                         }
                     },
                     error: function(xhr) {
@@ -1633,7 +1800,12 @@
                         if (xhr.responseJSON && xhr.responseJSON.message) {
                             msg = xhr.responseJSON.message;
                         }
-                        swal("Gagal!", msg, "error");
+                        Swal.fire({
+                            title: 'Gagal!',
+                            text: msg,
+                            icon: 'error',
+                            theme: currentSwalTheme(),
+                        });
                     }
                 });
             } else {

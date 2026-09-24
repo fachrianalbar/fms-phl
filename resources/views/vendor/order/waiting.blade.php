@@ -185,12 +185,89 @@
 @push('script')
 <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
+<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}?v=20260923-2"></script>
+<script>
+    // SweetAlert legacy mengatur warna judul/isi sendiri; sinkronkan dengan dark mode aplikasi.
+    (function syncVendorSweetAlertTheme() {
+        if (window.swal && typeof window.swal.setDefaults === 'function') {
+            window.swal.setDefaults({ className: 'swal-dark-mode' });
+        }
+
+        const style = document.createElement('style');
+        style.textContent = `
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-title,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-text,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-content,
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-footer {
+                color: #f8fafc !important;
+                -webkit-text-fill-color: #f8fafc !important;
+            }
+            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode {
+                background-color: #1f2028 !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        const sync = function() {
+            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+            document.querySelectorAll('.swal-modal').forEach(function(modal) {
+                const textColor = isDark ? '#f8fafc' : '';
+                const bodyColor = isDark ? '#e4e9f0' : '';
+
+                modal.style.setProperty('color', bodyColor, 'important');
+                modal.querySelectorAll('.swal-title, .swal-text, .swal-content, .swal-footer').forEach(function(element) {
+                    element.style.setProperty('color', textColor, 'important');
+                    element.style.setProperty('-webkit-text-fill-color', textColor, 'important');
+                });
+            });
+        };
+
+        new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
+        new MutationObserver(sync).observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ['data-bs-theme']
+        });
+        window.setInterval(sync, 100);
+        sync();
+    }());
+</script>
 <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
 <script>
-    let waitingTable;
-    const selectedOrders = {}; // key: orderCode
+    function vendorSwalTheme() {
+        return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+    }
+
+    function vendorSwalOptions(options) {
+        const isDark = vendorSwalTheme() === 'dark';
+
+        return Object.assign({
+            theme: vendorSwalTheme(),
+            background: isDark ? '#1f2028' : undefined,
+            color: isDark ? '#f8fafc' : undefined,
+            customClass: isDark ? {
+                popup: 'swal-dark-popup',
+                title: 'swal-dark-title',
+                htmlContainer: 'swal-dark-html',
+            } : undefined,
+            didOpen: isDark ? function(popup) {
+                const dialog = popup || Swal.getPopup();
+                if (!dialog) {
+                    return;
+                }
+
+                dialog.style.setProperty('background-color', '#1f2028', 'important');
+                dialog.style.setProperty('color', '#f8fafc', 'important');
+                dialog.querySelectorAll('h2.swal2-title, .swal2-html-container').forEach(function(element) {
+                    element.style.setProperty('color', '#f8fafc', 'important');
+                    element.style.setProperty('-webkit-text-fill-color', '#f8fafc', 'important');
+                });
+            } : undefined,
+        }, options);
+    }
 
     function formatCurrency(value) {
         return 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
@@ -441,8 +518,10 @@
                 selectedOrders[orderCode] = {
                     orderCode: orderCode,
                     orderFormat: String(checkbox.attr('data-order-format') || '').toUpperCase().trim(),
+                    customerCompanyName: String(checkbox.attr('data-customer-company-name') || '').trim(),
                     fleetCompanyCode: String(checkbox.attr('data-fleet-company-code') || ''),
                     fleetCompanyName: String(checkbox.attr('data-fleet-company-name') || ''),
+                    fleetCompanyPph: Number(checkbox.attr('data-fleet-company-pph') || 0),
                     checkboxType: 'nota',
                     billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
                     paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
@@ -516,10 +595,17 @@
                 orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(orderCode));
             });
 
-            // Reset rate PPN/PPh + subtotal
+            // Reset PPN/claim dan tentukan PPh otomatis. Perusahaan customer
+            // bernama PRIBADI bebas PPh; selain itu gunakan tarif master vendor.
+            const customerCompanyName = String(notaOrders[0].customerCompanyName || '').toUpperCase().trim();
+            const isPersonalCompany = customerCompanyName === 'PRIBADI';
             $('#notaPpnRate').val('0');
-            $('#notaPphRate').val('0');
             $('#notaClaimAmount').val('0');
+            notaModalState.pphRate = isPersonalCompany ? 0 : Math.min(100, Math.max(0, Number(notaOrders[0].fleetCompanyPph) || 0));
+            $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
+            $('#notaPphSource').html(isPersonalCompany
+                ? 'Perusahaan customer <strong>PRIBADI</strong>: tidak dipotong PPh. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>'
+                : 'Tarif otomatis dari master perusahaan armada <strong>' + $('<div>').text(fleetCompanyName || '-').html() + '</strong>. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>');
             notaModalState.subtotal = totals.billing;
             updateNotaTaxCalculation();
 
@@ -542,6 +628,7 @@
         // State perhitungan pajak modal nota
         const notaModalState = {
             subtotal: 0,
+            pphRate: 0,
         };
 
         // Ambil rate desimal dari input (koma diterima sebagai pemisah desimal).
@@ -593,7 +680,7 @@
         // Hitung nominal dari DPP x rate / 100 dan total bayar.
         function updateNotaTaxCalculation() {
             const ppnRate = parseNotaRateInput($('#notaPpnRate'));
-            const pphRate = parseNotaRateInput($('#notaPphRate'));
+            const pphRate = notaModalState.pphRate;
             const claim = parseNotaClaimInput($('#notaClaimAmount'));
             const ppn = Math.round(notaModalState.subtotal * ppnRate / 100);
             const pph = Math.round(notaModalState.subtotal * pphRate / 100);
@@ -620,7 +707,7 @@
         // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
         // keystroke. Memformat langsung akan menghapus tanda desimal sementara
         // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
-        $('#notaPpnRate, #notaPphRate').on('input', function() {
+        $('#notaPpnRate').on('input', function() {
             updateNotaTaxCalculation();
         });
 
@@ -629,7 +716,7 @@
             updateNotaTaxCalculation();
         });
 
-        $('#notaPpnRate, #notaPphRate').on('blur', function() {
+        $('#notaPpnRate').on('blur', function() {
             $(this).val(formatNotaRate(parseNotaRateInput(this)));
             updateNotaTaxCalculation();
         });
@@ -639,7 +726,7 @@
             updateNotaTaxCalculation();
         });
 
-        $('#notaPpnRate, #notaPphRate').on('focus', function() {
+        $('#notaPpnRate').on('focus', function() {
             $(this).select();
         });
 
@@ -656,28 +743,40 @@
             const selectedBank = $('#notaUserBankCode').val();
 
             if (!selectedBank) {
-                swal('Peringatan', 'Pilih bank pembayaran terlebih dahulu.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Pilih bank pembayaran terlebih dahulu.',
+                    icon: 'warning',
+                }));
 
                 return false;
             }
 
-            // Validasi rate PPN/PPh, lalu tampilkan rate dan nominal hasil hitung.
+            // Validasi rate PPN dan tampilkan PPh otomatis beserta nominalnya.
             const tax = updateNotaTaxCalculation();
             if (tax.ppnRate < 0 || tax.pphRate < 0 || tax.ppnRate > 100 || tax.pphRate > 100) {
-                swal('Peringatan', 'Persentase PPN dan PPh harus antara 0% sampai 100%.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Persentase PPN dan PPh harus antara 0% sampai 100%. Periksa master perusahaan armada.',
+                    icon: 'warning',
+                }));
 
                 return false;
             }
 
             if (tax.grandTotal < 0) {
-                swal('Peringatan', 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.',
+                    icon: 'warning',
+                }));
 
                 return false;
             }
 
-            // Kirim rate & nominal sebagai angka bersih tanpa pemisah ribuan.
+            // Kirim PPN dan claim sebagai angka bersih. PPh sengaja tidak
+            // dikirim karena backend menghitung ulang dari master perusahaan.
             $('#notaPpnRate').val(String(tax.ppnRate).replace(',', '.'));
-            $('#notaPphRate').val(String(tax.pphRate).replace(',', '.'));
             $('#notaClaimAmount').val(String(tax.claim));
 
             const hasClaim = tax.claim > 0;
@@ -692,22 +791,27 @@
                     '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
             }
 
-            swal({
-                title: "Generate Nota Pembayaran?",
-                text: selectedCodes.length + " order akan dikelompokkan ke dalam satu nota resmi dan ditargetkan ke akun bank yang dipilih." + taxText + "\n\nOrder yang sudah di-nota tidak bisa dipindahkan ke nota lain.",
-                icon: "info",
-                buttons: ["Batal", "Ya, Generate Nota!"],
-            }).then((willGenerate) => {
-                if (willGenerate) {
-                    // Loader SweetAlert selama proses generate nota berjalan
-                    swal({
-                        title: "Memproses Generate Nota...",
-                        text: "Sedang membuat nota pembayaran, mohon tunggu.",
-                        icon: "info",
-                        buttons: false,
-                        closeOnClickOutside: false,
-                        closeOnEsc: false,
-                    });
+            Swal.fire(vendorSwalOptions({
+                title: 'Generate Nota Pembayaran?',
+                text: selectedCodes.length + ' order akan dikelompokkan ke dalam satu nota resmi dan ditargetkan ke akun bank yang dipilih.' + taxText + '\n\nOrder yang sudah di-nota tidak bisa dipindahkan ke nota lain.',
+                icon: 'info',
+                showCancelButton: true,
+                cancelButtonText: 'Batal',
+                confirmButtonText: 'Ya, Generate Nota!',
+                reverseButtons: true,
+            })).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Memproses Generate Nota...',
+                        text: 'Sedang membuat nota pembayaran, mohon tunggu.',
+                        icon: 'info',
+                        showConfirmButton: false,
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        didOpen: function() {
+                            Swal.showLoading();
+                        },
+                    }));
 
                     // Nonaktifkan tombol submit agar tidak ada klik ganda
                     $('#generate-nota-form button[type="submit"]').prop('disabled', true);
@@ -725,15 +829,19 @@
 
                             if (res.success) {
                                 $('#nota-modal').modal('hide');
-                                swal({
-                                    title: "Berhasil!",
+                                Swal.fire(vendorSwalOptions({
+                                    title: 'Berhasil!',
                                     text: res.message || ('Nota pembayaran berhasil di-generate: ' + (res.nota_number || '')),
-                                    icon: "success",
-                                }).then(() => {
+                                    icon: 'success',
+                                })).then(() => {
                                     window.location.reload();
                                 });
                             } else {
-                                swal("Gagal!", res.message || 'Terjadi kesalahan saat membuat nota.', "error");
+                                Swal.fire(vendorSwalOptions({
+                                    title: 'Gagal!',
+                                    text: res.message || 'Terjadi kesalahan saat membuat nota.',
+                                    icon: 'error',
+                                }));
                             }
                         },
                         error: function(xhr) {
@@ -743,13 +851,17 @@
                             if (xhr.responseJSON && xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
                             }
-                            swal("Gagal!", msg, "error");
+                            Swal.fire(vendorSwalOptions({
+                                title: 'Gagal!',
+                                text: msg,
+                                icon: 'error',
+                            }));
                         }
                     });
                 } else {
                     // Kembalikan format rate & claim setelah konfirmasi dibatalkan.
                     $('#notaPpnRate').val(formatNotaRate(tax.ppnRate));
-                    $('#notaPphRate').val(formatNotaRate(tax.pphRate));
+                    $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
                     $('#notaClaimAmount').val(formatNotaNumber(tax.claim));
                     updateNotaTaxCalculation();
                 }

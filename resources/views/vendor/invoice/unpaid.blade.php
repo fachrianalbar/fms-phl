@@ -1,8 +1,12 @@
+@php
+    $isPartial = ($listType ?? 'pending') === 'partial';
+@endphp
+
 @extends('layouts.main', [
 'title' => $title,
 'pageTitle' => $title,
-'firstSegment' => 'Vendor',
-'secondSegment' => 'Invoice Belum Lunas',
+'firstSegment' => 'Hutang (Vendor)',
+'secondSegment' => $isPartial ? 'Invoice Dibayar Sebagian' : 'Invoice Belum Dibayar',
 ])
 
 @push('style')
@@ -192,12 +196,7 @@
     .vendor-payment-workbench .invoice-table-scroll {
         width: 100%;
         overflow-x: auto;
-        overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
-    }
-    .vendor-payment-workbench .invoice-table-scroll .invoice-table {
-        min-width: 1180px;
-        width: max-content !important;
     }
     .vendor-payment-workbench .invoice-table tbody td:nth-child(n+10):nth-child(-n+14) { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
     .vendor-payment-workbench .form-check-input:focus-visible,
@@ -251,15 +250,16 @@
 <div class="col-sm-12 vendor-payment-workbench">
     <section class="workbench-intro" aria-labelledby="paymentWorkflowTitle">
         <div>
-            <span class="workbench-eyebrow">Pembayaran vendor</span>
-            <h4 class="fw-bold mt-1 mb-2" id="paymentWorkflowTitle">Pilih, review, lalu proses</h4>
-            <p class="text-muted mb-3">Pilih satu atau beberapa nota. Pada tahap review, Anda dapat melunasi semuanya atau mengatur nominal DP/cicilan berbeda untuk setiap nota.</p>
-            <a href="{{ route('vendor.order.waiting') }}" class="btn btn-outline-primary btn-sm fw-semibold">
-                <i class="mdi mdi-tray-full me-1" aria-hidden="true"></i> Order Menunggu Nota
+            <span class="workbench-eyebrow">Pembayaran vendor · {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }}</span>
+            <h4 class="fw-bold mt-1 mb-2" id="paymentWorkflowTitle">{{ $isPartial ? 'Review Invoice Dibayar Sebagian' : 'Pilih Invoice Belum Dibayar' }}</h4>
+            <p class="text-muted mb-3">{{ $isPartial ? 'Kelola nota vendor yang sudah menerima pembayaran tetapi masih memiliki sisa tagihan.' : 'Pilih nota vendor yang benar-benar belum menerima pembayaran untuk diproses.' }}</p>
+            <a href="{{ $isPartial ? route('vendor.invoice.unpaid') : route('vendor.invoice.partial') }}" class="btn btn-outline-primary btn-sm fw-semibold">
+                <i class="mdi {{ $isPartial ? 'mdi-cash-remove' : 'mdi-cash-clock' }} me-1" aria-hidden="true"></i>
+                {{ $isPartial ? 'Lihat Invoice Belum Dibayar' : 'Lihat Invoice Dibayar Sebagian' }}
             </a>
         </div>
         <div class="payment-steps" aria-label="Tiga langkah pembayaran">
-            <div class="payment-step"><strong>1 · Pilih nota</strong><span>Pilihan tetap tersimpan saat berpindah halaman tabel.</span></div>
+            <div class="payment-step"><strong>1 · Pilih nota</strong><span>{{ $isPartial ? 'Pilih nota yang sudah memiliki pembayaran sebelumnya.' : 'Pilih nota yang belum memiliki pembayaran.' }}</span></div>
             <div class="payment-step"><strong>2 · Review nominal</strong><span>Periksa alokasi, sisa, tanggal, dan sumber dana.</span></div>
             <div class="payment-step"><strong>3 · Konfirmasi</strong><span>Sistem membuat satu kode pembayaran untuk seluruh pilihan.</span></div>
         </div>
@@ -272,7 +272,7 @@
         <div class="overview-item">
             <span>Nota belum lunas</span>
             <strong>{{ number_format($stats['notaCount'] ?? 0) }} Nota</strong>
-            <small>{{ $stats['pendingCount'] ?? 0 }} belum dibayar · {{ $stats['partialCount'] ?? 0 }} sebagian</small>
+            <span>{{ $isPartial ? 'Nota yang sudah dibayar sebagian' : 'Nota tanpa pembayaran sebelumnya' }}</span>
         </div>
         <div class="overview-item">
             <span>Order dalam nota</span>
@@ -280,20 +280,20 @@
             <small>Vendor armada eksternal</small>
         </div>
         <div class="overview-item">
-            <span>Sudah terbayar</span>
+            <span>{{ $isPartial ? 'Sudah dibayar' : 'Belum dibayar' }}</span>
             <strong>Rp {{ number_format($stats['totalPaid'] ?? 0, 0, ',', '.') }}</strong>
-            <small>Dari nota yang belum lunas</small>
+            <small>{{ $isPartial ? 'Akumulasi pembayaran sebelumnya' : 'Belum ada dana keluar' }}</small>
         </div>
         <div class="overview-item is-emphasis">
-            <span>Sisa harus dibayar</span>
+            <span>{{ $isPartial ? 'Sisa hutang berjalan' : 'Total yang harus dibayar' }}</span>
             <strong>Rp {{ number_format($stats['totalRemaining'] ?? 0, 0, ',', '.') }}</strong>
             <small>Total tagihan Rp {{ number_format($stats['totalBilling'] ?? 0, 0, ',', '.') }}</small>
         </div>
     </section>
 
     <div class="selection-empty-help" id="selectionEmptyHelp">
-        <i class="mdi mdi-checkbox-marked-outline me-1" aria-hidden="true"></i>
-        Centang nota pada tabel untuk pembayaran (bisa banyak nota). Cetak nota dilakukan lewat tombol aksi pada tiap baris.
+            <i class="mdi mdi-{{ $isPartial ? 'cash-clock' : 'cash-remove' }} me-1" aria-hidden="true"></i>
+        Centang nota {{ $isPartial ? 'yang sudah dibayar sebagian' : 'yang belum dibayar' }} untuk pembayaran lanjutan (bisa banyak nota). Cetak nota dilakukan lewat tombol aksi pada tiap baris.
     </div>
 
     <div class="selection-command-bar d-none" id="selectionCommandBar" aria-live="polite">
@@ -315,13 +315,13 @@
         </div>
     </div>
 
-    <!-- Nota Belum Lunas (1 baris = 1 nota hasil generate di Order Menunggu Nota) -->
+    <!-- Nota {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }} -->
     <div class="table-container-card">
         <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
             <div>
-                <h6 class="fw-bold text-dark mb-1">Nota Belum Lunas</h6>
+                <h6 class="fw-bold text-dark mb-1">Nota {{ $isPartial ? 'Dibayar Sebagian' : 'Belum Dibayar' }}</h6>
                 <div class="text-muted fs-12">
-                    <i class="mdi mdi-information-outline me-1 text-primary"></i>Satu nota dapat memuat beberapa order. Pembayaran dapat dilunasi atau DP/cicilan. Order baru digabungkan lewat menu <strong>Order Menunggu Nota</strong>.
+                    <i class="mdi mdi-information-outline me-1 text-primary"></i>{{ $isPartial ? 'Nota sudah memiliki pembayaran sebelumnya dan masih dapat dibayar hingga lunas.' : 'Nota ini belum memiliki pembayaran sebelumnya. Pembayaran dapat diproses sebagai DP, cicilan, atau pelunasan.' }}
                 </div>
             </div>
         </div>

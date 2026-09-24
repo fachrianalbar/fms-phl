@@ -114,7 +114,6 @@
             @php
                 $subtotalAll = 0;
                 $additionalCostAll = 0;
-                $pphAmountAll = 0;
             @endphp
             @foreach ($orders as $order)
                 @php
@@ -144,14 +143,8 @@
                     $ppn = $isOrderPaymentPdf ? ($order->customer->ppn ?? 0) : 0;
                     $ppnAmount = ($totalBefore * $ppn) / 100;
                     
-                    $pph = $isOrderPaymentPdf ? ($order->customer->pph ?? 0) : ($order->fleet->company->pph ?? 0);
-                    $pphAmount = ($totalBefore * $pph) / 100;
-                    
-                    $grandTotal = $isOrderPaymentPdf ? ($totalBefore + $ppnAmount - $pphAmount) : ($totalBefore - $pphAmount);
-
                     $subtotalAll += $subtotal;
                     $additionalCostAll += $additionalCost;
-                    $pphAmountAll += $pphAmount;
                 @endphp
                 <tr>
                     <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>

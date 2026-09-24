@@ -10,6 +10,8 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::resource('return-do', ReturnDoController::class);
     Route::post('return-do/sync-driver-salary', [ReturnDoController::class, 'syncDriverSalary'])->name('return-do.sync-driver-salary');
     Route::get('return-do/{orderId}/files', [ReturnDoController::class, 'getOrderFiles'])->name('return-do.get-files');
+    Route::get('not-return-do/export/excel', [NotReturnDoController::class, 'exportExcel'])->name('not-return-do.export-excel');
+    Route::get('not-return-do/export/pdf', [NotReturnDoController::class, 'exportPdf'])->name('not-return-do.export-pdf');
     Route::resource('not-return-do', NotReturnDoController::class)->except(['update']);
     Route::post('confirm-do', [NotReturnDoController::class, 'confirmDo'])->name('not-return-do.confirm-do');
     Route::put('not-return-do/update/{code}', [NotReturnDoController::class, 'update'])->name('not-return-do.update');

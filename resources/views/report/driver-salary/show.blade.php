@@ -223,6 +223,83 @@
             background-color: #fee2e2;
             color: #991b1b;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .btn-action-back {
+            background-color: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: #a5b4fc;
+        }
+        html[data-bs-theme="dark"] .btn-action-back:hover {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: #c7d2fe;
+        }
+
+        html[data-bs-theme="dark"] .premium-card {
+            background-color: var(--bs-card-bg);
+            border: 1px solid var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .info-label {
+            color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] .info-value {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .info-grid-item {
+            background-color: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .info-grid-item:hover {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        /* Summary tiles */
+        html[data-bs-theme="dark"] .summary-salary {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(99, 102, 241, 0.12));
+            border-color: rgba(129, 140, 248, 0.35);
+            color: #a5b4fc;
+        }
+        html[data-bs-theme="dark"] .summary-adj {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.12));
+            border-color: rgba(52, 211, 153, 0.35);
+            color: #6ee7b7;
+        }
+        html[data-bs-theme="dark"] .summary-grand {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.12));
+            border-color: rgba(251, 191, 36, 0.35);
+            color: #fde68a;
+        }
+
+        /* Premium tables */
+        html[data-bs-theme="dark"] .table-premium thead th {
+            background-color: var(--bs-tertiary-bg);
+            color: var(--bs-body-color);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .table-premium tbody td {
+            color: var(--bs-body-color);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .table-premium tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        html[data-bs-theme="dark"] .table-premium tfoot tr {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        /* Badges */
+        html[data-bs-theme="dark"] .badge-premium-addition {
+            background-color: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+        }
+        html[data-bs-theme="dark"] .badge-premium-deduction {
+            background-color: rgba(239, 68, 68, 0.18);
+            color: #fca5a5;
+        }
     </style>
 @endpush
 

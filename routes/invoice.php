@@ -13,7 +13,10 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
     // 2. Unpaid Invoice
     Route::get('unpaid', [InvoiceController::class, 'indexUnpaid'])->name('unpaid');
 
-    // 3. Paid Invoice
+    // 3. Partially Paid Invoice
+    Route::get('partial', [InvoiceController::class, 'indexPartial'])->name('partial');
+
+    // 4. Paid Invoice
     Route::get('paid', [InvoiceController::class, 'indexPaid'])->name('paid');
 
     // Invoice Operations
@@ -50,6 +53,7 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
 
 Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('invoice/unpaid', [InvoiceController::class, 'datatableUnpaid'])->name('invoice.unpaid');
+    Route::get('invoice/partial', [InvoiceController::class, 'datatablePartial'])->name('invoice.partial');
     Route::get('invoice/paid', [InvoiceController::class, 'datatablePaid'])->name('invoice.paid');
     Route::get('invoice/payment', [InvoicePaymentController::class, 'datatable'])->name('invoice.payment');
     Route::get('invoice/payment-transaction', [InvoicePaymentTransactionController::class, 'datatable'])->name('invoice.payment-transaction');
@@ -62,6 +66,8 @@ Route::prefix('faktur')->group(function () {
     Route::get('pembuatan', fn () => redirect()->route('invoice.create'));
     Route::get('unpaid', fn () => redirect()->route('invoice.unpaid'));
     Route::get('belum-lunas', fn () => redirect()->route('invoice.unpaid'));
+    Route::get('partial', fn () => redirect()->route('invoice.partial'));
+    Route::get('pembayaran-sebagian', fn () => redirect()->route('invoice.partial'));
     Route::get('paid', fn () => redirect()->route('invoice.paid'));
     Route::get('lunas', fn () => redirect()->route('invoice.paid'));
     Route::get('payment', fn () => redirect()->route('invoice.payment.index'));

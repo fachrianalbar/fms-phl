@@ -766,6 +766,103 @@
     @media (prefers-reduced-motion: reduce) {
         .payment-review-modal * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    /* 1. Detail nota: palet oklch terang digeser ke palet gelap. */
+    html[data-bs-theme="dark"] .detail-modal {
+        --dt-paper: var(--bs-card-bg);
+        --dt-paper-soft: var(--bs-tertiary-bg);
+        --dt-canvas: var(--bs-body-bg);
+        --dt-ink: var(--bs-body-color);
+        --dt-muted: var(--bs-secondary-color);
+        --dt-rule: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='ppn'] {
+        background: rgba(59, 130, 246, 0.16);
+        --tile-ink: #93c5fd;
+    }
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='pph'] {
+        background: rgba(239, 68, 68, 0.16);
+        --tile-ink: #fca5a5;
+    }
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='claim'],
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='remaining'] {
+        background: rgba(245, 158, 11, 0.16);
+        --tile-ink: #fcd34d;
+    }
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='paid'][data-tone='positive'],
+    html[data-bs-theme="dark"] .detail-amount-tile[data-role='remaining'][data-tone='settled'] {
+        background: rgba(34, 197, 94, 0.16);
+        --tile-ink: #86efac;
+    }
+    html[data-bs-theme="dark"] .detail-section-icon {
+        background: rgba(59, 130, 246, 0.16);
+        color: #93c5fd;
+    }
+    html[data-bs-theme="dark"] .detail-bank-value {
+        background: var(--bs-tertiary-bg);
+    }
+    html[data-bs-theme="dark"] .detail-history-table tbody tr:hover {
+        background: rgba(255, 255, 255, 0.04);
+    }
+
+    /* 2. Modal pembayaran tunggal (#payment-modal) & kartu receipt. */
+    html[data-bs-theme="dark"] #payment-modal .modal-content {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .modal-receipt-card {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .modal-receipt-card .receipt-meta-chip {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .modal-adjust-card {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .modal-adjust-card:hover {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .quick-chip-btn {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .quick-chip-btn:hover {
+        background: rgba(37, 99, 235, 0.18);
+        border-color: #3b82f6;
+        color: #93c5fd;
+    }
+    html[data-bs-theme="dark"] .payment-amount-input {
+        color: var(--bs-body-color) !important;
+    }
+    html[data-bs-theme="dark"] #payment-modal .select2-container--default .select2-selection--single {
+        border-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] #payment-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: var(--bs-body-color) !important;
+    }
+
+    /* 3. Modal review pembayaran nota (#batch-payment-modal). */
+    html[data-bs-theme="dark"] .payment-review-modal {
+        --vp-paper: var(--bs-card-bg);
+        --vp-paper-soft: var(--bs-tertiary-bg);
+        --vp-muted: var(--bs-secondary-color);
+        --vp-rule: var(--bs-border-color);
+        --vp-accent-soft: rgba(59, 130, 246, 0.16);
+        --vp-success-soft: rgba(34, 197, 94, 0.14);
+    }
+    html[data-bs-theme="dark"] .payment-total-block {
+        background: var(--bs-tertiary-bg);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .payment-total-block span,
+    html[data-bs-theme="dark"] .payment-total-block small {
+        color: var(--bs-secondary-color);
+    }
 </style>
 
 {{-- =====================================================================

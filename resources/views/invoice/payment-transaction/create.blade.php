@@ -204,6 +204,62 @@
         border-color: var(--trx-primary);
         background: #f0f7ff;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .card-modern {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .card-header-modern {
+        background: var(--bs-card-bg);
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .customer-summary-banner {
+        background: linear-gradient(135deg, var(--bs-tertiary-bg) 0%, var(--bs-secondary-bg) 100%);
+        border-color: var(--bs-border-color);
+        border-inline-start-color: var(--trx-primary);
+    }
+    html[data-bs-theme="dark"] .table-toolbar {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .table-search-input {
+        background-color: var(--bs-secondary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+        color: var(--bs-body-color) !important;
+    }
+    html[data-bs-theme="dark"] #dt-invoices tbody tr.row-disabled {
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+    html[data-bs-theme="dark"] .currency-input-group .input-group-text {
+        background-color: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .currency-input {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .summary-card {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .summary-metric-row {
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .grand-total-callout {
+        background: var(--bs-success-bg-subtle);
+        border-color: var(--bs-success-border-subtle);
+    }
+    html[data-bs-theme="dark"] .grand-total-value {
+        color: var(--bs-success-text-emphasis);
+    }
+    html[data-bs-theme="dark"] .custom-file-box {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .custom-file-box:hover {
+        background: var(--bs-secondary-bg);
+    }
 </style>
 @endpush
 
@@ -491,7 +547,7 @@
                                     <thead>
                                         <tr>
                                             <th class="text-center" style="width: 44px;">
-                                                <input type="checkbox" id="check-all" class="form-check-input" checked title="Pilih Semua">
+                                                <input type="checkbox" id="check-all" class="form-check-input" title="Pilih Semua">
                                             </th>
                                             <th style="min-width: 140px;">No. Faktur</th>
                                             <th style="min-width: 100px;">Tgl Faktur</th>
@@ -665,7 +721,7 @@
         invoices.forEach(function(inv, idx) {
             var tr = document.createElement('tr');
             tr.id = 'row-inv-' + idx;
-            tr.className = 'row-selected';
+            tr.className = 'row-disabled';
 
             var formattedBilling = formatRupiah(inv.totalBilling);
             var formattedPaid = formatRupiah(inv.totalPaid + inv.totalClaim);
@@ -673,7 +729,7 @@
 
             tr.innerHTML = ''
                 + '<td class="text-center">'
-                + '   <input type="checkbox" class="form-check-input row-check" data-idx="' + idx + '" checked>'
+                + '   <input type="checkbox" class="form-check-input row-check" data-idx="' + idx + '">'
                 + '   <input type="hidden" name="invoices[' + idx + '][code]" value="' + escapeHtml(inv.code) + '">'
                 + '</td>'
                 + '<td>'
@@ -913,6 +969,17 @@
             var fullAmount = Math.max(0, inv.remaining - claim);
             tr.find('.input-amount').val(formatRupiah(fullAmount));
             recalcTotals();
+        });
+
+        // Klik area baris untuk memilih/membatalkan pilihan faktur.
+        // Kontrol di dalam baris tetap memiliki perilaku native masing-masing.
+        $(document).on('click', '#dt-invoices tbody tr', function(e) {
+            if ($(e.target).closest('input, button, textarea, select, a, label').length) {
+                return;
+            }
+
+            const checkbox = $(this).find('.row-check');
+            checkbox.prop('checked', !checkbox.is(':checked')).trigger('change');
         });
 
         // Row checkbox toggle

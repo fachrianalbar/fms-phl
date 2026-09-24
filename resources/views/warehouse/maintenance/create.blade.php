@@ -403,6 +403,117 @@
         .stock-warn { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
         .stock-empty { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
         .stock-jasa { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .maintenance-card {
+            background: var(--bs-card-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .maintenance-card .card-header {
+            background: var(--bs-secondary-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .form-label-custom {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom:focus {
+            background: var(--bs-tertiary-bg);
+            border-color: #7669D3;
+        }
+        html[data-bs-theme="dark"] .form-control-custom:read-only,
+        html[data-bs-theme="dark"] .form-control-custom:disabled {
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-secondary-color);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .input-group-custom .input-group-text {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-secondary-color);
+        }
+
+        /* Select2 */
+        html[data-bs-theme="dark"] .select2-container .select2-selection--single,
+        html[data-bs-theme="dark"] .select2-container .select2-selection--multiple {
+            background: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default.select2-container--focus .select2-selection--single,
+        html[data-bs-theme="dark"] .select2-container--default.select2-container--open .select2-selection--single,
+        html[data-bs-theme="dark"] .select2-container--default.select2-container--focus .select2-selection--multiple,
+        html[data-bs-theme="dark"] .select2-container--default.select2-container--open .select2-selection--multiple {
+            background: var(--bs-tertiary-bg) !important;
+        }
+        html[data-bs-theme="dark"] .select2-container--default .select2-selection--multiple .select2-selection__choice {
+            background-color: rgba(99, 102, 241, 0.2) !important;
+            border-color: rgba(99, 102, 241, 0.35) !important;
+            color: #a5b4fc !important;
+        }
+
+        /* Table */
+        html[data-bs-theme="dark"] .maintenance-table-wrapper {
+            background: var(--bs-card-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .maintenance-table thead th {
+            background: var(--bs-tertiary-bg);
+            border-bottom-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .maintenance-table tbody tr {
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .maintenance-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        html[data-bs-theme="dark"] .row-number-badge {
+            background: var(--bs-tertiary-bg);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .btn-delete-row {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+        html[data-bs-theme="dark"] .btn-back {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .btn-back:hover {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-emphasis-color);
+        }
+
+        /* Stock status pills */
+        html[data-bs-theme="dark"] .stock-safe {
+            background: rgba(16, 185, 129, 0.18);
+            color: #6ee7b7;
+            border-color: rgba(52, 211, 153, 0.35);
+        }
+        html[data-bs-theme="dark"] .stock-warn {
+            background: rgba(245, 158, 11, 0.18);
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, 0.35);
+        }
+        html[data-bs-theme="dark"] .stock-empty {
+            background: rgba(239, 68, 68, 0.18);
+            color: #fca5a5;
+            border-color: rgba(248, 113, 113, 0.35);
+        }
+        html[data-bs-theme="dark"] .stock-jasa {
+            background: rgba(59, 130, 246, 0.18);
+            color: #93c5fd;
+            border-color: rgba(96, 165, 250, 0.35);
+        }
     </style>
 @endpush
 

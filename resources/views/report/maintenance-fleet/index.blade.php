@@ -133,6 +133,33 @@
             color: #64748b;
             font-size: 12px;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        html[data-bs-theme="dark"] #dt_wrapper .dataTables_info,
+        html[data-bs-theme="dark"] #dt_wrapper .dataTables_length,
+        html[data-bs-theme="dark"] #dt_wrapper .dataTables_filter {
+            color: var(--bs-secondary-color);
+        }
+        /* Filter bar (inline light background) */
+        html[data-bs-theme="dark"] .card.border-0.mb-4 {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
     </style>
 @endpush
 
@@ -167,7 +194,7 @@
 
                 {{-- Filter Bar --}}
                 <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    style="background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color) !important; border-radius: 12px;">
                     <div class="card-body p-3">
                         <form id="filterForm">
                             <div class="row g-2 align-items-end">

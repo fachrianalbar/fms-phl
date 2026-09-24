@@ -4,6 +4,7 @@ namespace App\Services\Finance;
 
 use App\Helpers\GenerateCode;
 use App\Models\Bank\UserBank;
+use App\Models\Finance\InvoiceDetail;
 use App\Models\Finance\VendorPayment;
 use App\Models\Finance\VendorPaymentBatch;
 use App\Models\Finance\VendorPaymentHistory;
@@ -173,6 +174,22 @@ class VendorPaymentService
     }
 
     /**
+     * Nota yang belum memiliki pembayaran.
+     */
+    public function findPendingNotas()
+    {
+        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'pending')->values();
+    }
+
+    /**
+     * Nota yang sudah dibayar sebagian tetapi masih memiliki sisa tagihan.
+     */
+    public function findPartialNotas()
+    {
+        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'partial')->values();
+    }
+
+    /**
      * Nota yang belum lunas (pending / partial).
      */
     public function findUnpaidNotas()
@@ -237,8 +254,8 @@ class VendorPaymentService
     {
         return $histories
             ->groupBy(fn ($history) => $history->batch_code
-                ? 'batch:' . $history->batch_code
-                : 'legacy:' . $history->id)
+                ? 'batch:'.$history->batch_code
+                : 'legacy:'.$history->id)
             ->map(function ($transaction, $transactionKey) {
                 $firstHistory = $transaction->first();
                 $isLegacy = empty($firstHistory->batch_code);
@@ -316,30 +333,34 @@ class VendorPaymentService
         ];
     }
 
+    private function statsForNotas($notas): array
+    {
+        return [
+            'notaCount' => $notas->count(),
+            'orderCount' => (int) $notas->sum('order_count'),
+            'totalCount' => $notas->count(),
+            'partialCount' => $notas->where('payment_status', 'partial')->count(),
+            'pendingCount' => $notas->where('payment_status', 'pending')->count(),
+            'totalBilling' => (float) $notas->sum('amount'),
+            'totalPaid' => (float) $notas->sum('paid_amount'),
+            'totalRemaining' => (float) $notas->sum('remaining_amount'),
+        ];
+    }
+
     /**
-     * Statistik untuk halaman Invoice Belum Lunas (nota pending/partial).
+     * Statistik untuk halaman Invoice Belum Dibayar (nota pending).
      */
     public function statsUnpaid()
     {
-        $unpaidNotas = $this->findUnpaidNotas();
+        return $this->statsForNotas($this->findPendingNotas());
+    }
 
-        $notaBilling = (float) $unpaidNotas->sum('amount');
-        $notaPaid = (float) $unpaidNotas->sum('paid_amount');
-        $notaRemaining = (float) $unpaidNotas->sum('remaining_amount');
-
-        $partialCount = $unpaidNotas->where('payment_status', 'partial')->count();
-        $pendingCount = $unpaidNotas->where('payment_status', 'pending')->count();
-
-        return [
-            'notaCount' => $unpaidNotas->count(),
-            'orderCount' => (int) $unpaidNotas->sum('order_count'),
-            'totalCount' => $unpaidNotas->count(),
-            'partialCount' => $partialCount,
-            'pendingCount' => $pendingCount,
-            'totalBilling' => $notaBilling,
-            'totalPaid' => $notaPaid,
-            'totalRemaining' => $notaRemaining,
-        ];
+    /**
+     * Statistik untuk halaman Invoice Dibayar Sebagian (nota partial).
+     */
+    public function statsPartial()
+    {
+        return $this->statsForNotas($this->findPartialNotas());
     }
 
     /**
@@ -408,9 +429,6 @@ class VendorPaymentService
         $payments = $payments->sortBy('nota_number', SORT_STRING)->values();
         $notaNumbers = $payments->pluck('nota_number')->all();
         $totalPaymentAmount = (int) $payments->sum('amount');
-        if ($totalPaymentAmount > 2147483647) {
-            throw new \DomainException('Total pembayaran maksimal Rp 2.147.483.647 per transaksi.', 422);
-        }
 
         $payloadHash = $this->paymentPayloadHash($request, $payments);
         $existingBatch = VendorPaymentBatch::where('request_key', $requestKey)->first();
@@ -541,7 +559,7 @@ class VendorPaymentService
                     'nominal' => $paymentAmount,
                     'type' => 'Out',
                     'date' => $request->date,
-                    'description' => 'Vendor Payment Batch ' . $batchCode . ' for Order ' . $vendorPayment->order->code . ' with amount ' . number_format($paymentAmount, 0, '.', ','),
+                    'description' => 'Vendor Payment Batch '.$batchCode.' for Order '.$vendorPayment->order->code.' with amount '.number_format($paymentAmount, 0, '.', ','),
                     'transactionCode' => $batchCode,
                     'transactionTypeCode' => 'FTT251208001130',
                 ]);
@@ -575,12 +593,8 @@ class VendorPaymentService
             throw new \LogicException('Persisted vendor payment allocation total is inconsistent.');
         }
 
-        $currentCredit = (int) round((float) $liveMutation->credit);
-        $currentDebit = (int) round((float) $liveMutation->debit);
-        if ($currentCredit + $totalPaymentAmount > 2147483647) {
-            throw new \DomainException('Akumulasi pengeluaran rekening melewati kapasitas ledger.', 422);
-        }
-
+        $currentCredit = (float) $liveMutation->credit;
+        $currentDebit = (float) $liveMutation->debit;
         $liveMutation->credit = $currentCredit + $totalPaymentAmount;
         $liveMutation->balance = $currentDebit - $liveMutation->credit;
         $liveMutation->save();
@@ -876,7 +890,7 @@ class VendorPaymentService
             ]);
 
             if ($payment->order) {
-                $isInvoiced = \App\Models\Finance\InvoiceDetail::where('orderCode', $payment->orderCode)
+                $isInvoiced = InvoiceDetail::where('orderCode', $payment->orderCode)
                     ->whereNull('deleted_at')
                     ->exists();
                 $payment->order->update([
@@ -884,7 +898,7 @@ class VendorPaymentService
                 ]);
             }
 
-            $this->logActivity($title, $payment, 'Cancel Payment Batch ' . $batchCode);
+            $this->logActivity($title, $payment, 'Cancel Payment Batch '.$batchCode);
         }
 
         $batch->update([
@@ -929,27 +943,26 @@ class VendorPaymentService
                 'updated_at' => now(),
             ]);
 
-        return $prefix . '/' . str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT) . '/' . $year;
+        return $prefix.'/'.str_pad((string) $nextSequence, 5, '0', STR_PAD_LEFT).'/'.$year;
     }
 
     /**
      * Assign nomor nota ke beberapa order sekaligus.
      *
-     * PPN & PPh diinput sebagai persentase pada level nota, sedangkan Biaya
-     * Claim diinput sebagai nominal. Nominal pajak & claim dihitung dari total
-     * DPP, lalu didistribusikan proporsional ke tiap order agar seluruh alur
-     * pembayaran tetap konsisten.
+     * PPN diinput sebagai persentase pada level nota. PPh ditentukan otomatis:
+     * perusahaan customer bernama PRIBADI tidak dipotong PPh, sedangkan
+     * perusahaan lainnya memakai tarif PPh dari master perusahaan armada.
+     * Nominal pajak & claim didistribusikan proporsional ke tiap order.
      *
-     * @param array $orderCodes
-     * @param string $userBankCode
-     * @param string $title
-     * @param float|int $ppnRate Persentase PPN (>= 0)
-     * @param float|int $pphRate Persentase PPh (>= 0)
-     * @param float|int $claimAmount Biaya Claim (nominal Rupiah, >= 0)
+     * @param  string  $userBankCode
+     * @param  string  $title
+     * @param  float|int  $ppnRate  Persentase PPN (>= 0)
+     * @param  float|int  $claimAmount  Biaya Claim (nominal Rupiah, >= 0)
      * @return string Nomor nota yang dihasilkan
+     *
      * @throws \Exception
      */
-    public function assignNota(array $orderCodes, $userBankCode, $title, $ppnRate = 0, $pphRate = 0, $claimAmount = 0)
+    public function assignNota(array $orderCodes, $userBankCode, $title, $ppnRate = 0, $claimAmount = 0)
     {
         $orderCodes = array_values(array_unique(array_filter($orderCodes)));
 
@@ -957,8 +970,7 @@ class VendorPaymentService
             throw new \DomainException('Pilih minimal satu order untuk di-nota-kan.', 422);
         }
 
-        $ppnRate = max(0, (float) $ppnRate);
-        $pphRate = max(0, (float) $pphRate);
+        $ppnRate = max(0, min(100, (float) $ppnRate));
         $claimAmount = max(0, (int) round((float) $claimAmount));
         $userBank = $this->userBank->where('code', $userBankCode)->first();
 
@@ -996,7 +1008,7 @@ class VendorPaymentService
             return strtoupper(trim((string) ($order->customer->company->format ?? '')));
         })->filter()->unique();
         if ($companyFormats->count() > 1) {
-            throw new \DomainException('Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' . $companyFormats->implode(', ') . '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.', 422);
+            throw new \DomainException('Gagal: Order yang dipilih memiliki format perusahaan yang berbeda ('.$companyFormats->implode(', ').'). Semua order dalam satu nota harus memiliki format perusahaan yang sama.', 422);
         }
 
         // Cari vendor payment yang sudah ada untuk order-order ini
@@ -1010,12 +1022,20 @@ class VendorPaymentService
         // Validasi: tidak boleh ada order yang sudah memiliki nota
         $alreadyNota = $vendorPayments->whereNotNull('nota_number');
         if ($alreadyNota->isNotEmpty()) {
-            throw new \DomainException('Order sudah memiliki nota: ' . $alreadyNota->pluck('orderCode')->implode(', '), 409);
+            throw new \DomainException('Order sudah memiliki nota: '.$alreadyNota->pluck('orderCode')->implode(', '), 409);
         }
 
-        // Ambil format perusahaan dari order pertama
+        // Ambil format perusahaan dari order pertama.
         $firstOrder = $orders->first();
         $companyFormat = strtoupper(trim((string) ($firstOrder->customer->company->format ?? '')));
+        $customerCompanyName = strtoupper(trim((string) ($firstOrder->customer->company->name ?? '')));
+
+        // PPh selalu ditentukan server-side agar nilai request tidak dapat
+        // mengganti tarif master. PRIBADI bebas PPh; selain itu gunakan tarif
+        // perusahaan armada/vendor yang sama untuk seluruh order pada nota.
+        $pphRate = $customerCompanyName === 'PRIBADI'
+            ? 0.0
+            : max(0, min(100, (float) ($firstOrder->fleet->company->pph ?? 0)));
 
         // Map format ke prefix nota
         if ($companyFormat === 'P') {
@@ -1045,7 +1065,7 @@ class VendorPaymentService
             $totalDpp += $dpp;
         }
 
-        // Nominal pajak dihitung dari total DPP berdasarkan rate yang diinput.
+        // Nominal pajak dihitung dari total DPP berdasarkan rate nota.
         $ppnAmount = (int) round($totalDpp * $ppnRate / 100);
         $pphAmount = (int) round($totalDpp * $pphRate / 100);
 
@@ -1077,7 +1097,7 @@ class VendorPaymentService
                 // Update yang sudah ada (pertahankan riwayat pembayaran)
                 $paidAmount = (int) round((float) ($vendorPayment->paid_amount ?? 0));
                 if ($paidAmount > $newAmount) {
-                    throw new \DomainException('Total nota baru lebih kecil daripada pembayaran yang sudah tercatat pada order ' . $orderCode . '.', 422);
+                    throw new \DomainException('Total nota baru lebih kecil daripada pembayaran yang sudah tercatat pada order '.$orderCode.'.', 422);
                 }
 
                 $newPaidAmount = $paidAmount;
@@ -1119,14 +1139,14 @@ class VendorPaymentService
                 ]);
             }
 
-            if (!$logPayment) {
+            if (! $logPayment) {
                 $logPayment = $vendorPayment;
             }
         }
 
         // Log activity
         if ($logPayment) {
-            $this->logActivity($title, $logPayment, 'Generate Nota ' . $notaNumber);
+            $this->logActivity($title, $logPayment, 'Generate Nota '.$notaNumber);
         }
 
         return $notaNumber;
@@ -1137,9 +1157,9 @@ class VendorPaymentService
      * Menggunakan metode largest remainder agar jumlah seluruh porsi
      * PERSIS sama dengan nominal pajak yang diinput (tanpa selisih pembulatan).
      *
-     * @param float|int $amount Nominal yang akan didistribusikan
-     * @param array $weights Basis pembobotan per orderCode
-     * @param float|int $totalWeight Total bobot
+     * @param  float|int  $amount  Nominal yang akan didistribusikan
+     * @param  array  $weights  Basis pembobotan per orderCode
+     * @param  float|int  $totalWeight  Total bobot
      * @return array Porsi (integer rupiah) per orderCode
      */
     private function distributeProportionally($amount, array $weights, $totalWeight): array
@@ -1232,7 +1252,7 @@ class VendorPaymentService
 
         if ($hasHistory || $alreadyPaid) {
             throw new \DomainException(
-                'Nota ' . ($vendorPayment->nota_number ?: '-') . ' sudah memiliki pembayaran. Batalkan batch pembayaran terlebih dahulu.',
+                'Nota '.($vendorPayment->nota_number ?: '-').' sudah memiliki pembayaran. Batalkan batch pembayaran terlebih dahulu.',
                 409
             );
         }
@@ -1245,9 +1265,8 @@ class VendorPaymentService
             $title,
             $vendorPayment,
             $vendorPayment->nota_number
-                ? 'Cancel Nota ' . $vendorPayment->nota_number . ' (All associated orders reset)'
+                ? 'Cancel Nota '.$vendorPayment->nota_number.' (All associated orders reset)'
                 : 'Cancel Unassigned Payment Record'
         );
     }
 }
-

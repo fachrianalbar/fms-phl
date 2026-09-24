@@ -200,6 +200,60 @@
         padding: 0.35rem 0.8rem;
         border-radius: 20px;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .card-modern {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .card-header-modern {
+        background: var(--bs-card-bg);
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .form-section-title {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .form-section-title::after {
+        background: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .tax-toggle-card {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .tax-toggle-card:hover {
+        background: var(--bs-secondary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .tax-toggle-card.active {
+        background: var(--bs-primary-bg-subtle);
+        border-color: var(--bs-primary-border-subtle);
+    }
+    html[data-bs-theme="dark"] .tax-toggle-card.active .tax-title {
+        color: var(--bs-primary-text-emphasis);
+    }
+    html[data-bs-theme="dark"] .customer-info-box {
+        background: linear-gradient(145deg, var(--bs-tertiary-bg) 0%, var(--bs-secondary-bg) 100%);
+        border-color: var(--bs-border-color);
+        border-inline-start-color: var(--invoice-primary);
+    }
+    html[data-bs-theme="dark"] .summary-card {
+        background: var(--bs-card-bg);
+    }
+    html[data-bs-theme="dark"] .grand-total-box {
+        background: var(--bs-success-bg-subtle);
+        border-color: var(--bs-success-border-subtle);
+    }
+    html[data-bs-theme="dark"] .grand-total-amount {
+        color: var(--bs-success-text-emphasis);
+    }
+    html[data-bs-theme="dark"] .chip-item {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .chip-item:hover {
+        background: var(--bs-secondary-bg);
+    }
 </style>
 @endpush
 

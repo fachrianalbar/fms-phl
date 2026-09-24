@@ -749,7 +749,7 @@
     <div id="multiPdfOrderCodesContainer"></div>
 </form>
 
-{{-- Form & Modal untuk Generate Nota (dengan input persentase PPN & PPh) --}}
+{{-- Form & Modal untuk Generate Nota (PPN manual, PPh otomatis dari master) --}}
 <form id="generate-nota-form" method="post" action="{{ route('vendor.invoice.generate-nota') }}">
     @csrf
     <div class="modal fade bd-example-modal-lg" id="nota-modal" tabindex="-1" role="dialog"
@@ -807,13 +807,13 @@
                         <div class="nota-order-codes custom-scrollbar" id="notaOrderList">-</div>
                     </div>
 
-                    {{-- Section: Rincian Nilai & Pajak (PPN/PPh input manual) --}}
+                    {{-- Section: Rincian Nilai & Pajak --}}
                     <div class="nota-modal-section">
                         <div class="nota-modal-section-title">
                             <span class="nota-modal-section-badge bg-success-subtle text-success"><i
                                     class="mdi mdi-cash-multiple"></i></span>
                             Rincian Nilai Nota &amp; Pajak
-                            <span class="nota-tax-hint ms-auto"><i class="mdi mdi-information-outline me-1"></i>Masukkan persentase, nominal dihitung otomatis</span>
+                            <span class="nota-tax-hint ms-auto"><i class="mdi mdi-information-outline me-1"></i>PPh mengikuti master perusahaan armada</span>
                         </div>
 
                         {{-- Subtotal / DPP --}}
@@ -840,19 +840,18 @@
                             <small class="form-text text-muted">Masukkan rate PPN; nominal yang ditambahkan: <strong id="notaPpnAmountPreview">Rp 0</strong></small>
                         </div>
 
-                        {{-- PPh berdasarkan persentase --}}
+                        {{-- PPh otomatis berdasarkan perusahaan customer dan armada --}}
                         <div class="nota-calc-row">
                             <div class="nota-calc-label mb-2"><label class="form-label nota-field-label mb-0"
                                     for="notaPphRate"><i class="mdi mdi-cash-refund me-2 text-danger"></i>PPh
-                                    (Pajak Penghasilan &mdash; dipotong)</label></div>
+                                    (Pajak Penghasilan &mdash; otomatis dipotong)</label></div>
                             <div class="input-group nota-tax-input-group">
-                                <input type="text" class="form-control nota-tax-input" id="notaPphRate"
-                                    name="pphRate" value="0" inputmode="decimal" autocomplete="off"
-                                    placeholder="0">
+                                <input type="text" class="form-control nota-tax-input bg-light" id="notaPphRate"
+                                    value="0" readonly tabindex="-1" aria-describedby="notaPphSource">
                                 <span class="input-group-text">%</span>
                                 <span class="input-group-text nota-tax-preview" id="notaPphPreview">Rp 0</span>
                             </div>
-                            <small class="form-text text-muted">Masukkan rate PPh; nominal yang dipotong: <strong id="notaPphAmountPreview">Rp 0</strong></small>
+                            <small class="form-text text-muted" id="notaPphSource">Tarif otomatis dari master perusahaan armada; perusahaan PRIBADI tidak dipotong. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong></small>
                         </div>
 
                         {{-- Biaya Claim berdasarkan nominal --}}

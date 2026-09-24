@@ -15,11 +15,9 @@ Tabel internal B2B dengan visual enterprise yang rapi, padat, dan mudah dipindai
     </div>
 
     <div class="card-body p-4">
-        <div class="card border-0 mb-4"
-            style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-            <div class="card-body p-3">
-                {{-- Filter dengan .row.g-2.align-items-end --}}
-            </div>
+        {{-- Filter card collapse standar — lihat bagian "Filter bar". JANGAN pakai border !important inline. --}}
+        <div class="filter-card">
+            {{-- .filter-card-header (trigger) + .filter-collapse > .filter-collapse-body > #filterForm --}}
         </div>
 
         <div class="table-responsive custom-scrollbar">
@@ -97,20 +95,40 @@ Do not use `table-striped` for standard report tables. Use the hover state and s
 
 ## Filter bar
 
-Use a soft filter container above the table:
+Filter memakai panel collapse `.filter-card` standar. **Referensi implementasi:** `resources/views/operational/not-return-do/index.blade.php`. Spesifikasi lengkap (markup, CSS terang + gelap, JS) ada di skill `phl-table-design` §3.
 
 ```blade
-<div class="card border-0 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-    <div class="card-body p-3">
-        <div class="row g-2 align-items-end">
-            {{-- labels use fw-semibold text-muted and font-size: 12px --}}
-            {{-- controls use form-control-sm and border-radius: 8px --}}
+<div class="card-body pt-3 pb-0">
+    <div class="filter-card">
+        <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+            data-bs-target="#uniqueFilterCollapse" aria-expanded="false" aria-controls="uniqueFilterCollapse">
+            <span class="filter-card-heading">
+                <i class="mdi mdi-filter-variant"></i>
+                <strong>Filter Data</strong>
+                <small>Gunakan filter untuk mempersempit data</small>
+            </span>
+            <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+        </button>
+        <div class="collapse filter-collapse" id="uniqueFilterCollapse">
+            <div class="filter-collapse-body">
+                <div id="filterForm">
+                    <div class="row g-3">
+                        {{-- field: .col-xl-3 col-md-6 berisi .filter-label + kontrol 38px --}}
+                        {{-- kolom akhir: .btn-filter-primary (Terapkan) + .btn-filter-reset (reset) --}}
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 ```
 
-Use a primary `Filter` button and an outline-secondary reset button with the `mdi-refresh` icon.
+Aturan:
+- Panel: background `#f8fafc`, border `1px #e2e8f0`, radius `12px`, collapse tertutup default.
+- Semua kontrol tinggi 38px / radius 8px. **Jangan** pakai `.form-control-sm` atau `.btn-sm`.
+- Tombol Terapkan = `.btn-filter-primary` (gradient indigo). Reset = `.btn-filter-reset` (38×38, ikon `mdi-refresh`).
+- `#filterForm` adalah `<div>`, bukan `<form>`; tombol Terapkan `type="button"` yang diikat ke handler `click`.
+- **Dark mode wajib:** sertakan override `html[data-bs-theme="dark"]` (panel, header, label, kontrol, tombol reset). Jangan menulis `border … !important` inline — inline `!important` tidak bisa ditimpa dan merusak dark mode.
 
 ## DataTables standard
 
@@ -154,8 +172,8 @@ Use the local Flatpickr asset for report date filters. Do not use native `type="
 ```blade
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
 
-<input class="form-control form-control-sm" name="startDate" id="startDate" type="text"
-    placeholder="Pilih Tanggal Mulai" value="{{ $startDate }}">
+<input class="form-control filter-control" name="startDate" id="startDate" type="text"
+    placeholder="Pilih tanggal mulai" value="{{ $startDate }}">
 ```
 
 Load the local scripts before the page script and use the backend-compatible `Y-m-d` format:
@@ -258,7 +276,8 @@ Untuk halaman detail report atau dashboard yang menampilkan agregasi angka (sepe
 ## Implementation checklist
 
 - [ ] Card uses `border-0 shadow-sm` and 16px radius.
-- [ ] Filter bar uses a soft `#f8fafc` background and 12px radius.
+- [ ] Filter uses the standard `.filter-card` collapse panel (38px controls, radius 8px) — ref `operational/not-return-do`, spec in `phl-table-design` §3.
+- [ ] Filter panel has a `html[data-bs-theme="dark"]` override block (no white surface in dark mode).
 - [ ] Table uses `table align-middle w-100 mb-0`, not `table-striped`.
 - [ ] Table ID has scoped header, row, and hover styles.
 - [ ] Header uses uppercase 12px text with `#f8fafc` background.

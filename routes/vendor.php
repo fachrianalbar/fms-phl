@@ -21,7 +21,10 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
     // 2. Invoice Belum Lunas
     Route::get('invoice/unpaid', [VendorInvoiceController::class, 'indexUnpaid'])->name('invoice.unpaid');
 
-    // 2. Invoice Lunas
+    // 3. Invoice Dibayar Sebagian
+    Route::get('invoice/partial', [VendorInvoiceController::class, 'indexPartial'])->name('invoice.partial');
+
+    // 4. Invoice Lunas
     Route::get('invoice/paid', [VendorInvoiceController::class, 'indexPaid'])->name('invoice.paid');
 
     // Operasi invoice vendor (dipanggil dari halaman unpaid/paid)
@@ -43,6 +46,7 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
 Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('vendor-invoice/waiting', [VendorInvoiceController::class, 'datatableWaiting'])->name('vendor-invoice.waiting');
     Route::get('vendor-invoice/unpaid', [VendorInvoiceController::class, 'datatableUnpaid'])->name('vendor-invoice.unpaid');
+    Route::get('vendor-invoice/partial', [VendorInvoiceController::class, 'datatablePartial'])->name('vendor-invoice.partial');
     Route::get('vendor-invoice/paid', [VendorInvoiceController::class, 'datatablePaid'])->name('vendor-invoice.paid');
     Route::get('vendor-payment-list', [VendorPaymentListController::class, 'datatable'])->name('vendor-payment-list');
 });

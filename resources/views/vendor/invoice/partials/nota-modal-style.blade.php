@@ -1,4 +1,4 @@
-{{-- Styling modal Generate Nota (input manual PPN & PPh).
+{{-- Styling modal Generate Nota (PPN manual dan PPh otomatis).
     Di-include dari vendor/invoice/partials/modals.blade.php. --}}
 
 <style>
@@ -285,5 +285,91 @@
         .nota-modal-footer {
             padding: 12px 16px;
         }
+    }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .nota-modal-section {
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .nota-modal-section-title,
+    html[data-bs-theme="dark"] .nota-field-label {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .nota-tax-hint {
+        color: #4ade80;
+        background: rgba(22, 163, 74, 0.16);
+        border-color: rgba(22, 163, 74, 0.4);
+    }
+    html[data-bs-theme="dark"] .nota-info-tile {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .nota-info-tile-label {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .nota-info-tile-value {
+        color: var(--bs-heading-color);
+    }
+    html[data-bs-theme="dark"] .nota-order-codes {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .nota-order-codes .nota-order-chip {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .nota-calc-row {
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .nota-calc-label {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .nota-calc-value {
+        color: var(--bs-heading-color);
+    }
+    html[data-bs-theme="dark"] .nota-tax-input-group .input-group-text {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .nota-tax-input {
+        color: var(--bs-body-color);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .nota-tax-preview {
+        background: rgba(37, 99, 235, 0.16) !important;
+        border-color: rgba(37, 99, 235, 0.4) !important;
+        color: #93c5fd !important;
+    }
+    html[data-bs-theme="dark"] .nota-grand-total {
+        background: rgba(22, 163, 74, 0.16);
+        border-color: rgba(22, 163, 74, 0.4);
+    }
+    html[data-bs-theme="dark"] .nota-grand-total-label,
+    html[data-bs-theme="dark"] .nota-grand-total-value {
+        color: #86efac;
+    }
+    html[data-bs-theme="dark"] .nota-grand-total-label small {
+        color: #4ade80;
+    }
+    html[data-bs-theme="dark"] .nota-grand-total.nota-grand-total-negative {
+        background: rgba(239, 68, 68, 0.16);
+        border-color: rgba(239, 68, 68, 0.4);
+    }
+    html[data-bs-theme="dark"] .nota-grand-total-negative .nota-grand-total-label,
+    html[data-bs-theme="dark"] .nota-grand-total-negative .nota-grand-total-value {
+        color: #fca5a5;
+    }
+    html[data-bs-theme="dark"] .nota-grand-total-negative .nota-grand-total-label small {
+        color: #f87171;
+    }
+    html[data-bs-theme="dark"] .nota-modal-footer {
+        background: var(--bs-card-bg);
+        border-top-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .nota-modal-footer-info {
+        color: var(--bs-secondary-color);
     }
 </style>

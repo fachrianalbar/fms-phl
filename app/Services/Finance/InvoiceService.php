@@ -11,6 +11,7 @@ use App\Models\Operational\Order;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 
 class InvoiceService
 {
@@ -45,9 +46,44 @@ class InvoiceService
         ])->orderBy('created_at', 'desc')->get();
     }
 
-    public function findUnpaid()
+    private function settledExpression(): string
     {
-        return $this->service->with([
+        return 'COALESCE((SELECT SUM(ip.amount) FROM invoice_payment ip WHERE ip.invoiceCode = invoice.code AND ip.deleted_at IS NULL), 0)
+            + COALESCE((SELECT SUM(ipc.amount) FROM invoice_payment_claim ipc WHERE ipc.invoiceCode = invoice.code AND ipc.deleted_at IS NULL), 0)';
+    }
+
+    private function billingExpression(): string
+    {
+        return '(COALESCE(invoice.invoiceAmount, 0) + COALESCE(invoice.ppnAmount, 0) - COALESCE(invoice.pphAmount, 0))';
+    }
+
+    /**
+     * Klasifikasi faktur berdasarkan pembayaran + claim aktual, bukan status tersimpan.
+     */
+    public function paymentStateQuery(string $state): Builder
+    {
+        $query = $this->service->newQuery();
+        $settled = $this->settledExpression();
+        $billing = $this->billingExpression();
+
+        return match ($state) {
+            'open' => $query
+                ->whereRaw("{$billing} > 0")
+                ->whereRaw("{$settled} < {$billing}"),
+            'unpaid' => $query->whereRaw("{$settled} = 0"),
+            'partial' => $query
+                ->whereRaw("{$settled} > 0")
+                ->whereRaw("{$settled} < {$billing}"),
+            'paid' => $query
+                ->whereRaw("{$billing} > 0")
+                ->whereRaw("{$settled} >= {$billing}"),
+            default => throw new \InvalidArgumentException("Status pembayaran faktur tidak dikenal: {$state}"),
+        };
+    }
+
+    private function invoiceListingQuery(string $state): Builder
+    {
+        return $this->paymentStateQuery($state)->with([
             'customer',
             'payments',
             'claims',
@@ -55,29 +91,51 @@ class InvoiceService
             'details.order.route.originLocation',
             'details.order.route.destinationLocation',
             'details.order.fleet',
-        ])
-            ->where(function ($q) {
-                $q->whereNull('status')
-                    ->orWhere('status', '!=', Invoice::STATUS_FULL);
-            })
-            ->orderBy('created_at', 'desc')
+        ]);
+    }
+
+    public function findUnpaid()
+    {
+        return $this->invoiceListingQuery('unpaid')
+            ->orderBy('invoiceDate', 'asc')
+            ->orderBy('created_at', 'asc')
+            ->get();
+    }
+
+    public function findPartial()
+    {
+        return $this->invoiceListingQuery('partial')
+            ->orderBy('invoiceDate', 'asc')
+            ->orderBy('created_at', 'asc')
             ->get();
     }
 
     public function findPaid()
     {
-        return $this->service->with([
-            'customer',
-            'payments',
-            'claims',
-            'details.order.cost.costComponent',
-            'details.order.route.originLocation',
-            'details.order.route.destinationLocation',
-            'details.order.fleet',
-        ])
-            ->where('status', Invoice::STATUS_FULL)
+        return $this->invoiceListingQuery('paid')
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    public function determinePaymentStatus(Invoice $invoice, ?float $billing = null): int
+    {
+        $billing ??= (float) (($invoice->invoiceAmount ?? 0) + ($invoice->ppnAmount ?? 0) - ($invoice->pphAmount ?? 0));
+        $settled = (float) $invoice->payments()->sum('amount')
+            + (float) $invoice->claims()->sum('amount');
+
+        if ($billing > 0 && $settled >= $billing) {
+            return Invoice::STATUS_FULL;
+        }
+
+        return $settled > 0 ? Invoice::STATUS_PARTIAL : Invoice::STATUS_CREATE;
+    }
+
+    public function synchronizePaymentStatus(Invoice $invoice, ?float $billing = null): int
+    {
+        $status = $this->determinePaymentStatus($invoice, $billing);
+        $this->service->newQuery()->whereKey($invoice->getKey())->update(['status' => $status]);
+
+        return $status;
     }
 
     public function getById($id)
@@ -142,7 +200,7 @@ class InvoiceService
             ->toArray();
 
         if (! empty($usedOrders)) {
-            throw new \RuntimeException('Order berikut sudah digunakan di invoice lain: ' . implode(', ', $usedOrders));
+            throw new \RuntimeException('Order berikut sudah digunakan di invoice lain: '.implode(', ', $usedOrders));
         }
     }
 
@@ -155,7 +213,7 @@ class InvoiceService
             ->toArray();
 
         if (! empty($invalidOrders)) {
-            throw new \RuntimeException('Order berikut tidak sesuai dengan customer invoice: ' . implode(', ', $invalidOrders));
+            throw new \RuntimeException('Order berikut tidak sesuai dengan customer invoice: '.implode(', ', $invalidOrders));
         }
     }
 
@@ -174,7 +232,7 @@ class InvoiceService
             ->toArray();
 
         if (! empty($directPayOrders)) {
-            throw new \RuntimeException('Order customer langsung cetak tidak dapat difaktur. Gunakan menu Pembayaran Langsung: ' . implode(', ', $directPayOrders));
+            throw new \RuntimeException('Order customer langsung cetak tidak dapat difaktur. Gunakan menu Pembayaran Langsung: '.implode(', ', $directPayOrders));
         }
     }
 
@@ -230,19 +288,11 @@ class InvoiceService
             'pphAmount' => $totals['pph'],
         ]);
 
-        // Update invoice status after recalc
+        // Sinkronkan status dari pembayaran + claim aktual.
         try {
-            $sumPayments = (int) $this->service->find($data->id)->payments()->sum('amount');
-            $invoiceTotal = (int) $totals['total'];
-            $nextStatus = Invoice::STATUS_CREATE;
-            if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
-                $nextStatus = Invoice::STATUS_FULL;
-            } elseif ($sumPayments > 0) {
-                $nextStatus = Invoice::STATUS_PARTIAL;
-            }
-            $this->service->where('id', $data->id)->update(['status' => $nextStatus]);
+            $this->synchronizePaymentStatus($data, (float) $totals['total']);
         } catch (\Exception $e) {
-            logger()->error('Failed to update invoice status after recalculation for invoice ' . $data->code . ': ' . $e->getMessage());
+            logger()->error('Failed to update invoice status after recalculation for invoice '.$data->code.': '.$e->getMessage());
         }
         $this->logActivity($title, $data, 'Create');
 
@@ -272,6 +322,7 @@ class InvoiceService
             'ppnAmount' => $totals['ppn'],
             'pphAmount' => $totals['pph'],
         ]);
+        $this->synchronizePaymentStatus($data, (float) $totals['total']);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }
@@ -360,7 +411,7 @@ class InvoiceService
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
             } catch (\Exception $e) {
-                logger()->error('Failed to update invoice status after adding details for invoice ' . $invoice->code . ': ' . $e->getMessage());
+                logger()->error('Failed to update invoice status after adding details for invoice '.$invoice->code.': '.$e->getMessage());
             }
         }
     }
@@ -404,7 +455,7 @@ class InvoiceService
                 }
                 $this->service->where('id', $invoice->id)->update(['status' => $nextStatus]);
             } catch (\Exception $e) {
-                logger()->error('Failed to update invoice status after removing details for invoice ' . $invoice->code . ': ' . $e->getMessage());
+                logger()->error('Failed to update invoice status after removing details for invoice '.$invoice->code.': '.$e->getMessage());
             }
         }
     }
@@ -414,7 +465,7 @@ class InvoiceService
      */
     public function calculateInvoiceAmount($invoiceOrId)
     {
-        $invoice = $invoiceOrId instanceof \App\Models\Finance\Invoice ? $invoiceOrId : $this->getById($invoiceOrId);
+        $invoice = $invoiceOrId instanceof Invoice ? $invoiceOrId : $this->getById($invoiceOrId);
 
         if (! $invoice) {
             return 0;
@@ -492,7 +543,7 @@ class InvoiceService
 
         // Format: INV/{FORMAT-COMPANY}/{CODE-CUSTOMER}/{NO-URUT}/{BULAN}/{TAHUN}
         foreach ($invoices as $invoice) {
-            if (preg_match('/INV\/' . preg_quote($customer->company->format, '/') . '\/' . preg_quote($customer->code, '/') . '\/(\d{5})\//', $invoice->invoiceNumber, $matches)) {
+            if (preg_match('/INV\/'.preg_quote($customer->company->format, '/').'\/'.preg_quote($customer->code, '/').'\/(\d{5})\//', $invoice->invoiceNumber, $matches)) {
                 $lastNumber = max($lastNumber, (int) $matches[1]);
             }
         }
@@ -500,7 +551,7 @@ class InvoiceService
         $increment = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
         $companyFormat = $customer->company->format ?? 'DEFAULT';
 
-        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $increment . '/' . $currentMonth . '/' . $currentYear;
+        return 'INV/'.$companyFormat.'/'.$customer->code.'/'.$increment.'/'.$currentMonth.'/'.$currentYear;
     }
 
     public function recalculate($invoiceId)
@@ -604,9 +655,9 @@ class InvoiceService
         foreach ($invoicesToShift as $item) {
             $nextSeq = str_pad($item['sequence'] + 1, 5, '0', STR_PAD_LEFT);
             $newNum = "INV/{$companyFormat}/{$customerCode}/{$nextSeq}/{$month}/{$year}";
-            
+
             $item['invoice']->update([
-                'invoiceNumber' => $newNum
+                'invoiceNumber' => $newNum,
             ]);
 
             $this->logActivity('Invoice', $item['invoice'], 'Shift Invoice Number due to Conflict');
@@ -621,7 +672,7 @@ class InvoiceService
 
         // Finally, update the target invoice
         $this->service->where('id', $id)->update([
-            'invoiceNumber' => $resolved->resolvedCode
+            'invoiceNumber' => $resolved->resolvedCode,
         ]);
 
         $updatedInvoice = $this->getById($id);
@@ -663,7 +714,7 @@ class InvoiceService
         $nextNumber = str_pad($maxNumber + 1, 5, '0', STR_PAD_LEFT);
         $companyFormat = $customer->company->format ?? 'DEFAULT';
 
-        return 'INV/' . $companyFormat . '/' . $customer->code . '/' . $nextNumber . '/' . $currentMonth . '/' . $currentYear;
+        return 'INV/'.$companyFormat.'/'.$customer->code.'/'.$nextNumber.'/'.$currentMonth.'/'.$currentYear;
     }
 
     private function resolveInvoiceNumber(string $number, string $customerCode, string $invoiceDate, ?string $ignoreId = null)

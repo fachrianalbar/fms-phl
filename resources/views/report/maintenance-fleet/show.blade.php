@@ -145,6 +145,56 @@
             color: #64748b;
             font-size: 12px;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt-maintenance-detail {
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt-maintenance-detail thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt-maintenance-detail tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #dt-maintenance-detail tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        html[data-bs-theme="dark"] #dt-maintenance-detail_wrapper .dataTables_info,
+        html[data-bs-theme="dark"] #dt-maintenance-detail_wrapper .dataTables_length,
+        html[data-bs-theme="dark"] #dt-maintenance-detail_wrapper .dataTables_filter {
+            color: var(--bs-secondary-color);
+        }
+
+        /* Summary tiles */
+        html[data-bs-theme="dark"] .summary-maintenance {
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.22), rgba(99, 102, 241, 0.12));
+            border-color: rgba(129, 140, 248, 0.35);
+            color: #a5b4fc;
+        }
+        html[data-bs-theme="dark"] .summary-qty {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(5, 150, 105, 0.12));
+            border-color: rgba(52, 211, 153, 0.35);
+            color: #6ee7b7;
+        }
+        html[data-bs-theme="dark"] .summary-cost {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.12));
+            border-color: rgba(251, 191, 36, 0.35);
+            color: #fde68a;
+        }
+
+        /* Filter bar follows the dark surface. */
+        html[data-bs-theme="dark"] .card.border-0.mb-4 .form-label,
+        html[data-bs-theme="dark"] .card.border-0.mb-4 .text-muted {
+            color: var(--bs-secondary-color) !important;
+        }
+        /* Fleet banner (inline white) → dark surface so its text stays readable. */
+        html[data-bs-theme="dark"] .card[style*="background: #ffffff"] {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
     </style>
 @endpush
 
@@ -208,7 +258,7 @@
             <div class="card-body p-4">
                 {{-- Filter Bar --}}
                 <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    style="background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color) !important; border-radius: 12px;">
                     <div class="card-body p-3">
                         <form method="GET" action="{{ route('report.maintenance-fleet.detail', ['fleetCode' => $fleet->code]) }}"
                             class="row g-2 align-items-end mb-0">

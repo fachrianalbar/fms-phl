@@ -65,20 +65,10 @@ class UpdateInvoiceAmounts extends Command
                 $invoice->update([
                     'invoiceAmount' => $totals['subtotal'],
                     'ppnAmount' => $totals['ppn'],
+                    'pphAmount' => $totals['pph'],
                 ]);
 
-                // Update invoice status based on payments
-                $sumPayments = (int) $invoice->payments()->sum('amount');
-                $invoiceTotal = (int) ($totals['subtotal'] + $totals['ppn']);
-
-                $nextStatus = Invoice::STATUS_CREATE;
-                if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
-                    $nextStatus = Invoice::STATUS_FULL;
-                } elseif ($sumPayments > 0) {
-                    $nextStatus = Invoice::STATUS_PARTIAL;
-                }
-
-                $invoice->update(['status' => $nextStatus]);
+                $this->invoiceService->synchronizePaymentStatus($invoice, (float) $totals['total']);
 
                 $processed++;
             } catch (\Exception $e) {

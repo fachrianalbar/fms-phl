@@ -74,6 +74,149 @@
             transform: translateY(-1px);
         }
 
+        /* ── Standar Filter Card Collapse (PHL §3) ── */
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+
+        .filter-card-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-card .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
+
+        .filter-label {
+            color: #64748b;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .filter-control,
+        .filter-card .form-control {
+            background-color: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #334155 !important;
+            font-size: 13px !important;
+            height: 38px !important;
+        }
+
+        .filter-control {
+            padding: 0 12px 0 36px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 15px 15px;
+            transition: all 0.2s ease !important;
+        }
+
+        .filter-control::placeholder {
+            color: #94a3b8 !important;
+            font-size: 13px !important;
+        }
+
+        .filter-control:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        .filter-control:focus {
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
+            background-color: #ffffff !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+        }
+
+        .btn-filter-primary {
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+            border: 0 !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            display: inline-flex;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
+            height: 38px;
+            justify-content: center;
+            padding: 0 16px;
+            white-space: nowrap;
+        }
+
+        .btn-filter-reset {
+            align-items: center;
+            background: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #64748b !important;
+            display: inline-flex;
+            height: 38px;
+            justify-content: center;
+            min-width: 38px;
+            padding: 0 !important;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
         /* ── Select2 Theme Matching ── */
         .select2-container--default .select2-selection--single {
             border: 1px solid #cbd5e1 !important;
@@ -136,6 +279,62 @@
             color: #64748b;
             font-size: 12px;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        /* ── Filter card (dark) ── */
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .filter-card .form-control {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
     </style>
 @endpush
 
@@ -178,63 +377,67 @@
             <div class="card-body p-4">
                 @include('partials.alert')
 
-                {{-- Filter Bar (selalu terbuka) --}}
-                <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <form id="filterForm">
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;"
-                                        for="companyCode">{{ __('menu_customer.company') }}</label>
-                                    <select class="form-select form-select-sm select2-filter" name="companyCode"
-                                        id="companyCode" style="width: 100%;">
-                                        <option value="">Semua Perusahaan</option>
-                                        @foreach ($company as $item)
-                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                {{-- Filter Bar (collapse, tertutup default) --}}
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#customerFilterCollapse" aria-expanded="false"
+                        aria-controls="customerFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar customer</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;"
-                                        for="type">{{ __('menu_customer.type') }}</label>
-                                    <select class="form-select form-select-sm select2-filter" name="type"
-                                        id="type" style="width: 100%;">
-                                        <option value="">Semua Tipe</option>
-                                        <option value="Company">{{ __('menu_customer.company') }}</option>
-                                        <option value="Individual">{{ __('menu_customer.person') }}</option>
-                                    </select>
-                                </div>
+                    <div class="collapse filter-collapse" id="customerFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="companyCode">{{ __('menu_customer.company') }}</label>
+                                        <select class="form-select select2-filter" name="companyCode" id="companyCode">
+                                            <option value="">Semua Perusahaan</option>
+                                            @foreach ($company as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;"
-                                        for="startDate">Dari Tanggal</label>
-                                    <input class="form-control form-control-sm" name="startDate" id="startDate"
-                                        type="text" placeholder="Pilih Tanggal Mulai"
-                                        style="border-radius: 8px; background: #fff;">
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="type">{{ __('menu_customer.type') }}</label>
+                                        <select class="form-select select2-filter" name="type" id="type">
+                                            <option value="">Semua Tipe</option>
+                                            <option value="Company">{{ __('menu_customer.company') }}</option>
+                                            <option value="Individual">{{ __('menu_customer.person') }}</option>
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-2">
-                                    <label class="form-label fw-semibold text-muted mb-1" style="font-size: 12px;"
-                                        for="endDate">Sampai Tanggal</label>
-                                    <input class="form-control form-control-sm" name="endDate" id="endDate"
-                                        type="text" placeholder="Pilih Tanggal Akhir"
-                                        style="border-radius: 8px; background: #fff;">
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
 
-                                <div class="col-md-3 d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary w-100" style="border-radius: 8px; font-weight: 600;"
-                                        type="submit" id="btnFilter">
-                                        <i class="mdi mdi-filter me-1"></i> Filter
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px;"
-                                        id="btnResetFilter" title="Reset Filter">
-                                        <i class="mdi mdi-refresh"></i>
-                                    </button>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate"
+                                            type="text" placeholder="Pilih tanggal akhir">
+                                    </div>
+
+                                    <div class="col-12 d-flex align-items-end justify-content-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -301,15 +504,13 @@
         ]);
 
         $(document).ready(function() {
-            // 1. Inisialisasi Select2
-            $('#companyCode').select2({
-                placeholder: 'Semua Perusahaan',
-                allowClear: true
-            });
+            const $filterForm = $('#filterForm');
 
-            $('#type').select2({
-                placeholder: 'Semua Tipe',
-                allowClear: true
+            // 1. Inisialisasi Select2
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
             });
 
             // 2. Inisialisasi Flatpickr (format standar backend Y-m-d)
@@ -329,25 +530,29 @@
                 }
             });
 
-            // 3. Sinkronisasi parameter filter ke tombol Export Excel & PDF
+            // 3. Kumpulan parameter filter aktif
+            function getFilters() {
+                return {
+                    companyCode: $('#companyCode').val() || '',
+                    type: $('#type').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            // 4. Sinkronisasi parameter filter ke tombol Export Excel & PDF
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                const companyCode = $('#companyCode').val();
-                const type = $('#type').val();
-                const startDate = $('#startDate').val();
-                const endDate = $('#endDate').val();
-
-                if (companyCode) params.set('companyCode', companyCode);
-                if (type) params.set('type', type);
-                if (startDate) params.set('startDate', startDate);
-                if (endDate) params.set('endDate', endDate);
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
 
                 const qs = params.toString() ? '?' + params.toString() : '';
                 $('#export-excel').attr('href', "{{ route($view . 'export-excel') }}" + qs);
                 $('#export-pdf').attr('href', "{{ route($view . 'export-pdf') }}" + qs);
             }
 
-            // 4. Inisialisasi DataTables
+            // 5. Inisialisasi DataTables
             const table = $('#dt').DataTable({
                 processing: true,
                 serverSide: true,
@@ -356,10 +561,7 @@
                 ajax: {
                     url: "{{ route('dt.customer') }}",
                     data: function(d) {
-                        d.companyCode = $('#companyCode').val();
-                        d.type = $('#type').val();
-                        d.startDate = $('#startDate').val();
-                        d.endDate = $('#endDate').val();
+                        Object.assign(d, getFilters());
                     }
                 },
                 columns: [
@@ -411,21 +613,29 @@
                 }
             });
 
-            // 5. Submit Filter
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
+            function reloadWithFilters() {
                 syncExportUrls();
-                table.ajax.reload();
+                table.ajax.reload(null, true);
+            }
+
+            // 6. Terapkan Filter (tombol & Enter) -> reload
+            $('#btnFilter').on('click', reloadWithFilters);
+            $filterForm.on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
             });
 
-            // 6. Reset Filter
+            // 7. Reset Filter
             $('#btnResetFilter').on('click', function() {
-                $('#companyCode').val('').trigger('change');
-                $('#type').val('').trigger('change');
-                if (filterStartPicker) filterStartPicker.clear();
-                if (filterEndPicker) filterEndPicker.clear();
-                syncExportUrls();
-                table.ajax.reload();
+                $filterForm.find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                filterStartPicker.clear();
+                filterEndPicker.clear();
+                filterStartPicker.set('maxDate', null);
+                filterEndPicker.set('minDate', null);
+                reloadWithFilters();
             });
 
             // Sinkronkan URL export saat halaman pertama kali dimuat

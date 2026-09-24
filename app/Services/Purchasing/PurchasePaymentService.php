@@ -331,10 +331,6 @@ class PurchasePaymentService
         $purchaseCodes = $payments->pluck('purchase_code')->all();
         $totalPaymentAmount = (int) $payments->sum('amount');
 
-        if ($totalPaymentAmount > 2147483647) {
-            throw new \DomainException('Total pembayaran maksimal Rp 2.147.483.647 per transaksi.', 422);
-        }
-
         $payloadHash = $this->paymentPayloadHash($request, $payments);
 
         $existingBatch = $this->batch->newQuery()->where('request_key', $requestKey)->first();
@@ -638,14 +634,10 @@ class PurchasePaymentService
         }
 
         $amount = (int) round($amount);
-        $currentCredit = (int) round((float) $liveMutation->credit);
-        $currentDebit = (int) round((float) $liveMutation->debit);
+        $currentCredit = (float) $liveMutation->credit;
+        $currentDebit = (float) $liveMutation->debit;
 
         if ($direction === 'out') {
-            if ($currentCredit + $amount > 2147483647) {
-                throw new \DomainException('Akumulasi pengeluaran rekening melewati kapasitas ledger.', 422);
-            }
-
             $currentCredit += $amount;
         } else {
             $currentDebit += $amount;

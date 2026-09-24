@@ -74,6 +74,73 @@
             transform: translateY(-1px);
         }
 
+        /* ── Standar Filter Card Collapse (PHL §3) ── */
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+
+        .filter-card-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
+
         /* ── Standarisasi Seragam Filter Bar (Tinggi Presisi: 38px) ── */
         .filter-label {
             font-size: 12px;
@@ -399,6 +466,85 @@
                 padding: 18px;
             }
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        /* ── Filter card (dark) ── */
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .filter-card .form-control {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        /* Modal CRUD: dark surfaces + light labels/buttons. */
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .modal-content {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .modal-body {
+            background-color: var(--bs-card-bg) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .modal-footer {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .form-label {
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .btn-modal-cancel {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
     </style>
 @endpush
 
@@ -441,56 +587,68 @@
             <div class="card-body p-4">
                 @include('partials.alert')
 
-                {{-- Filter Bar (Selalu Terbuka & Ukuran Seragam Presisi 38px) --}}
-                <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <form id="filterForm">
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-3">
-                                    <label class="filter-label" for="companyCode">Perusahaan Armada</label>
-                                    <select class="form-select select2-filter" name="companyCode"
-                                        id="companyCode" style="width: 100%;">
-                                        <option value="">Semua Perusahaan</option>
-                                        @foreach ($companies as $item)
-                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                {{-- Filter Bar (collapse, tertutup default) --}}
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#fleetCompanyFilterCollapse" aria-expanded="false"
+                        aria-controls="fleetCompanyFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar perusahaan armada</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-                                <div class="col-md-3">
-                                    <label class="filter-label" for="type">Tipe Kepemilikan</label>
-                                    <select class="form-select select2-filter" name="type"
-                                        id="type" style="width: 100%;">
-                                        <option value="">Semua Tipe</option>
-                                        <option value="Internal">Internal</option>
-                                        <option value="External">External</option>
-                                    </select>
-                                </div>
+                    <div class="collapse filter-collapse" id="fleetCompanyFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="companyCode">Perusahaan Armada</label>
+                                        <select class="form-select select2-filter" name="companyCode"
+                                            id="companyCode">
+                                            <option value="">Semua Perusahaan</option>
+                                            @foreach ($companies as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-2">
-                                    <label class="filter-label" for="startDate">Dari Tanggal</label>
-                                    <input class="form-control filter-control" name="startDate" id="startDate"
-                                        type="text" placeholder="Pilih Tanggal Mulai">
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="type">Tipe Kepemilikan</label>
+                                        <select class="form-select select2-filter" name="type"
+                                            id="type">
+                                            <option value="">Semua Tipe</option>
+                                            <option value="Internal">Internal</option>
+                                            <option value="External">External</option>
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-2">
-                                    <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                                    <input class="form-control filter-control" name="endDate" id="endDate"
-                                        type="text" placeholder="Pilih Tanggal Akhir">
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
 
-                                <div class="col-md-2 d-flex gap-2">
-                                    <button class="btn btn-filter-primary flex-grow-1" type="submit" id="btnFilter">
-                                        <i class="mdi mdi-filter fs-14"></i> Filter
-                                    </button>
-                                    <button type="button" class="btn btn-filter-reset" id="btnResetFilter"
-                                        data-bs-toggle="tooltip" title="Reset Filter">
-                                        <i class="mdi mdi-refresh fs-16"></i>
-                                    </button>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate"
+                                            type="text" placeholder="Pilih tanggal akhir">
+                                    </div>
+
+                                    <div class="col-12 d-flex align-items-end justify-content-end gap-2">
+                                        <button class="btn btn-filter-primary" type="button" id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -624,15 +782,19 @@
         let filterEndPicker;
 
         $(document).ready(function() {
+            const $filterForm = $('#filterForm');
+
             // 1. Inisialisasi Select2
             $('#companyCode').select2({
                 placeholder: 'Semua Perusahaan',
-                allowClear: true
+                allowClear: true,
+                width: '100%'
             });
 
             $('#type').select2({
                 placeholder: 'Semua Tipe',
-                allowClear: true
+                allowClear: true,
+                width: '100%'
             });
 
             // 2. Inisialisasi Flatpickr (format standar backend Y-m-d)
@@ -652,25 +814,29 @@
                 }
             });
 
-            // 3. Sinkronisasi parameter filter ke tombol Export Excel & PDF
+            // 3. Kumpulan parameter filter aktif
+            function getFilters() {
+                return {
+                    companyCode: $('#companyCode').val() || '',
+                    type: $('#type').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            // 4. Sinkronisasi parameter filter ke tombol Export Excel & PDF
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                const companyCode = $('#companyCode').val();
-                const type = $('#type').val();
-                const startDate = $('#startDate').val();
-                const endDate = $('#endDate').val();
-
-                if (companyCode) params.set('companyCode', companyCode);
-                if (type) params.set('type', type);
-                if (startDate) params.set('startDate', startDate);
-                if (endDate) params.set('endDate', endDate);
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
 
                 const qs = params.toString() ? '?' + params.toString() : '';
                 $('#export-excel').attr('href', "{{ route($view . 'export-excel') }}" + qs);
                 $('#export-pdf').attr('href', "{{ route($view . 'export-pdf') }}" + qs);
             }
 
-            // 4. Inisialisasi DataTables
+            // 5. Inisialisasi DataTables
             const table = $('#dt').DataTable({
                 processing: true,
                 serverSide: true,
@@ -679,10 +845,7 @@
                 ajax: {
                     url: "{{ route('dt.fleet-company') }}",
                     data: function(d) {
-                        d.companyCode = $('#companyCode').val();
-                        d.type = $('#type').val();
-                        d.startDate = $('#startDate').val();
-                        d.endDate = $('#endDate').val();
+                        Object.assign(d, getFilters());
                     }
                 },
                 columns: [
@@ -714,22 +877,38 @@
                 }
             });
 
-            // 5. Submit Filter
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
+            function reloadWithFilters() {
                 syncExportUrls();
-                table.ajax.reload();
+                table.ajax.reload(null, true);
+            }
+
+            // 6. Submit Filter (tombol & Enter)
+            $('#btnFilter').on('click', reloadWithFilters);
+            $filterForm.on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
             });
 
-            // 6. Reset Filter
+            // 7. Reset Filter
             $('#btnResetFilter').on('click', function() {
+                $filterForm.find('input').val('');
                 $('#companyCode').val('').trigger('change');
                 $('#type').val('').trigger('change');
-                if (filterStartPicker) filterStartPicker.clear();
-                if (filterEndPicker) filterEndPicker.clear();
-                syncExportUrls();
-                table.ajax.reload();
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
+
+            // Sinkronkan URL export saat pertama dimuat
+            syncExportUrls();
 
             // 7. Reset modal ke mode tambah saat dibuka dari tombol tambah
             $('#fleetCompanyCrudModal').on('show.bs.modal', function(event) {

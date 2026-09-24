@@ -347,6 +347,48 @@
             flex: 1 1 0;
         }
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .user-bank-modal .modal-content {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-modal .modal-body {
+        background: var(--bs-body-bg);
+    }
+    html[data-bs-theme="dark"] .user-bank-section {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-section-heading {
+        border-bottom-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-section-icon {
+        color: #93c5fd;
+        background: rgba(37, 99, 235, 0.16);
+        border-color: rgba(37, 99, 235, 0.35);
+    }
+    html[data-bs-theme="dark"] .user-bank-section-title {
+        color: var(--bs-heading-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-section-subtitle,
+    html[data-bs-theme="dark"] .user-bank-helper,
+    html[data-bs-theme="dark"] .user-bank-footer-note {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-field label {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-control-shell > .mdi {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-balance-field {
+        background: var(--bs-tertiary-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .user-bank-modal .modal-footer {
+        background: var(--bs-card-bg);
+        border-top-color: var(--bs-border-color);
+    }
 </style>
 
 <!-- Modal CRUD User Bank -->

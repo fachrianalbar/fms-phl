@@ -1107,9 +1107,6 @@ class DirectPaymentService
         $payments = $payments->sortBy('nota_number', SORT_STRING)->values();
         $notaNumbers = $payments->pluck('nota_number')->all();
         $totalPaymentAmount = (int) $payments->sum('amount');
-        if ($totalPaymentAmount > 2147483647) {
-            throw new \DomainException('Total pembayaran maksimal Rp 2.147.483.647 per transaksi.', 422);
-        }
 
         $payloadHash = $this->paymentPayloadHash($request, $payments);
         $existingBatch = OrderPaymentBatch::where('request_key', $requestKey)->first();
@@ -1273,13 +1270,8 @@ class DirectPaymentService
             throw new \LogicException('Persisted order payment allocation total is inconsistent.');
         }
 
-        // Penerimaan uang menambah DEBIT rekening (balance = debit - credit).
-        $currentCredit = (int) round((float) $liveMutation->credit);
-        $currentDebit = (int) round((float) $liveMutation->debit);
-        if ($currentDebit + $totalPaymentAmount > 2147483647) {
-            throw new \DomainException('Akumulasi penerimaan rekening melewati kapasitas ledger.', 422);
-        }
-
+        $currentCredit = (float) $liveMutation->credit;
+        $currentDebit = (float) $liveMutation->debit;
         $liveMutation->debit = $currentDebit + $totalPaymentAmount;
         $liveMutation->balance = $liveMutation->debit - $currentCredit;
         $liveMutation->save();

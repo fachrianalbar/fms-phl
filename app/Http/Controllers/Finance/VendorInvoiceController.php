@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
 use App\Models\CompanySetting;
 use App\Models\Finance\VendorPayment;
+use App\Models\Mutation;
+use App\Models\Operational\Order;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
-
 use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,16 +75,27 @@ class VendorInvoiceController extends Controller
     }
 
     /**
-     * Halaman Invoice Belum Lunas (Vendor).
+     * Halaman Invoice Belum Dibayar (Vendor).
      */
     public function indexUnpaid()
     {
-        $stats = $this->service->statsUnpaid();
-
         return view($this->view.'unpaid')
             ->with('view', $this->view)
-            ->with('title', $this->pageTitle('VENDOR_INV_UNPAID', 'Invoice Belum Lunas'))
-            ->with('stats', $stats);
+            ->with('title', $this->pageTitle('VENDOR_INV_UNPAID', 'Invoice Belum Dibayar'))
+            ->with('listType', 'pending')
+            ->with('stats', $this->service->statsUnpaid());
+    }
+
+    /**
+     * Halaman Invoice Dibayar Sebagian (Vendor).
+     */
+    public function indexPartial()
+    {
+        return view($this->view.'unpaid')
+            ->with('view', $this->view)
+            ->with('title', $this->pageTitle('VENDOR_INV_PARTIAL', 'Invoice Dibayar Sebagian'))
+            ->with('listType', 'partial')
+            ->with('stats', $this->service->statsPartial());
     }
 
     /**
@@ -120,7 +133,7 @@ class VendorInvoiceController extends Controller
                         $text = mb_strtolower(trim(preg_replace('/\s+/u', ' ', $text) ?? $text));
                         $compact = preg_replace('/[^\pL\pN]+/u', '', $text) ?? '';
 
-                        return $text . ' ' . $compact;
+                        return $text.' '.$compact;
                     };
 
                     $terms = preg_split('/\s+/u', mb_strtolower($keyword), -1, PREG_SPLIT_NO_EMPTY) ?: [];
@@ -164,10 +177,12 @@ class VendorInvoiceController extends Controller
                     $remainingAmount = max(0, $billingAmount - $paidAmount);
                     $orderFormat = strtoupper(trim((string) ($row->customer->company->format ?? '')));
                     $customerCode = $row->customerCode ?? ($row->customer->code ?? '');
+                    $customerCompanyName = $row->customer->company->name ?? '';
                     $fleetCompanyCode = $row->fleet->fleetCompanyCode ?? '';
                     $fleetCompanyName = $row->fleet->company->name ?? '';
+                    $fleetCompanyPph = (float) ($row->fleet->company->pph ?? 0);
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="' . e($row->code) . '" data-customer-code="' . e($customerCode) . '" data-fleet-company-code="' . e($fleetCompanyCode) . '" data-fleet-company-name="' . e($fleetCompanyName) . '" data-order-format="' . e($orderFormat) . '" data-billing-amount="' . $billingAmount . '" data-paid-amount="' . $paidAmount . '" data-remaining-amount="' . $remainingAmount . '" data-checkbox-type="nota" data-nota-number=""></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-code="'.e($row->code).'" data-customer-code="'.e($customerCode).'" data-customer-company-name="'.e($customerCompanyName).'" data-fleet-company-code="'.e($fleetCompanyCode).'" data-fleet-company-name="'.e($fleetCompanyName).'" data-fleet-company-pph="'.$fleetCompanyPph.'" data-order-format="'.e($orderFormat).'" data-billing-amount="'.$billingAmount.'" data-paid-amount="'.$paidAmount.'" data-remaining-amount="'.$remainingAmount.'" data-checkbox-type="nota" data-nota-number=""></div>';
                 })
                 ->editColumn('shipmentNumber', function ($row) {
                     return e($row->shipmentNumber ?: '-');
@@ -227,12 +242,12 @@ class VendorInvoiceController extends Controller
                     $details = $costs->map(function ($cost) {
                         $name = $cost->costComponent->name ?? ($cost->description ?? 'Biaya Tambahan');
 
-                        return e($name) . ' · Rp ' . number_format((float) ($cost->nominal ?? 0), 0, ',', '.');
+                        return e($name).' · Rp '.number_format((float) ($cost->nominal ?? 0), 0, ',', '.');
                     })->implode('<br>');
 
-                    return '<div class="vendor-on-charge-cell" title="' . e(strip_tags(str_replace('<br>', ', ', $details))) . '">' .
-                        '<strong>+ Rp ' . number_format($amount, 0, ',', '.') . '</strong>' .
-                        '<small>' . $details . '</small>' .
+                    return '<div class="vendor-on-charge-cell" title="'.e(strip_tags(str_replace('<br>', ', ', $details))).'">'.
+                        '<strong>+ Rp '.number_format($amount, 0, ',', '.').'</strong>'.
+                        '<small>'.$details.'</small>'.
                         '</div>';
                 })
                 ->addColumn('billingAmount', function ($row) {
@@ -269,7 +284,7 @@ class VendorInvoiceController extends Controller
                         $badgeClass = 'primary';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
                 })
                 ->rawColumns(['select', 'status', 'fleet.plateNumber', 'customer.name', 'route.originLocation.name', 'route.destinationLocation.name', 'onChargeAmount'])
                 ->toJson();
@@ -282,45 +297,45 @@ class VendorInvoiceController extends Controller
     public function datatableUnpaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findUnpaidNotas();
+            $data = $this->service->findPendingNotas();
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('select', function ($row) {
                     $orderCodes = $row->order_codes->implode(',');
                     $vendorName = $row->fleet_company_name ?? '-';
-                    $ariaLabel = 'Pilih nota ' . $row->nota_number . ' vendor ' . $vendorName;
+                    $ariaLabel = 'Pilih nota '.$row->nota_number.' vendor '.$vendorName;
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-ppn-amount="' . ($row->ppn_amount ?? 0) . '" data-pph-amount="' . ($row->pph_amount ?? 0) . '" data-claim-amount="' . ($row->claim_amount ?? 0) . '" data-checkbox-type="payment" data-vendor-name="' . e($vendorName) . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" data-nota-date="' . e($row->nota_date ?? '') . '" aria-label="' . e($ariaLabel) . '"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="'.e($orderCodes).'" data-nota-number="'.e($row->nota_number).'" data-customer-code="" data-fleet-company-code="'.e($row->fleetCompanyCode ?? '').'" data-order-format="'.e($row->order_format ?? '').'" data-billing-amount="'.$row->amount.'" data-paid-amount="'.$row->paid_amount.'" data-remaining-amount="'.$row->remaining_amount.'" data-ppn-amount="'.($row->ppn_amount ?? 0).'" data-pph-amount="'.($row->pph_amount ?? 0).'" data-claim-amount="'.($row->claim_amount ?? 0).'" data-checkbox-type="payment" data-vendor-name="'.e($vendorName).'" data-order-count="'.e($row->order_count).'" data-payment-status="'.e($row->payment_status).'" data-nota-date="'.e($row->nota_date ?? '').'" aria-label="'.e($ariaLabel).'"></div>';
                 })
                 ->addColumn('action', function ($row) {
                     $firstOrderCode = $row->order_codes->first();
 
                     $buttons = [];
-                    $buttons[] = '<a href="' . route('vendor.invoice.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
+                    $buttons[] = '<a href="'.route('vendor.invoice.pdf-nota', $firstOrderCode).'" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
                     if ($row->paid_amount > 0 || $row->payment_status !== 'pending') {
-                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
-                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code ?? '') . '" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
                     } else {
-                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-warning js-vendor-nota-cancel" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-outline-warning js-vendor-nota-cancel" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-14"></i></button>';
                     }
 
-                    return '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
+                    return '<div class="btn-group" role="group" aria-label="Actions">'.implode('', $buttons).'</div>';
                 })
                 ->editColumn('nota_number', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-primary">' . e($row->nota_number) . '</span>';
+                    return '<span class="badge rounded-pill text-bg-primary">'.e($row->nota_number).'</span>';
                 })
                 ->editColumn('fleet_company_name', function ($row) {
                     return e($row->fleet_company_name ?? '-');
                 })
                 ->editColumn('order_count', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-secondary">' . $row->order_count . ' order</span>';
+                    return '<span class="badge rounded-pill text-bg-secondary">'.$row->order_count.' order</span>';
                 })
                 ->editColumn('plate_numbers', function ($row) {
                     $plates = $row->plate_numbers->take(3)->implode(', ');
-                    $more = $row->plate_numbers->count() > 3 ? ' +' . ($row->plate_numbers->count() - 3) : '';
+                    $more = $row->plate_numbers->count() > 3 ? ' +'.($row->plate_numbers->count() - 3) : '';
 
-                    return '<span class="text-nowrap" title="' . e($row->plate_numbers->implode(', ')) . '">' . e($plates) . $more . '</span>';
+                    return '<span class="text-nowrap" title="'.e($row->plate_numbers->implode(', ')).'">'.e($plates).$more.'</span>';
                 })
                 ->editColumn('amount', function ($row) {
                     return $row->amount > 0 ? number_format($row->amount, 0, ',', '.') : '0';
@@ -331,8 +346,8 @@ class VendorInvoiceController extends Controller
                     $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
 
                     return $ppn > 0
-                        ? '<span class="text-primary fw-semibold">' . e($rateText) . '%<br>Rp ' . number_format($ppn, 0, ',', '.') . '</span>'
-                        : '<span class="text-muted">' . e($rateText ?: '0') . '%<br>Rp 0</span>';
+                        ? '<span class="text-primary fw-semibold">'.e($rateText).'%<br>Rp '.number_format($ppn, 0, ',', '.').'</span>'
+                        : '<span class="text-muted">'.e($rateText ?: '0').'%<br>Rp 0</span>';
                 })
                 ->addColumn('pph_amount', function ($row) {
                     $pph = (float) ($row->pph_amount ?? 0);
@@ -340,14 +355,14 @@ class VendorInvoiceController extends Controller
                     $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
 
                     return $pph > 0
-                        ? '<span class="text-danger fw-semibold">' . e($rateText) . '%<br>- Rp ' . number_format($pph, 0, ',', '.') . '</span>'
-                        : '<span class="text-muted">' . e($rateText ?: '0') . '%<br>Rp 0</span>';
+                        ? '<span class="text-danger fw-semibold">'.e($rateText).'%<br>- Rp '.number_format($pph, 0, ',', '.').'</span>'
+                        : '<span class="text-muted">'.e($rateText ?: '0').'%<br>Rp 0</span>';
                 })
                 ->addColumn('claim_amount', function ($row) {
                     $claim = (float) ($row->claim_amount ?? 0);
 
                     return $claim > 0
-                        ? '<span class="text-warning-emphasis fw-semibold">- Rp ' . number_format($claim, 0, ',', '.') . '</span>'
+                        ? '<span class="text-warning-emphasis fw-semibold">- Rp '.number_format($claim, 0, ',', '.').'</span>'
                         : '<span class="text-muted">Rp 0</span>';
                 })
                 ->editColumn('paid_amount', function ($row) {
@@ -368,11 +383,65 @@ class VendorInvoiceController extends Controller
                         $badgeClass = 'success';
                     }
 
-                    return '<span class="badge rounded-pill text-bg-' . $badgeClass . '">' . $statusText . '</span>';
+                    return '<span class="badge rounded-pill text-bg-'.$badgeClass.'">'.$statusText.'</span>';
                 })
                 ->rawColumns(['select', 'action', 'nota_number', 'order_count', 'plate_numbers', 'ppn_amount', 'pph_amount', 'claim_amount', 'payment_status'])
                 ->toJson();
         }
+    }
+
+    /**
+     * Datatable: nota vendor yang sudah dibayar sebagian — 1 baris = 1 nota.
+     */
+    public function datatablePartial(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $this->service->findPartialNotas();
+
+            return $this->datatableNotaRows($data)->toJson();
+        }
+    }
+
+    /**
+     * Format rows nota vendor untuk DataTable.
+     */
+    private function datatableNotaRows($data)
+    {
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('select', function ($row) {
+                $orderCodes = $row->order_codes->implode(',');
+                $vendorName = $row->fleet_company_name ?? '-';
+                $ariaLabel = 'Pilih nota '.$row->nota_number.' vendor '.$vendorName;
+
+                return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="'.e($orderCodes).'" data-nota-number="'.e($row->nota_number).'" data-customer-code="" data-fleet-company-code="'.e($row->fleetCompanyCode ?? '').'" data-order-format="'.e($row->order_format ?? '').'" data-billing-amount="'.$row->amount.'" data-paid-amount="'.$row->paid_amount.'" data-remaining-amount="'.$row->remaining_amount.'" data-ppn-amount="'.($row->ppn_amount ?? 0).'" data-pph-amount="'.($row->pph_amount ?? 0).'" data-claim-amount="'.($row->claim_amount ?? 0).'" data-checkbox-type="payment" data-vendor-name="'.e($vendorName).'" data-order-count="'.e($row->order_count).'" data-payment-status="'.e($row->payment_status).'" data-nota-date="'.e($row->nota_date ?? '').'" aria-label="'.e($ariaLabel).'"></div>';
+            })
+            ->addColumn('action', function ($row) {
+                $firstOrderCode = $row->order_codes->first();
+                $buttons = [];
+                $buttons[] = '<a href="'.route('vendor.invoice.pdf-nota', $firstOrderCode).'" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
+                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+
+                return '<div class="btn-group" role="group" aria-label="Actions">'.implode('', $buttons).'</div>';
+            })
+            ->editColumn('nota_number', fn ($row) => '<span class="badge rounded-pill text-bg-primary">'.e($row->nota_number).'</span>')
+            ->editColumn('fleet_company_name', fn ($row) => e($row->fleet_company_name ?? '-'))
+            ->editColumn('order_count', fn ($row) => '<span class="badge rounded-pill text-bg-secondary">'.$row->order_count.' order</span>')
+            ->editColumn('plate_numbers', function ($row) {
+                $plates = $row->plate_numbers->take(3)->implode(', ');
+                $more = $row->plate_numbers->count() > 3 ? ' +'.($row->plate_numbers->count() - 3) : '';
+
+                return '<span class="text-nowrap" title="'.e($row->plate_numbers->implode(', ')).'">'.e($plates).$more.'</span>';
+            })
+            ->editColumn('amount', fn ($row) => $row->amount > 0 ? number_format($row->amount, 0, ',', '.') : '0')
+            ->addColumn('ppn_amount', fn ($row) => (float) ($row->ppn_amount ?? 0) > 0 ? '<span class="text-primary fw-semibold">Rp '.number_format($row->ppn_amount, 0, ',', '.').'</span>' : '<span class="text-muted">Rp 0</span>')
+            ->addColumn('pph_amount', fn ($row) => (float) ($row->pph_amount ?? 0) > 0 ? '<span class="text-danger fw-semibold">- Rp '.number_format($row->pph_amount, 0, ',', '.').'</span>' : '<span class="text-muted">Rp 0</span>')
+            ->addColumn('claim_amount', fn ($row) => (float) ($row->claim_amount ?? 0) > 0 ? '<span class="text-warning-emphasis fw-semibold">- Rp '.number_format($row->claim_amount, 0, ',', '.').'</span>' : '<span class="text-muted">Rp 0</span>')
+            ->editColumn('paid_amount', fn ($row) => $row->paid_amount > 0 ? number_format($row->paid_amount, 0, ',', '.') : '0')
+            ->editColumn('remaining_amount', fn ($row) => $row->remaining_amount > 0 ? number_format($row->remaining_amount, 0, ',', '.') : '0')
+            ->editColumn('payment_status', fn () => '<span class="badge rounded-pill text-bg-info">Dibayar sebagian</span>')
+            ->rawColumns(['select', 'action', 'nota_number', 'order_count', 'plate_numbers', 'ppn_amount', 'pph_amount', 'claim_amount', 'payment_status']);
     }
 
     /**
@@ -388,31 +457,31 @@ class VendorInvoiceController extends Controller
                 ->addColumn('select', function ($row) {
                     $orderCodes = $row->order_codes->implode(',');
 
-                    return '<div class="form-check d-flex justify-content-center"><input class="form-check-input row-payment-checkbox" type="checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="" data-fleet-company-code="' . e($row->fleetCompanyCode ?? '') . '" data-order-format="' . e($row->order_format ?? '') . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-ppn-amount="' . ($row->ppn_amount ?? 0) . '" data-pph-amount="' . ($row->pph_amount ?? 0) . '" data-claim-amount="' . ($row->claim_amount ?? 0) . '" data-checkbox-type="payment"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input class="form-check-input row-payment-checkbox" type="checkbox" data-order-codes="'.e($orderCodes).'" data-nota-number="'.e($row->nota_number).'" data-customer-code="" data-fleet-company-code="'.e($row->fleetCompanyCode ?? '').'" data-order-format="'.e($row->order_format ?? '').'" data-billing-amount="'.$row->amount.'" data-paid-amount="'.$row->paid_amount.'" data-remaining-amount="'.$row->remaining_amount.'" data-ppn-amount="'.($row->ppn_amount ?? 0).'" data-pph-amount="'.($row->pph_amount ?? 0).'" data-claim-amount="'.($row->claim_amount ?? 0).'" data-checkbox-type="payment"></div>';
                 })
                 ->addColumn('action', function ($row) {
                     $firstOrderCode = $row->order_codes->first();
 
                     $buttons = [];
-                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
-                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code ?? '') . '" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
 
-                    return '<div class="btn-group" role="group" aria-label="Actions">' . implode('', $buttons) . '</div>';
+                    return '<div class="btn-group" role="group" aria-label="Actions">'.implode('', $buttons).'</div>';
                 })
                 ->editColumn('nota_number', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-primary">' . e($row->nota_number) . '</span>';
+                    return '<span class="badge rounded-pill text-bg-primary">'.e($row->nota_number).'</span>';
                 })
                 ->editColumn('fleet_company_name', function ($row) {
                     return e($row->fleet_company_name ?? '-');
                 })
                 ->editColumn('order_count', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-secondary">' . $row->order_count . ' order</span>';
+                    return '<span class="badge rounded-pill text-bg-secondary">'.$row->order_count.' order</span>';
                 })
                 ->editColumn('plate_numbers', function ($row) {
                     $plates = $row->plate_numbers->take(3)->implode(', ');
-                    $more = $row->plate_numbers->count() > 3 ? ' +' . ($row->plate_numbers->count() - 3) : '';
+                    $more = $row->plate_numbers->count() > 3 ? ' +'.($row->plate_numbers->count() - 3) : '';
 
-                    return '<span class="text-nowrap" title="' . e($row->plate_numbers->implode(', ')) . '">' . e($plates) . $more . '</span>';
+                    return '<span class="text-nowrap" title="'.e($row->plate_numbers->implode(', ')).'">'.e($plates).$more.'</span>';
                 })
                 ->editColumn('amount', function ($row) {
                     return $row->amount > 0 ? number_format($row->amount, 0, ',', '.') : '0';
@@ -437,8 +506,8 @@ class VendorInvoiceController extends Controller
             'requestKey' => ['required', 'uuid'],
             'payments' => ['required', 'array', 'min:1'],
             'payments.*.nota_number' => ['required', 'string', 'distinct'],
-            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:2147483647'],
-            'payments.*.expected_remaining' => ['required', 'integer', 'min:1', 'max:2147483647'],
+            'payments.*.amount' => ['required', 'integer', 'min:1', 'max:999999999999999999'],
+            'payments.*.expected_remaining' => ['required', 'integer', 'min:1', 'max:999999999999999999'],
             'date' => ['required', 'date'],
             'userBankCode' => ['required', 'string'],
             'description' => ['nullable', 'string', 'max:255'],
@@ -464,8 +533,8 @@ class VendorInvoiceController extends Controller
             $result = DB::transaction(fn () => $this->service->store($request, $this->title));
             $message = $result['idempotent']
                 ? 'Pembayaran vendor sebelumnya berhasil ditemukan.'
-                : $result['nota_count'] . ' nota vendor berhasil dibayar.';
-            $message .= ' Kode pembayaran: ' . $result['batch_code'] . '.';
+                : $result['nota_count'].' nota vendor berhasil dibayar.';
+            $message .= ' Kode pembayaran: '.$result['batch_code'].'.';
 
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([
@@ -486,7 +555,7 @@ class VendorInvoiceController extends Controller
             }
 
             if ($result) {
-                $message = 'Pembayaran vendor sebelumnya berhasil ditemukan. Kode pembayaran: ' . $result['batch_code'] . '.';
+                $message = 'Pembayaran vendor sebelumnya berhasil ditemukan. Kode pembayaran: '.$result['batch_code'].'.';
 
                 if ($request->ajax() || $request->expectsJson()) {
                     return response()->json([
@@ -550,14 +619,14 @@ class VendorInvoiceController extends Controller
             $vendorPayment->total_paid = $allAssociated->sum('paid_amount');
             $vendorPayment->total_remaining = $allAssociated->sum('remaining_amount');
 
-            // PPN & PPh manual dari nota (nilai sama di semua baris → MAX agar tidak ganda)
+            // Snapshot PPN dan PPh dari nota (nilai sama di semua baris → MAX agar tidak ganda)
             $vendorPayment->nota_ppn = (float) $allAssociated->max('ppn_amount');
             $vendorPayment->nota_pph = (float) $allAssociated->max('pph_amount');
             $vendorPayment->nota_claim = (float) $allAssociated->max('claim_amount');
             $vendorPayment->nota_ppn_rate = (float) $allAssociated->max('ppn_rate');
             $vendorPayment->nota_pph_rate = (float) $allAssociated->max('pph_rate');
 
-            $mutation = \App\Models\Mutation::where('description', 'like', '%' . $vendorPayment->order->code . '%')
+            $mutation = Mutation::where('description', 'like', '%'.$vendorPayment->order->code.'%')
                 ->where('type', 'Out')
                 ->with('userBank.bank')
                 ->orderByDesc('created_at')
@@ -585,7 +654,7 @@ class VendorInvoiceController extends Controller
             }
 
             $groupedHistories = $allHistories->groupBy(function ($history) {
-                return $history->payment_date . '_' . $history->description . '_' . $history->user_bank_code;
+                return $history->payment_date.'_'.$history->description.'_'.$history->user_bank_code;
             })->map(function ($group) {
                 $first = $group->first();
                 $bankName = $first->userBank->bank->name ?? null;
@@ -597,7 +666,7 @@ class VendorInvoiceController extends Controller
                     'payment_date' => $first->payment_date,
                     'user_bank_code' => $first->user_bank_code,
                     'bank_info' => $bankName && $accountNumber && $accountName
-                        ? $bankName . ' - ' . $accountNumber . ' (' . $accountName . ')'
+                        ? $bankName.' - '.$accountNumber.' ('.$accountName.')'
                         : $first->user_bank_code,
                     'description' => $first->description,
                     'created_at' => $first->created_at,
@@ -615,73 +684,7 @@ class VendorInvoiceController extends Controller
      */
     public function pdf($orderCode)
     {
-        $order = \App\Models\Operational\Order::with([
-            'fleet',
-            'driver',
-            'customer',
-            'route.originLocation',
-            'route.destinationLocation',
-            'orderMaterial.material',
-            'cost',
-        ])->where('code', $orderCode)->first();
-
-        if (! $order) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Data not found');
-        }
-
-        $company = CompanySetting::first();
-        $customer = $order->customer;
-
-        $vendorPayment = VendorPayment::with(['paymentHistory.userBank.bank'])
-            ->where('orderCode', $orderCode)
-            ->first();
-
-        if (! $vendorPayment || ! $vendorPayment->nota_number) {
-            return redirect()->route('vendor.invoice.unpaid')->with('fail', 'Nomor nota belum di-generate untuk order ini. Silakan generate nota terlebih dahulu.');
-        }
-
-        $paymentHistories = collect($vendorPayment?->paymentHistory ?? []);
-        $paymentHistoryTotal = $paymentHistories->sum('amount');
-
-        $userBankCode = $vendorPayment?->user_bank_code;
-        $userBank = null;
-        if ($userBankCode) {
-            $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
-        }
-
-        $pdfTemplate = 'finance.vendor-payment.pdf.general-phl';
-
-        if ($customer->company->format == 'P') {
-            $pdfTemplate = 'finance.vendor-payment.pdf.pribadi';
-        }
-
-        if ($customer->company->format == 'WTMS' || $customer->company->format == 'WT') {
-            $pdfTemplate = 'finance.vendor-payment.pdf.general-wt';
-        }
-
-        $mpdf = new Mpdf(
-            [
-                'orientation' => 'P',
-                'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp'),
-            ]
-        );
-
-        $mpdf->setAutoTopMargin = 'stretch';
-        $mpdf->setAutoBottomMargin = 'stretch';
-
-        $mpdf->WriteHTML(
-            view($pdfTemplate)
-                ->with('vendorPayment', $vendorPayment)
-                ->with('paymentHistories', $paymentHistories)
-                ->with('paymentHistoryTotal', $paymentHistoryTotal)
-                ->with('order', $order)
-                ->with('customer', $customer)
-                ->with('company', $company)
-                ->with('userBank', $userBank)
-        );
-
-        return $mpdf->Output('Nota-Pembayaran-' . $order->code . '.pdf', 'I');
+        return $this->pdfNota($orderCode);
     }
 
     /**
@@ -708,7 +711,7 @@ class VendorInvoiceController extends Controller
 
         return response($document['content'])
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-Multi-' . now()->format('YmdHis') . '.pdf"');
+            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-Multi-'.now()->format('YmdHis').'.pdf"');
     }
 
     /**
@@ -736,16 +739,17 @@ class VendorInvoiceController extends Controller
 
         return response($document['content'])
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-' . str_replace('/', '-', $vendorPayment->nota_number) . '.pdf"');
+            ->header('Content-Disposition', 'inline; filename="Nota-Pembayaran-'.str_replace('/', '-', $vendorPayment->nota_number).'.pdf"');
     }
 
     /**
      * Susun konten PDF nota pembayaran dari daftar order.
      * Seluruh order yang berada pada nomor nota yang sama ikut disertakan.
      *
-     * @throws \DomainException bila order belum punya nota / tidak ditemukan
      *
      * @return array{content: string, notaNumber: string|null}
+     *
+     * @throws DomainException bila order belum punya nota / tidak ditemukan
      */
     private function buildNotaPdf(array $orderCodes)
     {
@@ -773,7 +777,7 @@ class VendorInvoiceController extends Controller
             throw new DomainException('Beberapa order terpilih belum memiliki nomor nota. Silakan generate nota terlebih dahulu.', 422);
         }
 
-        $orders = \App\Models\Operational\Order::with([
+        $orders = Order::with([
             'fleet.company',
             'driver',
             'customer.company',
@@ -832,21 +836,13 @@ class VendorInvoiceController extends Controller
                     ->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')
                     ->sum('nominal')
                 : 0;
-            $totalBefore = $subtotal + $additionalCost;
-            $pph = $order->fleet->company->pph ?? 0;
-            $pphAmount = ($totalBefore * $pph) / 100;
-            $grandTotal = $totalBefore - $pphAmount;
-
             $totalSubtotal += $subtotal;
             $totalAdditionalCost += $additionalCost;
-            $totalPphAmount += $pphAmount;
-            $totalGrandTotal += $grandTotal;
         }
 
-        // PPN & PPh manual per nota (nilai sama di semua baris satu nota →
-        // ambil MAX per nota agar tidak terhitung ganda).
-        // Catatan: kolom ppn/pph/claim ini hasil input manual saat generate nota
-        // (menu Order Menunggu Nota).
+        // Ambil snapshot pajak dan claim per nota. PPh sudah ditentukan otomatis
+        // dari perusahaan customer dan master perusahaan armada saat nota dibuat.
+        // Nilai sama di semua baris satu nota, sehingga gunakan MAX per nota.
         $notaTaxTotals = $vendorPayments
             ->whereNotNull('nota_number')
             ->groupBy('nota_number')
@@ -859,11 +855,11 @@ class VendorInvoiceController extends Controller
             });
 
         $totalPpnAmount = (float) $notaTaxTotals->sum('ppn');
-        $totalPphAmount += (float) $notaTaxTotals->sum('pph');
+        $totalPphAmount = (float) $notaTaxTotals->sum('pph');
         $totalPpnRate = (float) ($vendorPayments->max('ppn_rate') ?? 0);
         $totalPphRate = (float) ($vendorPayments->max('pph_rate') ?? 0);
         $totalClaim = (float) $notaTaxTotals->sum('claim');
-        $totalGrandTotal += $totalPpnAmount - (float) $notaTaxTotals->sum('pph') - $totalClaim;
+        $totalGrandTotal = $totalSubtotal + $totalAdditionalCost + $totalPpnAmount - $totalPphAmount - $totalClaim;
 
         $company = CompanySetting::first();
         $customerFirst = $orders->first()->customer;
@@ -877,7 +873,7 @@ class VendorInvoiceController extends Controller
 
         $userBank = null;
         if ($userBankCode) {
-            $userBank = \App\Models\Bank\UserBank::with('bank')->where('code', $userBankCode)->first();
+            $userBank = UserBank::with('bank')->where('code', $userBankCode)->first();
         }
 
         $allHistories = collect();
@@ -890,7 +886,7 @@ class VendorInvoiceController extends Controller
         }
 
         $groupedHistories = $allHistories->groupBy(function ($history) {
-            return $history->payment_date . '_' . $history->description . '_' . $history->user_bank_code;
+            return $history->payment_date.'_'.$history->description.'_'.$history->user_bank_code;
         })->map(function ($group) {
             $first = $group->first();
 
@@ -915,7 +911,7 @@ class VendorInvoiceController extends Controller
         $mpdf->setAutoBottomMargin = 'stretch';
 
         $mpdf->WriteHTML(
-            view($pdfTemplate . '-multi')
+            view($pdfTemplate.'-multi')
                 ->with('orders', $orders)
                 ->with('customer', $customerFirst)
                 ->with('company', $company)
@@ -954,10 +950,10 @@ class VendorInvoiceController extends Controller
                 (string) $request->input('expected_batch_code'),
                 $this->title
             ));
-            $message = 'Batch pembayaran ' . $result['batch_code'] . ' berhasil dibatalkan. '
-                . 'Dana Rp ' . number_format($result['payment_amount'], 0, ',', '.')
-                . ' telah dikembalikan untuk ' . $result['nota_count'] . ' nota ('
-                . $result['order_count'] . ' order).';
+            $message = 'Batch pembayaran '.$result['batch_code'].' berhasil dibatalkan. '
+                .'Dana Rp '.number_format($result['payment_amount'], 0, ',', '.')
+                .' telah dikembalikan untuk '.$result['nota_count'].' nota ('
+                .$result['order_count'].' order).';
 
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([
@@ -998,7 +994,7 @@ class VendorInvoiceController extends Controller
 
     /**
      * Generate nomor nota (invoice) untuk order-order yang dipilih.
-     * PPN & PPh diinput sebagai persentase dari modal generate nota.
+     * PPN diinput dari modal; PPh ditentukan otomatis dari data perusahaan.
      * Proses dijalankan via AJAX (response JSON) dari halaman Order Menunggu
      * Nota agar loader & alert SweetAlert dapat ditampilkan; request non-AJAX
      * tetap diarahkan dengan flash message.
@@ -1007,9 +1003,9 @@ class VendorInvoiceController extends Controller
     {
         $data = $request->all();
 
-        // Normalisasi rate pajak. Koma diterima sebagai pemisah desimal,
-        // sedangkan titik dipertahankan agar rate seperti 11.5 tetap benar.
-        foreach (['ppnRate', 'pphRate'] as $taxField) {
+        // Normalisasi rate PPN. PPh tidak diterima dari request karena selalu
+        // ditentukan server-side dari perusahaan customer dan armada.
+        foreach (['ppnRate'] as $taxField) {
             if (isset($data[$taxField]) && is_string($data[$taxField])) {
                 $clean = str_replace(' ', '', trim($data[$taxField]));
                 $clean = str_replace(',', '.', $clean);
@@ -1033,7 +1029,6 @@ class VendorInvoiceController extends Controller
             'orderCodes.*' => 'required|string',
             'userBankCode' => 'required|string|exists:user_bank,code',
             'ppnRate' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'pphRate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'claimAmount' => ['nullable', 'numeric', 'min:0'],
         ]);
 
@@ -1057,23 +1052,22 @@ class VendorInvoiceController extends Controller
                 $data['userBankCode'],
                 $this->title,
                 (float) ($data['ppnRate'] ?? 0),
-                (float) ($data['pphRate'] ?? 0),
                 (float) ($data['claimAmount'] ?? 0)
             );
 
             DB::commit();
 
             $ppnRate = (float) ($data['ppnRate'] ?? 0);
-            $pphRate = (float) ($data['pphRate'] ?? 0);
+            $pphRate = (float) (VendorPayment::where('nota_number', $notaNumber)->max('pph_rate') ?? 0);
             $claimAmount = (int) round((float) ($data['claimAmount'] ?? 0));
             $ppnInfo = $ppnRate > 0 || $pphRate > 0
-                ? ' (PPN: ' . rtrim(rtrim(number_format($ppnRate, 4, ',', '.'), '0'), ',') . '%, PPh: ' . rtrim(rtrim(number_format($pphRate, 4, ',', '.'), '0'), ',') . '%)'
+                ? ' (PPN: '.rtrim(rtrim(number_format($ppnRate, 4, ',', '.'), '0'), ',').'%, PPh: '.rtrim(rtrim(number_format($pphRate, 4, ',', '.'), '0'), ',').'%)'
                 : '';
             $claimInfo = $claimAmount > 0
-                ? ' (Biaya Claim: Rp ' . number_format($claimAmount, 0, ',', '.') . ')'
+                ? ' (Biaya Claim: Rp '.number_format($claimAmount, 0, ',', '.').')'
                 : '';
 
-            $message = 'Nota pembayaran berhasil di-generate dengan nomor: ' . $notaNumber . $ppnInfo . $claimInfo;
+            $message = 'Nota pembayaran berhasil di-generate dengan nomor: '.$notaNumber.$ppnInfo.$claimInfo;
 
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([

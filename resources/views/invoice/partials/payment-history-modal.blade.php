@@ -11,6 +11,26 @@
     #modalPaymentHistory .ph-tl-card { border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; padding: 12px 14px; box-shadow: 0 1px 2px rgba(16, 24, 40, .04); }
     #modalPaymentHistory .ph-tl-card.ph-claim-card { border-color: #fde68a; background: #fffbeb; }
     #modalPaymentHistory .ph-legend-dot { display: inline-block; width: 10px; height: 10px; border-radius: 3px; }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] #modalPaymentHistory .ph-date-chip {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] #modalPaymentHistory .ph-date-day {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] #modalPaymentHistory .ph-tl-line {
+        background: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] #modalPaymentHistory .ph-tl-card {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] #modalPaymentHistory .ph-tl-card.ph-claim-card {
+        background: rgba(245, 158, 11, 0.12);
+        border-color: rgba(245, 158, 11, 0.4);
+    }
 </style>
 @endpush
 

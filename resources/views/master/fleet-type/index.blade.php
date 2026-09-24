@@ -63,6 +63,7 @@
         }
 
         /* ── Tombol Icon Ramping ── */
+        /* ── Tombol Icon Ramping Header / Aksi Tabel ── */
         .btn-icon {
             border-radius: 8px !important;
             padding: 6px 10px;
@@ -72,6 +73,73 @@
 
         .btn-icon:hover {
             transform: translateY(-1px);
+        }
+
+        /* ── Standar Filter Card Collapse (PHL §3) ── */
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+
+        .filter-card-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-card .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
         }
 
         /* ── Standarisasi Seragam Filter Bar (Tinggi Presisi: 38px) ── */
@@ -413,6 +481,90 @@
                 padding-right: 18px;
             }
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        /* ── Filter card (dark) ── */
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .filter-card .form-control {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        /* Modal CRUD: dark surfaces + light labels/buttons. */
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .modal-content {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .modal-body {
+            background-color: var(--bs-card-bg) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .modal-footer {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .form-label {
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .btn-modal-cancel {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-type-crud-modal .btn-modal-cancel:hover {
+            background-color: var(--bs-secondary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+        }
     </style>
 @endpush
 
@@ -455,46 +607,58 @@
             <div class="card-body p-4">
                 @include('partials.alert')
 
-                {{-- Filter Bar (Selalu Terbuka & Ukuran Seragam Presisi 38px) --}}
-                <div class="card border-0 mb-4"
-                    style="background: #f8fafc; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <form id="filterForm">
-                            <div class="row g-2 align-items-end">
-                                <div class="col-md-4">
-                                    <label class="filter-label" for="typeCode">Tipe Armada</label>
-                                    <select class="form-select select2-filter" name="typeCode"
-                                        id="typeCode" style="width: 100%;">
-                                        <option value="">Semua Tipe Armada</option>
-                                        @foreach ($types as $item)
-                                            <option value="{{ $item->code }}">{{ $item->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
+                {{-- Filter Bar (collapse, tertutup default) --}}
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#fleetTypeFilterCollapse" aria-expanded="false"
+                        aria-controls="fleetTypeFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar tipe armada</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-                                <div class="col-md-3">
-                                    <label class="filter-label" for="startDate">Dari Tanggal</label>
-                                    <input class="form-control filter-control" name="startDate" id="startDate"
-                                        type="text" placeholder="Pilih Tanggal Mulai">
-                                </div>
+                    <div class="collapse filter-collapse" id="fleetTypeFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="typeCode">Tipe Armada</label>
+                                        <select class="form-select select2-filter" name="typeCode" id="typeCode">
+                                            <option value="">Semua Tipe Armada</option>
+                                            @foreach ($types as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
 
-                                <div class="col-md-3">
-                                    <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                                    <input class="form-control filter-control" name="endDate" id="endDate"
-                                        type="text" placeholder="Pilih Tanggal Akhir">
-                                </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
 
-                                <div class="col-md-2 d-flex gap-2">
-                                    <button class="btn btn-filter-primary flex-grow-1" type="submit" id="btnFilter">
-                                        <i class="mdi mdi-filter fs-14"></i> Filter
-                                    </button>
-                                    <button type="button" class="btn btn-filter-reset" id="btnResetFilter"
-                                        data-bs-toggle="tooltip" title="Reset Filter">
-                                        <i class="mdi mdi-refresh fs-16"></i>
-                                    </button>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate"
+                                            type="text" placeholder="Pilih tanggal akhir">
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
@@ -599,10 +763,11 @@
             // 1. Inisialisasi Select2
             $('.select2-filter').select2({
                 placeholder: 'Semua Tipe Armada',
-                allowClear: true
+                allowClear: true,
+                width: '100%'
             });
 
-            // 2. Inisialisasi Flatpickr
+            // 2. Inisialisasi Flatpickr (format standar backend Y-m-d)
             filterStartPicker = flatpickr('#startDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
@@ -619,23 +784,28 @@
                 }
             });
 
-            // 3. Sinkronisasi Tombol Export Excel & PDF
+            // 3. Kumpulan parameter filter aktif
+            function getFilters() {
+                return {
+                    typeCode: $('#typeCode').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            // 4. Sinkronisasi Tombol Export Excel & PDF
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                const typeCode = $('#typeCode').val();
-                const startDate = $('#startDate').val();
-                const endDate = $('#endDate').val();
-
-                if (typeCode) params.set('typeCode', typeCode);
-                if (startDate) params.set('startDate', startDate);
-                if (endDate) params.set('endDate', endDate);
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
 
                 const qs = params.toString() ? '?' + params.toString() : '';
                 $('#export-pdf').attr('href', "{{ route($view . 'export-pdf') }}" + qs);
                 $('#export-excel').attr('href', "{{ route($view . 'export-excel') }}" + qs);
             }
 
-            // 4. DataTables (Tanpa Striped, ServerSide, Bahasa Indonesia)
+            // 5. DataTables (Tanpa Striped, ServerSide, Bahasa Indonesia)
             const table = $('#dt').DataTable({
                 processing: true,
                 serverSide: true,
@@ -644,9 +814,7 @@
                 ajax: {
                     url: "{{ route('dt.fleet-type') }}",
                     data: function(d) {
-                        d.typeCode = $('#typeCode').val();
-                        d.startDate = $('#startDate').val();
-                        d.endDate = $('#endDate').val();
+                        Object.assign(d, getFilters());
                     }
                 },
                 columns: [{
@@ -696,22 +864,37 @@
                 }
             });
 
-            // 5. Submit Filter Form
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
+            function reloadWithFilters() {
                 syncExportUrls();
-                table.ajax.reload();
+                table.ajax.reload(null, true);
+            }
+
+            // 6. Submit Filter (tombol & Enter)
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#filterForm').on('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
             });
 
-            // 6. Reset Filter Form
+            // 7. Reset Filter Form
             $('#btnResetFilter').on('click', function() {
-                $('#filterForm')[0].reset();
+                $('#filterForm').find('input').val('');
                 $('.select2-filter').val('').trigger('change');
-                if (filterStartPicker) filterStartPicker.clear();
-                if (filterEndPicker) filterEndPicker.clear();
-                syncExportUrls();
-                table.ajax.reload();
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
+
+            // Sinkronkan URL export saat pertama dimuat
+            syncExportUrls();
 
             // 7. Reset modal ke mode tambah saat dibuka dari tombol tambah
             $('#fleetTypeCrudModal').on('show.bs.modal', function(event) {

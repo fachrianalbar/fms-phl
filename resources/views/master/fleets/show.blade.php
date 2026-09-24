@@ -181,6 +181,81 @@
         .fleet-gallery-card:hover .fleet-gallery-img {
             transform: scale(1.02);
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        /* Inline white cards (banner, spec, gallery, history) → dark surfaces. */
+        html[data-bs-theme="dark"] .card[style*="background: #ffffff"] {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-primary {
+            background: var(--bs-primary-bg-subtle) !important;
+            border-color: var(--bs-primary-border-subtle) !important;
+            color: var(--bs-primary-text-emphasis) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-success {
+            background: var(--bs-success-bg-subtle) !important;
+            border-color: var(--bs-success-border-subtle) !important;
+            color: var(--bs-success-text-emphasis) !important;
+        }
+
+        html[data-bs-theme="dark"] .summary-warning {
+            background: var(--bs-warning-bg-subtle) !important;
+            border-color: var(--bs-warning-border-subtle) !important;
+            color: var(--bs-warning-text-emphasis) !important;
+        }
+
+        html[data-bs-theme="dark"] .spec-table {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .spec-table th,
+        html[data-bs-theme="dark"] .spec-table td {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .spec-table td.label-cell {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-secondary-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .spec-table td.value-cell {
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .mini-data-table {
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .mini-data-table thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .mini-data-table tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .mini-data-table tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-gallery-card {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        /* Image preview modal keeps its light border inline; correct it here. */
+        html[data-bs-theme="dark"] #imagePreviewModal .modal-content,
+        html[data-bs-theme="dark"] #imagePreviewModal .modal-header,
+        html[data-bs-theme="dark"] #imagePreviewModal .modal-footer {
+            border-color: var(--bs-border-color) !important;
+        }
     </style>
 @endpush
 

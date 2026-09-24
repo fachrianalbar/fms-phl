@@ -22,6 +22,76 @@
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 <style>
+    /* ── Scoped Table Styling ── */
+    #dt {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+    }
+
+    #dt thead th {
+        background-color: #f8fafc;
+        color: #475569;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 13px 12px;
+        border-bottom: 2px solid #e2e8f0;
+        border-top: none;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    #dt tbody td {
+        padding: 11px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+        font-size: 12.5px;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    #dt tbody tr {
+        transition: background-color 0.15s ease;
+    }
+
+    #dt tbody tr:hover {
+        background-color: #f8fafc !important;
+    }
+
+    /* ── Tombol Icon Ramping Header / Aksi Tabel ── */
+    .btn-icon {
+        border-radius: 8px !important;
+        padding: 6px 10px;
+        font-size: 13px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-icon:hover {
+        transform: translateY(-1px);
+    }
+
+    /* ── DataTables Inputs & Pagination ── */
+    #dt_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    #dt_wrapper .dataTables_length select {
+        border-radius: 8px;
+        font-size: 12px;
+    }
+
+    #dt_wrapper .dataTables_info,
+    #dt_wrapper .dataTables_length,
+    #dt_wrapper .dataTables_filter {
+        color: #64748b;
+        font-size: 12px;
+    }
+
     .export-loader {
         position: fixed;
         top: 0;
@@ -86,6 +156,49 @@
         text-align: center;
         font-weight: 500;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .card-header {
+        background-color: var(--bs-card-bg) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+
+    html[data-bs-theme="dark"] #dt {
+        border-color: var(--bs-border-color);
+    }
+
+    html[data-bs-theme="dark"] #dt thead th {
+        background-color: var(--bs-tertiary-bg) !important;
+        color: var(--bs-emphasis-color) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+
+    html[data-bs-theme="dark"] #dt tbody td {
+        color: var(--bs-body-color) !important;
+        border-color: var(--bs-border-color) !important;
+    }
+
+    html[data-bs-theme="dark"] #dt tbody tr:hover {
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+
+    html[data-bs-theme="dark"] .export-loader-content {
+        background-color: var(--bs-card-bg) !important;
+    }
+
+    html[data-bs-theme="dark"] .export-loader-text {
+        color: var(--bs-body-color) !important;
+    }
+
+    html[data-bs-theme="dark"] .export-loader-subtext {
+        color: var(--bs-secondary-color) !important;
+    }
+
+    html[data-bs-theme="dark"] .export-success {
+        background-color: var(--bs-success-bg-subtle) !important;
+        color: var(--bs-success-text-emphasis) !important;
+        border-color: var(--bs-success-border-subtle) !important;
+    }
 </style>
 @endpush
 
@@ -100,41 +213,54 @@
 </div>
 
 <div class="col-sm-12">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4>{{ $title }} Data</h4>
-
-            <div class="d-flex gap-2">
-                <a href="javascript:void(0)" onclick="exportExcel()" class="btn btn-success" id="btn-export">
-                    <i class="mdi mdi-file-excel"></i> Export Excel
-                </a>
-                <button type="button" class="btn btn-warning" id="btnBulkUpdatePrice" title="Penyesuaian Harga">
-                    <i class="mdi mdi-cash-multiple"></i> Penyesuaian Harga
-                </button>
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+        {{-- Card Header --}}
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
+            style="border-color: #e2e8f0;">
+            <div>
+                <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                    <i class="mdi mdi-calculator-variant-outline text-primary fs-20"></i>
+                    {{ $title }} Data
+                </h4>
+                <small class="text-muted">Daftar master komponen biaya operasional armada</small>
             </div>
 
+            <div class="d-flex align-items-center gap-2">
+                <a href="javascript:void(0)" onclick="exportExcel()" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
+                    id="btn-export" style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                    <i class="mdi mdi-file-excel"></i> Export Excel
+                </a>
+                <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1"
+                    id="btnBulkUpdatePrice" title="Penyesuaian Harga"
+                    style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                    <i class="mdi mdi-cash-multiple"></i> Penyesuaian Harga
+                </button>
+                <a href="{{ route($view . 'create') }}"
+                    class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                    style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                    <i class="mdi mdi-plus"></i> {{ __('general.add_data') }}
+                </a>
+            </div>
         </div>
-        <div class="card-body">
+
+        <div class="card-body p-4">
             @include('partials.alert')
             <div id="exportSuccessMessage" class="export-success">
                 <i class="mdi mdi-check-circle"></i> Export completed successfully! Your Excel file has been downloaded.
             </div>
             <div class="table-responsive custom-scrollbar">
-                <table class="table table-striped w-100 nowrap" id="dt">
+                <table class="table align-middle w-100 mb-0" id="dt">
                     <thead>
                         <tr>
                             <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
-                            <th>#</th>
-                            <th>No</th>
-                            <th>Name</th>
-                            <th>Price</th>
-                            <th>Type</th>
+                            <th class="text-center" style="width: 80px;">#</th>
+                            <th class="text-center" style="width: 60px;">No</th>
+                            <th>Nama Komponen</th>
+                            <th class="text-end">Harga</th>
+                            <th class="text-center">Tipe</th>
                         </tr>
                     </thead>
-                    <tbody>
-
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -220,23 +346,29 @@
             },
             "columns": [{
                     "data": 'checkbox',
+                    "className": 'text-center align-middle',
                     "orderable": false,
                     "searchable": false
                 },
                 {
-                    "data": 'action'
+                    "data": 'action',
+                    "className": 'text-center align-middle',
                 },
                 {
-                    "data": 'DT_RowIndex'
+                    "data": 'DT_RowIndex',
+                    "className": 'text-center align-middle',
                 },
                 {
-                    "data": 'name'
+                    "data": 'name',
+                    "className": 'align-middle fw-semibold text-dark',
                 },
                 {
-                    "data": 'formatted_price'
+                    "data": 'formatted_price',
+                    "className": 'text-end align-middle font-monospace fw-bold',
                 },
                 {
                     "data": 'type',
+                    "className": 'text-center align-middle',
                     "render": function(data, type, row) {
                         return data ? data.charAt(0).toUpperCase() + data.slice(1) : '-';
                     }

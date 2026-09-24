@@ -148,6 +148,36 @@
         font-size: 13px !important;
     }
     .dataTables_length .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px !important; }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] tr.row-open {
+        background-color: var(--bs-tertiary-bg) !important;
+    }
+    html[data-bs-theme="dark"] tr.row-open > td {
+        border-bottom-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] tr.child-row-payment > td {
+        background: var(--bs-body-bg) !important;
+        border-bottom-color: var(--bs-border-color) !important;
+    }
+    html[data-bs-theme="dark"] .tx-panel {
+        background: var(--bs-card-bg);
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .tx-chip-label {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .tx-chip-value {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .tx-nota-card {
+        border-color: var(--bs-border-color);
+    }
+    html[data-bs-theme="dark"] .tx-order-table th {
+        color: var(--bs-secondary-color);
+        background: var(--bs-tertiary-bg) !important;
+        border-bottom-color: var(--bs-border-color) !important;
+    }
 </style>
 @endpush
 

@@ -21,6 +21,18 @@
         font-weight: 600;
         color: #0f172a;
     }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .trx-info-label {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .trx-info-value {
+        color: var(--bs-body-color);
+    }
+    html[data-bs-theme="dark"] .trx-summary-box {
+        background-color: var(--bs-tertiary-bg) !important;
+        border-color: var(--bs-border-color) !important;
+    }
 </style>
 @endpush
 

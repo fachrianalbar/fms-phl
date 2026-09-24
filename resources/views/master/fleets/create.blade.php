@@ -148,6 +148,16 @@
             box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35) !important;
             transform: translateY(-1px) !important;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .form-section-title {
+            color: var(--bs-heading-color) !important;
+            border-bottom-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .form-label {
+            color: var(--bs-body-color) !important;
+        }
     </style>
 @endpush
 

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Finance;
 
-use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
 use App\Models\Finance\Invoice as InvoiceModel;
@@ -53,62 +52,58 @@ class InvoiceController extends Controller
     }
 
     /**
-     * Display listing of unpaid invoices.
+     * Ringkasan faktur berdasarkan klasifikasi pembayaran aktual.
      */
-    public function indexUnpaid()
+    private function paymentStateStats(string $state): array
     {
-        $unpaidQuery = InvoiceModel::where(function ($q) {
-            $q->whereNull('status')->orWhere('status', '!=', InvoiceModel::STATUS_FULL);
-        });
-
-        $totalCount = (clone $unpaidQuery)->count();
-        $createdCount = (clone $unpaidQuery)->where(function ($q) {
-            $q->whereNull('status')->orWhere('status', InvoiceModel::STATUS_CREATE);
-        })->count();
-        $partialCount = (clone $unpaidQuery)->where('status', InvoiceModel::STATUS_PARTIAL)->count();
-
-        $totals = (clone $unpaidQuery)->selectRaw('
+        $query = $this->service->paymentStateQuery($state);
+        $invoiceCodes = (clone $query)->select('invoice.code');
+        $totals = (clone $query)->selectRaw('
             COALESCE(SUM(invoiceAmount), 0) as sum_invoice,
             COALESCE(SUM(ppnAmount), 0) as sum_ppn,
             COALESCE(SUM(pphAmount), 0) as sum_pph
         ')->first();
-
         $totalBilling = (float) $totals->sum_invoice + (float) $totals->sum_ppn - (float) $totals->sum_pph;
-
         $totalPaid = (float) DB::table('invoice_payment')
-            ->join('invoice', 'invoice_payment.invoiceCode', '=', 'invoice.code')
-            ->whereNull('invoice.deleted_at')
-            ->whereNull('invoice_payment.deleted_at')
-            ->where(function ($q) {
-                $q->whereNull('invoice.status')->orWhere('invoice.status', '!=', InvoiceModel::STATUS_FULL);
-            })
-            ->sum('invoice_payment.amount');
-
+            ->whereNull('deleted_at')
+            ->whereIn('invoiceCode', clone $invoiceCodes)
+            ->sum('amount');
         $totalClaim = (float) DB::table('invoice_payment_claim')
-            ->join('invoice', 'invoice_payment_claim.invoiceCode', '=', 'invoice.code')
-            ->whereNull('invoice.deleted_at')
-            ->whereNull('invoice_payment_claim.deleted_at')
-            ->where(function ($q) {
-                $q->whereNull('invoice.status')->orWhere('invoice.status', '!=', InvoiceModel::STATUS_FULL);
-            })
-            ->sum('invoice_payment_claim.amount');
+            ->whereNull('deleted_at')
+            ->whereIn('invoiceCode', clone $invoiceCodes)
+            ->sum('amount');
 
-        $totalRemaining = $totalBilling - $totalPaid - $totalClaim;
-
-        $stats = [
-            'totalCount' => $totalCount,
+        return [
+            'totalCount' => (clone $query)->count(),
             'totalBilling' => $totalBilling,
             'totalPaid' => $totalPaid,
             'totalClaim' => $totalClaim,
-            'totalRemaining' => $totalRemaining,
-            'partialCount' => $partialCount,
-            'createdCount' => $createdCount,
+            'totalRemaining' => max($totalBilling - $totalPaid - $totalClaim, 0),
         ];
+    }
 
+    /**
+     * Faktur yang benar-benar belum memiliki pembayaran maupun claim.
+     */
+    public function indexUnpaid()
+    {
         return view('invoice.unpaid')
             ->with('view', 'invoice.')
-            ->with('title', 'Unpaid Invoice')
-            ->with('stats', $stats);
+            ->with('title', 'Faktur Belum Lunas')
+            ->with('listType', 'unpaid')
+            ->with('stats', $this->paymentStateStats('unpaid'));
+    }
+
+    /**
+     * Faktur yang sudah dibayar/claim sebagian dan masih memiliki sisa tagihan.
+     */
+    public function indexPartial()
+    {
+        return view('invoice.unpaid')
+            ->with('view', 'invoice.')
+            ->with('title', 'Faktur Pembayaran Sebagian')
+            ->with('listType', 'partial')
+            ->with('stats', $this->paymentStateStats('partial'));
     }
 
     /**
@@ -116,23 +111,11 @@ class InvoiceController extends Controller
      */
     public function indexPaid()
     {
-        $paidQuery = InvoiceModel::where('status', InvoiceModel::STATUS_FULL);
-        $totalCount = (clone $paidQuery)->count();
-        $totals = (clone $paidQuery)->selectRaw('
-            COALESCE(SUM(invoiceAmount), 0) as sum_invoice,
-            COALESCE(SUM(ppnAmount), 0) as sum_ppn,
-            COALESCE(SUM(pphAmount), 0) as sum_pph
-        ')->first();
-        $totalBilling = (float) $totals->sum_invoice + (float) $totals->sum_ppn - (float) $totals->sum_pph;
-
-        $stats = [
-            'totalCount' => $totalCount,
-            'totalBilling' => $totalBilling,
-        ];
+        $stats = $this->paymentStateStats('paid');
 
         return view('invoice.paid')
             ->with('view', 'invoice.')
-            ->with('title', 'Paid Invoice')
+            ->with('title', 'Faktur Lunas')
             ->with('stats', $stats);
     }
 
@@ -177,11 +160,11 @@ class InvoiceController extends Controller
             });
 
             $redirect = redirect()->route('invoice.unpaid')
-                ->with('success', 'Faktur ' . __('general.data_was_save_successfully'));
+                ->with('success', 'Faktur '.__('general.data_was_save_successfully'));
 
             return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            return redirect()->route('invoice.create')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route('invoice.create')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -245,11 +228,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->route('invoice.unpaid')->with('success', 'Faktur ' . __('general.data_was_update_succesfully'));
+            return redirect()->route('invoice.unpaid')->with('success', 'Faktur '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route('invoice.edit', $id)->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route('invoice.edit', $id)->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -279,7 +262,7 @@ class InvoiceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Invoice amount recalculated successfully. Invoice Amount: Rp ' . number_format($result['invoiceAmount'], 0, ',', '.') . ', PPN: Rp ' . number_format($result['ppnAmount'], 0, ',', '.') . '. Semua pembayaran untuk invoice ini telah dibatalkan.',
+                    'message' => 'Invoice amount recalculated successfully. Invoice Amount: Rp '.number_format($result['invoiceAmount'], 0, ',', '.').', PPN: Rp '.number_format($result['ppnAmount'], 0, ',', '.').'. Semua pembayaran untuk invoice ini telah dibatalkan.',
                     'invoiceAmount' => $result['invoiceAmount'],
                     'ppnAmount' => $result['ppnAmount'],
                     'total' => $result['total'],
@@ -287,7 +270,7 @@ class InvoiceController extends Controller
             }
 
             // Jika request dari form (dari edit page), redirect dengan message
-            $message = 'Invoice amount recalculated successfully. Invoice Amount: Rp ' . number_format($result['invoiceAmount'], 0, ',', '.') . ', PPN: Rp ' . number_format($result['ppnAmount'], 0, ',', '.') . '. <br><br><strong>Semua pembayaran untuk invoice ini telah dibatalkan.</strong> Silakan input ulang pembayaran invoice.';
+            $message = 'Invoice amount recalculated successfully. Invoice Amount: Rp '.number_format($result['invoiceAmount'], 0, ',', '.').', PPN: Rp '.number_format($result['ppnAmount'], 0, ',', '.').'. <br><br><strong>Semua pembayaran untuk invoice ini telah dibatalkan.</strong> Silakan input ulang pembayaran invoice.';
 
             return redirect()->route('invoice.edit', $id)->with('success', $message);
         } catch (\Throwable $th) {
@@ -297,11 +280,11 @@ class InvoiceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Line : ' . $th->getLine() . ' - ' . $th->getMessage(),
+                    'message' => 'Line : '.$th->getLine().' - '.$th->getMessage(),
                 ], 400);
             }
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -309,6 +292,15 @@ class InvoiceController extends Controller
     {
         if ($request->ajax()) {
             $data = $this->service->findUnpaid();
+
+            return $this->formatInvoiceDatatable($data, false);
+        }
+    }
+
+    public function datatablePartial(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $this->service->findPartial();
 
             return $this->formatInvoiceDatatable($data, false);
         }
@@ -332,25 +324,40 @@ class InvoiceController extends Controller
         }
     }
 
+    private function effectivePaymentStatus($row): int
+    {
+        $billing = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
+        $settled = (float) ($row->payments->sum('amount') ?? 0) + (float) ($row->claims->sum('amount') ?? 0);
+
+        if ($billing > 0 && $settled >= $billing) {
+            return InvoiceModel::STATUS_FULL;
+        }
+
+        return $settled > 0 ? InvoiceModel::STATUS_PARTIAL : InvoiceModel::STATUS_CREATE;
+    }
+
     private function formatInvoiceDatatable($data, bool $isPaidOnly)
     {
         return DataTables::of($data)
             ->addIndexColumn()
             ->addColumn('orderCount', function ($row) {
                 $count = $row->details ? $row->details->count() : 0;
-                return '<span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-truck-fast me-1"></i>' . $count . ' SJ</span>';
+
+                return '<span class="badge bg-light text-primary border border-primary-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-truck-fast me-1"></i>'.$count.' SJ</span>';
             })
             ->editColumn('DT_RowIndex', function ($row) {
-                return '<span class="text-muted fw-semibold fs-12">' . ($row->DT_RowIndex ?? '') . '</span>';
+                return '<span class="text-muted fw-semibold fs-12">'.($row->DT_RowIndex ?? '').'</span>';
             })
             ->editColumn('invoiceNumber', function ($row) {
                 $number = htmlspecialchars($row->invoiceNumber ?? '-');
-                return '<span class="font-monospace fw-bold text-primary fs-13 text-nowrap">' . $number . '</span>';
+
+                return '<span class="font-monospace fw-bold text-primary fs-13 text-nowrap">'.$number.'</span>';
             })
             ->editColumn('customer.name', function ($row) {
                 $customer = isset($row->customer->name) ? $row->customer->name : '-';
-                $code = $row->customerCode ? '<div class="text-muted font-monospace fs-11"><i class="mdi mdi-account-outline me-1"></i>' . htmlspecialchars($row->customerCode) . '</div>' : '';
-                return '<div class="text-start"><span class="fw-semibold text-dark fs-13 d-block text-truncate" style="max-width: 220px;" title="' . htmlspecialchars($customer) . '">' . htmlspecialchars($customer) . '</span>' . $code . '</div>';
+                $code = $row->customerCode ? '<div class="text-muted font-monospace fs-11"><i class="mdi mdi-account-outline me-1"></i>'.htmlspecialchars($row->customerCode).'</div>' : '';
+
+                return '<div class="text-start"><span class="fw-semibold text-dark fs-13 d-block text-truncate" style="max-width: 220px;" title="'.htmlspecialchars($customer).'">'.htmlspecialchars($customer).'</span>'.$code.'</div>';
             })
             ->editColumn('invoiceDate', function ($row) {
                 if (! $row->invoiceDate) {
@@ -359,9 +366,10 @@ class InvoiceController extends Controller
                 $formatted = Carbon::parse($row->invoiceDate)->format('d M Y');
                 $dueInfo = '';
                 if ($row->overdueDate) {
-                    $dueInfo = '<div class="text-muted fs-11"><i class="mdi mdi-calendar-clock me-1 text-warning"></i>Jth: ' . Carbon::parse($row->overdueDate)->format('d M Y') . '</div>';
+                    $dueInfo = '<div class="text-muted fs-11"><i class="mdi mdi-calendar-clock me-1 text-warning"></i>Jth: '.Carbon::parse($row->overdueDate)->format('d M Y').'</div>';
                 }
-                return '<div class="text-start text-nowrap"><span class="fw-medium text-dark fs-12">' . $formatted . '</span>' . $dueInfo . '</div>';
+
+                return '<div class="text-start text-nowrap"><span class="fw-medium text-dark fs-12">'.$formatted.'</span>'.$dueInfo.'</div>';
             })
             ->addColumn('price', function ($row) {
                 $subtotal = (float) ($row->invoiceAmount ?? 0);
@@ -388,7 +396,7 @@ class InvoiceController extends Controller
                                         $orderCosts[] = [
                                             'component' => $cName,
                                             'nominal' => $nom,
-                                            'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                            'nominalFormatted' => 'Rp '.number_format($nom, 0, ',', '.'),
                                         ];
                                     }
                                 }
@@ -397,22 +405,22 @@ class InvoiceController extends Controller
                             $ordersList[] = [
                                 'code' => $order->code,
                                 'shipment' => $order->shipmentNumber ?? $order->code,
-                                'route' => ($order->route && $order->route->originLocation ? $order->route->originLocation->name : '-') . ' ➔ ' . ($order->route && $order->route->destinationLocation ? $order->route->destinationLocation->name : '-'),
+                                'route' => ($order->route && $order->route->originLocation ? $order->route->originLocation->name : '-').' ➔ '.($order->route && $order->route->destinationLocation ? $order->route->destinationLocation->name : '-'),
                                 'plate' => $order->fleet->plateNumber ?? '-',
                                 'basePrice' => $routeAmt,
-                                'basePriceFormatted' => 'Rp ' . number_format($routeAmt, 0, ',', '.'),
+                                'basePriceFormatted' => 'Rp '.number_format($routeAmt, 0, ',', '.'),
                                 'onCharge' => $orderOnCharge,
-                                'onChargeFormatted' => 'Rp ' . number_format($orderOnCharge, 0, ',', '.'),
+                                'onChargeFormatted' => 'Rp '.number_format($orderOnCharge, 0, ',', '.'),
                                 'costs' => $orderCosts,
                                 'total' => $routeAmt + $orderOnCharge,
-                                'totalFormatted' => 'Rp ' . number_format($routeAmt + $orderOnCharge, 0, ',', '.'),
+                                'totalFormatted' => 'Rp '.number_format($routeAmt + $orderOnCharge, 0, ',', '.'),
                             ];
                         }
                     }
                 }
 
                 $html = '<div class="text-end">';
-                $html .= '<span class="fw-bold text-dark fs-13">Rp ' . number_format($subtotal, 0, ',', '.') . '</span>';
+                $html .= '<span class="fw-bold text-dark fs-13">Rp '.number_format($subtotal, 0, ',', '.').'</span>';
 
                 if ($totalOnCharge > 0) {
                     $breakdownData = [
@@ -420,42 +428,45 @@ class InvoiceController extends Controller
                         'customerName' => $row->customer->name ?? '-',
                         'invoiceDate' => $row->invoiceDate ? Carbon::parse($row->invoiceDate)->format('d-M-Y') : '-',
                         'totalRoute' => $totalRoute,
-                        'totalRouteFormatted' => 'Rp ' . number_format($totalRoute, 0, ',', '.'),
+                        'totalRouteFormatted' => 'Rp '.number_format($totalRoute, 0, ',', '.'),
                         'totalOnCharge' => $totalOnCharge,
-                        'totalOnChargeFormatted' => 'Rp ' . number_format($totalOnCharge, 0, ',', '.'),
+                        'totalOnChargeFormatted' => 'Rp '.number_format($totalOnCharge, 0, ',', '.'),
                         'subtotal' => $subtotal,
-                        'subtotalFormatted' => 'Rp ' . number_format($subtotal, 0, ',', '.'),
+                        'subtotalFormatted' => 'Rp '.number_format($subtotal, 0, ',', '.'),
                         'ppn' => (float) ($row->ppnAmount ?? 0),
-                        'ppnFormatted' => 'Rp ' . number_format((float) ($row->ppnAmount ?? 0), 0, ',', '.'),
+                        'ppnFormatted' => 'Rp '.number_format((float) ($row->ppnAmount ?? 0), 0, ',', '.'),
                         'pph' => (float) ($row->pphAmount ?? 0),
-                        'pphFormatted' => 'Rp ' . number_format((float) ($row->pphAmount ?? 0), 0, ',', '.'),
+                        'pphFormatted' => 'Rp '.number_format((float) ($row->pphAmount ?? 0), 0, ',', '.'),
                         'grandTotal' => $subtotal + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0),
-                        'grandTotalFormatted' => 'Rp ' . number_format($subtotal + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0), 0, ',', '.'),
+                        'grandTotalFormatted' => 'Rp '.number_format($subtotal + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0), 0, ',', '.'),
                         'components' => $onChargeSummary,
                         'orders' => $ordersList,
                     ];
                     $jsonAttr = htmlspecialchars(json_encode($breakdownData), ENT_QUOTES, 'UTF-8');
 
-                    $html .= '<br><button type="button" class="btn btn-xs btn-outline-warning border-warning-subtle py-0 px-2 mt-1 rounded-pill btn-view-invoice-breakdown" data-breakdown=\'' . $jsonAttr . '\' title="Klik untuk rincian biaya On Charge">';
-                    $html .= '<i class="mdi mdi-cash-multiple me-1"></i>+ On Charge: Rp ' . number_format($totalOnCharge, 0, ',', '.');
+                    $html .= '<br><button type="button" class="btn btn-xs btn-outline-warning border-warning-subtle py-0 px-2 mt-1 rounded-pill btn-view-invoice-breakdown" data-breakdown=\''.$jsonAttr.'\' title="Klik untuk rincian biaya On Charge">';
+                    $html .= '<i class="mdi mdi-cash-multiple me-1"></i>+ On Charge: Rp '.number_format($totalOnCharge, 0, ',', '.');
                     $html .= '</button>';
                 }
 
                 $html .= '</div>';
+
                 return $html;
             })
             ->addColumn('ppn', function ($row) {
                 $ppnAmount = (float) ($row->ppnAmount ?? 0);
                 if ($ppnAmount > 0) {
-                    return '<div class="text-end font-monospace fs-12 text-dark fw-medium">Rp ' . number_format($ppnAmount, 0, ',', '.') . '</div>';
+                    return '<div class="text-end font-monospace fs-12 text-dark fw-medium">Rp '.number_format($ppnAmount, 0, ',', '.').'</div>';
                 }
+
                 return '<div class="text-end text-muted font-monospace fs-12 opacity-50">-</div>';
             })
             ->addColumn('pph', function ($row) {
                 $pphAmount = (float) ($row->pphAmount ?? 0);
                 if ($pphAmount > 0) {
-                    return '<div class="text-end font-monospace fs-12 text-danger fw-medium">- Rp ' . number_format($pphAmount, 0, ',', '.') . '</div>';
+                    return '<div class="text-end font-monospace fs-12 text-danger fw-medium">- Rp '.number_format($pphAmount, 0, ',', '.').'</div>';
                 }
+
                 return '<div class="text-end text-muted font-monospace fs-12 opacity-50">-</div>';
             })
             ->addColumn('totalBilling', function ($row) {
@@ -465,15 +476,16 @@ class InvoiceController extends Controller
                 $remaining = $total - $totalPaid - $totalClaim;
 
                 $html = '<div class="text-end">';
-                $html .= '<span class="fw-bold text-dark fs-13">Rp ' . number_format($total, 0, ',', '.') . '</span>';
+                $html .= '<span class="fw-bold text-dark fs-13">Rp '.number_format($total, 0, ',', '.').'</span>';
                 if ($remaining > 0 && ($totalPaid > 0 || $totalClaim > 0)) {
-                    $html .= '<div class="text-danger fs-11 fw-semibold mt-0" title="Sisa Belum Dibayar"><i class="mdi mdi-alert-circle-outline me-1"></i>Sisa: Rp ' . number_format($remaining, 0, ',', '.') . '</div>';
+                    $html .= '<div class="text-danger fs-11 fw-semibold mt-0" title="Sisa Belum Dibayar"><i class="mdi mdi-alert-circle-outline me-1"></i>Sisa: Rp '.number_format($remaining, 0, ',', '.').'</div>';
                 }
                 $html .= '</div>';
+
                 return $html;
             })
             ->addColumn('status', function ($row) {
-                $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
+                $status = $this->effectivePaymentStatus($row);
                 if ($status === InvoiceModel::STATUS_FULL) {
                     return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1 fw-semibold fs-11"><i class="mdi mdi-check-circle me-1"></i>Lunas</span>';
                 } elseif ($status === InvoiceModel::STATUS_PARTIAL) {
@@ -483,14 +495,14 @@ class InvoiceController extends Controller
                 }
             })
             ->addColumn('action', function ($row) use ($isPaidOnly) {
-                $status = (int) ($row->status ?? InvoiceModel::STATUS_CREATE);
+                $status = $this->effectivePaymentStatus($row);
                 $totalBilling = (float) ($row->invoiceAmount ?? 0) + (float) ($row->ppnAmount ?? 0) - (float) ($row->pphAmount ?? 0);
                 $totalPaid = (float) ($row->payments->sum('amount') ?? 0);
                 $totalClaim = (float) ($row->claims->sum('amount') ?? 0);
                 $remaining = $totalBilling - $totalPaid - $totalClaim;
 
                 $btn = '<div class="d-inline-flex align-items-center gap-1">
-                        <a target="_blank" href="' . route('invoice.pdf', $row->id) . '"
+                        <a target="_blank" href="'.route('invoice.pdf', $row->id).'"
                         class="btn btn-icon btn-sm bg-success-subtle text-success border border-success-subtle hover-scale"
                         data-bs-toggle="tooltip" title="Cetak PDF">
                             <i class="mdi mdi-printer-outline fs-14"></i>
@@ -502,8 +514,8 @@ class InvoiceController extends Controller
                         <a href="javascript:void(0)"
                         class="btn btn-icon btn-sm bg-info-subtle text-info border border-info-subtle hover-scale btn-payment-history"
                         data-bs-toggle="tooltip" title="Riwayat Pembayaran (DP/Cicilan)"
-                        data-id="' . $row->id . '"
-                        data-invoice-number="' . htmlspecialchars($row->invoiceNumber ?? '-') . '">
+                        data-id="'.$row->id.'"
+                        data-invoice-number="'.htmlspecialchars($row->invoiceNumber ?? '-').'">
                             <i class="mdi mdi-cash-clock fs-14"></i>
                         </a>';
                 }
@@ -512,7 +524,7 @@ class InvoiceController extends Controller
                     // Tombol edit hanya muncul jika belum full payment
                     if ($status !== InvoiceModel::STATUS_FULL) {
                         $btn .= '
-                            <a href="' . route('invoice.edit', $row->id) . '"
+                            <a href="'.route('invoice.edit', $row->id).'"
                             class="btn btn-icon btn-sm bg-primary-subtle text-primary border border-primary-subtle hover-scale"
                             data-bs-toggle="tooltip" title="Edit Faktur">
                                 <i class="mdi mdi-pencil-outline fs-14"></i>
@@ -522,8 +534,8 @@ class InvoiceController extends Controller
                             <a href="javascript:void(0)" 
                             class="btn btn-icon btn-sm bg-secondary-subtle text-secondary border border-secondary-subtle hover-scale btn-suggest-number"
                             data-bs-toggle="tooltip" title="Saran Nomor Baru"
-                            data-id="' . $row->id . '"
-                            data-invoice-number="' . htmlspecialchars($row->invoiceNumber) . '">
+                            data-id="'.$row->id.'"
+                            data-invoice-number="'.htmlspecialchars($row->invoiceNumber).'">
                                 <i class="mdi mdi-auto-fix fs-14"></i>
                             </a>';
                     }
@@ -531,16 +543,16 @@ class InvoiceController extends Controller
 
                 // Tombol recalculate
                 $btn .= '
-                    <a href="javascript:recalculateInvoice(\'' . $row->id . '\')"
+                    <a href="javascript:recalculateInvoice(\''.$row->id.'\')"
                     class="btn btn-icon btn-sm bg-warning-subtle text-warning-emphasis border border-warning-subtle hover-scale"
                     data-bs-toggle="tooltip" title="Hitung Ulang Nilai Faktur">
                         <i class="mdi mdi-calculator fs-14"></i>
                     </a>';
 
-                // Tombol delete hanya muncul jika belum ada pembayaran dan belum lunas
-                if (! $isPaidOnly && count($row->payments) == 0) {
+                // Tombol hapus hanya muncul jika belum pernah ada pembayaran maupun claim.
+                if (! $isPaidOnly && count($row->payments) === 0 && count($row->claims) === 0) {
                     $btn .= '
-                        <a href="javascript:deleteData(\'' . $row->id . '\')"
+                        <a href="javascript:deleteData(\''.$row->id.'\')"
                         class="btn btn-icon btn-sm bg-danger-subtle text-danger border border-danger-subtle hover-scale"
                         data-bs-toggle="tooltip" title="Hapus Faktur">
                             <i class="mdi mdi-trash-can-outline fs-14"></i>
@@ -610,7 +622,8 @@ class InvoiceController extends Controller
                 })
                 ->addColumn('basePrice', function ($row) {
                     $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
-                    return '<span class="text-dark fw-medium">Rp ' . number_format($basePrice, 0, ',', '.') . '</span>';
+
+                    return '<span class="text-dark fw-medium">Rp '.number_format($basePrice, 0, ',', '.').'</span>';
                 })
                 ->addColumn('addCost', function ($row) {
                     $onChargeCost = 0;
@@ -623,7 +636,7 @@ class InvoiceController extends Controller
                                 $onChargeItems[] = [
                                     'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
                                     'nominal' => $nom,
-                                    'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                    'nominalFormatted' => 'Rp '.number_format($nom, 0, ',', '.'),
                                     'description' => $item->description ?? '',
                                 ];
                             }
@@ -636,17 +649,18 @@ class InvoiceController extends Controller
                         $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
 
                         $html = '<div class="d-flex flex-column align-items-end">';
-                        $html .= '<span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold mb-1">+ Rp ' . number_format($onChargeCost, 0, ',', '.') . '</span>';
+                        $html .= '<span class="badge bg-warning-subtle text-warning border border-warning-subtle fw-semibold mb-1">+ Rp '.number_format($onChargeCost, 0, ',', '.').'</span>';
                         $html .= '<button type="button" class="btn btn-xs btn-outline-info py-0 px-2 btn-order-cost-detail" '
-                            . 'data-code="' . $row->code . '" '
-                            . 'data-shipment="' . $shipment . '" '
-                            . 'data-base-price="' . number_format($basePrice, 0, ',', '.') . '" '
-                            . 'data-on-charge="' . number_format($onChargeCost, 0, ',', '.') . '" '
-                            . 'data-total="' . number_format($basePrice + $onChargeCost, 0, ',', '.') . '" '
-                            . 'data-costs=\'' . $jsonCosts . '\' title="Lihat Rincian Biaya On Charge">';
-                        $html .= '<i class="mdi mdi-receipt-text-outline me-1"></i>' . count($onChargeItems) . ' Rincian';
+                            .'data-code="'.$row->code.'" '
+                            .'data-shipment="'.$shipment.'" '
+                            .'data-base-price="'.number_format($basePrice, 0, ',', '.').'" '
+                            .'data-on-charge="'.number_format($onChargeCost, 0, ',', '.').'" '
+                            .'data-total="'.number_format($basePrice + $onChargeCost, 0, ',', '.').'" '
+                            .'data-costs=\''.$jsonCosts.'\' title="Lihat Rincian Biaya On Charge">';
+                        $html .= '<i class="mdi mdi-receipt-text-outline me-1"></i>'.count($onChargeItems).' Rincian';
                         $html .= '</button>';
                         $html .= '</div>';
+
                         return $html;
                     }
 
@@ -664,7 +678,7 @@ class InvoiceController extends Controller
                     $basePrice = (float) ($row->routeAmount ?? $row->price ?? 0);
                     $orderPrice = $basePrice + $onChargeCost;
 
-                    return '<span class="fw-bold text-primary fs-13">Rp ' . number_format($orderPrice, 0, ',', '.') . '</span>';
+                    return '<span class="fw-bold text-primary fs-13">Rp '.number_format($orderPrice, 0, ',', '.').'</span>';
                 })
                 ->addColumn('action', function ($row) {
                     $onChargeCost = 0;
@@ -677,7 +691,7 @@ class InvoiceController extends Controller
                                 $onChargeItems[] = [
                                     'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
                                     'nominal' => $nom,
-                                    'nominalFormatted' => 'Rp ' . number_format($nom, 0, ',', '.'),
+                                    'nominalFormatted' => 'Rp '.number_format($nom, 0, ',', '.'),
                                     'description' => $item->description ?? '',
                                 ];
                             }
@@ -688,14 +702,14 @@ class InvoiceController extends Controller
                     $costsJson = htmlspecialchars(json_encode($onChargeItems), ENT_QUOTES, 'UTF-8');
 
                     $btn = '<input class="order-checkbox form-check-input" type="checkbox" name="order[]" '
-                        . 'data-id="' . $row->code . '" '
-                        . 'data-price="' . $orderPrice . '" '
-                        . 'data-base-price="' . $basePrice . '" '
-                        . 'data-on-charge="' . $onChargeCost . '" '
-                        . 'data-costs=\'' . $costsJson . '\' '
-                        . 'data-shipment="' . ($row->shipmentNumber ?? $row->code) . '" '
-                        . 'data-plate="' . ($row->fleet->plateNumber ?? '-') . '" '
-                        . 'value="' . $row->code . '">';
+                        .'data-id="'.$row->code.'" '
+                        .'data-price="'.$orderPrice.'" '
+                        .'data-base-price="'.$basePrice.'" '
+                        .'data-on-charge="'.$onChargeCost.'" '
+                        .'data-costs=\''.$costsJson.'\' '
+                        .'data-shipment="'.($row->shipmentNumber ?? $row->code).'" '
+                        .'data-plate="'.($row->fleet->plateNumber ?? '-').'" '
+                        .'value="'.$row->code.'">';
 
                     return $btn;
                 })
@@ -728,11 +742,11 @@ class InvoiceController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            return redirect()->back()->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->back()->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->back()->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -785,7 +799,7 @@ class InvoiceController extends Controller
         }
 
         if ($customer && $customer->invoicePdf) {
-            $pdfTemplatePath = 'finance.invoice.pdf.customer.' . $customer->invoicePdf;
+            $pdfTemplatePath = 'finance.invoice.pdf.customer.'.$customer->invoicePdf;
 
             // Cek apakah view-nya ada, kalau tidak gunakan default general
             if (view()->exists($pdfTemplatePath)) {
@@ -819,7 +833,7 @@ class InvoiceController extends Controller
                 ->with('customer', $customer)
         );
 
-        return $mpdf->Output('Invoice-' . $data->invoiceNumber . '.pdf', 'I');
+        return $mpdf->Output('Invoice-'.$data->invoiceNumber.'.pdf', 'I');
     }
 
     public function customerInvoice($customerCode)
@@ -949,7 +963,7 @@ class InvoiceController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+                'message' => 'Terjadi kesalahan: '.$th->getMessage(),
             ], 500);
         }
     }
@@ -958,6 +972,7 @@ class InvoiceController extends Controller
     {
         try {
             $suggested = $this->service->getSuggestedInvoiceNumber($id);
+
             return response()->json([
                 'success' => true,
                 'suggestedNumber' => $suggested,
@@ -965,7 +980,7 @@ class InvoiceController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan: ' . $th->getMessage(),
+                'message' => 'Terjadi kesalahan: '.$th->getMessage(),
             ], 500);
         }
     }
@@ -975,7 +990,7 @@ class InvoiceController extends Controller
         if (auth()->user()->roleCode !== 'SPRADMIN') {
             return response()->json([
                 'success' => false,
-                'message' => 'Hanya System Administrator yang diizinkan untuk melakukan tindakan ini.'
+                'message' => 'Hanya System Administrator yang diizinkan untuk melakukan tindakan ini.',
             ], 403);
         }
 
@@ -999,26 +1014,15 @@ class InvoiceController extends Controller
                 $invoice->usePph = $usePph;
 
                 $totals = $this->service->calculateInvoiceAmount($invoice);
-                
+
                 InvoiceModel::where('id', $invoice->id)->update([
                     'invoiceAmount' => $totals['subtotal'],
                     'ppnAmount' => $totals['ppn'],
                     'pphAmount' => $totals['pph'],
                 ]);
 
-                // Update invoice status based on new totals and existing payments
-                $sumPayments = (int) $invoice->payments()->sum('amount');
-                $invoiceTotal = (int) $totals['total'];
-                $nextStatus = InvoiceModel::STATUS_CREATE;
-                if ($invoiceTotal > 0 && $sumPayments >= $invoiceTotal) {
-                    $nextStatus = InvoiceModel::STATUS_FULL;
-                } elseif ($sumPayments > 0) {
-                    $nextStatus = InvoiceModel::STATUS_PARTIAL;
-                }
-                
-                InvoiceModel::where('id', $invoice->id)->update([
-                    'status' => $nextStatus
-                ]);
+                // Sinkronkan status dengan pembayaran + claim aktual.
+                $this->service->synchronizePaymentStatus($invoice, (float) $totals['total']);
 
                 $count++;
             }
@@ -1034,7 +1038,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Error di baris ' . $th->getLine() . ': ' . $th->getMessage(),
+                'message' => 'Error di baris '.$th->getLine().': '.$th->getMessage(),
             ], 500);
         }
     }

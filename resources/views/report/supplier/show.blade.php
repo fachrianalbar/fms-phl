@@ -12,6 +12,10 @@
         #dt-supplier-purchase-detail tbody tr.table-danger-subtle td { background-color: #fff1f2 !important; }
         #dt-supplier-purchase-detail tbody tr.table-warning-subtle:hover td { background-color: #fef3c7 !important; }
         #dt-supplier-purchase-detail tbody tr.table-danger-subtle:hover td { background-color: #ffe4e6 !important; }
+        html[data-bs-theme="dark"] #dt-supplier-purchase-detail tbody tr.table-warning-subtle td { background-color: rgba(245, 158, 11, 0.16) !important; }
+        html[data-bs-theme="dark"] #dt-supplier-purchase-detail tbody tr.table-danger-subtle td { background-color: rgba(239, 68, 68, 0.16) !important; }
+        html[data-bs-theme="dark"] #dt-supplier-purchase-detail tbody tr.table-warning-subtle:hover td { background-color: rgba(245, 158, 11, 0.26) !important; }
+        html[data-bs-theme="dark"] #dt-supplier-purchase-detail tbody tr.table-danger-subtle:hover td { background-color: rgba(239, 68, 68, 0.26) !important; }
         .supplier-contact-line { color: #64748b; font-size: 12px; }
         .status-legend { font-size: 11.5px; color: #64748b; }
     </style>

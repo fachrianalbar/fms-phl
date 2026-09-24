@@ -17,34 +17,140 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 
-    <link rel="stylesheet" type="text/css" href="../assets/css/vendors/sweetalert2.css">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+
+    <style>
+        /* ── Scoped Table Styling ── */
+        #dt {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        #dt thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 13px 12px;
+            border-bottom: 2px solid #e2e8f0;
+            border-top: none;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #dt tbody td {
+            padding: 11px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 12.5px;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #dt tbody tr {
+            transition: background-color 0.15s ease;
+        }
+
+        #dt tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        /* ── Tombol Icon Ramping Header / Aksi Tabel ── */
+        .btn-icon {
+            border-radius: 8px !important;
+            padding: 6px 10px;
+            font-size: 13px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon:hover {
+            transform: translateY(-1px);
+        }
+
+        /* ── DataTables Inputs & Pagination ── */
+        #dt_wrapper .dataTables_filter input {
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        #dt_wrapper .dataTables_length select {
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
+        #dt_wrapper .dataTables_info,
+        #dt_wrapper .dataTables_length,
+        #dt_wrapper .dataTables_filter {
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .card-header {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #dt thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody td {
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
+    </style>
 @endpush
 
 @section('content')
     <div class="col-sm-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>Data {{ $title }}</h4>
+        <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+            {{-- Card Header --}}
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
+                style="border-color: #e2e8f0;">
+                <div>
+                    <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                        <i class="mdi mdi-office-building-outline text-primary fs-20"></i>
+                        {{ $title }} Data
+                    </h4>
+                    <small class="text-muted">Daftar master perusahaan / entitas bisnis</small>
+                </div>
 
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
-
+                <a href="{{ route($view . 'create') }}"
+                    class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+                    style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                    <i class="mdi mdi-plus"></i> {{ __('general.add_data') }}
+                </a>
             </div>
-            <div class="card-body">
+
+            <div class="card-body p-4">
                 @include('partials.alert')
                 <div class="table-responsive custom-scrollbar">
-                    <table class="table table-striped w-100 nowrap" id="dt">
+                    <table class="table align-middle w-100 mb-0" id="dt">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>No</th>
-                                <th>Kode</th>
-                                <th>Nama</th>
-                                {{-- <th>Format</th> --}}
+                                <th class="text-center" style="width: 80px;">#</th>
+                                <th class="text-center" style="width: 60px;">No</th>
+                                <th style="width: 25%;">Kode</th>
+                                <th>Nama Perusahaan</th>
                             </tr>
                         </thead>
-                        <tbody>
-
-                        </tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -58,8 +164,6 @@
 @endsection
 
 @push('script')
-    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-
     <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
 
     <!-- dataTables.bootstrap5 -->
@@ -78,8 +182,7 @@
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
 
-    <script src="../assets/js/sweet-alert/sweetalert.min.js"></script>
-    {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
 
     <script>
         $(document).ready(function() {
@@ -91,15 +194,19 @@
                     "url": "{{ route('dt.company') }}",
                 },
                 "columns": [{
-                        "data": 'action'
+                        "data": 'action',
+                        "className": 'text-center align-middle',
                     }, {
-                        "data": 'DT_RowIndex'
+                        "data": 'DT_RowIndex',
+                        "className": 'text-center align-middle',
                     },
                     {
-                        "data": 'code'
+                        "data": 'code',
+                        "className": 'align-middle font-monospace fw-semibold',
                     },
                     {
-                        "data": 'name'
+                        "data": 'name',
+                        "className": 'align-middle fw-semibold text-dark',
                     }
                 ],
                 "columnDefs": [{

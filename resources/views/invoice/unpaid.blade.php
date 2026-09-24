@@ -1,8 +1,12 @@
+@php
+    $isPartial = ($listType ?? 'unpaid') === 'partial';
+@endphp
+
 @extends('layouts.main', [
 'title' => $title,
 'pageTitle' => $title,
-'firstSegment' => 'Faktur',
-'secondSegment' => 'Unpaid Invoice',
+'firstSegment' => 'Piutang (Faktur)',
+'secondSegment' => $isPartial ? 'Pembayaran Sebagian' : 'Belum Lunas',
 ])
 
 @push('style')
@@ -26,17 +30,21 @@
     <!-- Page Header & Action Bar -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;">
-                <i class="mdi mdi-receipt-text-clock fs-24"></i>
+            <div class="{{ $isPartial ? 'bg-warning' : 'bg-primary' }} text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; background: {{ $isPartial ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }} !important;">
+                <i class="mdi {{ $isPartial ? 'mdi-cash-clock' : 'mdi-receipt-text-clock' }} fs-24"></i>
             </div>
             <div>
                 <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
                     {{ $title }}
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fs-12 px-2 py-1">
-                        {{ number_format($stats['totalCount'] ?? 0) }} Aktif
+                    <span class="badge {{ $isPartial ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-primary-subtle text-primary border-primary-subtle' }} border rounded-pill fs-12 px-2 py-1">
+                        {{ number_format($stats['totalCount'] ?? 0) }} {{ $isPartial ? 'Sebagian' : 'Belum Bayar' }}
                     </span>
                 </h4>
-                <p class="text-muted mb-0 fs-12">Kelola dan pantau faktur penagihan piutang pelanggan yang belum lunas atau terbayar sebagian.</p>
+                <p class="text-muted mb-0 fs-12">
+                    {{ $isPartial
+                        ? 'Faktur yang sudah memiliki pembayaran atau claim, tetapi masih menyisakan piutang pelanggan.'
+                        : 'Faktur yang benar-benar belum memiliki pembayaran maupun claim.' }}
+                </p>
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -48,9 +56,15 @@
                     <i class="mdi mdi-calculator-variant-outline me-1"></i> Hitung Ulang Semua
                 </button>
             @endif
-            <a href="{{ route('invoice.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-white fw-semibold" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
-                <i class="mdi mdi-plus-circle me-1"></i> {{ __('general.add_data') }}
-            </a>
+                <a href="{{ $isPartial ? route('invoice.unpaid') : route('invoice.partial') }}" class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-sm fw-semibold">
+                    <i class="mdi {{ $isPartial ? 'mdi-cash-remove' : 'mdi-cash-clock' }} me-1"></i>
+                    {{ $isPartial ? 'Lihat Faktur Belum Lunas' : 'Lihat Pembayaran Sebagian' }}
+                </a>
+                @if (! $isPartial)
+                    <a href="{{ route('invoice.create') }}" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-white fw-semibold" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+                        <i class="mdi mdi-plus-circle me-1"></i> {{ __('general.add_data') }}
+                    </a>
+                @endif
         </div>
     </div>
 
@@ -61,7 +75,7 @@
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Faktur Tertunda</div>
+                        <div class="stat-label">{{ $isPartial ? 'Faktur Bayar Sebagian' : 'Faktur Belum Dibayar' }}</div>
                         <div class="stat-value">{{ number_format($stats['totalCount'] ?? 0) }} <span class="fs-13 text-muted fw-normal">Faktur</span></div>
                     </div>
                     <div class="stat-icon-wrapper bg-primary-subtle text-primary">
@@ -69,11 +83,9 @@
                     </div>
                 </div>
                 <div class="stat-desc d-flex align-items-center gap-1 mt-2">
-                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill px-2 py-0 fs-11">
-                        {{ $stats['createdCount'] ?? 0 }} Baru
-                    </span>
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-2 py-0 fs-11">
-                        {{ $stats['partialCount'] ?? 0 }} Parsial
+                    <span class="badge {{ $isPartial ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle' }} border rounded-pill px-2 py-0 fs-11">
+                        <i class="mdi {{ $isPartial ? 'mdi-cash-clock' : 'mdi-cash-remove' }} me-1"></i>
+                        {{ $isPartial ? 'Masih memiliki sisa tagihan' : 'Belum ada pembayaran' }}
                     </span>
                 </div>
             </div>
@@ -102,15 +114,22 @@
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <div class="stat-label">Pembayaran Masuk</div>
-                        <div class="stat-value text-success">Rp {{ number_format($stats['totalPaid'] ?? 0, 0, ',', '.') }}</div>
+                        <div class="stat-label">{{ $isPartial ? 'Pembayaran Masuk' : 'Status Pembayaran' }}</div>
+                        <div class="stat-value {{ $isPartial ? 'text-success' : 'text-secondary' }}">
+                            @if ($isPartial)
+                                Rp {{ number_format($stats['totalPaid'] ?? 0, 0, ',', '.') }}
+                            @else
+                                Rp 0
+                            @endif
+                        </div>
                     </div>
-                    <div class="stat-icon-wrapper bg-success-subtle text-success">
-                        <i class="mdi mdi-check-decagram-outline"></i>
+                    <div class="stat-icon-wrapper {{ $isPartial ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }}">
+                        <i class="mdi {{ $isPartial ? 'mdi-check-decagram-outline' : 'mdi-cash-remove' }}"></i>
                     </div>
                 </div>
-                <div class="stat-desc mt-2 text-truncate text-success">
-                    <i class="mdi mdi-arrow-down-bold-circle-outline me-1"></i>Dana cicilan yang diterima
+                <div class="stat-desc mt-2 text-truncate {{ $isPartial ? 'text-success' : 'text-secondary' }}">
+                    <i class="mdi {{ $isPartial ? 'mdi-arrow-down-bold-circle-outline' : 'mdi-information-outline' }} me-1"></i>
+                    {{ $isPartial ? 'Dana cicilan yang telah diterima' : 'Belum ada dana pembayaran diterima' }}
                 </div>
             </div>
         </div>
@@ -136,22 +155,13 @@
 
     <!-- Main Table Card -->
     <div class="table-container-card mb-4">
-        <!-- Top Toolbar & Status Filter Pills -->
+        <!-- Category Indicator -->
         <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div class="d-flex flex-wrap align-items-center gap-2">
-                <span class="text-muted fw-bold fs-11 text-uppercase me-1" style="letter-spacing: 0.5px;">Filter Status:</span>
-                <button type="button" class="filter-pill-btn active" data-filter="all">
-                    <i class="mdi mdi-view-grid-outline"></i> Semua
-                    <span class="badge-pill-count">{{ $stats['totalCount'] ?? 0 }}</span>
-                </button>
-                <button type="button" class="filter-pill-btn" data-filter="created">
-                    <i class="mdi mdi-file-document-outline"></i> Belum Bayar
-                    <span class="badge-pill-count">{{ $stats['createdCount'] ?? 0 }}</span>
-                </button>
-                <button type="button" class="filter-pill-btn" data-filter="partial">
-                    <i class="mdi mdi-clock-check-outline"></i> Bayar Sebagian
-                    <span class="badge-pill-count">{{ $stats['partialCount'] ?? 0 }}</span>
-                </button>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge {{ $isPartial ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle' }} border rounded-pill px-3 py-1 fw-bold fs-12">
+                    <i class="mdi {{ $isPartial ? 'mdi-cash-clock' : 'mdi-cash-remove' }} me-1"></i>
+                    {{ $isPartial ? 'Sudah Dibayar Sebagian' : 'Belum Ada Pembayaran' }}
+                </span>
             </div>
             <div class="text-muted fs-12">
                 <i class="mdi mdi-information-outline me-1 text-primary"></i>Klik tombol <strong>+ On Charge</strong> untuk melihat rincian biaya tambahan.
@@ -261,7 +271,7 @@
             "destroy": true,
             "pageLength": 25,
             "ajax": {
-                "url": "{{ route('dt.invoice.unpaid') }}",
+                "url": "{{ $isPartial ? route('dt.invoice.partial') : route('dt.invoice.unpaid') }}",
             },
             "columns": [
                 { "data": 'action', "className": "text-center" },
@@ -292,20 +302,6 @@
                     "next": "<i class='mdi mdi-chevron-right'></i>",
                     "previous": "<i class='mdi mdi-chevron-left'></i>"
                 }
-            }
-        });
-
-        // Quick status filter pills
-        $('.filter-pill-btn').on('click', function() {
-            $('.filter-pill-btn').removeClass('active');
-            $(this).addClass('active');
-            var filter = $(this).data('filter');
-            if (filter === 'all') {
-                table.column(10).search('').draw();
-            } else if (filter === 'created') {
-                table.column(10).search('Belum Bayar').draw();
-            } else if (filter === 'partial') {
-                table.column(10).search('Sebagian').draw();
             }
         });
 

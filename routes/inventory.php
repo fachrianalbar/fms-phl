@@ -16,6 +16,8 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::resource('items', ItemController::class);
     Route::resource('item-category', ItemCategoryController::class);
     Route::resource('warehouse', WarehouseController::class);
+    Route::get('supplier/export-excel', [SupplierController::class, 'excelSupplier'])->name('supplier.export-excel');
+    Route::get('supplier/export-pdf', [SupplierController::class, 'pdfSupplier'])->name('supplier.export-pdf');
     Route::resource('supplier', SupplierController::class);
     Route::resource('item-unit', ItemUnitController::class);
     Route::resource('transaction-stock', StockTransactionController::class);

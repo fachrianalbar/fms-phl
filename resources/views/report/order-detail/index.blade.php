@@ -191,6 +191,53 @@
             font-size: 0.8rem;
             color: #475569;
         }
+
+        /* ── Dark mode ─────────────────────────────── */
+        html[data-bs-theme="dark"] .card-custom {
+            background: var(--bs-card-bg);
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] .card-custom .card-header {
+            background: var(--bs-card-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .form-label-custom {
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom {
+            background-color: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .form-control-custom:focus {
+            background-color: var(--bs-tertiary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] table.table-order thead th {
+            background: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] table.table-order td {
+            color: var(--bs-body-color) !important;
+            border-bottom-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] table.table-order tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+        html[data-bs-theme="dark"] table.table-order td .cost-detail-item {
+            color: var(--bs-secondary-color);
+        }
+
+        /* Export loader overlay card (inline white background) */
+        html[data-bs-theme="dark"] #exportLoader > .text-center {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #exportLoader .progress {
+            background-color: var(--bs-tertiary-bg) !important;
+        }
     </style>
 @endpush
 

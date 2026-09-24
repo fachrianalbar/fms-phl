@@ -10,6 +10,14 @@
 <style>
     .detail-label { font-weight: 600; color: #6c757d; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.25rem; }
     .detail-value { font-size: 1rem; font-weight: 500; margin-bottom: 1rem; color: #212529; }
+
+    /* ── Dark mode ─────────────────────────────── */
+    html[data-bs-theme="dark"] .detail-label {
+        color: var(--bs-secondary-color);
+    }
+    html[data-bs-theme="dark"] .detail-value {
+        color: var(--bs-body-color);
+    }
 </style>
 @endpush
 
