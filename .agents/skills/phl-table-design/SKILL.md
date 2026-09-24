@@ -1,6 +1,6 @@
 ---
 name: phl-table-design
-description: Standard UI design system for B2B data tables, reports, filter bars, KPI summary cards, and detail pages in the PHL project (Bootstrap 5, DataTables, Flatpickr, Select2). Includes the canonical filter-card standard (light + dark mode) referenced from operational/not-return-do. Use this skill whenever the user says "perbaiki design", "perbaiki tampilan", "standarisasi tabel", "desain table", "perbaiki filter", "standarisasi filter", "desain filter", "filter masih putih", "filter tidak muncul di dark mode", or asks to redesign/improve any report, table, or filter page.
+description: Standard UI design system for B2B data tables, reports, filter bars, KPI summary cards, detail pages, and modal dialogs in the PHL project (Bootstrap 5, DataTables, Flatpickr, Select2). Includes the canonical filter-card standard (light + dark mode) referenced from operational/not-return-do and modal standards. Use this skill whenever the user says "perbaiki design", "perbaiki tampilan", "standarisasi tabel", "desain table", "perbaiki filter", "standarisasi filter", "desain filter", "filter masih putih", "filter tidak muncul di dark mode", "perbaiki modal", "standarisasi modal", or asks to redesign/improve any report, table, filter, or modal dialog.
 ---
 
 # PHL B2B Table & Report Design Standard
@@ -969,3 +969,199 @@ Aturan UX tambahan:
 - Nonaktifkan tombol submit setelah submit pertama untuk mencegah duplikasi.
 - Modal wajib responsif; pada viewport kecil gunakan margin `1rem` dan padding horizontal yang lebih kecil.
 - Delete tetap menggunakan konfirmasi sebelum mengirim `DELETE`; jangan hapus langsung dari tombol tabel.
+
+---
+
+## 11. Standar Desain Modal Dialog PHL (B2B Modal Standard)
+
+> **Standar referensi visual:** `resources/views/operational/order/index.blade.php` & `resources/views/operational/return-do/index.blade.php`.
+
+Gunakan panduan ini untuk setiap pembuatan, pemeriksaan, dan refactoring modal dialog di seluruh modul PHL.
+
+### 1. Prinsip Utama Desain Modal
+1. **Sizing Proporsional (Anti-XL Abuse):**
+   - **`modal-md`** (max 500–560px): Untuk catatan singkat, preview teks tunggal, form konfirmasi, atau dialog upload file sederhana. JANGAN pernah menggunakan `modal-xl` hanya untuk satu input text/catatan!
+   - **`modal-lg`** (max 800px): Untuk form input dengan tabel riwayat (mis. Ganti Supir, Tambah Komponen Biaya) atau tabel rincian (Detail Biaya On Charge).
+   - **`modal-xl`** (max 1140–1200px): Khusus untuk dataset tabel lebar (banyak kolom) atau galeri file/lampiran dokumen.
+2. **Dilarang Nested `.card` di dalam `.modal-content`:**
+   Menaruh elemen `.card` di dalam `.modal-content` merupakan *anti-pattern* yang merusak konsistensi border-radius, background, dan whitespace. Gunakan `.modal-body` langsung dengan padding `p-4`, dan gunakan border pembatas halus atau section divider (`<hr class="my-3">`) jika memisahkan form dengan tabel.
+3. **Header Terstandarisasi:**
+   - Ikon lingkaran lembut (`avatar-sm bg-primary-subtle text-primary rounded-circle` ukuran 36×36px).
+   - Title modal tebal (`fw-bold text-dark`, `font-size: 15–16px`).
+   - Subtitle deskriptif (`small text-muted`).
+   - Tombol close standar (`.btn-close` dengan `data-bs-dismiss="modal"`).
+4. **Tabel di dalam Modal:**
+   - Gunakan kelas ter-scope `.modal-table` dengan border halus `#e2e8f0`, thead abu-abu `#f8fafc`, font 12.5px.
+   - **JANGAN** gunakan `table-striped` default.
+   - Kolom nominal dan angka **wajib** `text-end font-monospace fw-semibold`.
+5. **Kontrol Form di dalam Modal:**
+   - Kontrol tinggi seragam 38px, radius 8px.
+   - Select2 wajib menggunakan konfigurasi `dropdownParent: $('#modalId')` agar dropdown tidak tertutup backdrop modal dan memiliki z-index yang tepat (`z-index: 9999`).
+   - Textarea menggunakan radius 8px dengan `line-height: 1.5`.
+
+### 2. Markup Standar Modal
+
+```blade
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog"
+    aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+            {{-- Header --}}
+            <div class="modal-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="avatar-sm d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle"
+                        style="width: 36px; height: 36px;">
+                        <i class="mdi mdi-[icon-name] fs-18"></i>
+                    </span>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" id="exampleModalLabel">Judul Modal</h5>
+                        <small class="text-muted">Deskripsi ringkas mengenai fungsi dialog ini</small>
+                    </div>
+                </div>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            {{-- Body --}}
+            <div class="modal-body p-4">
+                {{-- Form atau Tabel Content --}}
+                <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <table class="table align-middle mb-0 modal-table">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase;">No</th>
+                                <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase;">Deskripsi</th>
+                                <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; text-align: right;">Nominal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data baris -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="modal-footer bg-light py-2 px-4 border-top d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"
+                    style="border-radius: 8px; padding: 6px 16px;">Tutup / Batal</button>
+                <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                    style="border-radius: 8px; padding: 6px 16px; font-weight: 600;">
+                    <i class="mdi mdi-content-save"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+### 3. CSS Terstandarisasi (Light & Dark Mode Wajib)
+
+Sertakan CSS ter-scope berikut di section `@push('style')` halaman yang memuat modal:
+
+```css
+/* ── Modal Styling (PHL Modal Standard §11) ── */
+.modal-content {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+}
+
+.modal-header {
+    padding: 14px 20px;
+    background: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-footer {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+.modal-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+.modal-table thead th {
+    background-color: #f8fafc;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 700;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 12px;
+    white-space: nowrap;
+}
+
+.modal-table tbody td {
+    padding: 9px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    color: #334155;
+    font-size: 12.5px;
+    vertical-align: middle;
+}
+
+.modal-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.modal .select2-container {
+    z-index: 9999;
+    width: 100% !important;
+}
+
+/* ── Modal Dark mode (WAJIB) ── */
+html[data-bs-theme="dark"] .modal-content {
+    background-color: var(--bs-card-bg) !important;
+    border-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-header {
+    background-color: var(--bs-card-bg) !important;
+    border-bottom-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-footer {
+    background-color: var(--bs-secondary-bg) !important;
+    border-top-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-body {
+    background-color: var(--bs-card-bg) !important;
+    color: var(--bs-body-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-body .table-responsive {
+    border-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-table thead th {
+    background-color: var(--bs-tertiary-bg) !important;
+    color: var(--bs-emphasis-color) !important;
+    border-bottom-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal-table tbody td {
+    color: var(--bs-body-color) !important;
+    border-bottom-color: var(--bs-border-color) !important;
+}
+
+html[data-bs-theme="dark"] .modal .form-control,
+html[data-bs-theme="dark"] .modal textarea {
+    background-color: var(--bs-tertiary-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+```
+
+### 4. Checklist Pengecekan Modal (§11)
+- [ ] Ukuran dialog proporsional (`modal-md` untuk single/short, `modal-lg` untuk form + riwayat, `modal-xl` hanya untuk multi-kolom/galeri).
+- [ ] Tidak ada nested `.card` sembarangan di dalam `.modal-content`.
+- [ ] Header menggunakan avatar icon, judul tebal, subtitle, dan tombol close `.btn-close`.
+- [ ] Tabel di dalam modal menggunakan `.modal-table`, tanpa `table-striped`, nominal `text-end font-monospace`.
+- [ ] Form input dan Select2 seragam tinggi 38px radius 8px; Select2 menggunakan `dropdownParent: $('#modalId')`.
+- [ ] Tombol aksi di footer menggunakan `.btn-sm` radius 8px (`.btn-secondary` dan `.btn-primary`).
+- [ ] Blok dark mode `html[data-bs-theme="dark"]` sudah mencakup header, footer, body, tabel, dan form input.
+- [ ] Diuji dan dipastikan tampil elegan di mode terang **dan** mode gelap.

@@ -592,6 +592,9 @@
         html[data-bs-theme="dark"] #editOrderPreviewTable .order-summary-row td {
             --bs-table-bg: rgba(79, 70, 229, 0.18) !important;
             background-color: rgba(79, 70, 229, 0.18) !important;
+            /* The light rule uses the `background` shorthand with a gradient, which
+               sets background-image; background-color alone can't clear it. */
+            background-image: none !important;
             color: #a5b4fc !important;
             border-color: var(--bs-border-color) !important;
         }
@@ -830,6 +833,112 @@
         html[data-bs-theme="dark"] .card.border-0.mb-4 .form-label,
         html[data-bs-theme="dark"] .card.border-0.mb-4 .text-muted {
             color: var(--bs-secondary-color) !important;
+        }
+
+        /* ══════════════════════════════════════════════════════════════ */
+        /* ── Dark mode: completeness net for the Process/Edit Salary  ── */
+        /*    modals (catches any surface still falling back to a light  */
+        /*    default, plus the un-styled modal scrollbars).             */
+        /* ══════════════════════════════════════════════════════════════ */
+        html[data-bs-theme="dark"] #processSalaryModal .modal-content,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-content {
+            background-color: var(--bs-secondary-bg) !important;
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body {
+            background-color: var(--bs-body-bg) !important;
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-section,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-section {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .modal-footer,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-footer {
+            background-color: var(--bs-secondary-bg) !important;
+            border-top-color: var(--bs-border-color) !important;
+        }
+        /* Form controls, inputs and the light footer button */
+        html[data-bs-theme="dark"] #processSalaryModal .form-control,
+        html[data-bs-theme="dark"] #processSalaryModal .form-select,
+        html[data-bs-theme="dark"] #editSalaryModal .form-control,
+        html[data-bs-theme="dark"] #editSalaryModal .form-select {
+            background-color: var(--bs-secondary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .input-group-text,
+        html[data-bs-theme="dark"] #editSalaryModal .input-group-text {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-secondary-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .btn-light,
+        html[data-bs-theme="dark"] #editSalaryModal .btn-light {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        /* Generic leftover surfaces (skip the blue info alert) */
+        html[data-bs-theme="dark"] #processSalaryModal .bg-white,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive,
+        html[data-bs-theme="dark"] #processSalaryModal .card,
+        html[data-bs-theme="dark"] #editSalaryModal .bg-white,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive,
+        html[data-bs-theme="dark"] #editSalaryModal .card {
+            background-color: transparent !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .alert:not(.modal-info-alert),
+        html[data-bs-theme="dark"] #editSalaryModal .alert:not(.modal-info-alert) {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .table,
+        html[data-bs-theme="dark"] #editSalaryModal .table {
+            --bs-table-bg: var(--bs-secondary-bg);
+            --bs-table-border-color: var(--bs-border-color);
+            --bs-table-color: var(--bs-body-color);
+            color: var(--bs-body-color);
+        }
+        /* Scrollbars — .custom-scrollbar is not defined on this page, so the
+           native (white) scrollbar of the modal's table wrapper was showing. */
+        html[data-bs-theme="dark"] #processSalaryModal .modal-body,
+        html[data-bs-theme="dark"] #processSalaryModal .custom-scrollbar,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive,
+        html[data-bs-theme="dark"] #editSalaryModal .modal-body,
+        html[data-bs-theme="dark"] #editSalaryModal .custom-scrollbar,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive {
+            scrollbar-color: var(--bs-border-color) var(--bs-body-bg);
+            scrollbar-width: thin;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .custom-scrollbar::-webkit-scrollbar,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive::-webkit-scrollbar,
+        html[data-bs-theme="dark"] #editSalaryModal .custom-scrollbar::-webkit-scrollbar,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .custom-scrollbar::-webkit-scrollbar-track,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive::-webkit-scrollbar-track,
+        html[data-bs-theme="dark"] #editSalaryModal .custom-scrollbar::-webkit-scrollbar-track,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive::-webkit-scrollbar-track {
+            background: var(--bs-body-bg);
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .custom-scrollbar::-webkit-scrollbar-thumb,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive::-webkit-scrollbar-thumb,
+        html[data-bs-theme="dark"] #editSalaryModal .custom-scrollbar::-webkit-scrollbar-thumb,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive::-webkit-scrollbar-thumb {
+            background: var(--bs-border-color);
+            border-radius: 4px;
+        }
+        html[data-bs-theme="dark"] #processSalaryModal .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        html[data-bs-theme="dark"] #processSalaryModal .table-responsive::-webkit-scrollbar-thumb:hover,
+        html[data-bs-theme="dark"] #editSalaryModal .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+        html[data-bs-theme="dark"] #editSalaryModal .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: var(--bs-secondary-color);
         }
     </style>
 @endpush
