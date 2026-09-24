@@ -138,6 +138,64 @@ class InvoiceService
         return $status;
     }
 
+    /**
+     * Terapkan tarif dan basis pajak customer ke invoice yang belum memiliki
+     * pembayaran/claim. Invoice yang sudah tersettle tidak boleh berubah agar
+     * histori transaksi keuangan tetap konsisten.
+     */
+    public function synchronizeCustomerTaxSettings(Customer $customer): int
+    {
+        $ppnRate = (float) ($customer->ppn ?? 0);
+        $pphRate = (float) ($customer->pph ?? 0);
+        $pphBaseType = $customer->pphBaseType === 'route' ? 'route' : 'subtotal';
+        $updated = 0;
+
+        $invoices = $this->service->newQuery()
+            ->where('customerCode', $customer->code)
+            ->whereDoesntHave('payments')
+            ->whereDoesntHave('claims')
+            ->with([
+                'details.order.cost',
+                'customer',
+            ])
+            ->get();
+
+        foreach ($invoices as $invoice) {
+            $invoice->forceFill([
+                'ppnRate' => $ppnRate,
+                'pphRate' => $pphRate,
+                'pphBaseType' => $pphBaseType,
+            ]);
+
+            $totals = $this->calculateInvoiceAmount($invoice);
+            $attributes = [
+                'ppnRate' => $ppnRate,
+                'pphRate' => $pphRate,
+                'pphBaseType' => $pphBaseType,
+                'invoiceAmount' => $totals['subtotal'],
+                'routeAmount' => $totals['routeTotal'],
+                'onChargeAmount' => $totals['onChargeTotal'],
+                'ppnAmount' => $totals['ppn'],
+                'pphAmount' => $totals['pph'],
+                'pphBaseAmount' => $totals['pphBaseAmount'],
+                'status' => Invoice::STATUS_CREATE,
+            ];
+
+            $hasChanges = collect($attributes)->contains(
+                fn ($value, $attribute) => (string) $invoice->getRawOriginal($attribute) !== (string) $value
+            );
+
+            if (! $hasChanges) {
+                continue;
+            }
+
+            $this->service->newQuery()->whereKey($invoice->getKey())->update($attributes);
+            $updated++;
+        }
+
+        return $updated;
+    }
+
     public function getById($id)
     {
         return $this->service->where('id', $id)->with([
@@ -243,8 +301,12 @@ class InvoiceService
         $this->ensureOrdersBelongToCustomer($orderCodes, $request->customerCode);
         $this->ensureOrdersAreDirectPayOnly($orderCodes);
 
+        $customer = $this->customer->where('code', $request->customerCode)->firstOrFail();
         $usePpn = (bool) ($request->input('usePpn') ?? false);
         $usePph = (bool) ($request->input('usePph') ?? false);
+        $ppnRate = (float) ($customer->ppn ?? 0);
+        $pphRate = (float) ($customer->pph ?? 0);
+        $pphBaseType = $request->input('pphBaseType', $customer->pphBaseType ?? 'subtotal');
         $invoiceNumber = $this->resolveInvoiceNumber(
             $request->invoiceNumber,
             $request->customerCode,
@@ -262,6 +324,10 @@ class InvoiceService
             'notes' => $request->notes,
             'usePpn' => $usePpn,
             'usePph' => $usePph,
+            'ppnRate' => $ppnRate,
+            'pphRate' => $pphRate,
+            'pphBaseType' => $pphBaseType,
+            'pphBaseAmount' => 0,
             'status' => Invoice::STATUS_CREATE,
         ]);
 
@@ -280,12 +346,15 @@ class InvoiceService
                 $this->logActivity('Invoice Detail', $detail, 'Create');
             }
         }
-        // Update invoiceAmount (subtotal), ppnAmount and pphAmount after creating invoice details
+        // Update snapshot komponen tagihan dan pajak setelah membuat detail invoice.
         $totals = $this->calculateInvoiceAmount($data);
         $this->service->where('id', $data->id)->update([
             'invoiceAmount' => $totals['subtotal'],
+            'routeAmount' => $totals['routeTotal'],
+            'onChargeAmount' => $totals['onChargeTotal'],
             'ppnAmount' => $totals['ppn'],
             'pphAmount' => $totals['pph'],
+            'pphBaseAmount' => $totals['pphBaseAmount'],
         ]);
 
         // Sinkronkan status dari pembayaran + claim aktual.
@@ -301,26 +370,38 @@ class InvoiceService
 
     public function update($request, $id, $title)
     {
-        $this->logActivity($title, $this->getById($id), 'Before Update');
+        $invoice = $this->getById($id);
+        $this->logActivity($title, $invoice, 'Before Update');
 
-        $this->service->where('id', $id)->update([
+        $taxLocked = $invoice->payments->isNotEmpty() || $invoice->claims->isNotEmpty();
+        $taxAttributes = [];
+        if (! $taxLocked) {
+            $taxAttributes = [
+                'usePpn' => (bool) ($request->input('usePpn') ?? false),
+                'usePph' => (bool) ($request->input('usePph') ?? false),
+                'pphBaseType' => $request->input('pphBaseType', $invoice->pphBaseType ?? 'subtotal'),
+            ];
+        }
+
+        $this->service->where('id', $id)->update(array_merge([
             'invoiceNumber' => $request->invoiceNumber,
             'receiptNumber' => $request->receiptNumber,
             'poNumber' => $request->poNumber,
             'invoiceDate' => $request->invoiceDate,
             'overdueDate' => $request->overdueDate ? Carbon::parse($request->overdueDate)->toDateString() : Carbon::parse($request->invoiceDate)->addDays(30)->toDateString(),
             'notes' => $request->notes,
-            'usePpn' => (bool) ($request->input('usePpn') ?? false),
-            'usePph' => (bool) ($request->input('usePph') ?? false),
-        ]);
+        ], $taxAttributes));
 
         // Recalculate invoice amount after update
         $data = $this->getById($id);
         $totals = $this->calculateInvoiceAmount($data);
         $this->service->where('id', $data->id)->update([
             'invoiceAmount' => $totals['subtotal'],
+            'routeAmount' => $totals['routeTotal'],
+            'onChargeAmount' => $totals['onChargeTotal'],
             'ppnAmount' => $totals['ppn'],
             'pphAmount' => $totals['pph'],
+            'pphBaseAmount' => $totals['pphBaseAmount'],
         ]);
         $this->synchronizePaymentStatus($data, (float) $totals['total']);
 
@@ -388,12 +469,15 @@ class InvoiceService
 
                 $this->logActivity('Invoice Detail', $detail, 'Create');
             }
-            // update invoice and ppn amounts after adding details
+            // Update snapshot komponen tagihan dan pajak setelah menambah detail.
             $totals = $this->calculateInvoiceAmount($invoice);
             $this->service->where('id', $invoice->id)->update([
                 'invoiceAmount' => $totals['subtotal'],
+                'routeAmount' => $totals['routeTotal'],
+                'onChargeAmount' => $totals['onChargeTotal'],
                 'ppnAmount' => $totals['ppn'],
                 'pphAmount' => $totals['pph'],
+                'pphBaseAmount' => $totals['pphBaseAmount'],
             ]);
 
             // Update invoice status after recalc
@@ -430,14 +514,17 @@ class InvoiceService
 
         $this->invoiceDetail->where('orderCode', $order->code)->delete();
 
-        // update invoice amount after removing detail
+        // Update snapshot komponen tagihan dan pajak setelah menghapus detail.
         $invoice = $this->getById($data->invoiceCode ?? null);
         if ($invoice) {
             $totals = $this->calculateInvoiceAmount($invoice);
             $this->service->where('id', $invoice->id)->update([
                 'invoiceAmount' => $totals['subtotal'],
+                'routeAmount' => $totals['routeTotal'],
+                'onChargeAmount' => $totals['onChargeTotal'],
                 'ppnAmount' => $totals['ppn'],
                 'pphAmount' => $totals['pph'],
+                'pphBaseAmount' => $totals['pphBaseAmount'],
             ]);
 
             // Update invoice status after recalc
@@ -461,7 +548,7 @@ class InvoiceService
     }
 
     /**
-     * Calculate invoice total based on details, allowances, tonase bonus, order costs and customer ppn.
+     * Hitung invoice dari tarif rute, biaya On Charge, dan snapshot pajak invoice.
      */
     public function calculateInvoiceAmount($invoiceOrId)
     {
@@ -471,11 +558,11 @@ class InvoiceService
             return 0;
         }
 
-        $subtotal = 0;
+        $routeTotal = 0;
+        $onChargeTotal = 0;
 
         foreach ($invoice->details as $detail) {
-            // Prefer using loaded relation to avoid extra queries
-            $order = ($detail->order ?? null);
+            $order = $detail->order ?? null;
             if (! $order) {
                 $order = $this->order->where('code', $detail->orderCode)->with('cost')->first();
             }
@@ -483,40 +570,36 @@ class InvoiceService
                 continue;
             }
 
-            // `routeAmount` is stored as total for the order (unit price * qty), use it directly
-            $routeAmount = (float) ($order->routeAmount ?? 0);
-            $subtotal += $routeAmount;
+            $routeTotal += (float) ($order->routeAmount ?? 0);
 
-            // add On Charge order costs
-            $onChargeCost = 0;
             if (isset($order->cost)) {
-                foreach ($order->cost as $c) {
-                    if (isset($c->type) && strtolower($c->type) === 'on charge') {
-                        $onChargeCost += (int) $c->nominal;
+                foreach ($order->cost as $cost) {
+                    if (isset($cost->type) && strtolower($cost->type) === 'on charge') {
+                        $onChargeTotal += (float) ($cost->nominal ?? 0);
                     }
                 }
             }
-            $subtotal += $onChargeCost;
         }
 
-        $ppn = 0;
-        $usePpn = $invoice->usePpn ?? true; // default true if not set
-        if ($usePpn && $invoice->customer && isset($invoice->customer->ppn)) {
-            $ppn = $subtotal * ($invoice->customer->ppn / 100);
-        }
+        $subtotal = $routeTotal + $onChargeTotal;
+        $ppnRate = (float) ($invoice->ppnRate ?? $invoice->customer?->ppn ?? 0);
+        $pphRate = (float) ($invoice->pphRate ?? $invoice->customer?->pph ?? 0);
+        $pphBaseType = in_array($invoice->pphBaseType, ['route', 'subtotal'], true)
+            ? $invoice->pphBaseType
+            : 'subtotal';
+        $pphBaseAmount = $pphBaseType === 'route' ? $routeTotal : $subtotal;
 
-        $pph = 0;
-        $usePph = $invoice->usePph ?? (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
-        if ($usePph && $invoice->customer && isset($invoice->customer->pph)) {
-            $pph = $subtotal * ($invoice->customer->pph / 100);
-        }
-
+        $ppn = $invoice->usePpn ? $subtotal * ($ppnRate / 100) : 0;
+        $pph = $invoice->usePph ? $pphBaseAmount * ($pphRate / 100) : 0;
         $total = (int) round($subtotal + $ppn - $pph);
 
         return [
+            'routeTotal' => (int) round($routeTotal),
+            'onChargeTotal' => (int) round($onChargeTotal),
             'subtotal' => (int) round($subtotal),
             'ppn' => (int) round($ppn),
             'pph' => (int) round($pph),
+            'pphBaseAmount' => (int) round($pphBaseAmount),
             'total' => $total,
         ];
     }
@@ -568,27 +651,18 @@ class InvoiceService
         // Hapus juga claim pengurang tagihan agar status invoice konsisten
         $invoice->claims()->delete();
 
-        // Sync usePpn and usePph to customer defaults if they are not already set (or always sync to customer if customer has them)
-        $usePpn = $invoice->usePpn || (isset($invoice->customer->ppn) && $invoice->customer->ppn > 0);
-        $usePph = $invoice->usePph || (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
-
-        $this->service->where('id', $invoiceId)->update([
-            'usePpn' => $usePpn,
-            'usePph' => $usePph,
-        ]);
-
-        $invoice->usePpn = $usePpn;
-        $invoice->usePph = $usePph;
-
-        // Calculate new amounts
+        // Tarif dan basis pajak tetap memakai snapshot invoice, bukan master customer terkini.
         $totals = $this->calculateInvoiceAmount($invoice);
 
         // Update invoice: reset status to CREATE and update amounts
         $this->service->where('id', $invoiceId)->update([
             'status' => Invoice::STATUS_CREATE, // Reset to CREATE status
             'invoiceAmount' => $totals['subtotal'],
+            'routeAmount' => $totals['routeTotal'],
+            'onChargeAmount' => $totals['onChargeTotal'],
             'ppnAmount' => $totals['ppn'],
             'pphAmount' => $totals['pph'],
+            'pphBaseAmount' => $totals['pphBaseAmount'],
         ]);
 
         $this->logActivity('Invoice', $invoice, 'Recalculate Amount and Cancel Payments');

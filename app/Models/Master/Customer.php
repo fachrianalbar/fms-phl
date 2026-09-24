@@ -25,6 +25,7 @@ class Customer extends Model
         'accountNumber',
         'ppn',
         'pph',
+        'pphBaseType',
         'invoiceFormat',
         'nickname',
         'picName',

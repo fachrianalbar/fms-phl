@@ -431,6 +431,15 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold text-dark fs-13" for="pphBaseType">Basis Perhitungan PPh 23</label>
+                                <select class="form-select" name="pphBaseType" id="pphBaseType" required>
+                                    <option value="subtotal">DPP Total — Tarif Rute + Biaya On Charge</option>
+                                    <option value="route">Tarif Rute Saja — On Charge tidak dikenakan PPh</option>
+                                </select>
+                                <small class="text-muted fs-11">Mengikuti default Customer dan dapat diubah khusus untuk invoice ini sebelum diterbitkan.</small>
+                            </div>
                         </div>
 
                         <!-- Optional References: PO & Kwitansi (Accordion / Collapse) -->
@@ -602,6 +611,11 @@
                                     <span class="fw-semibold text-primary fs-14" id="summaryPpn">+ Rp 0</span>
                                 </div>
 
+                                <div class="d-flex justify-content-between align-items-center mb-1" id="rowPphBase">
+                                    <span class="text-muted fs-13">Dasar PPh (<span id="summaryPphBaseLabel">DPP Total</span>):</span>
+                                    <span class="fw-semibold text-dark fs-14" id="summaryPphBase">Rp 0</span>
+                                </div>
+
                                 <div class="d-flex justify-content-between align-items-center mb-2" id="rowPph">
                                     <span class="text-muted fs-13 d-flex align-items-center">
                                         <span class="badge bg-warning-subtle text-warning me-1 fs-10" id="summaryPphBadge">2%</span> PPh 23:
@@ -765,9 +779,11 @@
 
         const usePpn = $('#usePpn').is(':checked');
         const usePph = $('#usePph').is(':checked');
+        const pphBaseType = $('#pphBaseType').val() || 'subtotal';
+        const pphBaseAmount = pphBaseType === 'route' ? totalBase : subtotal;
 
         const ppnAmount = usePpn && customerPpnRate > 0 ? subtotal * (customerPpnRate / 100) : 0;
-        const pphAmount = usePph && customerPphRate > 0 ? subtotal * (customerPphRate / 100) : 0;
+        const pphAmount = usePph && customerPphRate > 0 ? pphBaseAmount * (customerPphRate / 100) : 0;
         const grandTotal = subtotal + ppnAmount - pphAmount;
 
         // Update DOM
@@ -779,6 +795,8 @@
         $('#summaryOnCharge').text((totalOnCharge > 0 ? '+ ' : '') + formatRupiah(totalOnCharge));
         $('#summarySubtotal').text(formatRupiah(subtotal));
         $('#summaryPpn').text((usePpn ? '+ ' : '') + formatRupiah(ppnAmount));
+        $('#summaryPphBaseLabel').text(pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total');
+        $('#summaryPphBase').text(formatRupiah(pphBaseAmount));
         $('#summaryPph').text((usePph ? '- ' : '') + formatRupiah(pphAmount));
         $('#summaryGrandTotal').text(formatRupiah(grandTotal));
 
@@ -963,6 +981,8 @@
             }
             recalculateLiveSummary();
         });
+
+        $('#pphBaseType').on('change', recalculateLiveSummary);
 
         // Order Checkbox Click Handler (delegated)
         $(document).on('change', '.order-checkbox', function() {
@@ -1278,6 +1298,7 @@
             // Read customer tax rates
             customerPpnRate = data.ppn !== null && data.ppn !== undefined && data.ppn !== '' ? Number(data.ppn) : 0;
             customerPphRate = data.pph !== null && data.pph !== undefined && data.pph !== '' ? Number(data.pph) : 0;
+            $('#pphBaseType').val(data.pphBaseType === 'route' ? 'route' : 'subtotal').trigger('change');
 
             // Update tax badges and labels
             $('#ppnLabel').text(customerPpnRate > 0 ? `PPN (${customerPpnRate}%)` : 'PPN (0% / Non-PPN)');

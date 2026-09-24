@@ -106,6 +106,9 @@
                             <th class="text-center">No</th>
                             <th>No. Faktur</th>
                             <th>Tgl Faktur</th>
+                            <th class="text-end">DPP</th>
+                            <th class="text-end">PPN</th>
+                            <th class="text-end">PPh 23 / Basis</th>
                             <th class="text-end">Total Tagihan</th>
                             <th class="text-end">Dibayar (Transaksi Ini)</th>
                             <th class="text-end">Claim (Transaksi Ini)</th>
@@ -120,6 +123,21 @@
                             <td><span class="font-monospace fw-bold text-primary fs-13">{{ $row['invoiceNumber'] }}</span></td>
                             <td class="fs-12 text-nowrap">
                                 {{ $row['invoiceDate'] ? \Carbon\Carbon::parse($row['invoiceDate'])->format('d M Y') : '-' }}
+                            </td>
+                            <td class="text-end fw-semibold text-dark font-monospace fs-13">
+                                Rp {{ number_format($row['subtotal'], 0, ',', '.') }}
+                            </td>
+                            <td class="text-end font-monospace">
+                                <div class="fw-semibold text-primary fs-13">+ Rp {{ number_format($row['ppnAmount'], 0, ',', '.') }}</div>
+                                <small class="text-muted">{{ rtrim(rtrim(number_format($row['ppnRate'], 4, ',', '.'), '0'), ',') }}%</small>
+                            </td>
+                            <td class="text-end font-monospace">
+                                <div class="fw-semibold text-danger fs-13">- Rp {{ number_format($row['pphAmount'], 0, ',', '.') }}</div>
+                                <small class="text-muted">
+                                    {{ rtrim(rtrim(number_format($row['pphRate'], 4, ',', '.'), '0'), ',') }}%
+                                    × {{ $row['pphBaseType'] === 'route' ? 'Tarif Rute' : 'DPP Total' }}
+                                </small>
+                                <div class="text-muted fs-10">Dasar: Rp {{ number_format($row['pphBaseAmount'], 0, ',', '.') }}</div>
                             </td>
                             <td class="text-end fw-semibold text-dark fs-13">Rp {{ number_format($row['billing'], 0, ',', '.') }}</td>
                             <td class="text-end fw-semibold text-success font-monospace fs-13">
@@ -147,7 +165,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">Tidak ada faktur dalam transaksi ini.</td>
+                            <td colspan="11" class="text-center text-muted py-4">Tidak ada faktur dalam transaksi ini.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -205,6 +223,18 @@
                 <div class="col-md-6">
                     <div class="trx-summary-box p-3" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                         <div class="d-flex justify-content-between py-1 fs-13">
+                            <span class="text-muted">Total DPP Faktur</span>
+                            <span class="fw-semibold text-dark font-monospace">Rp {{ number_format($sumDpp, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 fs-13">
+                            <span class="text-muted">Total PPN</span>
+                            <span class="fw-semibold text-primary font-monospace">+ Rp {{ number_format($sumPpn, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 fs-13">
+                            <span class="text-muted">Total PPh 23</span>
+                            <span class="fw-semibold text-danger font-monospace">- Rp {{ number_format($sumPph, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between py-1 fs-13 border-top mt-1 pt-2">
                             <span class="text-muted">Total Tagihan Faktur</span>
                             <span class="fw-semibold text-dark font-monospace">Rp {{ number_format($sumBilling, 0, ',', '.') }}</span>
                         </div>

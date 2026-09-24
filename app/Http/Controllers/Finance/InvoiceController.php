@@ -145,10 +145,12 @@ class InvoiceController extends Controller
         $validator = Validator::make([
             'customerCode' => $request->customerCode,
             'invoiceNumber' => $request->invoiceNumber,
+            'pphBaseType' => $request->pphBaseType,
             'selectedOrders' => $selectedOrders,
         ], [
             'customerCode' => 'required',
             'invoiceNumber' => 'required',
+            'pphBaseType' => 'required|in:route,subtotal',
             'selectedOrders' => 'required|array|min:1',
         ]);
         if ($validator->fails()) {
@@ -191,10 +193,7 @@ class InvoiceController extends Controller
         $customerData = $this->customerSvc->getByCode($data->customerCode);
         $order = $this->service->getOrderDetail($id);
 
-        $status = 0;
-        if (count($data->payments) > 0) {
-            $status = 1;
-        }
+        $status = count($data->payments) > 0 || count($data->claims) > 0 ? 1 : 0;
         // invoiceStatus is the numeric status for invoice
         $invoiceStatus = (int) ($data->status ?? 1);
 
@@ -217,6 +216,7 @@ class InvoiceController extends Controller
         $validator = Validator::make($request->all(), [
             // 'customerCode' => 'required',
             'invoiceNumber' => 'required',
+            'pphBaseType' => 'required|in:route,subtotal',
         ]);
         if ($validator->fails()) {
             return redirect()->route('invoice.edit', $id)->with('fail', $validator->errors()->all()[0]);
@@ -1001,24 +1001,16 @@ class InvoiceController extends Controller
             $count = 0;
 
             foreach ($invoices as $invoice) {
-                // Sync usePpn and usePph to customer defaults for recalculate all
-                $usePpn = $invoice->usePpn || (isset($invoice->customer->ppn) && $invoice->customer->ppn > 0);
-                $usePph = $invoice->usePph || (isset($invoice->customer->pph) && $invoice->customer->pph > 0);
-
-                InvoiceModel::where('id', $invoice->id)->update([
-                    'usePpn' => $usePpn,
-                    'usePph' => $usePph,
-                ]);
-
-                $invoice->usePpn = $usePpn;
-                $invoice->usePph = $usePph;
-
+                // Pertahankan snapshot tarif dan basis pajak setiap invoice.
                 $totals = $this->service->calculateInvoiceAmount($invoice);
 
                 InvoiceModel::where('id', $invoice->id)->update([
                     'invoiceAmount' => $totals['subtotal'],
+                    'routeAmount' => $totals['routeTotal'],
+                    'onChargeAmount' => $totals['onChargeTotal'],
                     'ppnAmount' => $totals['ppn'],
                     'pphAmount' => $totals['pph'],
+                    'pphBaseAmount' => $totals['pphBaseAmount'],
                 ]);
 
                 // Sinkronkan status dengan pembayaran + claim aktual.

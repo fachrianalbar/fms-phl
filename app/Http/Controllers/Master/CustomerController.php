@@ -72,6 +72,9 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|max:30',
             'name' => 'required',
+            'ppn' => 'nullable|numeric|min:0|max:100',
+            'pph' => 'nullable|numeric|min:0|max:100',
+            'pphBaseType' => 'required|in:route,subtotal',
             // 'phone' => [
             //     Rule::unique('customer', 'phone')->whereNull('deleted_at')
             // ],
@@ -139,6 +142,9 @@ class CustomerController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required|string|max:30',
             'name' => 'required',
+            'ppn' => 'nullable|numeric|min:0|max:100',
+            'pph' => 'nullable|numeric|min:0|max:100',
+            'pphBaseType' => 'required|in:route,subtotal',
             // 'email' => [Rule::unique('customer', 'email')->ignore($data->id)->whereNull('deleted_at')],
             // 'telegramUsername' => [Rule::unique('customer', 'telegramUsername')->ignore($data->id)->whereNull('deleted_at')],
             // 'phone' => [
@@ -191,10 +197,20 @@ class CustomerController extends Controller
         if ($request->ajax()) {
             $data = $this->buildFilteredQuery($request);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('companyName', function ($row) {
                     return $row->company->name ?? '-';
+                })
+                ->addColumn('taxPolicy', function ($row) {
+                    $ppn = rtrim(rtrim(number_format((float) ($row->ppn ?? 0), 4, ',', '.'), '0'), ',');
+                    $pph = rtrim(rtrim(number_format((float) ($row->pph ?? 0), 4, ',', '.'), '0'), ',');
+                    $basis = $row->pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total';
+
+                    return '<div class="d-flex flex-column gap-1">'
+                        .'<span class="fs-11"><strong>PPN '.$ppn.'%</strong> · PPh '.$pph.'%</span>'
+                        .'<span class="badge bg-warning-subtle text-warning align-self-start fs-10">PPh: '.$basis.'</span>'
+                        .'</div>';
                 })
                 ->addColumn('action', function ($row) {
                     $editUrl = route($this->view.'edit', $row->id);
@@ -204,7 +220,7 @@ class CustomerController extends Controller
                         .'<a href="javascript:deleteData(\''.$row->id.'\')" class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">'
                         .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['taxPolicy', 'action'])
                 ->toJson();
         }
     }

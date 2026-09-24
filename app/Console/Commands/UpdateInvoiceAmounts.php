@@ -64,8 +64,11 @@ class UpdateInvoiceAmounts extends Command
 
                 $invoice->update([
                     'invoiceAmount' => $totals['subtotal'],
+                    'routeAmount' => $totals['routeTotal'],
+                    'onChargeAmount' => $totals['onChargeTotal'],
                     'ppnAmount' => $totals['ppn'],
                     'pphAmount' => $totals['pph'],
+                    'pphBaseAmount' => $totals['pphBaseAmount'],
                 ]);
 
                 $this->invoiceService->synchronizePaymentStatus($invoice, (float) $totals['total']);

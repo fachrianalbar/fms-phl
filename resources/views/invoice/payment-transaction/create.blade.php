@@ -425,6 +425,26 @@
                         <!-- Metrics Breakdown -->
                         <div class="mb-3">
                             <div class="summary-metric-row">
+                                <span class="text-muted">Total Tarif Rute</span>
+                                <span class="fw-semibold text-dark font-monospace fs-13" id="sum-route">Rp 0</span>
+                            </div>
+                            <div class="summary-metric-row">
+                                <span class="text-muted">Total Biaya On Charge</span>
+                                <span class="fw-semibold text-warning font-monospace fs-13" id="sum-on-charge">+ Rp 0</span>
+                            </div>
+                            <div class="summary-metric-row">
+                                <span class="text-muted">Total DPP (Rute + On Charge)</span>
+                                <span class="fw-semibold text-dark font-monospace fs-13" id="sum-dpp">Rp 0</span>
+                            </div>
+                            <div class="summary-metric-row">
+                                <span class="text-muted">Total PPN Faktur Terpilih</span>
+                                <span class="fw-semibold text-primary font-monospace fs-13" id="sum-ppn">+ Rp 0</span>
+                            </div>
+                            <div class="summary-metric-row">
+                                <span class="text-muted">Total PPh 23 Faktur Terpilih</span>
+                                <span class="fw-semibold text-danger font-monospace fs-13" id="sum-pph">- Rp 0</span>
+                            </div>
+                            <div class="summary-metric-row">
                                 <span class="text-muted">Total Sisa Tagihan Terpilih</span>
                                 <span class="fw-semibold text-dark font-monospace fs-13" id="sum-billing">Rp 0</span>
                             </div>
@@ -551,7 +571,12 @@
                                             </th>
                                             <th style="min-width: 140px;">No. Faktur</th>
                                             <th style="min-width: 100px;">Tgl Faktur</th>
-                                            <th class="text-end" style="min-width: 130px;">Total Tagihan</th>
+                                            <th class="text-end" style="min-width: 135px;">Tarif Rute</th>
+                                            <th class="text-end" style="min-width: 135px;">On Charge</th>
+                                            <th class="text-end" style="min-width: 145px;">DPP</th>
+                                            <th class="text-end" style="min-width: 135px;">PPN</th>
+                                            <th class="text-end" style="min-width: 190px;">PPh 23 / Basis</th>
+                                            <th class="text-end" style="min-width: 140px;">Total Tagihan</th>
                                             <th class="text-end" style="min-width: 130px;">Terbayar + Claim</th>
                                             <th class="text-end" style="min-width: 130px;">Sisa Tagihan</th>
                                             <th style="min-width: 220px;">Nominal Bayar (Rp)</th>
@@ -613,6 +638,11 @@
         if (val === '' || val === null || isNaN(val)) return '0';
         var num = Math.round(Number(val));
         return num.toLocaleString('id-ID');
+    }
+
+    function formatTaxRate(value) {
+        var rate = Number(value || 0);
+        return rate.toLocaleString('id-ID', { maximumFractionDigits: 4 });
     }
 
     // Helper Unformat Rupiah String to Number
@@ -723,6 +753,13 @@
             tr.id = 'row-inv-' + idx;
             tr.className = 'row-disabled';
 
+            var formattedRoute = formatRupiah(inv.routeAmount);
+            var formattedOnCharge = formatRupiah(inv.onChargeAmount);
+            var formattedSubtotal = formatRupiah(inv.subtotal);
+            var formattedPpn = formatRupiah(inv.ppnAmount);
+            var formattedPph = formatRupiah(inv.pphAmount);
+            var formattedPphBase = formatRupiah(inv.pphBaseAmount);
+            var pphBaseLabel = inv.pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total';
             var formattedBilling = formatRupiah(inv.totalBilling);
             var formattedPaid = formatRupiah(inv.totalPaid + inv.totalClaim);
             var formattedRemaining = formatRupiah(inv.remaining);
@@ -739,7 +776,19 @@
                 + '   </div>'
                 + '</td>'
                 + '<td class="fs-12 text-nowrap text-muted">' + escapeHtml(inv.invoiceDate || '-') + '</td>'
-                + '<td class="text-end fw-semibold text-dark fs-13">Rp ' + formattedBilling + '</td>'
+                + '<td class="text-end fw-semibold text-dark fs-13">Rp ' + formattedRoute + '</td>'
+                + '<td class="text-end fw-semibold text-warning fs-13">+ Rp ' + formattedOnCharge + '</td>'
+                + '<td class="text-end fw-bold text-dark fs-13">Rp ' + formattedSubtotal + '</td>'
+                + '<td class="text-end">'
+                + '   <div class="fw-semibold text-primary fs-13">+ Rp ' + formattedPpn + '</div>'
+                + '   <small class="text-muted">' + formatTaxRate(inv.ppnRate) + '%</small>'
+                + '</td>'
+                + '<td class="text-end">'
+                + '   <div class="fw-semibold text-danger fs-13">- Rp ' + formattedPph + '</div>'
+                + '   <small class="text-muted">' + formatTaxRate(inv.pphRate) + '% × ' + pphBaseLabel + '</small>'
+                + '   <div class="text-muted font-monospace fs-10">Dasar: Rp ' + formattedPphBase + '</div>'
+                + '</td>'
+                + '<td class="text-end fw-bold text-dark fs-13">Rp ' + formattedBilling + '</td>'
                 + '<td class="text-end text-muted fs-12">Rp ' + formattedPaid + '</td>'
                 + '<td class="text-end fw-bold text-danger fs-13" data-remaining="' + inv.remaining + '">Rp ' + formattedRemaining + '</td>'
                 + '<td>'
@@ -780,6 +829,11 @@
 
     // Recalculate Live Totals & Per-Row Status
     function recalcTotals() {
+        var sumRoute = 0;
+        var sumOnCharge = 0;
+        var sumDpp = 0;
+        var sumPpn = 0;
+        var sumPph = 0;
         var sumBilling = 0;
         var sumClaim = 0;
         var sumReceived = 0;
@@ -828,6 +882,11 @@
                 statusCell.html('<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fs-11 px-2 py-1">Sisa Rp ' + formatRupiah(finalRemaining) + '</span>');
             }
 
+            sumRoute += Number(inv.routeAmount || 0);
+            sumOnCharge += Number(inv.onChargeAmount || 0);
+            sumDpp += Number(inv.subtotal || 0);
+            sumPpn += Number(inv.ppnAmount || 0);
+            sumPph += Number(inv.pphAmount || 0);
             sumBilling += inv.remaining;
             sumClaim += claim;
             sumReceived += amount;
@@ -836,6 +895,11 @@
         var unpaidRemaining = Math.max(0, sumBilling - sumReceived - sumClaim);
 
         // Update Summary Card
+        $('#sum-route').text('Rp ' + formatRupiah(sumRoute));
+        $('#sum-on-charge').text('+ Rp ' + formatRupiah(sumOnCharge));
+        $('#sum-dpp').text('Rp ' + formatRupiah(sumDpp));
+        $('#sum-ppn').text('+ Rp ' + formatRupiah(sumPpn));
+        $('#sum-pph').text('- Rp ' + formatRupiah(sumPph));
         $('#sum-billing').text('Rp ' + formatRupiah(sumBilling));
         $('#sum-claim').text('- Rp ' + formatRupiah(sumClaim));
         $('#sum-received').text('Rp ' + formatRupiah(sumReceived));

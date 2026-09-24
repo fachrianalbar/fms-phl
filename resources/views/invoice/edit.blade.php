@@ -52,8 +52,11 @@ foreach ($order as $item) {
     ];
 }
 
-$customerPpnRate = (float) ($customerData->ppn ?? 0);
-$customerPphRate = (float) ($customerData->pph ?? 0);
+$customerPpnRate = (float) ($data->ppnRate ?? $customerData->ppn ?? 0);
+$customerPphRate = (float) ($data->pphRate ?? $customerData->pph ?? 0);
+$pphBaseType = in_array($data->pphBaseType, ['route', 'subtotal'], true) ? $data->pphBaseType : 'subtotal';
+$pphBaseAmount = $pphBaseType === 'route' ? $initialTotalBase : ($initialTotalBase + $initialTotalOnCharge);
+$taxLocked = $status === 1;
 $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
 @endphp
 
@@ -347,7 +350,7 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="form-check form-switch mb-0">
                                             <input type="hidden" name="usePpn" value="0">
-                                            <input class="form-check-input" type="checkbox" role="switch" id="usePpn" name="usePpn" value="1" {{ $data->usePpn ? 'checked' : '' }}>
+                                            <input class="form-check-input" type="checkbox" role="switch" id="usePpn" name="usePpn" value="1" {{ $data->usePpn ? 'checked' : '' }} {{ $taxLocked ? 'disabled' : '' }}>
                                         </div>
                                         <div>
                                             <div class="tax-title fs-14 fw-bold text-dark" id="ppnLabel">
@@ -367,7 +370,7 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
                                     <div class="d-flex align-items-center gap-3">
                                         <div class="form-check form-switch mb-0">
                                             <input type="hidden" name="usePph" value="0">
-                                            <input class="form-check-input" type="checkbox" role="switch" id="usePph" name="usePph" value="1" {{ $data->usePph ? 'checked' : '' }}>
+                                            <input class="form-check-input" type="checkbox" role="switch" id="usePph" name="usePph" value="1" {{ $data->usePph ? 'checked' : '' }} {{ $taxLocked ? 'disabled' : '' }}>
                                         </div>
                                         <div>
                                             <div class="tax-title fs-14 fw-bold text-dark" id="pphLabel">
@@ -380,6 +383,20 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
                                         {{ $customerPphRate }}%
                                     </span>
                                 </div>
+                            </div>
+
+                            <div class="col-12">
+                                @if ($taxLocked)
+                                    <input type="hidden" name="pphBaseType" value="{{ $pphBaseType }}">
+                                @endif
+                                <label class="form-label fw-semibold text-dark fs-13" for="pphBaseType">Basis Perhitungan PPh 23</label>
+                                <select class="form-select" name="pphBaseType" id="pphBaseType" required {{ $taxLocked ? 'disabled' : '' }}>
+                                    <option value="subtotal" {{ $pphBaseType === 'subtotal' ? 'selected' : '' }}>DPP Total — Tarif Rute + Biaya On Charge</option>
+                                    <option value="route" {{ $pphBaseType === 'route' ? 'selected' : '' }}>Tarif Rute Saja — On Charge tidak dikenakan PPh</option>
+                                </select>
+                                <small class="text-muted fs-11">
+                                    {{ $taxLocked ? 'Pengaturan pajak dikunci karena invoice sudah memiliki pembayaran atau claim.' : 'Override ini hanya berlaku untuk invoice ini; default Customer tidak berubah.' }}
+                                </small>
                             </div>
                         </div>
 
@@ -676,6 +693,11 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
                                     <span class="fw-semibold text-primary fs-14" id="summaryPpn">+ Rp {{ number_format($data->ppnAmount, 0, ',', '.') }}</span>
                                 </div>
 
+                                <div class="d-flex justify-content-between align-items-center mb-1" id="rowPphBase">
+                                    <span class="text-muted fs-13">Dasar PPh (<span id="summaryPphBaseLabel">{{ $pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total' }}</span>):</span>
+                                    <span class="fw-semibold text-dark fs-14" id="summaryPphBase">Rp {{ number_format($pphBaseAmount, 0, ',', '.') }}</span>
+                                </div>
+
                                 <div class="d-flex justify-content-between align-items-center mb-2 {{ $data->usePph ? '' : 'opacity-50 text-muted' }}" id="rowPph">
                                     <span class="text-muted fs-13 d-flex align-items-center">
                                         <span class="badge bg-warning-subtle text-warning me-1 fs-10" id="summaryPphBadge">{{ $customerPphRate }}%</span> PPh 23:
@@ -884,12 +906,16 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
     function recalculateSidebar() {
         const usePpn = $('#usePpn').is(':checked');
         const usePph = $('#usePph').is(':checked');
+        const pphBaseType = $('#pphBaseType').val() || '{{ $pphBaseType }}';
+        const pphBaseAmount = pphBaseType === 'route' ? totalBaseAmount : subtotalDpp;
 
         const ppnAmount = usePpn && customerPpnRate > 0 ? subtotalDpp * (customerPpnRate / 100) : 0;
-        const pphAmount = usePph && customerPphRate > 0 ? subtotalDpp * (customerPphRate / 100) : 0;
+        const pphAmount = usePph && customerPphRate > 0 ? pphBaseAmount * (customerPphRate / 100) : 0;
         const grandTotal = subtotalDpp + ppnAmount - pphAmount;
 
         $('#summaryPpn').text((usePpn ? '+ ' : '') + formatRupiah(ppnAmount));
+        $('#summaryPphBaseLabel').text(pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total');
+        $('#summaryPphBase').text(formatRupiah(pphBaseAmount));
         $('#summaryPph').text((usePph ? '- ' : '') + formatRupiah(pphAmount));
         $('#summaryGrandTotal').text(formatRupiah(grandTotal));
 
@@ -972,6 +998,8 @@ $customerDueDateDuration = (int) ($customerData->dueDateDuration ?? 30);
             }
             recalculateSidebar();
         });
+
+        $('#pphBaseType').on('change', recalculateSidebar);
 
         $('#invoiceDate').on('change', function() {
             updateOverdueDate();

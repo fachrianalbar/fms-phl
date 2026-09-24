@@ -91,6 +91,9 @@
                     <th>Email</th>
                     <th>Perusahaan</th>
                     <th>Tipe</th>
+                    <th>PPN</th>
+                    <th>PPh 23</th>
+                    <th>Basis PPh</th>
                     <th>Durasi Jatuh Tempo (Hari)</th>
                 </tr>
             </thead>
@@ -103,6 +106,9 @@
                         <td>{{ $row->email ?: '-' }}</td>
                         <td>{{ $row->company->name ?? '-' }}</td>
                         <td>{{ $row->type ?: '-' }}</td>
+                        <td class="text-right">{{ number_format((float) ($row->ppn ?? 0), 4, ',', '.') }}%</td>
+                        <td class="text-right">{{ number_format((float) ($row->pph ?? 0), 4, ',', '.') }}%</td>
+                        <td>{{ $row->pphBaseType === 'route' ? 'Tarif Rute' : 'DPP Total' }}</td>
                         <td class="text-right">{{ $row->dueDateDuration ?? '-' }}</td>
                     </tr>
                 @empty

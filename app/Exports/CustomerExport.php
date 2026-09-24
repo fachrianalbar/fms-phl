@@ -57,6 +57,9 @@ class CustomerExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMap
             'Email',
             'Perusahaan',
             'Tipe',
+            'PPN (%)',
+            'PPh 23 (%)',
+            'Basis PPh Default',
             'Durasi Jatuh Tempo (Hari)',
         ];
     }
@@ -72,6 +75,9 @@ class CustomerExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMap
             $customer->email ?: '-',
             $customer->company->name ?? '-',
             $customer->type ?: '-',
+            (float) ($customer->ppn ?? 0),
+            (float) ($customer->pph ?? 0),
+            $customer->pphBaseType === 'route' ? 'Tarif Rute Saja' : 'DPP Total (Tarif Rute + On Charge)',
             $customer->dueDateDuration ?? '-',
         ];
     }

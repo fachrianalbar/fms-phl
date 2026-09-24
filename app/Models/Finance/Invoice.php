@@ -31,20 +31,31 @@ class Invoice extends Model
         'overdueDate',
         'notes',
         'invoiceAmount',
+        'routeAmount',
+        'onChargeAmount',
         'ppnAmount',
         'pphAmount',
         'usePpn',
         'usePph',
+        'ppnRate',
+        'pphRate',
+        'pphBaseType',
+        'pphBaseAmount',
         'customerCode',
         'status',
     ];
 
     protected $casts = [
         'invoiceAmount' => 'integer',
+        'routeAmount' => 'integer',
+        'onChargeAmount' => 'integer',
         'ppnAmount' => 'integer',
         'pphAmount' => 'integer',
         'usePpn' => 'boolean',
         'usePph' => 'boolean',
+        'ppnRate' => 'float',
+        'pphRate' => 'float',
+        'pphBaseAmount' => 'integer',
         'status' => 'integer',
     ];
 

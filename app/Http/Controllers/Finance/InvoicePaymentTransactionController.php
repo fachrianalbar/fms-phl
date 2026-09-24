@@ -154,6 +154,9 @@ class InvoicePaymentTransactionController extends Controller
             ->keyBy('code');
 
         $rows = [];
+        $sumDpp = 0;
+        $sumPpn = 0;
+        $sumPph = 0;
         $sumBilling = 0;
         $sumPaidInTrx = 0;
         $sumClaimInTrx = 0;
@@ -164,13 +167,19 @@ class InvoicePaymentTransactionController extends Controller
                 continue;
             }
 
-            $billing = (float) (($invoice->invoiceAmount ?? 0) + ($invoice->ppnAmount ?? 0) - ($invoice->pphAmount ?? 0));
+            $subtotal = (float) ($invoice->invoiceAmount ?? 0);
+            $ppnAmount = (float) ($invoice->ppnAmount ?? 0);
+            $pphAmount = (float) ($invoice->pphAmount ?? 0);
+            $billing = $subtotal + $ppnAmount - $pphAmount;
             $paidInTrx = (float) $transaction->payments->where('invoiceCode', $code)->sum('amount');
             $claimInTrx = (float) $transaction->claims->where('invoiceCode', $code)->sum('amount');
             $paidTotal = (float) $invoice->payments->sum('amount');
             $claimTotal = (float) $invoice->claims->sum('amount');
             $remaining = max($billing - $paidTotal - $claimTotal, 0);
 
+            $sumDpp += $subtotal;
+            $sumPpn += $ppnAmount;
+            $sumPph += $pphAmount;
             $sumBilling += $billing;
             $sumPaidInTrx += $paidInTrx;
             $sumClaimInTrx += $claimInTrx;
@@ -178,6 +187,13 @@ class InvoicePaymentTransactionController extends Controller
             $rows[] = [
                 'invoiceNumber' => $invoice->invoiceNumber ?: $invoice->code,
                 'invoiceDate' => $invoice->invoiceDate,
+                'subtotal' => $subtotal,
+                'ppnAmount' => $ppnAmount,
+                'pphAmount' => $pphAmount,
+                'ppnRate' => (float) ($invoice->ppnRate ?? 0),
+                'pphRate' => (float) ($invoice->pphRate ?? 0),
+                'pphBaseType' => $invoice->pphBaseType === 'route' ? 'route' : 'subtotal',
+                'pphBaseAmount' => (float) ($invoice->pphBaseAmount ?? $subtotal),
                 'billing' => $billing,
                 'paidInTrx' => $paidInTrx,
                 'claimInTrx' => $claimInTrx,
@@ -193,6 +209,9 @@ class InvoicePaymentTransactionController extends Controller
             ->with('title', $this->title)
             ->with('transaction', $transaction)
             ->with('rows', $rows)
+            ->with('sumDpp', $sumDpp)
+            ->with('sumPpn', $sumPpn)
+            ->with('sumPph', $sumPph)
             ->with('sumBilling', $sumBilling)
             ->with('sumPaidInTrx', $sumPaidInTrx)
             ->with('sumClaimInTrx', $sumClaimInTrx);
@@ -207,7 +226,12 @@ class InvoicePaymentTransactionController extends Controller
 
         return response()->json(
             $invoices->map(function ($invoice) {
-                $billing = (float) (($invoice->invoiceAmount ?? 0) + ($invoice->ppnAmount ?? 0) - ($invoice->pphAmount ?? 0));
+                $subtotal = (float) ($invoice->invoiceAmount ?? 0);
+                $routeAmount = (float) ($invoice->routeAmount ?? $subtotal);
+                $onChargeAmount = (float) ($invoice->onChargeAmount ?? max($subtotal - $routeAmount, 0));
+                $ppnAmount = (float) ($invoice->ppnAmount ?? 0);
+                $pphAmount = (float) ($invoice->pphAmount ?? 0);
+                $billing = $subtotal + $ppnAmount - $pphAmount;
                 $totalPaid = (float) $invoice->payments->sum('amount');
                 $totalClaim = (float) $invoice->claims->sum('amount');
 
@@ -215,6 +239,15 @@ class InvoicePaymentTransactionController extends Controller
                     'code' => $invoice->code,
                     'invoiceNumber' => $invoice->invoiceNumber ?: $invoice->code,
                     'invoiceDate' => $invoice->invoiceDate ? Carbon::parse($invoice->invoiceDate)->format('d M Y') : '-',
+                    'routeAmount' => $routeAmount,
+                    'onChargeAmount' => $onChargeAmount,
+                    'subtotal' => $subtotal,
+                    'ppnAmount' => $ppnAmount,
+                    'pphAmount' => $pphAmount,
+                    'ppnRate' => (float) ($invoice->ppnRate ?? 0),
+                    'pphRate' => (float) ($invoice->pphRate ?? 0),
+                    'pphBaseType' => $invoice->pphBaseType === 'route' ? 'route' : 'subtotal',
+                    'pphBaseAmount' => (float) ($invoice->pphBaseAmount ?? $subtotal),
                     'totalBilling' => $billing,
                     'totalPaid' => $totalPaid,
                     'totalClaim' => $totalClaim,

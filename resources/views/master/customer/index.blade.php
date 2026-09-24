@@ -446,13 +446,14 @@
                     <table class="table align-middle w-100 mb-0" id="dt">
                         <thead>
                             <tr>
-                                <th style="width: 7%;" class="text-center">Aksi</th>
-                                <th style="width: 5%;" class="text-center">No</th>
-                                <th style="width: 22%;">{{ __('menu_customer.name') }}</th>
-                                <th style="width: 20%;">Email</th>
-                                <th style="width: 21%;">{{ __('menu_customer.company') }}</th>
-                                <th style="width: 12%;" class="text-center">{{ __('menu_customer.type') }}</th>
-                                <th style="width: 13%;" class="text-end">{{ __('menu_customer.due_date_duration') }}
+                                <th style="width: 6%;" class="text-center">Aksi</th>
+                                <th style="width: 4%;" class="text-center">No</th>
+                                <th style="width: 17%;">{{ __('menu_customer.name') }}</th>
+                                <th style="width: 15%;">Email</th>
+                                <th style="width: 15%;">{{ __('menu_customer.company') }}</th>
+                                <th style="width: 9%;" class="text-center">{{ __('menu_customer.type') }}</th>
+                                <th style="width: 22%;">Kebijakan Pajak</th>
+                                <th style="width: 12%;" class="text-end">{{ __('menu_customer.due_date_duration') }}
                                     ({{ __('menu_customer.days') }})</th>
                             </tr>
                         </thead>
@@ -588,6 +589,7 @@
                             return '<span class="badge ' + badgeClass + ' px-2 py-1" style="border-radius: 6px; font-weight: 600; font-size: 11px;">' + label + '</span>';
                         }
                     },
+                    { data: 'taxPolicy', className: 'align-middle' },
                     {
                         data: 'dueDateDuration',
                         className: 'text-end align-middle font-monospace',
@@ -597,7 +599,7 @@
                     }
                 ],
                 columnDefs: [
-                    { searchable: false, targets: [0, 1, 4, 6] },
+                    { searchable: false, targets: [0, 1, 4, 6, 7] },
                     { orderable: false, targets: [0, 1] }
                 ],
                 order: [

@@ -3,10 +3,12 @@
 namespace App\Services\Master;
 
 use App\Helpers\GenerateCode;
+use App\Models\Finance\Invoice;
 use App\Models\Master\Customer;
 use App\Models\Master\CustomerDetail;
 use App\Models\Master\CustomerPic;
 use App\Models\Operational\CustomerDetailOrder;
+use App\Services\Finance\InvoiceService;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
@@ -23,7 +25,7 @@ class CustomerService
 
     protected $customerPic;
 
-    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic, private UniqueCodeService $uniqueCode)
+    public function __construct(Customer $customer, CustomerDetail $customerDetail, CustomerDetailOrder $customerDetailOrder, CustomerPic $customerPic, private UniqueCodeService $uniqueCode, private InvoiceService $invoiceService)
     {
         $this->service = $customer;
         $this->customerDetail = $customerDetail;
@@ -65,7 +67,7 @@ class CustomerService
     public function findAllInvoicePayable()
     {
         $openInvoice = fn ($q) => $q->whereNull('status')
-            ->orWhere('status', '!=', \App\Models\Finance\Invoice::STATUS_FULL);
+            ->orWhere('status', '!=', Invoice::STATUS_FULL);
 
         return $this->service->with(['company'])
             ->where(function ($q) use ($openInvoice) {
@@ -104,8 +106,9 @@ class CustomerService
             'billingAddress' => $request->billingAddress,
             'npwp' => $request->npwp,
             'accountNumber' => $request->accountNumber,
-            'ppn' => $request->ppn,
-            'pph' => $request->pph,
+            'ppn' => $request->ppn ?? 0,
+            'pph' => $request->pph ?? 0,
+            'pphBaseType' => $request->pphBaseType,
             'companyCode' => $request->companyCode,
             'duedateduration' => $request->duedateduration,
             'type' => $request->type,
@@ -144,8 +147,9 @@ class CustomerService
             'billingAddress' => $request->billingAddress,
             'npwp' => $request->npwp,
             'accountNumber' => $request->accountNumber,
-            'ppn' => $request->ppn,
-            'pph' => $request->pph,
+            'ppn' => $request->ppn ?? 0,
+            'pph' => $request->pph ?? 0,
+            'pphBaseType' => $request->pphBaseType,
             'companyCode' => $request->companyCode,
             'duedateduration' => $request->duedateduration,
             'type' => $request->type,
@@ -154,6 +158,10 @@ class CustomerService
         ]);
 
         $data = $this->getById($id);
+
+        // Tarif dan basis pajak customer juga berlaku untuk invoice terbuka
+        // yang belum memiliki pembayaran maupun claim.
+        $this->invoiceService->synchronizeCustomerTaxSettings($data);
 
         if (isset($request->picName)) {
             $data->pic()->delete();

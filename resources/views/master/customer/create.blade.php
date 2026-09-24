@@ -83,14 +83,25 @@
                     </div>
 
                     <div class="row mt-4">
-                        <div class="col-md-6">
-                            <label class="form-label" for="ppn">Ppn</label>
-                            <input class="form-control" name="ppn" id="ppn" type="number" placeholder="Ppn">
+                        <div class="col-md-4">
+                            <label class="form-label" for="ppn">Tarif PPN (%)</label>
+                            <input class="form-control" name="ppn" id="ppn" type="number" min="0" max="100" step="0.0001"
+                                value="{{ old('ppn', 0) }}" placeholder="Contoh: 11">
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label" for="pph"> Pph</label>
-                            <input class="form-control" name="pph" id="pph" type="number" placeholder="Pph">
+                        <div class="col-md-4">
+                            <label class="form-label" for="pph">Tarif PPh 23 (%)</label>
+                            <input class="form-control" name="pph" id="pph" type="number" min="0" max="100" step="0.0001"
+                                value="{{ old('pph', 0) }}" placeholder="Contoh: 2">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="pphBaseType">Basis PPh Default</label>
+                            <select class="form-select" name="pphBaseType" id="pphBaseType" required>
+                                <option value="subtotal" {{ old('pphBaseType', 'subtotal') === 'subtotal' ? 'selected' : '' }}>DPP Total (Tarif Rute + On Charge)</option>
+                                <option value="route" {{ old('pphBaseType') === 'route' ? 'selected' : '' }}>Tarif Rute Saja</option>
+                            </select>
+                            <small class="text-muted">Menjadi default saat membuat invoice dan dapat dioverride sebelum pembayaran.</small>
                         </div>
                     </div>
 
