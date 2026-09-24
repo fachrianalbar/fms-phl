@@ -25,6 +25,144 @@
         /* ── Main table styling ── */
         .salary-amount { text-align: right; font-weight: 500; }
 
+        /* ── Standar Filter Card Collapse (PHL §3) ── */
+        .filter-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            margin: 0 0 20px;
+            overflow: hidden;
+        }
+
+        .filter-card-header {
+            align-items: center;
+            background: #f8fafc;
+            border: 0;
+            color: #334155;
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            text-align: left;
+            width: 100%;
+        }
+
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-card .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
+
+        .filter-label {
+            color: #64748b;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .filter-control,
+        .filter-card .form-control {
+            background-color: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #334155 !important;
+            font-size: 13px !important;
+            height: 38px !important;
+        }
+
+        .filter-control {
+            padding: 0 12px 0 36px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 15px 15px;
+            transition: all 0.2s ease !important;
+        }
+
+        .filter-control::placeholder {
+            color: #94a3b8 !important;
+            font-size: 13px !important;
+        }
+
+        .filter-control:hover {
+            border-color: #94a3b8 !important;
+        }
+
+        .filter-control:focus {
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
+            background-color: #ffffff !important;
+        }
+
+        .btn-filter-primary {
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+            border: 0 !important;
+            border-radius: 8px !important;
+            color: #fff !important;
+            display: inline-flex;
+            font-size: 13px;
+            font-weight: 600;
+            gap: 6px;
+            height: 38px;
+            justify-content: center;
+            padding: 0 16px;
+            white-space: nowrap;
+        }
+
+        .btn-filter-reset {
+            align-items: center;
+            background: #fff !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            color: #64748b !important;
+            display: inline-flex;
+            height: 38px;
+            justify-content: center;
+            min-width: 38px;
+            padding: 0 !important;
+        }
+
         /* ── Modal premium styling ── */
         #processSalaryModal .modal-content, #editSalaryModal .modal-content {
             border: none;
@@ -829,10 +967,40 @@
             color: var(--bs-secondary-color);
         }
 
-        /* ── Dark mode: filter bar follows the dark surface ── */
-        html[data-bs-theme="dark"] .card.border-0.mb-4 .form-label,
-        html[data-bs-theme="dark"] .card.border-0.mb-4 .text-muted {
-            color: var(--bs-secondary-color) !important;
+        /* ── Dark mode: Filter card (PHL §3) ── */
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-control,
+        html[data-bs-theme="dark"] .filter-card .form-control {
+            background-color: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .btn-filter-reset {
+            background: var(--bs-tertiary-bg) !important;
+            border-color: var(--bs-border-color) !important;
+            color: var(--bs-body-color) !important;
         }
 
         /* ══════════════════════════════════════════════════════════════ */
@@ -946,9 +1114,9 @@
 @section('content')
     <div class="col-sm-12">
         <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
+            <div class="card-header py-3 border-bottom d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                    <h4 class="mb-1 fw-bold d-flex align-items-center gap-2">
                         <i class="mdi mdi-cash-register text-primary fs-20"></i>
                         {{ $title }} Data
                     </h4>
@@ -970,34 +1138,48 @@
             <div class="card-body p-4">
                 @include('partials.alert')
 
-                {{-- Filter Bar --}}
-                <div class="card border-0 mb-4" style="background: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color) !important; border-radius: 12px;">
-                    <div class="card-body p-3">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-md-4">
-                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Filter Supir</label>
-                                <select id="filterTableDriver" class="form-select form-select-sm select2-filter" style="width:100%;">
-                                    <option value="">Semua Supir</option>
-                                    @foreach ($driver as $item)
-                                        <option value="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Dari Tanggal</label>
-                                <input type="text" id="filterTableStartDate" class="form-control form-control-sm" placeholder="Pilih Tanggal Mulai" style="border-radius:8px; background:#fff;">
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label fw-semibold text-muted mb-1" style="font-size:12px;">Sampai Tanggal</label>
-                                <input type="text" id="filterTableEndDate" class="form-control form-control-sm" placeholder="Pilih Tanggal Akhir" style="border-radius:8px; background:#fff;">
-                            </div>
-                            <div class="col-md-2 d-flex gap-2">
-                                <button type="button" id="btnFilterTable" class="btn btn-sm btn-primary w-100" style="border-radius:8px; font-weight:600;">
-                                    <i class="mdi mdi-filter me-1"></i> Filter
-                                </button>
-                                <button type="button" id="btnResetTableFilter" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;" title="Reset Filter">
-                                    <i class="mdi mdi-refresh"></i>
-                                </button>
+                {{-- Filter Bar (Standard Collapsible Panel) --}}
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#driverSalaryFilterCollapse" aria-expanded="false" aria-controls="driverSalaryFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar riwayat gaji supir</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="driverSalaryFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-4 col-md-6">
+                                        <label class="filter-label" for="filterTableDriver">Supir</label>
+                                        <select id="filterTableDriver" name="filterDriverCode" class="form-select select2-filter" style="width:100%;">
+                                            <option value="">Semua Supir</option>
+                                            @foreach ($driver as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }} ({{ $item->code }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterTableStartDate">Dari Tanggal</label>
+                                        <input type="text" id="filterTableStartDate" name="filterStartDate" class="form-control filter-control" placeholder="Pilih Tanggal Mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterTableEndDate">Sampai Tanggal</label>
+                                        <input type="text" id="filterTableEndDate" name="filterEndDate" class="form-control filter-control" placeholder="Pilih Tanggal Akhir">
+                                    </div>
+                                    <div class="col-xl-2 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button type="button" id="btnFilterTable" class="btn btn-filter-primary flex-grow-1 flex-md-grow-0">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan
+                                        </button>
+                                        <button type="button" id="btnResetTableFilter" class="btn btn-filter-reset" data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1393,7 +1575,7 @@
                 dateFormat: 'Y-m-d',
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
-                    if (filterTableEndPicker) filterTableEndPicker.set('minDate', dateStr);
+                    if (filterTableEndPicker) filterTableEndPicker.set('minDate', dateStr || null);
                 }
             });
 
@@ -1401,7 +1583,7 @@
                 dateFormat: 'Y-m-d',
                 allowInput: true,
                 onChange: function(selectedDates, dateStr) {
-                    if (filterTableStartPicker) filterTableStartPicker.set('maxDate', dateStr);
+                    if (filterTableStartPicker) filterTableStartPicker.set('maxDate', dateStr || null);
                 }
             });
 
@@ -1501,8 +1683,20 @@
             });
 
             // ============================================================
-            // Main DataTable: Processed salaries
+            // Filter Helper & Main DataTable: Processed salaries
             // ============================================================
+            function getFilters() {
+                return {
+                    filterDriverCode: $('#filterTableDriver').val() || '',
+                    filterStartDate: $('#filterTableStartDate').val() || '',
+                    filterEndDate: $('#filterTableEndDate').val() || ''
+                };
+            }
+
+            function reloadWithFilters() {
+                processedTable.ajax.reload(null, true);
+            }
+
             const processedTable = $('#dtProcessed').DataTable({
                 "processing": true,
                 "serverSide": true,
@@ -1511,9 +1705,7 @@
                 "ajax": {
                     "url": "{{ route('dt.driver-salary-processed') }}",
                     "data": function(d) {
-                        d.filterDriverCode = $('#filterTableDriver').val();
-                        d.filterStartDate = $('#filterTableStartDate').val();
-                        d.filterEndDate = $('#filterTableEndDate').val();
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [
@@ -1541,19 +1733,36 @@
             });
 
             $('#filterTableDriver').on('change', function() {
-                processedTable.ajax.reload();
+                reloadWithFilters();
             });
 
             $('#btnFilterTable').on('click', function() {
-                processedTable.ajax.reload();
+                reloadWithFilters();
+            });
+
+            $('#filterTableStartDate, #filterTableEndDate').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
             });
 
             $('#btnResetTableFilter').on('click', function() {
                 $('#filterTableDriver').val('').trigger('change');
-                if (filterTableStartPicker) filterTableStartPicker.clear();
-                if (filterTableEndPicker) filterTableEndPicker.clear();
-                processedTable.ajax.reload();
+                if (filterTableStartPicker) {
+                    filterTableStartPicker.clear();
+                    filterTableStartPicker.set('maxDate', null);
+                }
+                if (filterTableEndPicker) {
+                    filterTableEndPicker.clear();
+                    filterTableEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
+
+            if (typeof $.fn.tooltip === 'function') {
+                $('[data-bs-toggle="tooltip"]').tooltip();
+            }
 
             // ============================================================
             // Modal: Adjustment rows

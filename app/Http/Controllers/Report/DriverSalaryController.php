@@ -525,11 +525,20 @@ class DriverSalaryController extends Controller
                             </div>';
                 })
                 ->filterColumn('driverName', function ($query, $keyword) {
-                    $query->where(function($q) use ($keyword) {
-                        $q->whereHas('driver', function ($q2) use ($keyword) {
-                            $q2->where('name', 'like', "%{$keyword}%");
-                        })->orWhere('driverCode', 'like', "%{$keyword}%")
-                          ->orWhere('code', 'like', "%{$keyword}%");
+                    // Do not use whereHas('driver') here. The relation compares
+                    // driver_salary.driverCode with employee.code, whose database
+                    // collations may differ between existing installations.
+                    $driverCodes = Employee::query()
+                        ->where('name', 'like', "%{$keyword}%")
+                        ->pluck('code');
+
+                    $query->where(function ($q) use ($keyword, $driverCodes) {
+                        $q->where('driverCode', 'like', "%{$keyword}%")
+                            ->orWhere('code', 'like', "%{$keyword}%");
+
+                        if ($driverCodes->isNotEmpty()) {
+                            $q->orWhereIn('driverCode', $driverCodes);
+                        }
                     });
                 })
                 ->addColumn('periode', function ($row) {
