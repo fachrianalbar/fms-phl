@@ -74,6 +74,7 @@
         // Supplier
         'inventory/supplier' => 'mdi-factory',
         'purchasing/purchase' => 'mdi-cart-outline',
+        'purchasing/direct-purchase' => 'mdi-cart-arrow-right',
         'purchasing/purchase-payment' => 'mdi-cash-remove',
         'purchasing/purchase-paid' => 'mdi-cash-check',
         'report/supplier' => 'mdi-chart-timeline-variant',

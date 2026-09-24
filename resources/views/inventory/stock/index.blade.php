@@ -71,7 +71,6 @@
                             <th>No</th>
                             <th>Item Code</th>
                             <th>Item Name</th>
-                            <th>Warehouse</th>
                             <th>Stock</th>
                         </tr>
                     </thead>
@@ -105,11 +104,6 @@
                     <div class="mb-3">
                         <label for="editItemName" class="form-label">Nama Item</label>
                         <input type="text" class="form-control" id="editItemName" readonly>
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="editWarehouseName" class="form-label">Warehouse</label>
-                        <input type="text" class="form-control" id="editWarehouseName" readonly>
                     </div>
 
                     <div class="mb-3">
@@ -243,20 +237,16 @@
                     "orderable": false
                 },
                 {
-                    "data": 'warehouseName',
-                    "orderable": false
-                },
-                {
                     "data": 'stock'
                 }
             ],
             "columnDefs": [{
                     "searchable": false,
-                    "targets": [0, 1, 5]
+                    "targets": [0, 1, 4]
                 },
                 {
                     "orderable": false,
-                    "targets": [0, 1, 3, 4]
+                    "targets": [0, 1, 3]
                 }
             ],
             "order": [

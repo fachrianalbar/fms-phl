@@ -53,7 +53,7 @@
                         </span>
                     </h4>
                     <p class="text-muted mb-0 fs-12">
-                        Daftar pembelian (PO) beserta supplier, gudang, jatuh tempo, dan status pembayaran.
+                        Daftar pembelian (PO) beserta supplier, jatuh tempo, dan status pembayaran.
                     </p>
                 </div>
             </div>
@@ -211,7 +211,6 @@
                                 <th class="text-center">Tanggal</th>
                                 <th class="text-center">Jatuh Tempo</th>
                                 <th>Supplier</th>
-                                <th>Gudang</th>
                                 <th class="text-end">Total</th>
                                 <th class="text-center">Status</th>
                             </tr>
@@ -301,10 +300,6 @@
                     },
                     {
                         "data": 'supplier.name',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'warehouse.name',
                         "className": 'align-middle'
                     },
                     {

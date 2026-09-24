@@ -516,7 +516,7 @@
                         </div>
 
                         <!-- Fleet -->
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label-custom" for="fleetCode">
                                 <i class="mdi mdi-truck-outline text-muted"></i>
                                 {{ __('menu_maintenance.fleet') }} / Plat Nomor <span class="required-star">*</span>
@@ -531,21 +531,8 @@
                             </select>
                         </div>
 
-                        <!-- Warehouse -->
-                        <div class="col-md-6">
-                            <label class="form-label-custom" for="warehouseCode">
-                                <i class="mdi mdi-warehouse text-muted"></i>
-                                Gudang Logistik <span class="required-star">*</span>
-                            </label>
-                            <select class="js-example-basic-single form-select" name="warehouseCode" id="warehouseCode" required>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }} Gudang...</option>
-                                @foreach ($warehouse as $item)
-                                    <option value="{{ $item->code }}" {{ $data->warehouseCode == $item->code ? 'selected' : '' }}>
-                                        {{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <!-- Hidden Warehouse Code -->
+                        <input type="hidden" name="warehouseCode" id="warehouseCode" value="{{ $data->warehouseCode }}">
 
                         <!-- Purchase Order (No PO) Multi-Select -->
                         <div class="col-md-12">

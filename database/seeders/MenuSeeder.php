@@ -73,9 +73,10 @@ class MenuSeeder extends Seeder
         // ── SUPPLIER ──────────────────────────────────────────────────
         ['code' => 'SUPPLIER', 'name' => 'Supplier', 'nama' => 'Data Supplier', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'inventory/supplier', 'sort' => 1],
         ['code' => 'PURCHASE', 'name' => 'Purchase', 'nama' => 'Pembelian', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/purchase', 'sort' => 2],
-        ['code' => 'PURCHASE_PAYMENT', 'name' => 'Purchase Payment', 'nama' => 'Hutang Belum Lunas', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/purchase-payment', 'sort' => 3],
-        ['code' => 'PURCHASE_PAID', 'name' => 'Supplier Paid', 'nama' => 'Hutang Lunas', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/purchase-paid', 'sort' => 4],
-        ['code' => 'SUPPLIER_PURCHASE', 'name' => 'Supplier Purchase Report', 'nama' => 'Laporan Supplier', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'report/supplier', 'sort' => 5],
+        ['code' => 'DIRECT_PURCHASE', 'name' => 'Direct Purchase', 'nama' => 'Pembelian Langsung', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/direct-purchase', 'sort' => 3],
+        ['code' => 'PURCHASE_PAYMENT', 'name' => 'Purchase Payment', 'nama' => 'Hutang Belum Lunas', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/purchase-payment', 'sort' => 4],
+        ['code' => 'PURCHASE_PAID', 'name' => 'Supplier Paid', 'nama' => 'Hutang Lunas', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'purchasing/purchase-paid', 'sort' => 5],
+        ['code' => 'SUPPLIER_PURCHASE', 'name' => 'Supplier Purchase Report', 'nama' => 'Laporan Supplier', 'parentCode' => 'SUPPLIER_GROUP', 'url' => 'report/supplier', 'sort' => 6],
 
         // ── INVENTORY ─────────────────────────────────────────────────────
         ['code' => 'ITEM', 'name' => 'Item', 'nama' => 'Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/items', 'sort' => 1],

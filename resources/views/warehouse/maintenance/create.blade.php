@@ -574,7 +574,7 @@
                         </div>
 
                         <!-- Fleet -->
-                        <div class="col-md-6">
+                        <div class="col-md-12">
                             <label class="form-label-custom" for="fleetCode">
                                 <i class="mdi mdi-truck-outline text-muted"></i>
                                 {{ __('menu_maintenance.fleet') }} / Plat Nomor <span class="required-star">*</span>
@@ -589,21 +589,8 @@
                             </select>
                         </div>
 
-                        <!-- Warehouse -->
-                        <div class="col-md-6">
-                            <label class="form-label-custom" for="warehouseCode">
-                                <i class="mdi mdi-warehouse text-muted"></i>
-                                Gudang Logistik <span class="required-star">*</span>
-                            </label>
-                            <select class="js-example-basic-single form-select" name="warehouseCode" id="warehouseCode" required>
-                                <option selected="" disabled="" value="">{{ __('general.choose') }} Gudang...</option>
-                                @foreach ($warehouse as $item)
-                                    <option value="{{ $item->code }}">
-                                        {{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <!-- Hidden Warehouse Code (Default Gudang) -->
+                        <input type="hidden" name="warehouseCode" id="warehouseCode" value="{{ $warehouse->first()->code ?? '' }}">
 
                         <!-- Purchase Order (No PO) Multi-Select -->
                         <div class="col-md-12">
@@ -614,7 +601,7 @@
                                     <span id="po-count-badge" class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2" style="display: none;">0 PO</span>
                                     <span id="po-loading-spinner" class="spinner-border spinner-border-sm text-primary ms-2" style="display: none;" role="status"></span>
                                 </label>
-                                <span class="text-muted small" id="po-status-hint">Pilih Gudang terlebih dahulu</span>
+                                <span class="text-muted small" id="po-status-hint">Memuat daftar PO...</span>
                             </div>
                             <select class="form-select" name="purchase_ids[]" id="purchase_ids" multiple="multiple" required disabled>
                             </select>
@@ -646,7 +633,7 @@
 
                 <div class="card-body">
                     <!-- Alert Notice if warehouse not selected -->
-                    <div id="warehouse-alert-box" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded-3">
+                    <div id="warehouse-alert-box" class="alert alert-warning border-0 bg-warning-subtle text-warning-emphasis d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded-3" style="display: none;">
                         <i class="mdi mdi-alert-circle-outline fs-18"></i>
                         <span>Silakan pilih <strong>Gudang Logistik</strong> di atas untuk membuka pilihan suku cadang dan No PO.</span>
                     </div>

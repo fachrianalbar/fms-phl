@@ -1,0 +1,7 @@
+# Taste
+- Writes in casual/informal Indonesian and expects replies in Indonesian — explicitly calls out ("kok respon bahasa china") when the agent answers in another language, and does not accept English source docs/context as a reason to switch languages. Confidence: 0.9
+- Gets overwhelmed by long explanations with multiple options and asks "what should I do now" — wants a single, concrete next action spelled out rather than a menu of alternatives. Confidence: 0.5
+- Uses Zed as their editor on macOS and heavily customizes its AI setup (custom OpenAI-compatible providers, an `AI Agent` local proxy at `localhost`, multiple agent servers, custom models) rather than accepting defaults. Confidence: 0.55
+- When shown a config or setup, asks whether the values are actually *optimal* and expects the agent to critically audit them against ground truth (e.g. upstream/proxy metadata) instead of just describing them. Confidence: 0.45
+- Prefers the agent to just do the task end-to-end rather than hand back manual steps to run himself — will supply whatever's needed (e.g. a server password) and say "just access it", and when offered a concrete fix replies with a short "do it now" instruction ("oke skrng coba anda atur semua..."). Confidence: 0.75
+- When asking for optimization, wants the *most optimal* settings applied for everything at once rather than a narrow, conservative tweak — expects real, ground-truth-derived values (from upstream/proxy metadata) substituted for copy-pasted defaults. Confidence: 0.5

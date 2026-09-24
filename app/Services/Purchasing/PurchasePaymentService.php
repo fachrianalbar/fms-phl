@@ -70,7 +70,8 @@ class PurchasePaymentService
             'warehouse',
             'purchaseStatus',
             'details',
-        ])->where('paymentStatus', '!=', 'Paid')
+        ])->where('is_direct', false)
+            ->where('paymentStatus', '!=', 'Paid')
             ->orderBy('dueDate', 'asc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
@@ -84,7 +85,8 @@ class PurchasePaymentService
             'purchaseStatus',
             'details',
             'paymentBatch',
-        ])->where('paymentStatus', 'Paid')
+        ])->where('is_direct', false)
+            ->where('paymentStatus', 'Paid')
             ->orderBy('paymentDate', 'desc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
@@ -127,6 +129,7 @@ class PurchasePaymentService
 
         $row = $this->service->newQuery()
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
+            ->where('purchase.is_direct', false)
             ->where('purchase.paymentStatus', '!=', 'Paid')
             ->selectRaw('COUNT(*) as total_count')
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Unpaid' THEN 1 ELSE 0 END) as unpaid_count")
@@ -150,7 +153,10 @@ class PurchasePaymentService
 
     public function statsPaid(): array
     {
-        $rows = $this->service->newQuery()->where('paymentStatus', 'Paid')->get();
+        $rows = $this->service->newQuery()
+            ->where('is_direct', false)
+            ->where('paymentStatus', 'Paid')
+            ->get();
 
         return [
             'totalCount' => $rows->count(),

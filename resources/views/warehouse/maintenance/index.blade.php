@@ -119,7 +119,6 @@
                                 <th>Code</th>
                                 <th>{{ __('menu_maintenance.date') }}</th>
                                 <th>{{ __('menu_maintenance.plate_no') }}</th>
-                                <th>Warehouse</th>
                                 <th style="text-align: right">Grand Total</th>
                             </tr>
                         </thead>
@@ -258,9 +257,6 @@
                     },
                     {
                         "data": 'fleet.plateNumber'
-                    },
-                    {
-                        "data": "warehouse"
                     },
                     {
                         "data": 'grand_total',

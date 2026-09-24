@@ -25,14 +25,27 @@ class Purchase extends Model
         'time',
         'supplierCode',
         'warehouseCode',
+        'is_direct',
+        'fleetCode',
         'status',
         'receivedDate',
         'paymentDate',
         'nominal',
+        'paidAmount',
+        'paymentStatus',
         'paymentCode',
         'userBankCode',
         'dueDate',
     ];
+
+    protected $casts = [
+        'is_direct' => 'boolean',
+    ];
+
+    public function fleet()
+    {
+        return $this->belongsTo(\App\Models\Master\Fleet::class, 'fleetCode', 'code');
+    }
 
     public function supplier()
     {

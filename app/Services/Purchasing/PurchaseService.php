@@ -37,7 +37,7 @@ class PurchaseService
             'supplier',
             'warehouse',
             'purchaseStatus',
-        ])->orderBy('date', 'desc')->orderBy('time', 'desc')->get();
+        ])->where('is_direct', false)->orderBy('date', 'desc')->orderBy('time', 'desc')->get();
     }
 
     public function datatable()
@@ -46,7 +46,7 @@ class PurchaseService
             'supplier',
             'warehouse',
             'purchaseStatus',
-        ])->orderBy('date', 'desc')->orderBy('time', 'desc');
+        ])->where('is_direct', false)->orderBy('date', 'desc')->orderBy('time', 'desc');
     }
 
     /**
@@ -65,6 +65,7 @@ class PurchaseService
             ->selectRaw('purchaseCode, SUM(price * COALESCE(qty, receivedQty)) as detail_sum');
 
         $row = $this->service->newQuery()
+            ->where('purchase.is_direct', false)
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
             ->selectRaw('COUNT(*) as total_count')
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Paid' THEN 1 ELSE 0 END) as paid_count")
