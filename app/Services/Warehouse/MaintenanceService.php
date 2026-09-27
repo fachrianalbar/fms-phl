@@ -68,6 +68,7 @@ class MaintenanceService
         return $this->service->with([
             'fleet',
             'warehouse',
+            'purchases',
             'details',
             'details.item',
         ])->where('status', 0)->orderBy('created_at', 'desc');
@@ -390,6 +391,9 @@ class MaintenanceService
 
         // 5. Hapus detail maintenance
         $data->details()->delete();
+
+        // 5b. Hapus relasi pivot maintenance_purchase agar PO dapat digunakan kembali
+        MaintenancePurchase::query()->where('maintenance_id', $id)->delete();
 
         // 6. Soft delete maintenance utama tanpa mengubah kode histori.
         $this->service->query()->where('id', $id)->delete();

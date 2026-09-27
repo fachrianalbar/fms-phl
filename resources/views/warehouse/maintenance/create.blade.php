@@ -541,6 +541,7 @@
                 </div>
 
                 <div class="card-body">
+                    @include('partials.alert')
                     <div class="row g-3">
                         <!-- Code (Auto Generated) -->
                         <div class="col-md-4">
@@ -606,7 +607,7 @@
                             <select class="form-select" name="purchase_ids[]" id="purchase_ids" multiple="multiple" required disabled>
                             </select>
                             <small class="text-muted d-block mt-1">
-                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang ini. Daftar PO akan terisi otomatis sesuai Gudang.
+                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang ini. Hanya PO yang memiliki stok suku cadang fisik tersedia (> 0, bukan jasa) dan belum pernah digunakan yang ditampilkan.
                             </small>
                         </div>
                     </div>
@@ -638,6 +639,12 @@
                         <span>Silakan pilih <strong>Gudang Logistik</strong> di atas untuk membuka pilihan suku cadang dan No PO.</span>
                     </div>
 
+                    <!-- Alert Notice if PO not selected yet -->
+                    <div id="po-alert-box" class="alert alert-info border-0 bg-info-subtle text-info-emphasis d-flex align-items-center gap-2 mb-3 py-2 px-3 rounded-3">
+                        <i class="mdi mdi-information-outline fs-18"></i>
+                        <span>Silakan pilih minimal satu <strong>No. Purchase Order (PO)</strong> di atas. Daftar item suku cadang yang dapat dipilih akan otomatis dibatasi hanya suku cadang pada PO tersebut yang memiliki sisa stok fisik tersedia.</span>
+                    </div>
+
                     <div class="maintenance-table-wrapper">
                         <div class="table-responsive">
                             <table class="maintenance-table" id="maintenanceTable">
@@ -662,7 +669,7 @@
                                             <select class="js-example-basic-single form-select" name="itemCode[]" id="itemCode_1" required
                                                 onchange="loadItemDetails(1)" disabled>
                                                 <option selected="" disabled="" value="">
-                                                    {{ __('general.choose') }} Item...
+                                                    Pilih No. PO terlebih dahulu...
                                                 </option>
                                             </select>
                                             <input type="hidden" name="item_type[]" id="item_type_1" value="">
@@ -763,13 +770,17 @@
                 allowClear: true
             });
 
-            // Update badge when PO selection changes
+            // Update badge & reload items when PO selection changes
             $('#purchase_ids').on('change', function() {
-                const count = ($(this).val() || []).length;
-                if (count > 0) {
-                    $('#po-count-badge').text(count + ' PO terpilih').show();
+                const selected = $(this).val() || [];
+                if (selected.length > 0) {
+                    $('#po-count-badge').text(selected.length + ' PO terpilih').show();
                 } else {
                     $('#po-count-badge').hide();
+                }
+
+                if (selectedWarehouse) {
+                    loadItemsByPurchases(selectedWarehouse, selected);
                 }
             });
 
@@ -784,7 +795,7 @@
             generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
         });
 
-        // When warehouse is selected, load POs and stock items
+        // When warehouse is selected, load POs. Items are loaded only after PO is chosen.
         $('#warehouseCode').on('change', function() {
             selectedWarehouse = $(this).val();
 
@@ -802,57 +813,9 @@
             $('#po-status-hint').text('Memuat daftar PO...');
             $('#po-loading-spinner').show();
 
-            // 1. Load daftar PO untuk warehouse ini
+            // Load daftar PO untuk warehouse ini.
+            // Daftar item baru dimuat setelah PO dipilih, agar item dibatasi hanya item pada PO.
             loadPurchasesByWarehouse(selectedWarehouse);
-
-            // 2. Load stock items for this warehouse
-            $.ajax({
-                url: '/ajax/maintenance-stock-by-warehouse',
-                method: 'GET',
-                data: {
-                    warehouseCode: selectedWarehouse
-                },
-                success: function(response) {
-                    if (response.success) {
-                        dataItem = response.data;
-
-                        // Enable item selects and add button
-                        $('select[name="itemCode[]"]').prop('disabled', false);
-                        $('#save').prop('disabled', false);
-
-                        // Populate item selects across all existing rows
-                        $('#purchaseDetails tr').each(function() {
-                            const select = $(this).find('select[name="itemCode[]"]');
-                            const currentVal = select.val();
-
-                            let html = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
-                            dataItem.forEach(i => {
-                                const typeBadge = i.type === 'jasa' ? '[JASA]' : `[Stok: ${i.stock}]`;
-                                html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
-                            });
-
-                            select.html(html);
-                            if (currentVal) {
-                                select.val(currentVal);
-                            }
-                            select.select2({ width: '100%' });
-                        });
-                    } else {
-                        swal({
-                            title: "{{ __('general.warning') }}",
-                            text: response.message,
-                            icon: "warning",
-                        });
-                    }
-                },
-                error: function() {
-                    swal({
-                        title: "{{ __('general.error') }}",
-                        text: "Gagal memuat daftar suku cadang dari gudang.",
-                        icon: "error",
-                    });
-                }
-            });
         });
 
         // Load daftar PO (Purchase Order) berdasarkan warehouse terpilih
@@ -879,9 +842,9 @@
                             }
                             html += `<option value="${p.id}">${label}</option>`;
                         });
-                        $('#po-status-hint').text(`${totalPo} PO tersedia`);
+                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada stok part)`);
                     } else {
-                        $('#po-status-hint').text('Tidak ada PO pada gudang ini');
+                        $('#po-status-hint').text('Tidak ada PO dengan stok suku cadang fisik pada gudang ini');
                     }
 
                     $('#purchase_ids').html(html).prop('disabled', false).trigger('change');
@@ -896,6 +859,109 @@
                     });
                 }
             });
+        }
+
+        // Load item yang HANYA berasal dari PO terpilih (dibatasi oleh purchase_ids)
+        function loadItemsByPurchases(warehouseCode, purchaseIds) {
+            purchaseIds = purchaseIds || [];
+
+            if (!warehouseCode) {
+                return;
+            }
+
+            if (purchaseIds.length === 0) {
+                dataItem = [];
+                $('#po-alert-box').show();
+                $('#save').prop('disabled', true);
+                updateItemSelectOptions();
+                return;
+            }
+
+            $.ajax({
+                url: '/ajax/maintenance-stock-by-warehouse',
+                method: 'GET',
+                data: {
+                    warehouseCode: warehouseCode,
+                    purchase_ids: purchaseIds
+                },
+                success: function(response) {
+                    if (response.success) {
+                        dataItem = response.data || [];
+                        $('#po-alert-box').toggle(dataItem.length === 0);
+                        $('#save').prop('disabled', dataItem.length === 0);
+                        updateItemSelectOptions();
+
+                        if (dataItem.length === 0) {
+                            swal({
+                                title: "{{ __('general.warning') }}",
+                                text: 'PO yang dipilih tidak memiliki item suku cadang dengan stok tersedia.',
+                                icon: "warning",
+                            });
+                        }
+                    } else {
+                        swal({
+                            title: "{{ __('general.warning') }}",
+                            text: response.message,
+                            icon: "warning",
+                        });
+                    }
+                },
+                error: function() {
+                    swal({
+                        title: "{{ __('general.error') }}",
+                        text: "Gagal memuat daftar suku cadang dari PO terpilih.",
+                        icon: "error",
+                    });
+                }
+            });
+        }
+
+        // Bangun opsi <option> dropdown item berdasarkan dataItem (hasil filter PO)
+        function buildItemOptionsHtml() {
+            let html = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
+            dataItem.forEach(i => {
+                const typeBadge = i.type === 'jasa' ? '[JASA]' : `[Stok: ${i.stock}]`;
+                html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
+            });
+            return html;
+        }
+
+        // Sinkronkan semua dropdown item pada tabel dengan dataItem (dibatasi PO)
+        function updateItemSelectOptions() {
+            const hasItems = dataItem.length > 0;
+            const optionsHtml = hasItems
+                ? buildItemOptionsHtml()
+                : '<option selected="" disabled="" value="">Pilih No. PO terlebih dahulu...</option>';
+
+            $('#purchaseDetails tr').each(function() {
+                const select = $(this).find('select[name="itemCode[]"]');
+                const row = $(this).attr('id').split('_')[1];
+                const currentVal = select.val();
+
+                select.html(optionsHtml);
+                select.prop('disabled', !hasItems);
+
+                if (currentVal && hasItems && dataItem.some(i => i.code === currentVal)) {
+                    select.val(currentVal);
+                    loadItemDetails(row);
+                } else {
+                    select.val(null);
+                    resetRowFields(row);
+                }
+
+                select.select2({ width: '100%' });
+            });
+
+            updateSummary();
+        }
+
+        // Reset nilai baris item ketika item belum/tidak lagi valid
+        function resetRowFields(row) {
+            $(`#item_type_${row}`).val('');
+            $(`#qty_exist_${row}`).val(0);
+            $(`#price_${row}`).val(0);
+            $(`#total_${row}`).val(0);
+            $(`#stock_display_${row}`).html('<span class="stock-pill stock-empty">0</span>');
         }
 
         // Load item details (name, price, stock)
@@ -1004,6 +1070,25 @@
                 return;
             }
 
+            const selectedPos = $('#purchase_ids').val() || [];
+            if (selectedPos.length === 0) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "Silakan pilih minimal satu No. Purchase Order (PO) terlebih dahulu.",
+                    icon: "warning",
+                });
+                return;
+            }
+
+            if (dataItem.length === 0) {
+                swal({
+                    title: "{{ __('general.warning') }}",
+                    text: "PO yang dipilih tidak memiliki item suku cadang dengan stok tersedia.",
+                    icon: "warning",
+                });
+                return;
+            }
+
             let nextRow = Date.now(); // unique row identifier
 
             let newRowHtml = `
@@ -1045,14 +1130,8 @@
 
             $('#purchaseDetails').append(newRowHtml);
 
-            // Populate options from cached dataItem
-            let optionsHtml = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
-            dataItem.forEach(i => {
-                const typeBadge = i.type === 'jasa' ? '[JASA]' : `[Stok: ${i.stock}]`;
-                optionsHtml += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
-            });
-
-            $(`#itemCode_${nextRow}`).html(optionsHtml).select2({ width: '100%' });
+            // Populate options from cached dataItem (sudah difilter berdasarkan PO)
+            $(`#itemCode_${nextRow}`).html(buildItemOptionsHtml()).select2({ width: '100%' });
 
             refreshRowNumbers();
         });

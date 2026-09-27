@@ -105,6 +105,18 @@ class MaintenanceController extends Controller
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
+
+        $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
+        $usedPurchaseIds = $this->getUsedPurchaseIds();
+        $conflictingIds = array_intersect($purchaseIds, $usedPurchaseIds);
+
+        if (! empty($conflictingIds)) {
+            $conflictingCodes = Purchase::whereIn('id', $conflictingIds)->pluck('code')->implode(', ');
+
+            return redirect()->back()
+                ->withInput()
+                ->with('fail', "Purchase Order {$conflictingCodes} sudah pernah digunakan pada maintenance lain.");
+        }
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
@@ -176,6 +188,18 @@ class MaintenanceController extends Controller
 
         if ($validator->fails()) {
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+        }
+
+        $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
+        $usedPurchaseIds = $this->getUsedPurchaseIds($id);
+        $conflictingIds = array_intersect($purchaseIds, $usedPurchaseIds);
+
+        if (! empty($conflictingIds)) {
+            $conflictingCodes = Purchase::whereIn('id', $conflictingIds)->pluck('code')->implode(', ');
+
+            return redirect()->back()
+                ->withInput()
+                ->with('fail', "Purchase Order {$conflictingCodes} sudah pernah digunakan pada maintenance lain.");
         }
 
         try {
@@ -270,6 +294,21 @@ class MaintenanceController extends Controller
 
             return DataTables::of($data)
                 ->addIndexColumn()
+                ->addColumn('po_numbers', function ($row) {
+                    if ($row->purchases && $row->purchases->isNotEmpty()) {
+                        return $row->purchases->map(function ($p) {
+                            return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fs-11 px-2 py-1 me-1 mb-1">'
+                                . e($p->code) . '</span>';
+                        })->implode(' ');
+                    }
+
+                    return '<span class="text-muted">-</span>';
+                })
+                ->filterColumn('po_numbers', function ($query, $keyword) {
+                    $query->whereHas('purchases', function ($q) use ($keyword) {
+                        $q->where('purchase.code', 'like', "%{$keyword}%");
+                    });
+                })
                 ->addColumn('maintenanceDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
@@ -312,7 +351,7 @@ class MaintenanceController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'warehouse', 'action'])
+                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'po_numbers', 'warehouse', 'action'])
                 ->toJson();
         }
     }
@@ -399,7 +438,55 @@ class MaintenanceController extends Controller
             ->groupBy('itemCode')
             ->pluck('stock', 'itemCode');
 
-        // Part items: only those with positive stock in this warehouse
+        // Jika filter purchase_ids dikirim (dari create/edit maintenance)
+        if ($request->has('purchase_ids')) {
+            $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
+
+            if (empty($purchaseIds)) {
+                return response()->json(['success' => true, 'data' => []]);
+            }
+
+            $purchaseCodes = Purchase::whereIn('id', $purchaseIds)->pluck('code');
+            $purchaseDetails = PurchaseDetail::whereIn('purchaseCode', $purchaseCodes)
+                ->with('item')
+                ->whereNull('deleted_at')
+                ->get();
+
+            // Gabungkan item berdasarkan itemCode agar tidak duplikat bila ada di beberapa PO
+            $grouped = $purchaseDetails->groupBy('itemCode');
+
+            $items = $grouped->map(function ($details, $itemCode) use ($stockByItem) {
+                $firstDetail = $details->first();
+                $item = $firstDetail->item;
+
+                // Hanya item fisik suku cadang, bukan jasa
+                if (optional($item)->type === Item::TYPE_JASA) {
+                    return null;
+                }
+
+                $stock = (float) ($stockByItem[$itemCode] ?? 0);
+
+                // Hanya item yang memiliki sisa stok positif (> 0)
+                if ($stock <= 0) {
+                    return null;
+                }
+
+                $price = $firstDetail->price ?? (optional($item)->price ?? 0);
+
+                return [
+                    'code' => $itemCode,
+                    'name' => optional($item)->name ?? $itemCode,
+                    'stock' => $stock,
+                    'price' => $price,
+                    'type' => optional($item)->type ?? Item::TYPE_PART,
+                    'po_codes' => $details->pluck('purchaseCode')->unique()->values()->all(),
+                ];
+            })->filter()->values();
+
+            return response()->json(['success' => true, 'data' => $items]);
+        }
+
+        // Part items: only those with positive stock in this warehouse (bukan jasa)
         $partCodes = $stockByItem->filter(function ($s) {
             return (float) $s > 0;
         })->keys()->toArray();
@@ -407,24 +494,12 @@ class MaintenanceController extends Controller
         $parts = collect();
         if (! empty($partCodes)) {
             $parts = Item::whereIn('code', $partCodes)
-                ->where('type', Item::TYPE_PART)
+                ->where('type', '!=', Item::TYPE_JASA)
                 ->get();
         }
 
-        // Jasa items: include all jasa regardless of warehouse
-        $jasas = Item::where('type', Item::TYPE_JASA)
-            ->orderBy('code')
-            ->get();
-
-        // Merge and dedupe by code, keep order by code
-        $items = $parts->concat($jasas)->unique('code')->sortBy('code')->values();
-
-        $stocks = $items->map(function ($item) use ($stockByItem) {
+        $stocks = $parts->map(function ($item) use ($stockByItem) {
             $stock = (float) ($stockByItem[$item->code] ?? 0);
-
-            if ($item->type === Item::TYPE_JASA) {
-                $stock = 1;
-            }
 
             return [
                 'code' => $item->code,
@@ -440,6 +515,7 @@ class MaintenanceController extends Controller
 
     /**
      * Get purchase orders (PO) by warehouse untuk dropdown "No PO" di form maintenance.
+     * Hanya menampilkan PO yang belum pernah digunakan dan memiliki stok suku cadang fisik > 0 (bukan jasa).
      */
     public function getPurchasesByWarehouse(Request $request)
     {
@@ -449,9 +525,60 @@ class MaintenanceController extends Controller
             return response()->json(['success' => false, 'message' => 'Warehouse code is required'], 400);
         }
 
+        $currentMaintenanceId = $request->current_maintenance_id ?? $request->maintenance_id;
+        $usedPurchaseIds = $this->getUsedPurchaseIds($currentMaintenanceId);
+
+        // 1. Ambil stok per item di gudang ini
+        $stockByItem = StockTransaction::query()
+            ->select('itemCode')
+            ->selectRaw('SUM(qtyIn) - SUM(qtyOut) as stock')
+            ->where('warehouseCode', $warehouseCode)
+            ->groupBy('itemCode')
+            ->pluck('stock', 'itemCode');
+
+        // Item fisik suku cadang (bukan jasa) yang memiliki sisa stok positif (> 0)
+        $partItemCodes = Item::query()
+            ->where('type', '!=', Item::TYPE_JASA)
+            ->pluck('code')
+            ->toArray();
+
+        $validItemCodes = $stockByItem->filter(function ($s, $code) use ($partItemCodes) {
+            return (float) $s > 0 && in_array($code, $partItemCodes);
+        })->keys()->toArray();
+
+        // 2. Ambil ID purchase yang memiliki minimal satu item suku cadang dengan stok > 0
+        $posWithStock = DB::table('purchase')
+            ->join('purchase_detail', 'purchase_detail.purchaseCode', '=', 'purchase.code')
+            ->where('purchase.warehouseCode', $warehouseCode)
+            ->whereNull('purchase.deleted_at')
+            ->whereNull('purchase_detail.deleted_at')
+            ->whereIn('purchase_detail.itemCode', $validItemCodes)
+            ->distinct()
+            ->pluck('purchase.id')
+            ->toArray();
+
+        // Jika mode edit, pastikan PO milik maintenance saat ini tetap diikutsertakan
+        $currentMaintenancePurchaseIds = [];
+        if ($currentMaintenanceId) {
+            $currentMaintenancePurchaseIds = DB::table('maintenance_purchase')
+                ->where('maintenance_id', $currentMaintenanceId)
+                ->pluck('purchase_id')
+                ->toArray();
+        }
+
         $purchases = Purchase::query()
             ->with('supplier')
             ->where('warehouseCode', $warehouseCode)
+            ->where(function ($q) {
+                $q->whereNull('is_direct')->orWhere('is_direct', 0);
+            })
+            ->whereNotIn('id', $usedPurchaseIds)
+            ->where(function ($q) use ($posWithStock, $currentMaintenancePurchaseIds) {
+                $q->whereIn('id', $posWithStock);
+                if (! empty($currentMaintenancePurchaseIds)) {
+                    $q->orWhereIn('id', $currentMaintenancePurchaseIds);
+                }
+            })
             ->orderByDesc('date')
             ->orderByDesc('code')
             ->get()
@@ -468,5 +595,39 @@ class MaintenanceController extends Controller
             ->values();
 
         return response()->json(['success' => true, 'data' => $purchases]);
+    }
+
+    /**
+     * Ambil list ID Purchase (PO) yang sudah pernah digunakan pada maintenance lain.
+     */
+    protected function getUsedPurchaseIds(?string $excludeMaintenanceId = null): array
+    {
+        // 1. PO yang sudah tersimpan di pivot maintenance_purchase pada maintenance aktif
+        $usedInMaintenanceQuery = DB::table('maintenance_purchase')
+            ->join('maintenance', 'maintenance.id', '=', 'maintenance_purchase.maintenance_id')
+            ->whereNull('maintenance.deleted_at');
+
+        if ($excludeMaintenanceId) {
+            $usedInMaintenanceQuery->where('maintenance_purchase.maintenance_id', '!=', $excludeMaintenanceId);
+        }
+
+        $usedInMaintenance = $usedInMaintenanceQuery->pluck('maintenance_purchase.purchase_id');
+
+        // 2. PO yang sudah pernah dikonsumsi di maintenance_fifo pada maintenance aktif
+        $usedInFifoQuery = DB::table('maintenance_fifo')
+            ->join('maintenance_detail', 'maintenance_detail.code', '=', 'maintenance_fifo.maintenanceDetailCode')
+            ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
+            ->join('purchase_detail', 'purchase_detail.code', '=', 'maintenance_fifo.purchaseDetailCode')
+            ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
+            ->whereNull('maintenance.deleted_at')
+            ->whereNull('purchase.deleted_at');
+
+        if ($excludeMaintenanceId) {
+            $usedInFifoQuery->where('maintenance.id', '!=', $excludeMaintenanceId);
+        }
+
+        $usedInFifo = $usedInFifoQuery->pluck('purchase.id');
+
+        return $usedInMaintenance->concat($usedInFifo)->unique()->filter()->values()->toArray();
     }
 }
