@@ -97,16 +97,16 @@ class InvoiceService
     public function findUnpaid()
     {
         return $this->invoiceListingQuery('unpaid')
-            ->orderBy('invoiceDate', 'asc')
-            ->orderBy('created_at', 'asc')
+            ->orderBy('invoiceDate', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
     public function findPartial()
     {
         return $this->invoiceListingQuery('partial')
-            ->orderBy('invoiceDate', 'asc')
-            ->orderBy('created_at', 'asc')
+            ->orderBy('invoiceDate', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
