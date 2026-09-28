@@ -140,10 +140,18 @@
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ $detail->order->fleet->plateNumber ?? '-' }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
-                        {{-- {{ $detail->order->shipmentNumber ?? '-' }} --}}
-
-                        {{ $detail->order->customerDetailOrders->where('customerDetailCode', 'FCD251218084400733')->value('value') ?? '-' }}
-
+                        @php
+                            $sppb = $detail->order->customerDetailOrders->first(function ($cdo) {
+                                return $cdo->customerDetail && stripos($cdo->customerDetail->name, 'sppb') !== false;
+                            })?->value
+                            ?? $detail->order->customerDetailOrders->whereIn('customerDetailCode', [
+                                'FCD251218084400733',
+                                'FCD260717092037935',
+                                'FCD260924141802174',
+                            ])->value('value')
+                            ?? $detail->order->customerDetailOrders->first()?->value;
+                        @endphp
+                        {{ $sppb ?? '-' }}
                     </td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ explode(' ', $detail->order->route?->originLocation?->name ?? '')[0] ?? '-' }}</td>

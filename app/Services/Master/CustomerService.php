@@ -169,18 +169,38 @@ class CustomerService
         }
 
         if (isset($request->nameDetail)) {
-            $filtered = Arr::only($request->all(), ['nameDetail']);
+            $nameDetails = $request->nameDetail;
+            $codeDetails = $request->codeDetail ?? [];
+            $existingDetails = $this->customerDetail->where('customerCode', $data->code)->get()->keyBy('code');
+            $keptCodes = [];
 
-            $this->customerDetail->where('customerCode', $data->code)->delete();
+            for ($i = 0; $i < count($nameDetails); $i++) {
+                $name = trim($nameDetails[$i] ?? '');
+                if ($name === '') {
+                    continue;
+                }
 
-            for ($i = 0; $i < count($request->nameDetail); $i++) {
-                $dataDetail = $this->customerDetail->create([
-                    'code' => GenerateCode::generateCode('FCD', true),
-                    'name' => $filtered['nameDetail'][$i],
-                    'customerCode' => $data->code,
-                ]);
-                $this->logActivity('Customer Detail', $dataDetail, 'Create');
+                $detailCode = $codeDetails[$i] ?? null;
+
+                if ($detailCode && $existingDetails->has($detailCode)) {
+                    $detail = $existingDetails->get($detailCode);
+                    $detail->update(['name' => $name]);
+                    $keptCodes[] = $detailCode;
+                    $this->logActivity('Customer Detail', $detail, 'Update');
+                } else {
+                    $dataDetail = $this->customerDetail->create([
+                        'code' => GenerateCode::generateCode('FCD', true),
+                        'name' => $name,
+                        'customerCode' => $data->code,
+                    ]);
+                    $keptCodes[] = $dataDetail->code;
+                    $this->logActivity('Customer Detail', $dataDetail, 'Create');
+                }
             }
+
+            $this->customerDetail->where('customerCode', $data->code)
+                ->whereNotIn('code', $keptCodes)
+                ->delete();
         }
         $this->logActivity($title, $this->getById($id), 'After Update');
 
@@ -189,12 +209,36 @@ class CustomerService
 
     public function destroy($id, $title)
     {
-        $this->logActivity($title, $this->getById($id), 'Delete');
-
         $data = $this->getById($id);
+
+        if (! $data) {
+            return;
+        }
+
+        // Pengaman integritas data: Jika customer sudah memiliki transaksi apapun
+        // (order operasional, faktur tagihan, atau transaksi pembayaran), data master customer tidak boleh dihapus.
+        $summary = $data->getTransactionSummary();
+        if ($summary['has_transactions']) {
+            $details = [];
+            if ($summary['orders'] > 0) {
+                $details[] = $summary['orders'].' Order';
+            }
+            if ($summary['invoices'] > 0) {
+                $details[] = $summary['invoices'].' Faktur';
+            }
+            if ($summary['payments'] > 0) {
+                $details[] = $summary['payments'].' Transaksi Pembayaran';
+            }
+            $breakdown = implode(', ', $details);
+
+            throw new \DomainException("Customer \"{$data->name}\" ({$data->code}) tidak dapat dihapus karena sudah memiliki riwayat transaksi ({$breakdown}). Data master dilindungi demi integritas operasional dan laporan keuangan.");
+        }
+
+        $this->logActivity($title, $data, 'Delete');
 
         $this->service->where('id', $id)->delete();
     }
+
 
     public function deleteCustomerDetail($id)
     {

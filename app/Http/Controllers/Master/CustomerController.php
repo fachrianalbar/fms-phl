@@ -175,7 +175,25 @@ class CustomerController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->service->destroy($id, $this->title);
+        try {
+            $this->service->destroy($id, $this->title);
+        } catch (\DomainException $exception) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
+
+            return redirect()->route($this->view.'index')->with('fail', $exception->getMessage());
+        }
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => __('general.delete_data_success'),
+            ]);
+        }
 
         return redirect()->route($this->view.'index')->with('success', __('general.delete_data_success'));
     }
@@ -214,11 +232,41 @@ class CustomerController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $editUrl = route($this->view.'edit', $row->id);
+                    $ordersCount = (int) ($row->orders_count ?? 0);
+                    $invoicesCount = (int) ($row->invoices_count ?? 0);
+                    $paymentsCount = (int) ($row->payment_transactions_count ?? 0);
+                    $hasTransactions = ($ordersCount + $invoicesCount + $paymentsCount) > 0;
 
-                    return '<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle me-1" data-bs-toggle="tooltip" title="Edit">'
-                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>'
-                        .'<a href="javascript:deleteData(\''.$row->id.'\')" class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">'
-                        .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
+                    $editBtn = '<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle me-1" data-bs-toggle="tooltip" title="Edit">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>';
+
+                    if ($hasTransactions) {
+                        $reasons = [];
+                        if ($ordersCount > 0) {
+                            $reasons[] = $ordersCount.' Order';
+                        }
+                        if ($invoicesCount > 0) {
+                            $reasons[] = $invoicesCount.' Faktur';
+                        }
+                        if ($paymentsCount > 0) {
+                            $reasons[] = $paymentsCount.' Pembayaran';
+                        }
+                        $reasonText = implode(', ', $reasons);
+                        $tooltipText = 'Tidak dapat dihapus: Memiliki riwayat '.$reasonText;
+
+                        $customerNameEscaped = htmlspecialchars($row->name, ENT_QUOTES, 'UTF-8');
+                        $reasonEscaped = htmlspecialchars($reasonText, ENT_QUOTES, 'UTF-8');
+
+                        $deleteBtn = '<button type="button" class="btn btn-icon btn-sm bg-secondary-subtle text-muted" '
+                            .'onclick="blockedDeleteCustomer(\''.$customerNameEscaped.'\', \''.$reasonEscaped.'\')" '
+                            .'data-bs-toggle="tooltip" title="'.htmlspecialchars($tooltipText, ENT_QUOTES, 'UTF-8').'">'
+                            .'<i class="mdi mdi-lock-outline fs-14 text-muted"></i></button>';
+                    } else {
+                        $deleteBtn = '<a href="javascript:deleteData(\''.$row->id.'\')" class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Delete">'
+                            .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
+                    }
+
+                    return $editBtn.$deleteBtn;
                 })
                 ->rawColumns(['taxPolicy', 'action'])
                 ->toJson();
@@ -230,7 +278,12 @@ class CustomerController extends Controller
      */
     private function buildFilteredQuery(Request $request)
     {
-        $query = $this->service->findAllQuery();
+        $query = $this->service->findAllQuery()
+            ->withCount([
+                'orders' => fn ($q) => $q->withTrashed(),
+                'invoices' => fn ($q) => $q->withTrashed(),
+                'paymentTransactions' => fn ($q) => $q->withTrashed(),
+            ]);
 
         if ($request->filled('companyCode')) {
             $query->where('companyCode', $request->companyCode);

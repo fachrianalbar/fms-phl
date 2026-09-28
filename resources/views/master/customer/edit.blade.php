@@ -299,6 +299,7 @@
                                             </td>
 
                                             <td>
+                                                <input type="hidden" name="codeDetail[]" value="{{ $item->code }}">
                                                 <input class="form-control" name="nameDetail[]" type="text"
                                                     style="width: 500px" value="{{ $item->name }}">
                                             </td>
@@ -308,6 +309,7 @@
                                     <tr>
                                         <td></td>
                                         <td>
+                                            <input type="hidden" name="codeDetail[]" value="">
                                             <input type="text" class="form-control" name="nameDetail[]"
                                                 style="width: 500px">
                                         </td>
@@ -416,6 +418,7 @@
 
                             </td>
                              <td>
+                                    <input type="hidden" name="codeDetail[]" value="">
                                     <input type="text" class="form-control" name="nameDetail[]" id="nameDetail_${row}" style="width: 500px">
                             </td>
                           </tr>`;

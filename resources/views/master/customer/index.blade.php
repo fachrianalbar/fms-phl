@@ -612,6 +612,12 @@
                     infoEmpty: 'Tidak ada data',
                     zeroRecords: 'Data tidak ditemukan',
                     processing: '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat data...'
+                },
+                drawCallback: function() {
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('#dt [data-bs-toggle="tooltip"]'));
+                    tooltipTriggerList.map(function(tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
                 }
             });
 
@@ -643,6 +649,23 @@
             // Sinkronkan URL export saat halaman pertama kali dimuat
             syncExportUrls();
         });
+
+        function blockedDeleteCustomer(name, reason) {
+            swal({
+                title: "Tidak Dapat Dihapus",
+                text: "Customer \"" + name + "\" tidak dapat dihapus karena sudah memiliki riwayat transaksi (" + reason + "). Master data dilindungi demi integritas operasional dan keuangan.",
+                icon: "warning",
+                buttons: {
+                    confirm: {
+                        text: "Mengerti",
+                        value: true,
+                        visible: true,
+                        className: "btn btn-primary",
+                        closeModal: true
+                    }
+                }
+            });
+        }
 
         function deleteData(uuid) {
             var url = '{{ route('master.customer.index') }}/' + uuid;

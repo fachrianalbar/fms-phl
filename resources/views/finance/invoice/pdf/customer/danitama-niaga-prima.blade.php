@@ -204,7 +204,7 @@
                     @endphp
                     @if ($hasValue)
                         <tr>
-                            <td colspan="8" class="text-left">{{ $item->customerDetail->name }} :
+                            <td colspan="8" class="text-left">{{ $item->customerDetail?->name ?? 'Detail' }} :
                                 {{ $item->value }}</td>
                         </tr>
                     @endif

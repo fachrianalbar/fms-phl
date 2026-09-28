@@ -777,6 +777,8 @@ class InvoiceController extends Controller
             'order.driver',
             'order.route.originLocation',
             'order.route.destinationLocation',
+            'order.customerDetailOrders.customerDetail',
+            'order.onChargeCost.costComponent',
         ])->get()->sortBy(function ($detail) {
             return $detail->order->orderDate ?? '';
         })->values();

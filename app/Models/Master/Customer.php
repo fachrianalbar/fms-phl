@@ -42,7 +42,7 @@ class Customer extends Model
 
     public function routes()
     {
-        return $this->hasMany(Route::class, 'customerCode');
+        return $this->hasMany(Route::class, 'customerCode', 'code');
     }
 
     public function company()
@@ -64,4 +64,45 @@ class Customer extends Model
     {
         return $this->hasMany(\App\Models\Finance\Invoice::class, 'customerCode', 'code');
     }
+
+    public function orders()
+    {
+        return $this->hasMany(\App\Models\Operational\Order::class, 'customerCode', 'code');
+    }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(\App\Models\Finance\InvoicePaymentTransaction::class, 'customerCode', 'code');
+    }
+
+    /**
+     * Ringkasan transaksi yang berelasi dengan customer ini.
+     * Meliputi order operasional, faktur tagihan (invoice), dan transaksi pembayaran invoice.
+     */
+    public function getTransactionSummary(): array
+    {
+        $ordersCount = \App\Models\Operational\Order::withTrashed()->where('customerCode', $this->code)->count();
+        $invoicesCount = \App\Models\Finance\Invoice::withTrashed()->where('customerCode', $this->code)->count();
+        $paymentsCount = \App\Models\Finance\InvoicePaymentTransaction::withTrashed()->where('customerCode', $this->code)->count();
+        $total = $ordersCount + $invoicesCount + $paymentsCount;
+
+        return [
+            'has_transactions' => $total > 0,
+            'orders' => $ordersCount,
+            'invoices' => $invoicesCount,
+            'payments' => $paymentsCount,
+            'total' => $total,
+        ];
+    }
+
+    /**
+     * Cek apakah customer sudah memiliki riwayat transaksi apapun.
+     */
+    public function hasTransactions(): bool
+    {
+        return \App\Models\Operational\Order::withTrashed()->where('customerCode', $this->code)->exists()
+            || \App\Models\Finance\Invoice::withTrashed()->where('customerCode', $this->code)->exists()
+            || \App\Models\Finance\InvoicePaymentTransaction::withTrashed()->where('customerCode', $this->code)->exists();
+    }
 }
+
