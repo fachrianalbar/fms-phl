@@ -61,7 +61,7 @@ class DirectPaymentController extends Controller
             return $fallback;
         }
 
-        return Auth::user()->languange == 'id' ? $menu->nama : $menu->name;
+        return (Auth::user()?->languange ?? 'id') == 'id' ? $menu->nama : $menu->name;
     }
 
     /**
@@ -77,7 +77,22 @@ class DirectPaymentController extends Controller
     }
 
     /**
-     * Halaman Order Belum Lunas — generate nota, bayar tunggal & bayar nota.
+     * Halaman Order Menunggu Nota — order standalone non-DO belum dibuat nota.
+     */
+    public function indexWaiting()
+    {
+        $userBank = $this->userBankSvc->findAll();
+        $stats = $this->service->statsWaiting();
+
+        return view($this->view . 'order.waiting')
+            ->with('view', $this->view)
+            ->with('userBank', $userBank)
+            ->with('stats', $stats)
+            ->with('title', $this->pageTitle('DIRECT_PAYMENT_WAITING', 'Order Menunggu Nota'));
+    }
+
+    /**
+     * Halaman Nota Belum Lunas — nota multi-DO yang belum dibayar lunas.
      */
     public function indexUnpaid()
     {
@@ -88,7 +103,7 @@ class DirectPaymentController extends Controller
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('stats', $stats)
-            ->with('title', $this->pageTitle('DIRECT_PAYMENT_UNPAID', 'Order Belum Lunas'));
+            ->with('title', $this->pageTitle('DIRECT_PAYMENT_UNPAID', 'Nota Belum Lunas'));
     }
 
     /**
@@ -316,7 +331,7 @@ class DirectPaymentController extends Controller
                 ], 422);
             }
 
-            return redirect()->route('direct-payment.order.unpaid')
+            return redirect()->route('direct-payment.order.waiting')
                 ->with('fail', $validator->errors()->all()[0]);
         }
 
@@ -355,7 +370,7 @@ class DirectPaymentController extends Controller
                 ]);
             }
 
-            return redirect()->route('direct-payment.order.unpaid')
+            return redirect()->route('direct-payment.order.waiting')
                 ->with('success', $message);
         } catch (DomainException $exception) {
             DB::rollback();
@@ -371,7 +386,7 @@ class DirectPaymentController extends Controller
                 ], $status);
             }
 
-            return redirect()->route('direct-payment.order.unpaid')->with('fail', $message);
+            return redirect()->route('direct-payment.order.waiting')->with('fail', $message);
         } catch (Throwable $th) {
             DB::rollback();
             report($th);
@@ -384,7 +399,7 @@ class DirectPaymentController extends Controller
                 ], 500);
             }
 
-            return redirect()->route('direct-payment.order.unpaid')->with('fail', $message);
+            return redirect()->route('direct-payment.order.waiting')->with('fail', $message);
         }
     }
 
@@ -467,24 +482,12 @@ class DirectPaymentController extends Controller
     }
 
     /**
-     * Datatable unit belum lunas: order standalone + nota (pending/partial).
-     * Filter status: all / unpaid / partial / nota.
+     * Datatable: order standalone non-DO yang belum dibuat nota (menunggu nota).
      */
-    public function datatableUnpaid(Request $request)
+    public function datatableWaiting(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findUnpaidUnits();
-
-            $statusFilter = $request->input('status');
-            if ($statusFilter && in_array($statusFilter, ['unpaid', 'partial', 'nota'])) {
-                $data = $data->filter(function ($row) use ($statusFilter) {
-                    if ($statusFilter === 'nota') {
-                        return $row->unit_type === 'nota';
-                    }
-
-                    return $row->payment_status === $statusFilter;
-                })->values();
-            }
+            $data = $this->service->findWaitingOrders();
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -532,52 +535,19 @@ class DirectPaymentController extends Controller
                     });
                 })
                 ->addColumn('select', function ($row) {
-                    if ($row->unit_type === 'nota') {
-                        $orderCodes = $row->order_codes->implode(',');
-                        $ariaLabel = 'Pilih nota ' . $row->nota_number . ' customer ' . $row->customer_name;
-
-                        return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->grand_total . '" data-paid-amount="' . $row->payment . '" data-remaining-amount="' . $row->remaining . '" data-checkbox-type="payment" data-nota-date="' . e($row->nota_date ?? '') . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" aria-label="' . e($ariaLabel) . '"></div>';
-                    }
-
-                    // Order standalone: checkbox hanya untuk generate nota.
-                    // Order partial (sudah ada DP) tidak boleh digabung nota.
                     $disabled = $row->payment_status === 'partial' ? ' disabled' : '';
                     $subtotalAmount = (float) $row->cost + (float) $row->additional_cost;
 
                     return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox"' . $disabled . ' data-order-code="' . e($row->code) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->grand_total . '" data-subtotal-amount="' . $subtotalAmount . '" data-shipment="' . e($row->shipment ?? '') . '" data-paid-amount="' . $row->payment . '" data-remaining-amount="' . $row->remaining . '" data-checkbox-type="nota" data-nota-number=""></div>';
                 })
                 ->addColumn('action', function ($row) {
-                    if ($row->unit_type === 'nota') {
-                        $firstOrderCode = $row->order_codes->first();
-
-                        $buttons = [];
-                        $buttons[] = '<a href="' . route('direct-payment.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Nota"><i class="mdi mdi-printer fs-15"></i></a>';
-                        $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-info-subtle text-info hover-scale me-1 js-dp-nota-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Nota"><i class="mdi mdi-eye-outline fs-15"></i></button>';
-
-                        if ($row->payment > 0 || $row->payment_status !== 'pending') {
-                            if ($row->latest_batch_code) {
-                                $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-danger-subtle text-danger hover-scale js-dp-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Batal Pembayaran"><i class="mdi mdi-close-circle-outline fs-15"></i></button>';
-                            }
-                        } else {
-                            $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-warning-subtle text-warning-emphasis hover-scale js-dp-nota-cancel" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-15"></i></button>';
-                        }
-
-                        return '<div class="d-inline-flex align-items-center justify-content-center">' . implode('', $buttons) . '</div>';
-                    }
-
                     $buttons = [];
-                    $buttons[] = '<button type="button" onclick="showDetailModal(\'' . e($row->code) . '\')" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Pembayaran"><i class="mdi mdi-eye-outline fs-15"></i></button>';
+                    $buttons[] = '<button type="button" onclick="showDetailModal(\'' . e($row->code) . '\')" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Order"><i class="mdi mdi-eye-outline fs-15"></i></button>';
+                    $buttons[] = '<button type="button" onclick="generateNotaSingle(\'' . e($row->code) . '\')" class="btn btn-sm btn-icon bg-warning-subtle text-warning-emphasis hover-scale" data-bs-toggle="tooltip" data-bs-placement="top" title="Generate Nota"><i class="mdi mdi-file-document-plus-outline fs-15"></i></button>';
 
                     return '<div class="d-inline-flex align-items-center justify-content-center">' . implode('', $buttons) . '</div>';
                 })
                 ->editColumn('code', function ($row) {
-                    if ($row->unit_type === 'nota') {
-                        return '<div class="d-flex flex-column gap-1">'
-                            . '<span class="badge rounded-pill text-bg-primary font-monospace fs-11">' . e($row->nota_number) . '</span>'
-                            . '<span class="badge rounded-pill text-bg-secondary fs-11" style="width: fit-content;">' . $row->order_count . ' DO</span>'
-                            . '</div>';
-                    }
-
                     return '<span class="fw-semibold text-primary font-monospace fs-12 d-inline-flex align-items-center gap-1">
                                 <i class="mdi mdi-file-document-outline fs-14"></i>' . e($row->code) . '
                             </span>';
@@ -596,63 +566,14 @@ class DirectPaymentController extends Controller
                                 <span class="cell-ellipsis" style="max-width: 140px;" title="' . e($customer) . '">' . e($customer) . '</span>
                             </div>';
                 })
-                ->addColumn('plate', function ($row) {
-                    if ($row->unit_type === 'nota') {
-                        $plates = collect(explode(', ', (string) $row->plate))->filter();
-                        if ($plates->isEmpty()) {
-                            return '<span class="text-muted">-</span>';
-                        }
-                        $shown = $plates->take(2)->implode(', ');
-                        $more = $plates->count() > 2 ? ' +' . ($plates->count() - 2) : '';
-
-                        return '<span class="text-nowrap fs-12" title="' . e($plates->implode(', ')) . '"><i class="mdi mdi-truck-outline text-primary me-1"></i>' . e($shown) . $more . '</span>';
-                    }
-
-                    if (! $row->plate) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    return '<span class="badge bg-light text-dark border px-2 py-1 font-monospace fw-semibold fs-11 text-nowrap">
-                                <i class="mdi mdi-truck-outline text-primary me-1"></i>' . e($row->plate) . '
-                            </span>';
-                })
-                ->addColumn('driver', function ($row) {
-                    if (! $row->driver) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    return '<span class="cell-ellipsis text-dark fs-12 fw-medium text-nowrap" style="max-width: 120px;" title="' . e($row->driver) . '">
-                                <i class="mdi mdi-account-circle-outline text-muted fs-13 me-1"></i>' . e($row->driver) . '
-                            </span>';
-                })
-                ->addColumn('shipment', function ($row) {
-                    if (! $row->shipment) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    return '<span class="badge bg-light text-secondary border px-2 py-1 font-monospace fs-11 text-nowrap">
-                                <span class="cell-ellipsis" style="max-width: 120px;" title="' . e($row->shipment) . '">' . e($row->shipment) . '</span>
-                            </span>';
-                })
-                ->addColumn('rute', function ($row) {
-                    if (! $row->rute) {
-                        return '<span class="text-muted">-</span>';
-                    }
-
-                    return '<div class="d-inline-flex align-items-center gap-1 text-nowrap fs-12">
-                                <span class="cell-ellipsis text-secondary" style="max-width: 95px;">' . e($row->rute) . '</span>
-                            </div>';
-                })
-                ->addColumn('cost', function ($row) {
-                    return '<span class="font-monospace text-dark fs-12">' . number_format((float) $row->cost, 0, ',', '.') . '</span>';
-                })
-                ->addColumn('additional_cost', function ($row) {
-                    if ((float) $row->additional_cost > 0) {
-                        return '<span class="font-monospace text-warning-emphasis fw-semibold fs-12">+' . number_format((float) $row->additional_cost, 0, ',', '.') . '</span>';
-                    }
-
-                    return '<span class="text-muted font-monospace fs-12">-</span>';
-                })
+                ->addColumn('plate', fn ($row) => $row->plate ? '<span class="badge bg-light text-dark border px-2 py-1 font-monospace fw-semibold fs-11 text-nowrap"><i class="mdi mdi-truck-outline text-primary me-1"></i>' . e($row->plate) . '</span>' : '<span class="text-muted">-</span>')
+                ->addColumn('driver', fn ($row) => $row->driver ? '<span class="cell-ellipsis text-dark fs-12 fw-medium text-nowrap" style="max-width: 120px;" title="' . e($row->driver) . '"><i class="mdi mdi-account-circle-outline text-muted fs-13 me-1"></i>' . e($row->driver) . '</span>' : '<span class="text-muted">-</span>')
+                ->addColumn('shipment', fn ($row) => $row->shipment ? '<span class="badge bg-light text-secondary border px-2 py-1 font-monospace fs-11 text-nowrap"><span class="cell-ellipsis" style="max-width: 120px;" title="' . e($row->shipment) . '">' . e($row->shipment) . '</span></span>' : '<span class="text-muted">-</span>')
+                ->addColumn('rute', fn ($row) => $row->rute ? '<div class="d-inline-flex align-items-center gap-1 text-nowrap fs-12"><span class="cell-ellipsis text-secondary" style="max-width: 95px;">' . e($row->rute) . '</span></div>' : '<span class="text-muted">-</span>')
+                ->addColumn('cost', fn ($row) => '<span class="font-monospace text-dark fs-12">' . number_format((float) $row->cost, 0, ',', '.') . '</span>')
+                ->addColumn('additional_cost', fn ($row) => (float) $row->additional_cost > 0
+                    ? '<span class="font-monospace text-warning-emphasis fw-semibold fs-12">+' . number_format((float) $row->additional_cost, 0, ',', '.') . '</span>'
+                    : '<span class="text-muted font-monospace fs-12">-</span>')
                 ->addColumn('ppn', function ($row) {
                     if ((float) $row->ppn > 0) {
                         $label = '+' . number_format((float) $row->ppn, 0, ',', '.');
@@ -684,23 +605,9 @@ class DirectPaymentController extends Controller
 
                     return '<span class="text-muted font-monospace fs-12">-</span>';
                 })
-                ->addColumn('grand_total', function ($row) {
-                    return '<span class="fw-bold text-dark font-monospace fs-12">' . number_format((float) $row->grand_total, 0, ',', '.') . '</span>';
-                })
-                ->addColumn('paymentAmount', function ($row) {
-                    if ((float) $row->payment > 0) {
-                        return '<span class="fw-semibold text-success font-monospace fs-12">' . number_format((float) $row->payment, 0, ',', '.') . '</span>';
-                    }
-
-                    return '<span class="text-muted font-monospace fs-12">0</span>';
-                })
-                ->addColumn('total', function ($row) {
-                    if ((float) $row->remaining > 0) {
-                        return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold fs-11">Rp ' . number_format((float) $row->remaining, 0, ',', '.') . '</span>';
-                    }
-
-                    return '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace fs-11"><i class="mdi mdi-check me-1"></i>Lunas</span>';
-                })
+                ->addColumn('grand_total', fn ($row) => '<span class="fw-bold text-dark font-monospace fs-12">' . number_format((float) $row->grand_total, 0, ',', '.') . '</span>')
+                ->addColumn('paymentAmount', fn ($row) => (float) $row->payment > 0 ? '<span class="fw-semibold text-success font-monospace fs-12">' . number_format((float) $row->payment, 0, ',', '.') . '</span>' : '<span class="text-muted font-monospace fs-12">0</span>')
+                ->addColumn('total', fn ($row) => (float) $row->remaining > 0 ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold fs-11">Rp ' . number_format((float) $row->remaining, 0, ',', '.') . '</span>' : '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace fs-11"><i class="mdi mdi-check me-1"></i>Lunas</span>')
                 ->addColumn('paymentStatus', function ($row) {
                     if ($row->payment_status === 'pending') {
                         return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill fw-semibold fs-11"><i class="mdi mdi-close-circle-outline me-1"></i>Belum Bayar</span>';
@@ -714,6 +621,162 @@ class DirectPaymentController extends Controller
                 ->rawColumns([
                     'select', 'action', 'code', 'date', 'customer_name', 'plate', 'driver',
                     'shipment', 'rute', 'cost', 'additional_cost', 'ppn', 'pph', 'claim',
+                    'grand_total', 'paymentAmount', 'total', 'paymentStatus',
+                ])
+                ->toJson();
+        }
+    }
+
+    /**
+     * Datatable: nota pembayaran langsung yang belum lunas (1 baris = 1 nota).
+     */
+    public function datatableUnpaid(Request $request)
+    {
+        if ($request->ajax()) {
+            $data = $this->service->findUnpaidNotas();
+
+            $statusFilter = $request->input('status');
+            if ($statusFilter && in_array($statusFilter, ['pending', 'unpaid', 'partial'])) {
+                $statusMatch = $statusFilter === 'unpaid' ? 'pending' : $statusFilter;
+                $data = $data->filter(fn ($row) => $row->payment_status === $statusMatch)->values();
+            }
+
+            return DataTables::of($data)
+                ->addIndexColumn()
+                ->filter(function ($dataTable) use ($request) {
+                    $keyword = trim((string) $request->input('search.value', ''));
+
+                    if ($keyword === '') {
+                        return;
+                    }
+
+                    $normalize = static function ($value): string {
+                        $text = html_entity_decode(strip_tags((string) ($value ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                        $text = mb_strtolower(trim(preg_replace('/\s+/u', ' ', $text) ?? $text));
+                        $compact = preg_replace('/[^\pL\pN]+/u', '', $text) ?? '';
+
+                        return $text . ' ' . $compact;
+                    };
+
+                    $terms = preg_split('/\s+/u', mb_strtolower($keyword), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+                    $dataTable->collection = $dataTable->collection->filter(function ($row) use ($normalize, $terms) {
+                        $searchableValues = [
+                            data_get($row, 'nota_number'),
+                            data_get($row, 'customer_name'),
+                            data_get($row, 'plate_numbers')->implode(' '),
+                            data_get($row, 'order_codes')->implode(' '),
+                            data_get($row, 'payment_status'),
+                        ];
+
+                        $haystack = $normalize(implode(' ', $searchableValues));
+
+                        foreach ($terms as $term) {
+                            $normalizedTerm = $normalize($term);
+                            $termParts = array_values(array_filter(explode(' ', $normalizedTerm)));
+
+                            if (! collect($termParts)->contains(fn ($part) => str_contains($haystack, $part))) {
+                                return false;
+                            }
+                        }
+
+                        return true;
+                    });
+                })
+                ->addColumn('select', function ($row) {
+                    $orderCodes = $row->order_codes->implode(',');
+                    $ariaLabel = 'Pilih nota ' . $row->nota_number . ' customer ' . $row->customer_name;
+
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-checkbox-type="payment" data-nota-date="' . e($row->nota_date ?? '') . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" aria-label="' . e($ariaLabel) . '"></div>';
+                })
+                ->addColumn('action', function ($row) {
+                    $firstOrderCode = $row->order_codes->first();
+
+                    $buttons = [];
+                    $buttons[] = '<a href="' . route('direct-payment.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Nota"><i class="mdi mdi-printer fs-15"></i></a>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-info-subtle text-info hover-scale me-1 js-dp-nota-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Nota"><i class="mdi mdi-eye-outline fs-15"></i></button>';
+
+                    if ($row->paid_amount > 0 || $row->payment_status !== 'pending') {
+                        if ($row->latest_batch_code) {
+                            $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-danger-subtle text-danger hover-scale js-dp-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Batal Pembayaran"><i class="mdi mdi-close-circle-outline fs-15"></i></button>';
+                        }
+                    } else {
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-warning-subtle text-warning-emphasis hover-scale js-dp-nota-cancel" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Batal Nota"><i class="mdi mdi-file-remove-outline fs-15"></i></button>';
+                    }
+
+                    return '<div class="d-inline-flex align-items-center justify-content-center">' . implode('', $buttons) . '</div>';
+                })
+                ->editColumn('code', function ($row) {
+                    return '<div class="d-flex flex-column gap-1">'
+                        . '<span class="badge rounded-pill text-bg-primary font-monospace fs-11">' . e($row->nota_number) . '</span>'
+                        . '<span class="badge rounded-pill text-bg-secondary fs-11" style="width: fit-content;">' . $row->order_count . ' DO</span>'
+                        . '</div>';
+                })
+                ->editColumn('date', function ($row) {
+                    if (! $row->date) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return '<span class="text-nowrap text-secondary fs-12 font-monospace">' . Carbon::parse($row->date)->format('d/m/Y') . '</span>';
+                })
+                ->editColumn('customer_name', function ($row) {
+                    $customer = $row->customer_name ?: '-';
+
+                    return '<div class="fw-semibold text-dark fs-12 text-nowrap">
+                                <span class="cell-ellipsis" style="max-width: 140px;" title="' . e($customer) . '">' . e($customer) . '</span>
+                            </div>';
+                })
+                ->addColumn('plate', function ($row) {
+                    $plates = $row->plate_numbers->take(2)->implode(', ');
+                    $more = $row->plate_numbers->count() > 2 ? ' +' . ($row->plate_numbers->count() - 2) : '';
+
+                    return '<span class="text-nowrap fs-12" title="' . e($row->plate_numbers->implode(', ')) . '"><i class="mdi mdi-truck-outline text-primary me-1"></i>' . e($plates) . $more . '</span>';
+                })
+                ->addColumn('cost', fn ($row) => '<span class="font-monospace text-dark fs-12">' . number_format((float) ($row->cost_amount ?? 0), 0, ',', '.') . '</span>')
+                ->addColumn('additional_cost', fn ($row) => (float) ($row->additional_cost_amount ?? 0) > 0
+                    ? '<span class="font-monospace text-warning-emphasis fw-semibold fs-12">+' . number_format((float) $row->additional_cost_amount, 0, ',', '.') . '</span>'
+                    : '<span class="text-muted font-monospace fs-12">-</span>')
+                ->addColumn('ppn', function ($row) {
+                    $ppn = (float) ($row->ppn_amount ?? 0);
+                    $rate = (float) ($row->ppn_rate ?? 0);
+                    $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
+
+                    return $ppn > 0
+                        ? '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace fs-11">' . e($rateText) . '%<br>+' . number_format($ppn, 0, ',', '.') . '</span>'
+                        : '<span class="text-muted font-monospace fs-12">-</span>';
+                })
+                ->addColumn('pph', function ($row) {
+                    $pph = (float) ($row->pph_amount ?? 0);
+                    $rate = (float) ($row->pph_rate ?? 0);
+                    $rateText = rtrim(rtrim(number_format($rate, 4, ',', '.'), '0'), ',');
+
+                    return $pph > 0
+                        ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fs-11">' . e($rateText) . '%<br>-' . number_format($pph, 0, ',', '.') . '</span>'
+                        : '<span class="text-muted font-monospace fs-12">-</span>';
+                })
+                ->addColumn('claim', function ($row) {
+                    $claim = (float) ($row->claim_amount ?? 0);
+
+                    return $claim > 0
+                        ? '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-monospace fs-11">-' . number_format($claim, 0, ',', '.') . '</span>'
+                        : '<span class="text-muted font-monospace fs-12">-</span>';
+                })
+                ->addColumn('grand_total', fn ($row) => '<span class="fw-bold text-dark font-monospace fs-12">' . number_format((float) $row->amount, 0, ',', '.') . '</span>')
+                ->addColumn('paymentAmount', fn ($row) => (float) $row->paid_amount > 0 ? '<span class="fw-semibold text-success font-monospace fs-12">' . number_format((float) $row->paid_amount, 0, ',', '.') . '</span>' : '<span class="text-muted font-monospace fs-12">0</span>')
+                ->addColumn('total', fn ($row) => (float) $row->remaining_amount > 0 ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace fw-bold fs-11">Rp ' . number_format((float) $row->remaining_amount, 0, ',', '.') . '</span>' : '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace fs-11"><i class="mdi mdi-check me-1"></i>Lunas</span>')
+                ->addColumn('paymentStatus', function ($row) {
+                    if ($row->payment_status === 'pending') {
+                        return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill fw-semibold fs-11"><i class="mdi mdi-close-circle-outline me-1"></i>Belum Bayar</span>';
+                    }
+                    if ($row->payment_status === 'paid') {
+                        return '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill fw-semibold fs-11"><i class="mdi mdi-check-circle-outline me-1"></i>Lunas</span>';
+                    }
+
+                    return '<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill fw-semibold fs-11"><i class="mdi mdi-clock-outline me-1"></i>Belum Lunas (DP)</span>';
+                })
+                ->rawColumns([
+                    'select', 'action', 'code', 'date', 'customer_name', 'plate',
+                    'cost', 'additional_cost', 'ppn', 'pph', 'claim',
                     'grand_total', 'paymentAmount', 'total', 'paymentStatus',
                 ])
                 ->toJson();
@@ -792,11 +855,41 @@ class DirectPaymentController extends Controller
                             </span>';
                 })
                 ->editColumn('date', function ($row) {
-                    if (! $row->date) {
+                    $date = $row->order_date ?? $row->date;
+                    if (! $date) {
                         return '<span class="text-muted">-</span>';
                     }
 
-                    return '<span class="text-nowrap text-secondary fs-12 font-monospace">' . Carbon::parse($row->date)->format('d/m/Y') . '</span>';
+                    return '<span class="text-nowrap text-secondary fs-12 font-monospace">' . Carbon::parse($date)->format('d/m/Y') . '</span>';
+                })
+                ->addColumn('order_date', function ($row) {
+                    if (! empty($row->order_date_range)) {
+                        return '<span class="text-nowrap text-secondary fs-12 font-monospace d-inline-flex align-items-center gap-1" title="Rentang Order: ' . e($row->order_date_range) . '">'
+                            . '<i class="mdi mdi-calendar-range text-primary fs-13"></i>'
+                            . e($row->order_date_range)
+                            . '</span>';
+                    }
+
+                    $date = $row->order_date ?? $row->date;
+                    if (! $date) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return '<span class="text-nowrap text-secondary fs-12 font-monospace d-inline-flex align-items-center gap-1">
+                                <i class="mdi mdi-calendar-text-outline text-primary fs-13"></i>'
+                                . Carbon::parse($date)->format('d/m/Y') .
+                            '</span>';
+                })
+                ->addColumn('payment_date', function ($row) {
+                    $date = $row->payment_date ?? null;
+                    if (! $date) {
+                        return '<span class="text-muted">-</span>';
+                    }
+
+                    return '<span class="text-nowrap text-success fs-12 font-monospace fw-semibold d-inline-flex align-items-center gap-1">
+                                <i class="mdi mdi-cash-check text-success fs-14"></i>'
+                                . Carbon::parse($date)->format('d/m/Y') .
+                            '</span>';
                 })
                 ->editColumn('customer_name', function ($row) {
                     $customer = $row->customer_name ?: '-';
@@ -838,7 +931,7 @@ class DirectPaymentController extends Controller
 
                     return '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill fw-semibold fs-11"><i class="mdi mdi-check-circle-outline me-1"></i>Lunas</span>';
                 })
-                ->rawColumns(['action', 'code', 'date', 'customer_name', 'plate', 'grand_total', 'paymentAmount', 'paymentStatus'])
+                ->rawColumns(['action', 'code', 'date', 'order_date', 'payment_date', 'customer_name', 'plate', 'grand_total', 'paymentAmount', 'paymentStatus'])
                 ->toJson();
         }
     }

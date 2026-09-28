@@ -1422,10 +1422,13 @@
 
                             <div class="mt-3 pt-2 border-top d-flex flex-column gap-2">
                                 <button type="button" class="btn btn-outline-danger w-100 fw-semibold btn-sm shadow-sm" id="detail-btn-print-pdf">
-                                    <i class="mdi mdi-file-pdf-box me-1"></i> Cetak Nota PDF
+                                    <i class="mdi mdi-file-pdf-box me-1"></i> Cetak PDF
                                 </button>
-                                <button type="button" class="btn btn-success w-100 fw-bold btn-sm shadow-sm d-none" id="detail-btn-bayar-now">
-                                    <i class="mdi mdi-credit-card-outline me-1"></i> Input Pembayaran
+                                <button type="button" class="btn btn-primary w-100 fw-bold btn-sm shadow-sm d-none" id="detail-btn-generate-nota-now">
+                                    <i class="mdi mdi-file-document-plus-outline me-1"></i> Generate Nota
+                                </button>
+                                <button type="button" class="btn btn-info w-100 fw-bold btn-sm shadow-sm d-none" id="detail-btn-view-nota">
+                                    <i class="mdi mdi-receipt-text-outline me-1"></i> Lihat Rincian Nota
                                 </button>
                             </div>
                         </div>

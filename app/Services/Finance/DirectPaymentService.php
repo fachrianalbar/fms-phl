@@ -72,7 +72,7 @@ class DirectPaymentService
     {
         return $this->order->whereHas('customer', function ($q) {
             $q->where('isDo', 0);
-        })->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderPayment', 'cost'])->get();
+        })->with(['fleet', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderPayment', 'cost', 'orderPaymentHistory'])->get();
     }
 
     public function getById(string $id)
@@ -90,10 +90,15 @@ class DirectPaymentService
     {
         $cost = (float) ($order->routeAmount ?? 0);
         $additionalCost = 0;
-        if (isset($order->orderPayment) && isset($order->orderPayment->additional_cost)) {
-            $additionalCost = (float) $order->orderPayment->additional_cost;
+        if (isset($order->orderPayment)) {
+            if (isset($order->orderPayment->cost) && (float) $order->orderPayment->cost > 0) {
+                $cost = (float) $order->orderPayment->cost;
+            }
+            $additionalCost = (float) ($order->orderPayment->additional_cost ?? 0);
         } else {
-            $additionalCost = (float) $order->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+            $additionalCost = (float) ($order->cost ?? collect())
+                ->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')
+                ->sum('nominal');
         }
         $subtotal = $cost + $additionalCost;
 
@@ -138,13 +143,19 @@ class DirectPaymentService
 
         $statusCode = 'unpaid';
         $statusLabel = 'Belum Bayar';
-        if ($payment > 0) {
+        if (isset($order->orderPayment) && (int) ($order->orderPayment->status ?? 0) === 1) {
+            $statusCode = 'paid';
+            $statusLabel = 'Lunas';
+            $remaining = 0;
+        } elseif ($payment > 0) {
             if ($payment == $grandTotal) {
                 $statusCode = 'paid';
                 $statusLabel = 'Lunas';
+                $remaining = 0;
             } elseif ($payment > $grandTotal) {
                 $statusCode = 'overpaid';
                 $statusLabel = 'Kelebihan Bayar';
+                $remaining = 0;
             } else {
                 $statusCode = 'partial';
                 $statusLabel = 'Belum Lunas';
@@ -212,117 +223,14 @@ class DirectPaymentService
     }
 
     /**
-     * Simpan pembayaran TUNGGAL satu order (mode legacy).
-     * Order yang sudah tergabung dalam nota ditolak di sini.
+     * Simpan pembayaran TUNGGAL satu order.
+     * Tidak diperbolehkan: seluruh order (1 atau lebih) wajib generate nota terlebih dahulu.
      */
     public function store($request, $title)
     {
-        $orderPayment = $this->service->where('orderCode', $request->orderCode)->first();
-
-        // Guard: order yang sudah masuk nota hanya boleh dibayar via nota.
-        if ($orderPayment && $orderPayment->nota_number) {
-            throw new \InvalidArgumentException(
-                'Order ini sudah tergabung dalam nota ' . $orderPayment->nota_number
-                . '. Pembayaran harus dilakukan melalui nota tersebut (multi-order).'
-            );
-        }
-
-        $billingCost = (float) ($request->cost ?? 0);
-        $billingAdditionalCost = (float) ($request->additional_cost ?? 0);
-        $billingSubtotal = $billingCost + $billingAdditionalCost;
-
-        // PPN / PPH: persentase atau nominal
-        $ppn = $this->resolveTax($request->ppn_type, $request->ppn_percent, $request->ppn, $billingSubtotal);
-        $pph = $this->resolveTax($request->pph_type, $request->pph_percent, $request->pph, $billingSubtotal);
-
-        $billingPpn = $ppn['nominal'];
-        $billingPpnPercent = $ppn['percent'];
-        $billingPph = $pph['nominal'];
-        $billingPphPercent = $pph['percent'];
-
-        // Biaya Claim (pengurang tagihan)
-        $billingClaim = (float) ($request->claim ?? 0);
-        $billingClaimDescription = $request->claim_description ?? null;
-
-        $billingTotal = $billingSubtotal + $billingPpn - $billingPph - $billingClaim;
-
-        // Nominal pembayaran: mendukung DP/cicilan (partial) maupun pelunasan
-        $payment = (float) ($request->paymentAmount ?? 0);
-
-        if ($payment <= 0) {
-            throw new \InvalidArgumentException('Nominal pembayaran harus lebih besar dari 0.');
-        }
-
-        $alreadyPaid = $orderPayment ? (float) $orderPayment->total : 0;
-        $newTotal = $alreadyPaid + $payment;
-
-        $paymentType = $request->type;
-        if (! in_array($paymentType, ['Full', 'Dp'])) {
-            $paymentType = $payment >= ($billingTotal - $alreadyPaid) ? 'Full' : 'Dp';
-        }
-
-        $billingData = [
-            'cost' => $billingCost,
-            'additional_cost' => $billingAdditionalCost,
-            'claim' => $billingClaim,
-            'claim_description' => $billingClaimDescription,
-            'ppn' => $billingPpn,
-            'ppn_percent' => $billingPpnPercent,
-            'pph' => $billingPph,
-            'pph_percent' => $billingPphPercent,
-            'total' => $newTotal,
-            'status' => $newTotal >= $billingTotal ? 1 : 0,
-        ];
-
-        if (! $orderPayment) {
-            $data = $this->service->create(array_merge([
-                'code' => GenerateCode::generateUniqueCode('FOP', 'order_payment'),
-                'orderCode' => $request->orderCode,
-            ], $billingData));
-
-            $this->logActivity($title, $data, 'Create');
-        } else {
-            $this->logActivity($title, $orderPayment, 'Before Update');
-
-            $orderPayment->update($billingData);
-
-            $this->logActivity($title, $orderPayment->refresh(), 'After Update');
-        }
-
-        LiveMutationHelper::updateLiveMutation($request->userBankCode, $payment, 'debit');
-
-        // Riwayat pembayaran: setiap transaksi tercatat lengkap
-        // dengan snapshot pajak dan claim yang dipakai saat pembayaran dibuat
-        $orderPaymentHistory = $this->orderPaymentHistory->create([
-            'code' => GenerateCode::generateUniqueCode('FOPH', 'order_payment_history'),
-            'orderCode' => $request->orderCode,
-            'paymentType' => $paymentType,
-            'claim' => $billingClaim,
-            'claim_description' => $billingClaimDescription,
-            'ppn' => $billingPpn,
-            'ppn_percent' => $billingPpnPercent,
-            'pph' => $billingPph,
-            'pph_percent' => $billingPphPercent,
-            'total' => $payment,
-            'date' => $request->date,
-            'description' => $request->description,
-            'userBankCode' => $request->userBankCode,
-        ]);
-
-        $mutation = $this->mutation->create([
-            'code' => GenerateCode::generateUniqueCode('FMT', 'mutation'),
-            'userBankCode' => $request->userBankCode,
-            'date' => now(),
-            'description' => 'Direct payment for order ' . $request->orderCode . ' with amount ' . number_format($payment, 0, ',', '.'),
-            'nominal' => $payment,
-            'type' => 'In',
-            'transactionCode' => $orderPaymentHistory->code,
-            'transactionTypeCode' => 'FTT250306114178', // Order Payment
-        ]);
-
-        $this->logActivity('Order Payment History', $orderPaymentHistory, 'Create');
-
-        $this->logActivity('Mutation', $mutation, 'Create');
+        throw new \DomainException(
+            'Pembayaran tunggal langsung tanpa nota tidak diperbolehkan. Seluruh order (1 atau lebih) wajib dibuatkan nota pembayaran terlebih dahulu.'
+        );
     }
 
     /**
@@ -351,9 +259,10 @@ class DirectPaymentService
         $customerPphPercent = isset($data->customer->pph) ? (float) $data->customer->pph : 0;
 
         if (isset($data->orderPayment)) {
-            $additional_cost = isset($data->orderPayment->additional_cost)
-                ? (float) $data->orderPayment->additional_cost
-                : (float) $data->cost->filter(fn($c) => strtolower($c->type ?? '') === 'on charge')->sum('nominal');
+            if (isset($data->orderPayment->cost) && (float) $data->orderPayment->cost > 0) {
+                $cost = (float) $data->orderPayment->cost;
+            }
+            $additional_cost = (float) ($data->orderPayment->additional_cost ?? 0);
 
             $ppn = isset($data->orderPayment->ppn)
                 ? (float) $data->orderPayment->ppn
@@ -429,8 +338,11 @@ class DirectPaymentService
         // Calculate status
         $status = 'Belum Bayar';
         $statusCode = 'unpaid';
-        if ($payment > 0) {
-            if ($payment == $grandTotal) {
+        if (isset($data->orderPayment) && (int) ($data->orderPayment->status ?? 0) === 1) {
+            $status = 'Lunas';
+            $statusCode = 'paid';
+        } elseif ($payment > 0) {
+            if ($payment >= $grandTotal) {
                 $status = 'Lunas';
                 $statusCode = 'paid';
             } elseif ($payment > $grandTotal) {
@@ -802,6 +714,27 @@ class DirectPaymentService
                 ->sortDesc(SORT_STRING)
                 ->first();
 
+            $orderDates = $orders->pluck('orderDate')->filter()->unique()->sort()->values();
+            $minOrderDate = $orderDates->first() ? \Carbon\Carbon::parse($orderDates->first())->format('Y-m-d') : null;
+            $maxOrderDate = $orderDates->last() ? \Carbon\Carbon::parse($orderDates->last())->format('Y-m-d') : null;
+            $orderDateRange = ($minOrderDate && $maxOrderDate && $minOrderDate !== $maxOrderDate)
+                ? \Carbon\Carbon::parse($minOrderDate)->format('d/m/Y') . ' - ' . \Carbon\Carbon::parse($maxOrderDate)->format('d/m/Y')
+                : ($minOrderDate ? \Carbon\Carbon::parse($minOrderDate)->format('d/m/Y') : null);
+
+            $latestPaymentDate = $group
+                ->flatMap(fn ($payment) => $payment->paymentHistory)
+                ->pluck('date')
+                ->filter()
+                ->sortDesc()
+                ->first();
+            if (! $latestPaymentDate) {
+                $latestHistory = $group
+                    ->flatMap(fn ($payment) => $payment->paymentHistory)
+                    ->sortByDesc('created_at')
+                    ->first();
+                $latestPaymentDate = $latestHistory?->created_at ? \Carbon\Carbon::parse($latestHistory->created_at)->format('Y-m-d') : null;
+            }
+
             $status = 'pending';
             if ($group->every(fn ($op) => (int) ($op->status ?? 0) === 1)) {
                 $status = 'paid';
@@ -822,6 +755,9 @@ class DirectPaymentService
                 // kronologis; tampilan diformat ulang di sisi JavaScript.
                 'nota_date' => optional($group->min('created_at'))->format('Y-m-d\TH:i:s'),
                 'date' => optional($group->min('created_at'))->format('Y-m-d'),
+                'order_date' => $minOrderDate,
+                'order_date_range' => $orderDateRange,
+                'payment_date' => $latestPaymentDate,
                 'amount' => $totalBilling,
                 'paid_amount' => $totalPaid,
                 'remaining_amount' => $totalRemaining,
@@ -872,11 +808,26 @@ class DirectPaymentService
         $dest = $order->route->destinationLocation->name ?? '';
         $customerName = $order->customer->name ?? '';
 
+        $orderDate = null;
+        if (! empty($order->orderDate)) {
+            $orderDate = is_string($order->orderDate)
+                ? \Carbon\Carbon::parse($order->orderDate)->format('Y-m-d')
+                : optional($order->orderDate)->format('Y-m-d');
+        }
+
+        $paymentHistory = $order->orderPaymentHistory ?? collect();
+        $latestPaymentDate = $paymentHistory->pluck('date')->filter()->sortDesc()->first();
+        if (! $latestPaymentDate && isset($order->orderPayment->created_at)) {
+            $latestPaymentDate = \Carbon\Carbon::parse($order->orderPayment->created_at)->format('Y-m-d');
+        }
+
         return (object) [
             'unit_type' => 'order',
             'unit_key' => $order->code,
             'code' => $order->code,
-            'date' => optional($order->orderDate)->format('Y-m-d'),
+            'date' => $orderDate,
+            'order_date' => $orderDate,
+            'payment_date' => $latestPaymentDate,
             'customer_code' => $order->customerCode ?? ($order->customer->code ?? ''),
             'customer_name' => $customerName,
             'plate' => $order->fleet->plateNumber ?? '',
@@ -904,7 +855,8 @@ class DirectPaymentService
             'search_text' => implode(' ', array_filter([
                 $order->code,
                 $order->shipmentNumber,
-                $order->orderDate,
+                $orderDate,
+                $latestPaymentDate,
                 $customerName,
                 $order->fleet->plateNumber ?? '',
                 $order->driver->name ?? '',
@@ -924,6 +876,9 @@ class DirectPaymentService
             'unit_key' => $nota->nota_number,
             'code' => $nota->nota_number,
             'date' => $nota->nota_date,
+            'order_date' => $nota->order_date ?? $nota->date,
+            'order_date_range' => $nota->order_date_range ?? null,
+            'payment_date' => $nota->payment_date ?? null,
             'customer_code' => $nota->customer_code,
             'customer_name' => $nota->customer_name ?? '',
             'plate' => $plates->implode(', '),
@@ -1010,24 +965,52 @@ class DirectPaymentService
     }
 
     /**
-     * Statistik untuk halaman Order Belum Lunas.
+     * Order non-DO yang belum dibuat nota (menunggu di-generate nota).
+     * Hanya menyertakan order yang BELUM PERNAH DIBAYAR (payment == 0 dan belum berstatus lunas/partial).
+     */
+    public function findWaitingOrders()
+    {
+        return $this->findAllUnits()
+            ->where('unit_type', 'order')
+            ->filter(function ($unit) {
+                $payment = (float) ($unit->payment ?? 0);
+                $isPaidOrPartial = in_array($unit->status_code ?? '', ['paid', 'overpaid', 'partial'], true);
+
+                return $payment <= 0 && ! $isPaidOrPartial && ($unit->status_code ?? '') === 'unpaid';
+            })
+            ->values();
+    }
+
+    /**
+     * Statistik untuk halaman Order Menunggu Nota.
+     */
+    public function statsWaiting()
+    {
+        $waiting = $this->findWaitingOrders();
+
+        return [
+            'waitingCount' => $waiting->count(),
+            'totalBilling' => (float) $waiting->sum('grand_total'),
+            'totalRemaining' => (float) $waiting->sum('remaining'),
+            'customerCount' => $waiting->pluck('customer_code')->filter()->unique()->count(),
+        ];
+    }
+
+    /**
+     * Statistik untuk halaman Nota Belum Lunas.
      */
     public function statsUnpaid()
     {
-        $units = $this->findUnpaidUnits();
-
-        $orderUnits = $units->where('unit_type', 'order');
-        $notaUnits = $units->where('unit_type', 'nota');
+        $notas = $this->findUnpaidNotas();
 
         return [
-            'totalCount' => $units->count(),
-            'orderCount' => $orderUnits->count(),
-            'notaCount' => $notaUnits->count(),
-            'unpaidCount' => $units->where('payment_status', 'pending')->count(),
-            'partialCount' => $units->where('payment_status', 'partial')->count(),
-            'totalBilling' => (float) $units->sum('grand_total'),
-            'totalPaid' => (float) $units->sum('payment'),
-            'totalRemaining' => (float) $units->sum('remaining'),
+            'totalCount' => $notas->count(),
+            'orderCount' => (int) $notas->sum('order_count'),
+            'unpaidCount' => $notas->where('payment_status', 'pending')->count(),
+            'partialCount' => $notas->where('payment_status', 'partial')->count(),
+            'totalBilling' => (float) $notas->sum('amount'),
+            'totalPaid' => (float) $notas->sum('paid_amount'),
+            'totalRemaining' => (float) $notas->sum('remaining_amount'),
         ];
     }
 

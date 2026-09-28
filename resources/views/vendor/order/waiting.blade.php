@@ -237,6 +237,13 @@
 <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
 <script>
+    let waitingTable;
+    const selectedOrders = {};
+    const notaModalState = {
+        subtotal: 0,
+        pphRate: 0,
+    };
+
     function vendorSwalTheme() {
         return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
     }
@@ -353,6 +360,10 @@
             "pageLength": 25,
             "ajax": {
                 "url": "{{ route('dt.vendor-invoice.waiting') }}",
+                "error": function(xhr, error, thrown) {
+                    console.error('DataTables waiting error: ', xhr.responseText || thrown);
+                    $('#dtWaiting_processing').hide();
+                }
             },
             "columns": [{
                     "data": 'select'
@@ -454,15 +465,18 @@
                 },
                 {
                     "data": 'paidAmount',
-                    "searchable": true
+                    "searchable": true,
+                    "className": 'text-end'
                 },
                 {
                     "data": 'remainingAmount',
-                    "searchable": true
+                    "searchable": true,
+                    "className": 'text-end'
                 },
                 {
                     "data": 'status',
-                    "searchable": true
+                    "searchable": true,
+                    "className": 'text-center'
                 }
             ],
             "columnDefs": [{
@@ -551,7 +565,11 @@
             const selectedCodes = notaOrders.map(item => item.orderCode);
 
             if (selectedCodes.length === 0) {
-                swal('Peringatan', 'Pilih minimal satu order yang belum memiliki nota.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Pilih minimal satu order yang belum memiliki nota.',
+                    icon: 'warning',
+                }));
 
                 return;
             }
@@ -559,7 +577,11 @@
             // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh digabung dalam satu nota
             const uniqueFleetCompanies = [...new Set(notaOrders.map(item => item.fleetCompanyCode).filter(f => f !== ''))];
             if (uniqueFleetCompanies.length > 1) {
-                swal('Peringatan', 'Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.',
+                    icon: 'warning',
+                }));
 
                 return;
             }
@@ -567,7 +589,11 @@
             // Validasi 2: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh digabung dalam satu nota
             const uniqueFormats = [...new Set(notaOrders.map(item => item.orderFormat).filter(f => f !== ''))];
             if (uniqueFormats.length > 1) {
-                swal('Peringatan', 'Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' + uniqueFormats.join(', ') + '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.', 'warning');
+                Swal.fire(vendorSwalOptions({
+                    title: 'Peringatan',
+                    text: 'Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' + uniqueFormats.join(', ') + '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.',
+                    icon: 'warning',
+                }));
 
                 return;
             }
@@ -624,12 +650,6 @@
             // Tampilkan modal generate nota
             $('#nota-modal').modal('show');
         });
-
-        // State perhitungan pajak modal nota
-        const notaModalState = {
-            subtotal: 0,
-            pphRate: 0,
-        };
 
         // Ambil rate desimal dari input (koma diterima sebagai pemisah desimal).
         function parseNotaRateInput(el) {

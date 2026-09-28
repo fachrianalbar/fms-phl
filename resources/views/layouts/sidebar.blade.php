@@ -37,6 +37,7 @@
         'vendor/payment' => 'mdi-credit-card-outline',
 
         // Pembayaran Langsung
+        'direct-payment/order/waiting' => 'mdi-tray-full',
         'direct-payment/order/unpaid' => 'mdi-cash-remove',
         'direct-payment/order/paid' => 'mdi-cash-check',
         'direct-payment/payment' => 'mdi-credit-card-outline',

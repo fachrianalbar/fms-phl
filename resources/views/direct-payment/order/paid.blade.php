@@ -37,7 +37,7 @@
     }
 
     .table-scroll-wrap .direct-payment-table {
-        min-width: 980px;
+        min-width: 1040px;
         width: 100% !important;
     }
 
@@ -188,7 +188,8 @@
                             <th class="text-center" style="width: 130px;">Aksi</th>
                             <th class="text-center" style="width: 45px;">No</th>
                             <th>Kode / No Nota</th>
-                            <th>Tanggal</th>
+                            <th>Tgl Order</th>
+                            <th>Tgl Bayar</th>
                             <th>Customer</th>
                             <th>Nopol</th>
                             <th class="text-end">Total Tagihan</th>
@@ -679,7 +680,8 @@
                 { "data": 'action', "className": 'text-center align-middle', "orderable": false, "searchable": false },
                 { "data": 'DT_RowIndex', "className": 'text-center align-middle', "orderable": false, "searchable": false },
                 { "data": 'code', "className": 'align-middle' },
-                { "data": 'date', "className": 'align-middle text-center', "render": function(data) { return formatDateDMY(data); } },
+                { "data": 'order_date', "className": 'align-middle text-center' },
+                { "data": 'payment_date', "className": 'align-middle text-center' },
                 { "data": 'customer_name', "className": 'align-middle' },
                 { "data": 'plate', "className": 'align-middle text-center' },
                 { "data": 'grand_total', "className": 'text-end align-middle' },
@@ -687,7 +689,7 @@
                 { "data": 'paymentStatus', "className": 'text-center align-middle' }
             ],
             "order": [
-                [3, 'desc']
+                [4, 'desc']
             ],
             "drawCallback": function() {
                 if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {

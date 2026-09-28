@@ -58,7 +58,7 @@ class VendorInvoiceController extends Controller
             return $fallback;
         }
 
-        return Auth::user()->languange == 'id' ? $menu->nama : $menu->name;
+        return (Auth::user()?->languange ?? 'id') == 'id' ? $menu->nama : $menu->name;
     }
 
     /**
@@ -273,7 +273,8 @@ class VendorInvoiceController extends Controller
                     $badgeClass = 'primary';
 
                     if (isset($row->orderStatus->name)) {
-                        $statusText = Auth::user()->languange == 'id' ? $row->orderStatus->nama : $row->orderStatus->name;
+                        $isId = (Auth::user()?->languange ?? 'id') === 'id';
+                        $statusText = $isId ? ($row->orderStatus->nama ?? $row->orderStatus->name) : $row->orderStatus->name;
                     }
 
                     if ($row->status == 4) {

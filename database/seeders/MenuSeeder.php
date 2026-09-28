@@ -102,9 +102,10 @@ class MenuSeeder extends Seeder
         ['code' => 'VENDOR_PAY_LIST', 'name' => 'Vendor Payment List', 'nama' => 'Daftar Pembayaran Vendor', 'parentCode' => 'VENDOR', 'url' => 'vendor/payment', 'sort' => 4],
 
         // ── DIRECT_PAYMENT ────────────────────────────────────────────────
-        ['code' => 'DIRECT_PAYMENT_UNPAID', 'name' => 'Unpaid Direct Payment', 'nama' => 'Pembayaran Belum Lunas', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/unpaid', 'sort' => 1],
-        ['code' => 'DIRECT_PAYMENT_PAID', 'name' => 'Paid Direct Payment', 'nama' => 'Pembayaran Lunas', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/paid', 'sort' => 2],
-        ['code' => 'DIRECT_PAYMENT_LIST', 'name' => 'Direct Payment List', 'nama' => 'Daftar Pembayaran', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/payment', 'sort' => 3],
+        ['code' => 'DIRECT_PAYMENT_WAITING', 'name' => 'Direct Payment Waiting Order', 'nama' => 'Order Menunggu Nota', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/waiting', 'sort' => 1],
+        ['code' => 'DIRECT_PAYMENT_UNPAID', 'name' => 'Direct Payment Unpaid Nota', 'nama' => 'Nota Belum Lunas', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/unpaid', 'sort' => 2],
+        ['code' => 'DIRECT_PAYMENT_PAID', 'name' => 'Paid Direct Payment', 'nama' => 'Pembayaran Lunas', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/paid', 'sort' => 3],
+        ['code' => 'DIRECT_PAYMENT_LIST', 'name' => 'Direct Payment List', 'nama' => 'Daftar Pembayaran', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/payment', 'sort' => 4],
 
         // ── BANK (Kas & Bank) ─────────────────────────────────────────────
         ['code' => 'BANK_ACCOUNT', 'name' => 'Bank Account', 'nama' => 'Rekening Bank', 'parentCode' => 'BANK', 'url' => 'bank/bank-account', 'sort' => 1],

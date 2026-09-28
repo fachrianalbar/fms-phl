@@ -19,19 +19,22 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('direct-payment')->name('direct-payment.')->group(function () {
-    // 1. Order Belum Lunas (generate nota + bayar tunggal + bayar nota)
+    // 1. Order Menunggu Nota (order standalone non-DO belum dibuat nota)
+    Route::get('order/waiting', [DirectPaymentController::class, 'indexWaiting'])->name('order.waiting');
+
+    // 2. Nota Belum Lunas (nota pending / partial, bayar DP/cicilan/lunas)
     Route::get('order/unpaid', [DirectPaymentController::class, 'indexUnpaid'])->name('order.unpaid');
 
-    // 2. Order Lunas (baca + cetak + batal pembayaran)
+    // 3. Order Lunas (baca + cetak + batal pembayaran)
     Route::get('order/paid', [DirectPaymentController::class, 'indexPaid'])->name('order.paid');
 
-    // 3. Daftar Pembayaran (riwayat transaksi)
+    // 4. Daftar Pembayaran (riwayat transaksi)
     Route::get('payment', [DirectPaymentController::class, 'paymentIndex'])->name('payment.index');
 
     // Detail order (halaman show legacy, dipakai redirect routes/finance.php)
     Route::get('show/{id}', [DirectPaymentController::class, 'show'])->name('show');
 
-    // Operasi pembayaran (dipanggil dari halaman unpaid/paid)
+    // Operasi pembayaran (dipanggil dari halaman waiting/unpaid/paid)
     Route::post('order/payment', [DirectPaymentController::class, 'storeBatch'])->name('order.payment.store');
     Route::post('order/payment-single', [DirectPaymentController::class, 'store'])->name('order.payment-single.store');
     Route::post('order/generate-nota', [DirectPaymentController::class, 'generateNota'])->name('order.generate-nota');
@@ -43,11 +46,12 @@ Route::prefix('direct-payment')->name('direct-payment.')->group(function () {
     Route::get('pdf-nota/{orderCode}', [DirectPaymentController::class, 'pdfNota'])->name('pdf-nota');
 });
 
-// URL lama direct-payment dialihkan ke halaman Order Belum Lunas.
+// URL lama direct-payment dialihkan ke halaman Order Menunggu Nota.
 // (direct-payment.index & direct-payment.show dipakai link legacy.)
-Route::get('direct-payment', fn () => redirect()->route('direct-payment.order.unpaid'))->name('direct-payment.index');
+Route::get('direct-payment', fn () => redirect()->route('direct-payment.order.waiting'))->name('direct-payment.index');
 
 Route::prefix('datatable')->name('dt.')->group(function () {
+    Route::get('direct-payment/waiting', [DirectPaymentController::class, 'datatableWaiting'])->name('direct-payment.waiting');
     Route::get('direct-payment/unpaid', [DirectPaymentController::class, 'datatableUnpaid'])->name('direct-payment.unpaid');
     Route::get('direct-payment/paid', [DirectPaymentController::class, 'datatablePaid'])->name('direct-payment.paid');
     Route::get('direct-payment-payment-list', [DirectPaymentController::class, 'paymentDatatable'])->name('direct-payment-payment-list');
