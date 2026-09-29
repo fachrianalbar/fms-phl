@@ -291,11 +291,32 @@
             border-radius: 8px !important;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
             overflow: hidden !important;
+            z-index: 99999 !important;
         }
 
         .select2-container--default .select2-results__option--highlighted[aria-selected] {
             background-color: #4f46e5 !important;
             color: #ffffff !important;
+        }
+
+        /* Modal Select2 */
+        .modal .select2-container {
+            z-index: 9999;
+            width: 100% !important;
+        }
+
+        .fleet-company-crud-modal .select2-container--default .select2-selection--single {
+            min-height: 40px !important;
+            height: 40px !important;
+            border-radius: 9px !important;
+        }
+
+        .fleet-company-crud-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 38px !important;
+        }
+
+        .fleet-company-crud-modal .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 38px !important;
         }
 
         /* ── DataTables Inputs & Pagination ── */
@@ -545,6 +566,15 @@
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
         }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .select2-container--default .select2-selection--single {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] .fleet-company-crud-modal .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: var(--bs-body-color) !important;
+        }
     </style>
 @endpush
 
@@ -771,7 +801,6 @@
 
     <!-- Select2 & Flatpickr -->
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
-    <script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 
@@ -795,6 +824,12 @@
                 placeholder: 'Semua Tipe',
                 allowClear: true,
                 width: '100%'
+            });
+
+            $('#fleetCompanyCrudType').select2({
+                dropdownParent: $('#fleetCompanyCrudModal'),
+                width: '100%',
+                minimumResultsForSearch: Infinity
             });
 
             // 2. Inisialisasi Flatpickr (format standar backend Y-m-d)
@@ -929,7 +964,7 @@
                     form.attr('action', trigger.data('action'));
                     methodInput.val('PUT');
                     nameInput.val(trigger.data('name'));
-                    typeInput.val(trigger.data('type') || 'Internal');
+                    typeInput.val(trigger.data('type') || 'Internal').trigger('change');
                     bankNameInput.val(trigger.data('bank-name') || '');
                     accountNumberInput.val(trigger.data('account-number') || '');
                     pphInput.val(trigger.data('pph') || '0');
@@ -940,7 +975,7 @@
                     form.attr('action', "{{ route($view . 'store') }}");
                     methodInput.val('POST');
                     nameInput.val('');
-                    typeInput.val('Internal');
+                    typeInput.val('Internal').trigger('change');
                     bankNameInput.val('');
                     accountNumberInput.val('');
                     pphInput.val('0');
@@ -958,6 +993,11 @@
             $('#fleetCompanyCrudForm').on('submit', function() {
                 const submitButton = $('#fleetCompanyCrudSubmit');
                 submitButton.prop('disabled', true).find('span').text('Menyimpan...');
+            });
+
+            $('#fleetCompanyCrudModal').on('hidden.bs.modal', function() {
+                const submitButton = $('#fleetCompanyCrudSubmit');
+                submitButton.prop('disabled', false).find('span').text('Simpan Perusahaan');
             });
         });
 
