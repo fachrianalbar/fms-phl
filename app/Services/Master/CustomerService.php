@@ -35,7 +35,11 @@ class CustomerService
 
     public function findAll()
     {
-        return $this->service->with(['company'])->get();
+        return $this->service->with(['company'])
+            ->orderBy('name')
+            ->get()
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
     }
 
     /**
@@ -55,7 +59,10 @@ class CustomerService
     {
         return $this->service->with(['company'])
             ->where('isDo', 1)
-            ->get();
+            ->orderBy('name')
+            ->get()
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
     }
 
     /**
@@ -74,7 +81,10 @@ class CustomerService
                 $q->where('isDo', 1)
                     ->orWhereHas('invoices', $openInvoice);
             })
-            ->get();
+            ->orderBy('name')
+            ->get()
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
     }
 
     public function getById($id)
