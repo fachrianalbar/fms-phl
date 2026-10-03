@@ -59,7 +59,7 @@ flowchart TD
     C --> D[Sistem membuat nomor nota DP/00001/2026]
     D --> E[Pajak dan claim didistribusikan proporsional ke tiap DO]
     E --> F[Centang nota lalu klik Bayar Nota]
-    F --> G[Isi nominal per nota, bank, tanggal]
+    F --> G[Isi nominal per nota dan tanggal - rekening mengikuti bank nota]
     G --> H[Simpan batch pembayaran]
     H --> I[Nominal didistribusikan proporsional ke DO dalam nota]
     I --> J{Semua DO lunas?}
@@ -156,13 +156,15 @@ Nota memungkinkan beberapa DO milik satu customer ditagih dan dibayar dalam satu
 1. Centang satu atau beberapa nota pada daftar.
 2. Klik **Bayar Nota**.
 3. Untuk tiap nota, isi nominal pembayaran — bisa DP, cicilan, atau **Bayar Lunas** per nota.
-4. Pilih **bank tujuan transfer** dan **tanggal pembayaran** (satu untuk seluruh nota terpilih).
+4. Isi **tanggal pembayaran** (satu untuk seluruh nota terpilih). Rekening sumber dana otomatis mengikuti bank yang dipilih saat generate nota — tidak perlu (dan tidak bisa) dipilih ulang di sini.
 5. Isi keterangan bila perlu.
 6. Klik **Simpan**. Satu transaksi batch dicatat (satu kode batch `DPB/...`), lalu:
    - nominal tiap nota didistribusikan proporsional ke DO di dalamnya berdasarkan sisa tagihan masing-masing;
    - saldo bank bertambah dan mutasi tercatat;
    - tiap DO mendapat riwayat pembayaran dengan kode batch yang sama.
 7. Nota yang masih ada sisinya dapat dibayar lagi (cicilan) sampai lunas.
+
+> **Catatan:** satu batch pembayaran hanya boleh berisi nota dengan rekening bank yang sama. Jika nota terpilih menggunakan rekening berbeda, bayar per kelompok rekening. Nota lama tanpa rekening tercatat harus dibatalkan lalu generate ulang dari menu Order Menunggu Nota.
 
 ### Mencetak PDF
 

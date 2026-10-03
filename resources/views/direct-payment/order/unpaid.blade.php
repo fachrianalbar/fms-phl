@@ -231,6 +231,7 @@
                 <div class="selection-facts mt-1">
                     <span id="selection-order-fact">0 DO</span>
                     <span id="selection-remaining-fact">Sisa Rp 0</span>
+                    <span id="selection-bank-fact" class="d-none"></span>
                 </div>
             </div>
             <div class="selection-actions">
@@ -401,10 +402,8 @@
     const selectedPayNotas = {};
 
     // State modal bayar nota (batch)
-    let batchBanksLoaded = false;
     let batchSubmissionInFlight = false;
     let batchRequestKey = null;
-    let batchBankRequestSequence = 0;
 
     // =====================================================================
     // HELPER
@@ -636,6 +635,8 @@
             billingAmount: Math.round(Number(checkbox.attr('data-billing-amount') || 0)),
             paidAmount: Math.round(Number(checkbox.attr('data-paid-amount') || 0)),
             remainingAmount: Math.round(Number(checkbox.attr('data-remaining-amount') || 0)),
+            userBankCode: String(checkbox.attr('data-user-bank-code') || ''),
+            userBankLabel: String(checkbox.attr('data-user-bank-label') || ''),
         };
     }
 
@@ -651,6 +652,36 @@
             totals.orderCount += item.orderCount || item.orderCodes.length;
             return totals;
         }, { billing: 0, paid: 0, remaining: 0, orderCount: 0 });
+    }
+
+    /**
+     * Rekening nota mengikuti pilihan bank saat generate nota
+     * (menu Order Menunggu Nota) — user tidak perlu memilih lagi di sini.
+     * Status:
+     *   ok       → semua nota memakai satu rekening yang sama
+     *   missing  → ada nota tanpa rekening (data lama)
+     *   conflict → nota terpilih memakai rekening berbeda
+     *   empty    → belum ada nota terpilih
+     */
+    function selectedPaymentBank() {
+        const items = selectedPaymentItems();
+        if (items.length === 0) return { status: 'empty' };
+
+        const missing = items.filter(item => !item.userBankCode);
+        if (missing.length > 0) {
+            return { status: 'missing', missingCount: missing.length, firstNota: missing[0].notaNumber };
+        }
+
+        const codes = [...new Set(items.map(item => item.userBankCode))];
+        if (codes.length > 1) {
+            return { status: 'conflict', codes: codes };
+        }
+
+        return {
+            status: 'ok',
+            code: codes[0],
+            label: items[0].userBankLabel || '-',
+        };
     }
 
     function syncSelectAllState() {
@@ -683,6 +714,7 @@
     function updateSelectionUI() {
         const payNotas = selectedPaymentItems();
         const totals = calculateSelectedPaymentTotals();
+        const bank = selectedPaymentBank();
         const count = payNotas.length;
 
         $('#selected-headline').text(count + ' nota terpilih');
@@ -690,8 +722,21 @@
         $('#selection-remaining-fact').text('Sisa ' + formatCurrency(totals.remaining));
         $('#payment-selection-count').text(count);
 
+        const bankFact = $('#selection-bank-fact');
+        if (bankFact.length > 0) {
+            if (bank.status === 'ok') {
+                bankFact.text(bank.label).removeAttr('title').removeAttr('data-bs-original-title').removeClass('d-none');
+            } else if (bank.status === 'conflict') {
+                bankFact.text('Rekening nota berbeda — bayar per kelompok rekening').attr('title', 'Nota terpilih menggunakan rekening bank yang berbeda.').removeClass('d-none');
+            } else if (bank.status === 'missing') {
+                bankFact.text('Ada nota tanpa rekening bank').attr('title', 'Nota ' + bank.firstNota + ' belum memiliki rekening. Batalkan nota lalu generate ulang dari menu Order Menunggu Nota.').removeClass('d-none');
+            } else {
+                bankFact.text('').removeAttr('title').removeAttr('data-bs-original-title').addClass('d-none');
+            }
+        }
+
         $('#selection-bar').toggleClass('d-none', count === 0);
-        $('#btn-batch-pay').prop('disabled', count === 0 || totals.remaining < 1);
+        $('#btn-batch-pay').prop('disabled', count === 0 || totals.remaining < 1 || bank.status !== 'ok');
 
         syncSelectAllState();
     }
@@ -706,59 +751,35 @@
     // =====================================================================
     // BAYAR NOTA (batch pembayaran DP / cicilan / pelunasan)
     // =====================================================================
-    function setBankLoadingState(message, isError) {
-        $('#batchBankStatus')
-            .text(message)
-            .toggleClass('text-danger', !!isError)
-            .toggleClass('text-success', false);
-        $('#reloadBatchBanksBtn').toggleClass('d-none', !isError);
-    }
+    /**
+     * Tampilkan rekening nota (read-only). Bank sudah dipilih saat generate
+     * nota di menu Order Menunggu Nota — tidak dipilih lagi di halaman ini.
+     */
+    function renderBatchBankInfo() {
+        const bank = selectedPaymentBank();
+        const info = $('#batchBankInfo');
+        const status = $('#batchBankStatus');
 
-    function loadBatchBankData(forceReload) {
-        if (batchBanksLoaded && !forceReload) return;
+        if (bank.status === 'ok') {
+            $('#batchUserBankCode').val(bank.code);
+            info.html('<i class="mdi mdi-bank-outline me-1" aria-hidden="true"></i><span>' + escapeHtml(bank.label) + '</span>').removeClass('payment-bank-display-invalid');
+            status.text('Mengikuti rekening yang dipilih saat generate nota.').toggleClass('text-danger', false).toggleClass('text-success', true);
+            return true;
+        }
 
-        const bankSelect = $('#batchUserBankCode');
-        const requestSequence = ++batchBankRequestSequence;
-        batchBanksLoaded = false;
-        bankSelect.prop('disabled', true).empty().append(new Option('Memuat rekening...', ''));
-        bankSelect.trigger('change');
-        setBankLoadingState('Memuat rekening perusahaan...', false);
-        updateBatchPaymentSummary();
+        $('#batchUserBankCode').val('');
+        if (bank.status === 'conflict') {
+            info.html('<i class="mdi mdi-alert-outline me-1" aria-hidden="true"></i><span>Rekening nota berbeda</span>').addClass('payment-bank-display-invalid');
+            status.text('Nota terpilih menggunakan rekening berbeda — bayar per kelompok rekening.').toggleClass('text-danger', true).toggleClass('text-success', false);
+        } else if (bank.status === 'missing') {
+            info.html('<i class="mdi mdi-alert-outline me-1" aria-hidden="true"></i><span>Nota tanpa rekening bank</span>').addClass('payment-bank-display-invalid');
+            status.text('Nota ' + bank.firstNota + ' belum memiliki rekening. Batalkan nota lalu generate ulang dari menu Order Menunggu Nota.').toggleClass('text-danger', true).toggleClass('text-success', false);
+        } else {
+            info.html('<span class="text-muted">-</span>').removeClass('payment-bank-display-invalid');
+            status.text('Pilih nota terlebih dahulu.').toggleClass('text-danger', false).toggleClass('text-success', false);
+        }
 
-        $.ajax({
-            url: "{{ route('api.user-bank.company') }}",
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (requestSequence !== batchBankRequestSequence) return;
-
-                bankSelect.empty().append(new Option('Pilih rekening sumber dana', ''));
-
-                if (Array.isArray(response) && response.length > 0) {
-                    response.forEach(function(bank) {
-                        const label = (bank.bank_name || 'Bank') + ' · ' + (bank.account_number || '-') + ' · ' + (bank.account_name || '-');
-                        bankSelect.append(new Option(label, bank.code || '', false, false));
-                    });
-                    batchBanksLoaded = true;
-                    bankSelect.prop('disabled', false);
-                    setBankLoadingState(response.length + ' rekening tersedia.', false);
-                } else {
-                    bankSelect.append(new Option('Tidak ada rekening perusahaan', '', false, false));
-                    setBankLoadingState('Tidak ada rekening perusahaan yang dapat digunakan.', true);
-                }
-
-                bankSelect.trigger('change');
-                updateBatchPaymentSummary();
-            },
-            error: function() {
-                if (requestSequence !== batchBankRequestSequence) return;
-
-                bankSelect.empty().append(new Option('Gagal memuat rekening', ''));
-                bankSelect.trigger('change');
-                setBankLoadingState('Rekening gagal dimuat. Periksa koneksi lalu muat ulang.', true);
-                updateBatchPaymentSummary();
-            }
-        });
+        return false;
     }
 
     function renderBatchPaymentAllocations() {
@@ -843,9 +864,10 @@
 
         const totals = calculateSelectedPaymentTotals();
         const customerCount = new Set(items.map(item => item.customerCode || item.customerName)).size;
-        const bankSelected = $('#batchUserBankCode').val() !== '';
+        const bank = selectedPaymentBank();
+        const bankReady = bank.status === 'ok';
         const dateValid = $('#batchDate').val() !== '';
-        const ready = items.length > 0 && !firstError && totalPayment > 0 && batchBanksLoaded && bankSelected && dateValid && !batchSubmissionInFlight;
+        const ready = items.length > 0 && !firstError && totalPayment > 0 && bankReady && dateValid && !batchSubmissionInFlight;
 
         $('#batchPaymentGrandTotal').text(formatCurrency(totalPayment));
         $('#batchPaymentAfterSummary').text('Sisa setelah pembayaran: ' + formatCurrency(totalAfter));
@@ -856,19 +878,14 @@
         $('#batchSubmitLabel').text(totalPayment > 0 ? 'Bayar ' + formatCurrency(totalPayment) : 'Proses Pembayaran');
         $('#batchPaymentAllocationError').toggleClass('d-none', firstError === '').text(firstError);
         $('#batchDate').toggleClass('is-invalid', !dateValid).attr('aria-invalid', dateValid ? 'false' : 'true');
-        $('#batchUserBankCode').toggleClass('is-invalid', batchBanksLoaded && !bankSelected).attr('aria-invalid', bankSelected ? 'false' : 'true');
+        $('#batchBankInfo').toggleClass('payment-bank-display-invalid', !bankReady);
         $('#submitBatchPaymentBtn').prop('disabled', !ready);
-
-        if (bankSelected) {
-            $('#batchBankStatus').text('Rekening siap digunakan.').toggleClass('text-danger', false).toggleClass('text-success', true);
-        } else {
-            $('#batchBankStatus').text('Pilih rekening sumber dana.').toggleClass('text-danger', false).toggleClass('text-success', false);
-        }
 
         let hint = 'Siap diproses sebagai satu batch pembayaran.';
         if (firstError) hint = 'Perbaiki nominal pembayaran yang ditandai.';
+        else if (bank.status === 'conflict') hint = 'Nota terpilih menggunakan rekening berbeda — bayar per kelompok rekening.';
+        else if (bank.status === 'missing') hint = 'Ada nota tanpa rekening bank — batalkan & generate ulang nota terkait.';
         else if (!dateValid) hint = 'Isi tanggal pembayaran.';
-        else if (!batchBanksLoaded || !bankSelected) hint = 'Pilih rekening sumber dana.';
         $('#batchSubmitHint').text(hint);
     }
 
@@ -895,7 +912,6 @@
         $('#batchSubmitIcon').toggleClass('d-none', isSubmitting);
         $('#batch-payment-modal [data-bs-dismiss]').prop('disabled', isSubmitting);
         $('#batchPaymentModeFull, #batchPaymentModeCustom, #batchDate, #batchDescription, .allocation-amount-input').prop('disabled', isSubmitting);
-        $('#batchUserBankCode').prop('disabled', isSubmitting || !batchBanksLoaded).trigger('change.select2');
         updateBatchPaymentSummary();
     }
 
@@ -928,6 +944,24 @@
             return;
         }
 
+        const bank = selectedPaymentBank();
+        if (bank.status === 'conflict') {
+            Swal.fire({
+                title: 'Rekening nota berbeda',
+                text: 'Nota terpilih menggunakan rekening bank yang berbeda. Batalkan pilihan lalu bayar nota per kelompok rekening.',
+                icon: 'warning',
+            });
+            return;
+        }
+        if (bank.status === 'missing') {
+            Swal.fire({
+                title: 'Nota tanpa rekening bank',
+                text: 'Nota ' + bank.firstNota + ' belum memiliki rekening. Batalkan nota lalu generate ulang dari menu Order Menunggu Nota.',
+                icon: 'warning',
+            });
+            return;
+        }
+
         batchRequestKey = generateRequestKey();
         items.forEach(function(item) {
             item.allocationAmount = item.remainingAmount;
@@ -936,11 +970,10 @@
         $('#batchDate').val(localDateValue());
         $('#batchDescription').val('');
         $('#batchDescriptionCount').text('0/255');
-        $('#batchUserBankCode').val('').trigger('change');
+        renderBatchBankInfo();
         renderBatchPaymentAllocations();
         setBatchPaymentSubmitting(false);
         $('#batch-payment-modal').modal('show');
-        loadBatchBankData(false);
     }
 
     $('input[name="paymentMode"]').on('change', applyBatchPaymentMode);
@@ -958,12 +991,9 @@
         updateBatchPaymentSummary();
     });
 
-    $('#batchDate, #batchUserBankCode').on('change', updateBatchPaymentSummary);
+    $('#batchDate').on('change', updateBatchPaymentSummary);
     $('#batchDescription').on('input', function() {
         $('#batchDescriptionCount').text(String($(this).val()).length + '/255');
-    });
-    $('#reloadBatchBanksBtn').on('click', function() {
-        loadBatchBankData(true);
     });
 
     $('#batch-payment-form').on('submit', function(event) {
@@ -973,7 +1003,8 @@
         if ($('#submitBatchPaymentBtn').prop('disabled') || batchSubmissionInFlight) return;
 
         const payload = batchPaymentPayload();
-        const selectedBankText = $('#batchUserBankCode option:selected').text();
+        const bank = selectedPaymentBank();
+        const selectedBankText = bank.status === 'ok' ? bank.label : '-';
         const totalPayment = payload.payments.reduce((t, p) => t + p.amount, 0);
         const confirmationHtml = '<strong>' + escapeHtml(formatCurrency(totalPayment)) + '</strong> untuk '
             + payload.payments.length + ' nota.<br>Sumber dana: ' + escapeHtml(selectedBankText)
@@ -1236,12 +1267,6 @@
 
         $(document).on('click', '.js-dp-nota-cancel', function() {
             confirmCancelNota(String($(this).attr('data-order-code') || ''));
-        });
-
-        // Select2 untuk modal bayar nota
-        $('#batchUserBankCode').select2({
-            dropdownParent: $('#batch-payment-modal'),
-            width: '100%',
         });
 
         // Select2 untuk dropdown "Tampilkan _MENU_ data" milik DataTables

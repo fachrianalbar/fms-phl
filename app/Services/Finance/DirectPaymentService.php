@@ -681,7 +681,16 @@ class DirectPaymentService
             ->whereNotNull('nota_number')
             ->get();
 
-        return $orderPayments->groupBy('nota_number')->map(function ($group, $notaNumber) {
+        // Lookup rekening bank per nota (bank dipilih saat generate nota di
+        // menu Order Menunggu Nota). Label dibutuhkan halaman Nota Belum
+        // Lunas untuk menampilkan rekening tanpa meminta user memilih lagi.
+        $notaBankLookup = $this->userBank
+            ->with('bank')
+            ->whereIn('code', $orderPayments->pluck('user_bank_code')->filter()->unique()->values()->all())
+            ->get()
+            ->keyBy('code');
+
+        return $orderPayments->groupBy('nota_number')->map(function ($group, $notaNumber) use ($notaBankLookup) {
             $orders = $group->pluck('order')->filter();
             $firstPayment = $group->first();
             $firstOrder = $orders->first();
@@ -770,6 +779,11 @@ class DirectPaymentService
                 'pph_rate' => $notaPphRate !== null ? (float) $notaPphRate : 0,
                 'payment_status' => $status,
                 'user_bank_code' => $firstPayment?->user_bank_code,
+                'user_bank' => isset($notaBankLookup[$firstPayment?->user_bank_code]) ? [
+                    'name' => $notaBankLookup[$firstPayment->user_bank_code]->bank->name ?? 'Bank',
+                    'account_number' => $notaBankLookup[$firstPayment->user_bank_code]->accountNumber ?? '',
+                    'account_name' => $notaBankLookup[$firstPayment->user_bank_code]->accountName ?? '',
+                ] : null,
                 'latest_batch_code' => $latestBatchCode,
             ];
         })->values();
@@ -1136,6 +1150,27 @@ class DirectPaymentService
         foreach ($orderPayments as $orderPayment) {
             if (! $orderPayment->order || (int) ($orderPayment->order->customer->isDo ?? 1) !== 0) {
                 throw new \DomainException('Nota hanya dapat dibayar untuk order customer non-DO yang valid.', 422);
+            }
+        }
+
+        // Bank nota dipilih saat generate nota (menu Order Menunggu Nota);
+        // pembayaran wajib mengikuti rekening nota tersebut agar user tidak
+        // perlu (dan tidak boleh) memilih rekening lain saat membayar.
+        foreach ($orderPayments->groupBy('nota_number') as $notaNumber => $notaRows) {
+            $notaBankCodes = $notaRows->pluck('user_bank_code')->unique()->values();
+
+            if ($notaBankCodes->count() > 1) {
+                throw new \DomainException('Nota ' . $notaNumber . ' memiliki data rekening tidak konsisten. Hubungi admin.', 422);
+            }
+
+            $notaBankCode = $notaBankCodes->first();
+
+            if (! $notaBankCode) {
+                throw new \DomainException('Nota ' . $notaNumber . ' belum memiliki rekening bank. Batalkan nota lalu generate ulang dari menu Order Menunggu Nota.', 422);
+            }
+
+            if ($notaBankCode !== $userBank->code) {
+                throw new \DomainException('Nota ' . $notaNumber . ' tercatat dengan rekening berbeda. Bayar nota sesuai rekening yang dipilih saat generate nota.', 422);
             }
         }
 

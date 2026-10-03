@@ -727,6 +727,29 @@
         font-variant-numeric: tabular-nums;
     }
 
+    .payment-bank-display {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 38px;
+        padding: 6px 12px;
+        border: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+        border-radius: 6px;
+        background: var(--vp-paper-soft, oklch(97% 0.008 250));
+        font-size: 13px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .payment-bank-display .mdi {
+        flex: 0 0 auto;
+    }
+
+    .payment-bank-display-invalid {
+        border-color: var(--vp-danger, oklch(58% 0.19 27));
+        color: var(--vp-danger, oklch(58% 0.19 27));
+    }
+
     .payment-bank-status {
         min-height: 18px;
         margin-top: 5px;
@@ -1703,17 +1726,10 @@
                             </div>
 
                             <div class="mb-2">
-                                <div class="d-flex align-items-center justify-content-between gap-2">
-                                    <label class="form-label fw-semibold mb-1" for="batchUserBankCode">Sumber dana <span class="text-danger">*</span></label>
-                                    <button class="btn btn-link btn-sm p-0 text-decoration-none d-none" type="button" id="reloadBatchBanksBtn">
-                                        <i class="mdi mdi-refresh" aria-hidden="true"></i> Muat ulang
-                                    </button>
-                                </div>
-                                <select class="js-example-basic form-select" name="userBankCode" id="batchUserBankCode" required disabled>
-                                    <option value="">Memuat rekening...</option>
-                                </select>
-                                <div class="payment-bank-status" id="batchBankStatus" role="status">Memuat rekening perusahaan...</div>
-                                <div class="invalid-feedback">Pilih rekening sumber dana.</div>
+                                <label class="form-label fw-semibold mb-1">Sumber dana <span class="text-muted fw-normal fs-11">(mengikuti rekening nota)</span></label>
+                                <input type="hidden" name="userBankCode" id="batchUserBankCode" value="">
+                                <div class="payment-bank-display" id="batchBankInfo"><span class="text-muted">-</span></div>
+                                <div class="payment-bank-status" id="batchBankStatus" role="status"></div>
                             </div>
 
                             <div>
@@ -1730,7 +1746,7 @@
                 </div>
 
                 <div class="modal-footer payment-review-footer">
-                    <div class="text-muted fs-12 me-auto" id="batchSubmitHint">Periksa alokasi dan pilih sumber dana.</div>
+                    <div class="text-muted fs-12 me-auto" id="batchSubmitHint">Periksa alokasi pembayaran.</div>
                     <button class="btn btn-light" type="button" data-bs-dismiss="modal">Kembali</button>
                     <button class="btn btn-success" type="submit" id="submitBatchPaymentBtn" disabled>
                         <span class="spinner-border spinner-border-sm me-1 d-none" id="batchSubmitSpinner" aria-hidden="true"></span>

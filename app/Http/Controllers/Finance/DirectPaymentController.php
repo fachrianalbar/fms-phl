@@ -686,8 +686,12 @@ class DirectPaymentController extends Controller
                 ->addColumn('select', function ($row) {
                     $orderCodes = $row->order_codes->implode(',');
                     $ariaLabel = 'Pilih nota ' . $row->nota_number . ' customer ' . $row->customer_name;
+                    $bankLabel = '-';
+                    if (!empty($row->user_bank)) {
+                        $bankLabel = ($row->user_bank['name'] ?? 'Bank') . ' · ' . ($row->user_bank['account_number'] ?? '-') . ' a/n ' . ($row->user_bank['account_name'] ?? '-');
+                    }
 
-                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-checkbox-type="payment" data-nota-date="' . e($row->nota_date ?? '') . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" aria-label="' . e($ariaLabel) . '"></div>';
+                    return '<div class="form-check d-flex justify-content-center"><input type="checkbox" class="form-check-input row-payment-checkbox" data-order-codes="' . e($orderCodes) . '" data-nota-number="' . e($row->nota_number) . '" data-customer-code="' . e($row->customer_code) . '" data-customer-name="' . e($row->customer_name) . '" data-billing-amount="' . $row->amount . '" data-paid-amount="' . $row->paid_amount . '" data-remaining-amount="' . $row->remaining_amount . '" data-checkbox-type="payment" data-nota-date="' . e($row->nota_date ?? '') . '" data-order-count="' . e($row->order_count) . '" data-payment-status="' . e($row->payment_status) . '" data-user-bank-code="' . e($row->user_bank_code ?? '') . '" data-user-bank-label="' . e($bankLabel) . '" aria-label="' . e($ariaLabel) . '"></div>';
                 })
                 ->addColumn('action', function ($row) {
                     $firstOrderCode = $row->order_codes->first();
