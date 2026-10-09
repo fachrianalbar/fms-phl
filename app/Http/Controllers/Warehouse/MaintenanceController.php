@@ -106,17 +106,7 @@ class MaintenanceController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
 
-        $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
-        $usedPurchaseIds = $this->getUsedPurchaseIds();
-        $conflictingIds = array_intersect($purchaseIds, $usedPurchaseIds);
-
-        if (! empty($conflictingIds)) {
-            $conflictingCodes = Purchase::whereIn('id', $conflictingIds)->pluck('code')->implode(', ');
-
-            return redirect()->back()
-                ->withInput()
-                ->with('fail', "Purchase Order {$conflictingCodes} sudah pernah digunakan pada maintenance lain.");
-        }
+        // Allow POs with remaining quantities to be reused across maintenance records
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
@@ -190,18 +180,7 @@ class MaintenanceController extends Controller
             return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
         }
 
-        $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
-        $usedPurchaseIds = $this->getUsedPurchaseIds($id);
-        $conflictingIds = array_intersect($purchaseIds, $usedPurchaseIds);
-
-        if (! empty($conflictingIds)) {
-            $conflictingCodes = Purchase::whereIn('id', $conflictingIds)->pluck('code')->implode(', ');
-
-            return redirect()->back()
-                ->withInput()
-                ->with('fail', "Purchase Order {$conflictingCodes} sudah pernah digunakan pada maintenance lain.");
-        }
-
+        // Allow POs with remaining quantities to be reused across maintenance records
         try {
             DB::beginTransaction();
 
@@ -438,12 +417,44 @@ class MaintenanceController extends Controller
             ->groupBy('itemCode')
             ->pluck('stock', 'itemCode');
 
+        $currentMaintenanceId = $request->current_maintenance_id ?? $request->maintenance_id;
+
+        // Jika mode edit, kembalikan stok fisik yang sedang digunakan oleh maintenance ini
+        if ($currentMaintenanceId) {
+            $currentUsedItems = DB::table('maintenance_detail')
+                ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
+                ->where('maintenance.id', $currentMaintenanceId)
+                ->whereNull('maintenance.deleted_at')
+                ->whereNull('maintenance_detail.deleted_at')
+                ->select('maintenance_detail.itemCode', DB::raw('SUM(maintenance_detail.qty) as totalQty'))
+                ->groupBy('maintenance_detail.itemCode')
+                ->pluck('totalQty', 'itemCode');
+
+            foreach ($currentUsedItems as $iCode => $uQty) {
+                $stockByItem[$iCode] = ((float) ($stockByItem[$iCode] ?? 0)) + (float) $uQty;
+            }
+        }
+
         // Jika filter purchase_ids dikirim (dari create/edit maintenance)
         if ($request->has('purchase_ids')) {
             $purchaseIds = array_filter((array) $request->input('purchase_ids', []));
 
             if (empty($purchaseIds)) {
                 return response()->json(['success' => true, 'data' => []]);
+            }
+
+            // Ambil alokasi FIFO dari maintenance saat ini jika sedang mode edit
+            $currentFifoByPd = collect();
+            if ($currentMaintenanceId) {
+                $currentFifoByPd = DB::table('maintenance_fifo')
+                    ->join('maintenance_detail', 'maintenance_detail.code', '=', 'maintenance_fifo.maintenanceDetailCode')
+                    ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
+                    ->where('maintenance.id', $currentMaintenanceId)
+                    ->whereNull('maintenance.deleted_at')
+                    ->whereNull('maintenance_detail.deleted_at')
+                    ->select('maintenance_fifo.purchaseDetailCode', DB::raw('SUM(maintenance_fifo.qty) as currentUsed'))
+                    ->groupBy('maintenance_fifo.purchaseDetailCode')
+                    ->pluck('currentUsed', 'purchaseDetailCode');
             }
 
             $purchaseCodes = Purchase::whereIn('id', $purchaseIds)->pluck('code');
@@ -455,7 +466,7 @@ class MaintenanceController extends Controller
             // Gabungkan item berdasarkan itemCode agar tidak duplikat bila ada di beberapa PO
             $grouped = $purchaseDetails->groupBy('itemCode');
 
-            $items = $grouped->map(function ($details, $itemCode) use ($stockByItem) {
+            $items = $grouped->map(function ($details, $itemCode) use ($stockByItem, $currentFifoByPd) {
                 $firstDetail = $details->first();
                 $item = $firstDetail->item;
 
@@ -464,19 +475,35 @@ class MaintenanceController extends Controller
                     return null;
                 }
 
-                $stock = (float) ($stockByItem[$itemCode] ?? 0);
+                // Hitung total sisa kuantitas untuk itemCode ini di seluruh PO terpilih
+                $remainingPoQty = 0;
+                foreach ($details as $d) {
+                    $nominal = (float) ($d->receivedQty ?: $d->qty);
+                    $used = (float) ($d->qtyUsed ?? 0);
+                    $curUsed = (float) ($currentFifoByPd->get($d->code) ?? 0);
+                    $effectiveUsed = max(0, $used - $curUsed);
+                    $remainingPoQty += max(0, $nominal - $effectiveUsed);
+                }
 
-                // Hanya item yang memiliki sisa stok positif (> 0)
-                if ($stock <= 0) {
+                // Jika sisa kuantitas pada PO terpilih sudah 0, item tidak bisa dipilih lagi
+                if ($remainingPoQty <= 0) {
                     return null;
                 }
 
+                $whStock = (float) ($stockByItem[$itemCode] ?? 0);
+                if ($whStock <= 0) {
+                    return null;
+                }
+
+                // Batas stok yang bisa dipakai: minimum antara sisa PO dan stok fisik gudang
+                $availableStock = min($remainingPoQty, $whStock);
                 $price = $firstDetail->price ?? (optional($item)->price ?? 0);
 
                 return [
                     'code' => $itemCode,
                     'name' => optional($item)->name ?? $itemCode,
-                    'stock' => $stock,
+                    'stock' => $availableStock,
+                    'remaining_po_qty' => $remainingPoQty,
                     'price' => $price,
                     'type' => optional($item)->type ?? Item::TYPE_PART,
                     'po_codes' => $details->pluck('purchaseCode')->unique()->values()->all(),
@@ -515,7 +542,7 @@ class MaintenanceController extends Controller
 
     /**
      * Get purchase orders (PO) by warehouse untuk dropdown "No PO" di form maintenance.
-     * Hanya menampilkan PO yang belum pernah digunakan dan memiliki stok suku cadang fisik > 0 (bukan jasa).
+     * Menampilkan PO yang masih memiliki sisa kuantitas suku cadang fisik > 0 dan stok fisik gudang > 0.
      */
     public function getPurchasesByWarehouse(Request $request)
     {
@@ -526,7 +553,6 @@ class MaintenanceController extends Controller
         }
 
         $currentMaintenanceId = $request->current_maintenance_id ?? $request->maintenance_id;
-        $usedPurchaseIds = $this->getUsedPurchaseIds($currentMaintenanceId);
 
         // 1. Ambil stok per item di gudang ini
         $stockByItem = StockTransaction::query()
@@ -536,7 +562,23 @@ class MaintenanceController extends Controller
             ->groupBy('itemCode')
             ->pluck('stock', 'itemCode');
 
-        // Item fisik suku cadang (bukan jasa) yang memiliki sisa stok positif (> 0)
+        // Jika mode edit, tambahkan kembali stok yang sedang digunakan oleh maintenance ini
+        if ($currentMaintenanceId) {
+            $currentDetails = DB::table('maintenance_detail')
+                ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
+                ->where('maintenance.id', $currentMaintenanceId)
+                ->whereNull('maintenance.deleted_at')
+                ->whereNull('maintenance_detail.deleted_at')
+                ->select('maintenance_detail.itemCode', DB::raw('SUM(maintenance_detail.qty) as totalQty'))
+                ->groupBy('maintenance_detail.itemCode')
+                ->pluck('totalQty', 'itemCode');
+
+            foreach ($currentDetails as $iCode => $usedQty) {
+                $stockByItem[$iCode] = ((float) ($stockByItem[$iCode] ?? 0)) + (float) $usedQty;
+            }
+        }
+
+        // Item fisik suku cadang (bukan jasa) yang memiliki sisa stok positif (> 0) di gudang
         $partItemCodes = Item::query()
             ->where('type', '!=', Item::TYPE_JASA)
             ->pluck('code')
@@ -546,16 +588,49 @@ class MaintenanceController extends Controller
             return (float) $s > 0 && in_array($code, $partItemCodes);
         })->keys()->toArray();
 
-        // 2. Ambil ID purchase yang memiliki minimal satu item suku cadang dengan stok > 0
-        $posWithStock = DB::table('purchase')
-            ->join('purchase_detail', 'purchase_detail.purchaseCode', '=', 'purchase.code')
+        // Jika mode edit, ambil qty FIFO yang dikonsumsi oleh maintenance saat ini per purchase_detail
+        $currentFifoByPd = collect();
+        if ($currentMaintenanceId) {
+            $currentFifoByPd = DB::table('maintenance_fifo')
+                ->join('maintenance_detail', 'maintenance_detail.code', '=', 'maintenance_fifo.maintenanceDetailCode')
+                ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
+                ->where('maintenance.id', $currentMaintenanceId)
+                ->whereNull('maintenance.deleted_at')
+                ->whereNull('maintenance_detail.deleted_at')
+                ->select('maintenance_fifo.purchaseDetailCode', DB::raw('SUM(maintenance_fifo.qty) as currentUsed'))
+                ->groupBy('maintenance_fifo.purchaseDetailCode')
+                ->pluck('currentUsed', 'purchaseDetailCode');
+        }
+
+        // 2. Ambil detail PO untuk gudang ini dan item fisik yang ada stok fisiknya di gudang
+        $details = DB::table('purchase_detail')
+            ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
             ->where('purchase.warehouseCode', $warehouseCode)
+            ->where(function ($q) {
+                $q->whereNull('purchase.is_direct')->orWhere('purchase.is_direct', 0);
+            })
             ->whereNull('purchase.deleted_at')
             ->whereNull('purchase_detail.deleted_at')
             ->whereIn('purchase_detail.itemCode', $validItemCodes)
-            ->distinct()
-            ->pluck('purchase.id')
-            ->toArray();
+            ->select(
+                'purchase.id as purchase_id',
+                'purchase_detail.code as pd_code',
+                'purchase_detail.itemCode',
+                'purchase_detail.qty',
+                'purchase_detail.receivedQty',
+                'purchase_detail.qtyUsed'
+            )
+            ->get();
+
+        // Filter: PO yang memiliki minimal satu item suku cadang dengan sisa kuantitas PO > 0
+        $posWithRemainingQty = $details->filter(function ($d) use ($currentFifoByPd) {
+            $nominalQty = (float) ($d->receivedQty ?: $d->qty);
+            $qtyUsed = (float) ($d->qtyUsed ?? 0);
+            $currentUsed = (float) ($currentFifoByPd->get($d->pd_code) ?? 0);
+            $effectiveQtyUsed = max(0, $qtyUsed - $currentUsed);
+
+            return ($nominalQty - $effectiveQtyUsed) > 0;
+        })->pluck('purchase_id')->unique()->toArray();
 
         // Jika mode edit, pastikan PO milik maintenance saat ini tetap diikutsertakan
         $currentMaintenancePurchaseIds = [];
@@ -566,19 +641,15 @@ class MaintenanceController extends Controller
                 ->toArray();
         }
 
+        $allowedPurchaseIds = array_unique(array_merge($posWithRemainingQty, $currentMaintenancePurchaseIds));
+
         $purchases = Purchase::query()
             ->with('supplier')
             ->where('warehouseCode', $warehouseCode)
             ->where(function ($q) {
                 $q->whereNull('is_direct')->orWhere('is_direct', 0);
             })
-            ->whereNotIn('id', $usedPurchaseIds)
-            ->where(function ($q) use ($posWithStock, $currentMaintenancePurchaseIds) {
-                $q->whereIn('id', $posWithStock);
-                if (! empty($currentMaintenancePurchaseIds)) {
-                    $q->orWhereIn('id', $currentMaintenancePurchaseIds);
-                }
-            })
+            ->whereIn('id', $allowedPurchaseIds)
             ->orderByDesc('date')
             ->orderByDesc('code')
             ->get()
@@ -598,36 +669,10 @@ class MaintenanceController extends Controller
     }
 
     /**
-     * Ambil list ID Purchase (PO) yang sudah pernah digunakan pada maintenance lain.
+     * Helper list ID Purchase yang sudah pernah digunakan (deprecated, kept for compatibility).
      */
     protected function getUsedPurchaseIds(?string $excludeMaintenanceId = null): array
     {
-        // 1. PO yang sudah tersimpan di pivot maintenance_purchase pada maintenance aktif
-        $usedInMaintenanceQuery = DB::table('maintenance_purchase')
-            ->join('maintenance', 'maintenance.id', '=', 'maintenance_purchase.maintenance_id')
-            ->whereNull('maintenance.deleted_at');
-
-        if ($excludeMaintenanceId) {
-            $usedInMaintenanceQuery->where('maintenance_purchase.maintenance_id', '!=', $excludeMaintenanceId);
-        }
-
-        $usedInMaintenance = $usedInMaintenanceQuery->pluck('maintenance_purchase.purchase_id');
-
-        // 2. PO yang sudah pernah dikonsumsi di maintenance_fifo pada maintenance aktif
-        $usedInFifoQuery = DB::table('maintenance_fifo')
-            ->join('maintenance_detail', 'maintenance_detail.code', '=', 'maintenance_fifo.maintenanceDetailCode')
-            ->join('maintenance', 'maintenance.code', '=', 'maintenance_detail.maintenanceCode')
-            ->join('purchase_detail', 'purchase_detail.code', '=', 'maintenance_fifo.purchaseDetailCode')
-            ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
-            ->whereNull('maintenance.deleted_at')
-            ->whereNull('purchase.deleted_at');
-
-        if ($excludeMaintenanceId) {
-            $usedInFifoQuery->where('maintenance.id', '!=', $excludeMaintenanceId);
-        }
-
-        $usedInFifo = $usedInFifoQuery->pluck('purchase.id');
-
-        return $usedInMaintenance->concat($usedInFifo)->unique()->filter()->values()->toArray();
+        return [];
     }
 }

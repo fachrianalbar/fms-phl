@@ -6,6 +6,7 @@ use App\Helpers\GenerateCode;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Inventory\Warehouse;
+use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Models\Warehouse\Maintenance;
@@ -108,6 +109,10 @@ class MaintenanceService
         // 2. Jika ada item digunakan
         if (isset($request->itemCode)) {
             $filtered = Arr::only($request->all(), ['itemCode', 'qty', 'description']);
+            $selectedPurchaseIds = array_filter((array) $request->input('purchase_ids', []));
+            $selectedPurchaseCodes = ! empty($selectedPurchaseIds)
+                ? Purchase::whereIn('id', $selectedPurchaseIds)->pluck('code')->toArray()
+                : [];
 
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $itemCode = $filtered['itemCode'][$i];
@@ -148,12 +153,16 @@ class MaintenanceService
                     continue;
                 }
 
-                // 5. Alokasikan FIFO dan simpan ke MaintenanceFifo
+                // 5. Alokasikan FIFO dari PO yang dipilih dan simpan ke MaintenanceFifo
                 $remainingQty = $requestedQty;
-                $fifoPurchases = PurchaseDetail::query()->where('itemCode', $itemCode)
-                    ->whereColumn('qtyUsed', '<', 'receivedQty')
-                    ->orderBy('created_at')
-                    ->get();
+                $fifoQuery = PurchaseDetail::query()->where('itemCode', $itemCode)
+                    ->whereRaw('COALESCE(qtyUsed, 0) < COALESCE(receivedQty, qty, 0)');
+
+                if (! empty($selectedPurchaseCodes)) {
+                    $fifoQuery->whereIn('purchaseCode', $selectedPurchaseCodes);
+                }
+
+                $fifoPurchases = $fifoQuery->orderBy('created_at')->get();
 
                 /** @var PurchaseDetail $purchase */
                 foreach ($fifoPurchases as $purchase) {
@@ -161,10 +170,17 @@ class MaintenanceService
                         break;
                     }
 
-                    $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                    $nominalQty = (float) ($purchase->receivedQty ?: $purchase->qty);
+                    $currentUsed = (float) ($purchase->qtyUsed ?? 0);
+                    $availableQty = max(0, $nominalQty - $currentUsed);
+
+                    if ($availableQty <= 0) {
+                        continue;
+                    }
+
                     $useQty = min($remainingQty, $availableQty);
 
-                    $purchase->qtyUsed += $useQty;
+                    $purchase->qtyUsed = $currentUsed + $useQty;
                     $purchase->save();
 
                     MaintenanceFifo::create([
@@ -175,6 +191,10 @@ class MaintenanceService
                     ]);
 
                     $remainingQty -= $useQty;
+                }
+
+                if ($remainingQty > 0) {
+                    throw new \Exception("Kuantitas untuk item {$itemCode} melebihi sisa kuantitas yang tersedia pada PO terpilih.");
                 }
 
                 // 6. Update stok keluar
@@ -303,11 +323,20 @@ class MaintenanceService
                     continue;
                 }
 
-                // Ambil batch dari purchase_detail
-                $purchaseDetails = PurchaseDetail::query()->where('itemCode', $itemCode)
-                    ->where('status', 1)
-                    ->orderBy('created_at', 'asc')
-                    ->get();
+                // Ambil batch dari purchase_detail sesuai PO terpilih
+                $selectedPurchaseIds = array_filter((array) $request->input('purchase_ids', []));
+                $selectedPurchaseCodes = ! empty($selectedPurchaseIds)
+                    ? Purchase::whereIn('id', $selectedPurchaseIds)->pluck('code')->toArray()
+                    : [];
+
+                $purchaseQuery = PurchaseDetail::query()->where('itemCode', $itemCode)
+                    ->whereRaw('COALESCE(qtyUsed, 0) < COALESCE(receivedQty, qty, 0)');
+
+                if (! empty($selectedPurchaseCodes)) {
+                    $purchaseQuery->whereIn('purchaseCode', $selectedPurchaseCodes);
+                }
+
+                $purchaseDetails = $purchaseQuery->orderBy('created_at', 'asc')->get();
 
                 $remainingQty = $qty;
 
@@ -316,7 +345,10 @@ class MaintenanceService
                         break;
                     }
 
-                    $availableQty = $purchase->receivedQty - $purchase->qtyUsed;
+                    $nominalQty = (float) ($purchase->receivedQty ?: $purchase->qty);
+                    $currentUsed = (float) ($purchase->qtyUsed ?? 0);
+                    $availableQty = max(0, $nominalQty - $currentUsed);
+
                     if ($availableQty <= 0) {
                         continue;
                     }
@@ -334,6 +366,10 @@ class MaintenanceService
                     ]);
 
                     $remainingQty -= $useQty;
+                }
+
+                if ($remainingQty > 0) {
+                    throw new \Exception("Kuantitas untuk item {$itemCode} melebihi sisa kuantitas yang tersedia pada PO terpilih.");
                 }
 
                 Stock::query()->where('itemCode', $itemCode)

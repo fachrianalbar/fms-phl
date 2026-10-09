@@ -555,7 +555,7 @@
                                 @endforeach
                             </select>
                             <small class="text-muted d-block mt-1">
-                                <i class="mdi mdi-information-outline me-1"></i>Pilih nomor PO pengadaan yang terkait dengan pengerjaan ini. Hanya PO milik maintenance ini dan PO lain yang memiliki stok tersedia yang ditampilkan.
+                                <i class="mdi mdi-information-outline me-1"></i>Pilih nomor PO pengadaan yang terkait dengan pengerjaan ini. Selama suku cadang pada PO masih memiliki sisa kuantitas dan stok fisik tersedia di gudang, PO akan tetap dapat digunakan.
                             </small>
                         </div>
                     </div>
@@ -787,9 +787,9 @@
                             }
                             html += `<option value="${p.id}">${label}</option>`;
                         });
-                        $('#po-status-hint').text(`${totalPo} PO tersedia`);
+                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part)`);
                     } else {
-                        $('#po-status-hint').text('Tidak ada PO pada gudang ini');
+                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang fisik pada gudang ini');
                     }
 
                     $('#purchase_ids').html(html).prop('disabled', false).val(selectedIds).trigger('change');
@@ -814,7 +814,8 @@
                 method: 'GET',
                 data: {
                     warehouseCode: warehouseCode,
-                    purchase_ids: purchaseIds
+                    purchase_ids: purchaseIds,
+                    current_maintenance_id: '{{ $data->id }}'
                 },
                 success: function(response) {
                     if (response.success) {

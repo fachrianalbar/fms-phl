@@ -607,7 +607,7 @@
                             <select class="form-select" name="purchase_ids[]" id="purchase_ids" multiple="multiple" required disabled>
                             </select>
                             <small class="text-muted d-block mt-1">
-                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang ini. Hanya PO yang memiliki stok suku cadang fisik tersedia (> 0, bukan jasa) dan belum pernah digunakan yang ditampilkan.
+                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang ini. Selama suku cadang pada PO masih memiliki sisa kuantitas dan stok fisik tersedia di gudang, PO akan tetap dapat digunakan.
                             </small>
                         </div>
                     </div>
@@ -842,9 +842,9 @@
                             }
                             html += `<option value="${p.id}">${label}</option>`;
                         });
-                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada stok part)`);
+                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part)`);
                     } else {
-                        $('#po-status-hint').text('Tidak ada PO dengan stok suku cadang fisik pada gudang ini');
+                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang fisik pada gudang ini');
                     }
 
                     $('#purchase_ids').html(html).prop('disabled', false).trigger('change');
