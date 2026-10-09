@@ -53,7 +53,7 @@ class MaintenanceController extends Controller
         $this->warehouseSvc = $warehouseSvc;
         $this->title = 'Maintenance';
         $this->menuSvc = $menuSvc->getByName('Maintenance');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') == 'en' ? ($this->menuSvc?->name ?? 'Maintenance') : ($this->menuSvc?->nama ?? 'Perawatan');
         $this->view = 'warehouse.maintenance.';
     }
 
