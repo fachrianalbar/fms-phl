@@ -149,11 +149,7 @@ class MaintenanceService
                     'description' => $filtered['description'][$i] ?? null,
                 ]);
 
-                if ($isJasa) {
-                    continue;
-                }
-
-                // 5. Alokasikan FIFO dari PO yang dipilih dan simpan ke MaintenanceFifo
+                // 5. Alokasikan FIFO dari PO yang dipilih dan simpan ke MaintenanceFifo (baik part maupun jasa)
                 $remainingQty = $requestedQty;
                 $fifoQuery = PurchaseDetail::query()->where('itemCode', $itemCode)
                     ->whereRaw('COALESCE(qtyUsed, 0) < COALESCE(receivedQty, qty, 0)');
@@ -197,21 +193,23 @@ class MaintenanceService
                     throw new \Exception("Kuantitas untuk item {$itemCode} melebihi sisa kuantitas yang tersedia pada PO terpilih.");
                 }
 
-                // 6. Update stok keluar
-                Stock::query()->where('itemCode', $itemCode)->increment('stockOut', $requestedQty);
+                // 6. Update stok keluar dan transaksi stok hanya jika BUKAN jasa
+                if (! $isJasa) {
+                    Stock::query()->where('itemCode', $itemCode)->increment('stockOut', $requestedQty);
 
-                // 7. Buat StockTransaction
-                StockTransaction::create([
-                    'code' => GenerateCode::generateCode('FST', true),
-                    'itemCode' => $itemCode,
-                    'qtyIn' => 0,
-                    'qtyOut' => $requestedQty,
-                    'transactionCode' => $data->code,
-                    'transactionDetailCode' => $detail->code,
-                    'date' => $request->date.' '.$request->time,
-                    'transactionType' => 'OUT',
-                    'warehouseCode' => $warehouseCode,
-                ]);
+                    // 7. Buat StockTransaction
+                    StockTransaction::create([
+                        'code' => GenerateCode::generateCode('FST', true),
+                        'itemCode' => $itemCode,
+                        'qtyIn' => 0,
+                        'qtyOut' => $requestedQty,
+                        'transactionCode' => $data->code,
+                        'transactionDetailCode' => $detail->code,
+                        'date' => $request->date.' '.$request->time,
+                        'transactionType' => 'OUT',
+                        'warehouseCode' => $warehouseCode,
+                    ]);
+                }
             }
         }
 
@@ -259,22 +257,22 @@ class MaintenanceService
 
                 if ($md) {
                     $detailMap[$itemCode] = $md;
-                    $shouldRollbackInventory = optional($md->item)->type !== Item::TYPE_JASA;
+                    $isJasa = optional($md->item)->type === Item::TYPE_JASA;
 
-                    if ($shouldRollbackInventory) {
-                        // Ambil semua fifo terkait detail ini
-                        $fifos = MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)->get();
+                    // Ambil semua fifo terkait detail ini (baik part maupun jasa)
+                    $fifos = MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)->get();
 
-                        foreach ($fifos as $fifo) {
-                            PurchaseDetail::query()->where('code', $fifo->purchaseDetailCode)
-                                ->decrement('qtyUsed', $fifo->qty);
-                        }
+                    foreach ($fifos as $fifo) {
+                        PurchaseDetail::query()->where('code', $fifo->purchaseDetailCode)
+                            ->decrement('qtyUsed', $fifo->qty);
+                    }
 
-                        // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
-                        MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)
-                                ->update(['qty' => 0]);
+                    // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
+                    MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)
+                            ->update(['qty' => 0]);
 
-                        // Reset stockOut
+                    // Reset stockOut hanya jika BUKAN jasa
+                    if (! $isJasa) {
                         Stock::query()->where('itemCode', $itemCode)
                             ->decrement('stockOut', $md->qty);
                     }
@@ -319,11 +317,7 @@ class MaintenanceService
                     ]);
                 }
 
-                if ($isJasa) {
-                    continue;
-                }
-
-                // Ambil batch dari purchase_detail sesuai PO terpilih
+                // Ambil batch dari purchase_detail sesuai PO terpilih (baik part maupun jasa)
                 $selectedPurchaseIds = array_filter((array) $request->input('purchase_ids', []));
                 $selectedPurchaseCodes = ! empty($selectedPurchaseIds)
                     ? Purchase::whereIn('id', $selectedPurchaseIds)->pluck('code')->toArray()
@@ -372,20 +366,23 @@ class MaintenanceService
                     throw new \Exception("Kuantitas untuk item {$itemCode} melebihi sisa kuantitas yang tersedia pada PO terpilih.");
                 }
 
-                Stock::query()->where('itemCode', $itemCode)
-                    ->increment('stockOut', $qty);
+                // Update stok keluar dan transaksi stok hanya jika BUKAN jasa
+                if (! $isJasa) {
+                    Stock::query()->where('itemCode', $itemCode)
+                        ->increment('stockOut', $qty);
 
-                StockTransaction::updateOrCreate(
-                    ['transactionDetailCode' => $detail->code],
-                    [
-                        'itemCode' => $itemCode,
-                        'qtyIn' => 0,
-                        'qtyOut' => $qty,
-                        'date' => $request->date.' '.$request->time,
-                        'transactionType' => 'OUT',
-                        'warehouseCode' => $maintenanceData->warehouseCode,
-                    ]
-                );
+                    StockTransaction::updateOrCreate(
+                        ['transactionDetailCode' => $detail->code],
+                        [
+                            'itemCode' => $itemCode,
+                            'qtyIn' => 0,
+                            'qtyOut' => $qty,
+                            'date' => $request->date.' '.$request->time,
+                            'transactionType' => 'OUT',
+                            'warehouseCode' => $maintenanceData->warehouseCode,
+                        ]
+                    );
+                }
             }
         }
 
@@ -404,11 +401,7 @@ class MaintenanceService
         foreach ($data->details as $item) {
             $isJasa = optional($item->item)->type === Item::TYPE_JASA;
 
-            if ($isJasa) {
-                continue;
-            }
-
-            // 1. Rollback FIFO
+            // 1. Rollback FIFO (baik part maupun jasa)
             $fifos = MaintenanceFifo::query()->where('maintenanceDetailCode', $item->code)->get();
             foreach ($fifos as $fifo) {
                 PurchaseDetail::query()->where('code', $fifo->purchaseDetailCode)
@@ -418,11 +411,11 @@ class MaintenanceService
             // 2. Hapus data FIFO terkait
             MaintenanceFifo::query()->where('maintenanceDetailCode', $item->code)->delete();
 
-            // 3. Update stok keluar
-            Stock::query()->where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
-
-            // 4. Hapus transaksi stok
-            StockTransaction::query()->where('transactionDetailCode', $item->code)->delete();
+            // 3. Update stok keluar & hapus transaksi stok hanya jika BUKAN jasa
+            if (! $isJasa) {
+                Stock::query()->where('itemCode', $item->item->code)->decrement('stockOut', $item->qty);
+                StockTransaction::query()->where('transactionDetailCode', $item->code)->delete();
+            }
         }
 
         // 5. Hapus detail maintenance

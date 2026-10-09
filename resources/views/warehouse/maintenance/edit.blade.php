@@ -555,7 +555,7 @@
                                 @endforeach
                             </select>
                             <small class="text-muted d-block mt-1">
-                                <i class="mdi mdi-information-outline me-1"></i>Pilih nomor PO pengadaan yang terkait dengan pengerjaan ini. Selama suku cadang pada PO masih memiliki sisa kuantitas dan stok fisik tersedia di gudang, PO akan tetap dapat digunakan.
+                                <i class="mdi mdi-information-outline me-1"></i>Pilih nomor PO pengadaan yang terkait dengan pengerjaan ini. Selama item part / jasa pada PO masih memiliki sisa kuantitas, PO akan tetap dapat digunakan.
                             </small>
                         </div>
                     </div>
@@ -787,9 +787,9 @@
                             }
                             html += `<option value="${p.id}">${label}</option>`;
                         });
-                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part)`);
+                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part / jasa)`);
                     } else {
-                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang fisik pada gudang ini');
+                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang / jasa pada gudang ini');
                     }
 
                     $('#purchase_ids').html(html).prop('disabled', false).val(selectedIds).trigger('change');
@@ -836,7 +836,7 @@
                             }
                             let isJasa = foundItem.type === 'jasa';
                             $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-                            $(`#qty_exist_${row}`).val(isJasa ? 999999 : parseFloat(foundItem.stock));
+                            $(`#qty_exist_${row}`).val(parseFloat(foundItem.stock));
                         });
                     } else {
                         swal({
@@ -849,7 +849,7 @@
                 error: function() {
                     swal({
                         title: "{{ __('general.error') }}",
-                        text: "Gagal memuat daftar suku cadang dari gudang.",
+                        text: "Gagal memuat daftar suku cadang / jasa dari gudang.",
                         icon: "error",
                     });
                 }
@@ -865,7 +865,7 @@
             let itemType = foundItem ? foundItem.type : $(`#itemCode_${row} option:selected`).data('type');
 
             $(`#item_type_${row}`).val(itemType === 'jasa' ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(itemType === 'jasa' ? 999999 : parseFloat(itemQty));
+            $(`#qty_exist_${row}`).val(parseFloat(itemQty));
             $(`#price_${row}`).val(new Intl.NumberFormat('id-ID').format(itemPrice));
             let qty = parseFloat($(`#qty_${row}`).val()) || 0;
             let total = qty * parseFloat(itemPrice || 0);
@@ -877,7 +877,7 @@
         function buildItemOptionsHtml() {
             let html = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
             dataItem.forEach(i => {
-                const typeBadge = i.type === 'jasa' ? '[JASA]' : `[Stok: ${i.stock}]`;
+                const typeBadge = i.type === 'jasa' ? `[JASA: ${i.stock}]` : `[Stok: ${i.stock}]`;
                 html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
             });
             return html;
@@ -971,7 +971,7 @@
             if (dataItem.length === 0) {
                 swal({
                     title: "{{ __('general.warning') }}",
-                    text: "PO yang dipilih tidak memiliki item suku cadang dengan stok tersedia.",
+                    text: "PO yang dipilih tidak memiliki item suku cadang / jasa dengan sisa kuantitas tersedia.",
                     icon: "warning",
                 });
                 return;
@@ -1063,11 +1063,13 @@
                 let itemName = $(this).find('select[name="itemCode[]"] option:selected').data('name') || code;
                 let itemType = $(this).find('input[name="item_type[]"]').val();
 
-                let totalAvailable = qtyExisting + originalQty;
+                let totalAvailable = qtyExisting > 0 ? qtyExisting : originalQty;
 
-                if (itemType !== 'jasa' && qtyInput > totalAvailable) {
+                if (qtyInput > totalAvailable) {
                     isValid = false;
-                    errorMessage = `Kuantitas item "${itemName}" melebihi stok yang tersedia (${totalAvailable}).`;
+                    errorMessage = itemType === 'jasa'
+                        ? `Kuantitas jasa "${itemName}" (${qtyInput}) melebihi sisa kuantitas pada PO terpilih (${totalAvailable}).`
+                        : `Kuantitas item "${itemName}" (${qtyInput}) melebihi stok yang tersedia (${totalAvailable}).`;
                     return false;
                 }
 

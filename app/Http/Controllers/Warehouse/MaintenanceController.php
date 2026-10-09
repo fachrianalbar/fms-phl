@@ -211,15 +211,7 @@ class MaintenanceController extends Controller
         $md = MaintenanceDetail::where('id', $id)->firstOrFail();
         $isJasa = optional($md->item)->type === \App\Models\Inventory\Item::TYPE_JASA;
 
-        if ($isJasa) {
-            $maintenanceId = $md->maintenance->id;
-            $md->delete();
-
-            return redirect()->route($this->view . 'edit', $maintenanceId)
-                ->with('success', 'Delete Data Success');
-        }
-
-        // Rollback qtyUsed pada PurchaseDetail berdasarkan FIFO
+        // Rollback qtyUsed pada PurchaseDetail berdasarkan FIFO (baik part maupun jasa)
         $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
         foreach ($fifos as $fifo) {
             PurchaseDetail::where('code', $fifo->purchaseDetailCode)
@@ -229,12 +221,14 @@ class MaintenanceController extends Controller
         // Hapus data MaintenanceFifo terkait
         MaintenanceFifo::where('maintenanceDetailCode', $md->code)->delete();
 
-        // Update stok keluar
-        Stock::where('itemCode', $md->itemCode)
-            ->decrement('stockOut', $md->qty);
+        if (! $isJasa) {
+            // Update stok keluar
+            Stock::where('itemCode', $md->itemCode)
+                ->decrement('stockOut', $md->qty);
 
-        // Hapus transaksi stok
-        StockTransaction::where('transactionDetailCode', $md->code)->delete();
+            // Hapus transaksi stok
+            StockTransaction::where('transactionDetailCode', $md->code)->delete();
+        }
 
         // Hapus detail maintenance
         $maintenanceId = $md->maintenance->id;
@@ -469,11 +463,7 @@ class MaintenanceController extends Controller
             $items = $grouped->map(function ($details, $itemCode) use ($stockByItem, $currentFifoByPd) {
                 $firstDetail = $details->first();
                 $item = $firstDetail->item;
-
-                // Hanya item fisik suku cadang, bukan jasa
-                if (optional($item)->type === Item::TYPE_JASA) {
-                    return null;
-                }
+                $isJasa = optional($item)->type === Item::TYPE_JASA;
 
                 // Hitung total sisa kuantitas untuk itemCode ini di seluruh PO terpilih
                 $remainingPoQty = 0;
@@ -490,13 +480,19 @@ class MaintenanceController extends Controller
                     return null;
                 }
 
-                $whStock = (float) ($stockByItem[$itemCode] ?? 0);
-                if ($whStock <= 0) {
-                    return null;
+                if ($isJasa) {
+                    // Jasa tidak memerlukan stok fisik di gudang, batasnya adalah sisa kuantitas PO
+                    $availableStock = $remainingPoQty;
+                } else {
+                    $whStock = (float) ($stockByItem[$itemCode] ?? 0);
+                    if ($whStock <= 0) {
+                        return null;
+                    }
+
+                    // Batas stok yang bisa dipakai: minimum antara sisa PO dan stok fisik gudang
+                    $availableStock = min($remainingPoQty, $whStock);
                 }
 
-                // Batas stok yang bisa dipakai: minimum antara sisa PO dan stok fisik gudang
-                $availableStock = min($remainingPoQty, $whStock);
                 $price = $firstDetail->price ?? (optional($item)->price ?? 0);
 
                 return [
@@ -542,7 +538,7 @@ class MaintenanceController extends Controller
 
     /**
      * Get purchase orders (PO) by warehouse untuk dropdown "No PO" di form maintenance.
-     * Menampilkan PO yang masih memiliki sisa kuantitas suku cadang fisik > 0 dan stok fisik gudang > 0.
+     * Menampilkan PO yang masih memiliki sisa kuantitas suku cadang fisik / jasa > 0.
      */
     public function getPurchasesByWarehouse(Request $request)
     {
@@ -584,9 +580,17 @@ class MaintenanceController extends Controller
             ->pluck('code')
             ->toArray();
 
-        $validItemCodes = $stockByItem->filter(function ($s, $code) use ($partItemCodes) {
+        $validPartItemCodes = $stockByItem->filter(function ($s, $code) use ($partItemCodes) {
             return (float) $s > 0 && in_array($code, $partItemCodes);
         })->keys()->toArray();
+
+        // Item jasa (tidak memerlukan stok fisik di gudang)
+        $jasaItemCodes = Item::query()
+            ->where('type', Item::TYPE_JASA)
+            ->pluck('code')
+            ->toArray();
+
+        $allowedItemCodes = array_merge($validPartItemCodes, $jasaItemCodes);
 
         // Jika mode edit, ambil qty FIFO yang dikonsumsi oleh maintenance saat ini per purchase_detail
         $currentFifoByPd = collect();
@@ -602,7 +606,7 @@ class MaintenanceController extends Controller
                 ->pluck('currentUsed', 'purchaseDetailCode');
         }
 
-        // 2. Ambil detail PO untuk gudang ini dan item fisik yang ada stok fisiknya di gudang
+        // 2. Ambil detail PO untuk gudang ini dan item fisik yang ada stok fisiknya di gudang ATAU item jasa
         $details = DB::table('purchase_detail')
             ->join('purchase', 'purchase.code', '=', 'purchase_detail.purchaseCode')
             ->where('purchase.warehouseCode', $warehouseCode)
@@ -611,7 +615,7 @@ class MaintenanceController extends Controller
             })
             ->whereNull('purchase.deleted_at')
             ->whereNull('purchase_detail.deleted_at')
-            ->whereIn('purchase_detail.itemCode', $validItemCodes)
+            ->whereIn('purchase_detail.itemCode', $allowedItemCodes)
             ->select(
                 'purchase.id as purchase_id',
                 'purchase_detail.code as pd_code',
@@ -622,7 +626,7 @@ class MaintenanceController extends Controller
             )
             ->get();
 
-        // Filter: PO yang memiliki minimal satu item suku cadang dengan sisa kuantitas PO > 0
+        // Filter: PO yang memiliki minimal satu item suku cadang / jasa dengan sisa kuantitas PO > 0
         $posWithRemainingQty = $details->filter(function ($d) use ($currentFifoByPd) {
             $nominalQty = (float) ($d->receivedQty ?: $d->qty);
             $qtyUsed = (float) ($d->qtyUsed ?? 0);

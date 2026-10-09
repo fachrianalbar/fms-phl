@@ -607,7 +607,7 @@
                             <select class="form-select" name="purchase_ids[]" id="purchase_ids" multiple="multiple" required disabled>
                             </select>
                             <small class="text-muted d-block mt-1">
-                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang ini. Selama suku cadang pada PO masih memiliki sisa kuantitas dan stok fisik tersedia di gudang, PO akan tetap dapat digunakan.
+                                <i class="mdi mdi-information-outline me-1"></i>Pilih satu atau lebih PO asal pengadaan suku cadang / jasa ini. Selama item part / jasa pada PO masih memiliki sisa kuantitas, PO akan tetap dapat digunakan.
                             </small>
                         </div>
                     </div>
@@ -842,9 +842,9 @@
                             }
                             html += `<option value="${p.id}">${label}</option>`;
                         });
-                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part)`);
+                        $('#po-status-hint').text(`${totalPo} PO tersedia (ada sisa part / jasa)`);
                     } else {
-                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang fisik pada gudang ini');
+                        $('#po-status-hint').text('Tidak ada PO dengan sisa suku cadang / jasa pada gudang ini');
                     }
 
                     $('#purchase_ids').html(html).prop('disabled', false).trigger('change');
@@ -894,7 +894,7 @@
                         if (dataItem.length === 0) {
                             swal({
                                 title: "{{ __('general.warning') }}",
-                                text: 'PO yang dipilih tidak memiliki item suku cadang dengan stok tersedia.',
+                                text: 'PO yang dipilih tidak memiliki item suku cadang / jasa dengan sisa kuantitas tersedia.',
                                 icon: "warning",
                             });
                         }
@@ -909,7 +909,7 @@
                 error: function() {
                     swal({
                         title: "{{ __('general.error') }}",
-                        text: "Gagal memuat daftar suku cadang dari PO terpilih.",
+                        text: "Gagal memuat daftar suku cadang / jasa dari PO terpilih.",
                         icon: "error",
                     });
                 }
@@ -920,7 +920,7 @@
         function buildItemOptionsHtml() {
             let html = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
             dataItem.forEach(i => {
-                const typeBadge = i.type === 'jasa' ? '[JASA]' : `[Stok: ${i.stock}]`;
+                const typeBadge = i.type === 'jasa' ? `[JASA: ${i.stock}]` : `[Stok: ${i.stock}]`;
                 html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
             });
             return html;
@@ -978,12 +978,12 @@
             let isJasa = itemType === 'jasa' || (foundItem && foundItem.type === 'jasa');
 
             $(`#item_type_${row}`).val(isJasa ? 'jasa' : 'part');
-            $(`#qty_exist_${row}`).val(isJasa ? 999999 : itemQty);
+            $(`#qty_exist_${row}`).val(itemQty);
 
             // Update visual stock badge
             let stockHtml = '';
             if (isJasa) {
-                stockHtml = '<span class="stock-pill stock-jasa"><i class="mdi mdi-account-wrench me-1"></i>Jasa</span>';
+                stockHtml = `<span class="stock-pill stock-jasa"><i class="mdi mdi-account-wrench me-1"></i>Jasa (${itemQty})</span>`;
             } else if (itemQty > 5) {
                 stockHtml = `<span class="stock-pill stock-safe"><i class="mdi mdi-check-circle-outline me-1"></i>${itemQty}</span>`;
             } else if (itemQty > 0) {
@@ -1011,7 +1011,7 @@
             const qty = parseFloat(qtyInput.val()) || 0;
             const availableStock = parseFloat($(`#qty_exist_${row}`).val()) || 0;
 
-            if (!isJasa && qty > availableStock) {
+            if (qty > availableStock) {
                 qtyInput.addClass('is-invalid').css('border-color', '#ef4444');
             } else {
                 qtyInput.removeClass('is-invalid').css('border-color', '');
@@ -1227,9 +1227,11 @@
                     return false;
                 }
 
-                if (itemType !== 'jasa' && qtyInput > qtyExisting) {
+                if (qtyInput > qtyExisting) {
                     isValid = false;
-                    errorMessage = `Kuantitas item "${itemName}" (${qtyInput}) melebihi stok yang tersedia di gudang (${qtyExisting}).`;
+                    errorMessage = itemType === 'jasa'
+                        ? `Kuantitas jasa "${itemName}" (${qtyInput}) melebihi sisa kuantitas pada PO terpilih (${qtyExisting}).`
+                        : `Kuantitas item "${itemName}" (${qtyInput}) melebihi stok yang tersedia di gudang (${qtyExisting}).`;
                     return false;
                 }
 
