@@ -255,23 +255,22 @@ class PurchasePaymentController extends Controller
             ->addIndexColumn()
             ->addColumn('purchaseDate', fn ($row) => $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '')
             ->addColumn('dueDateHtml', function ($row) {
-                if (! $row->dueDate) {
-                    return '<span class="text-muted">-</span>';
-                }
-
-                $due = Carbon::parse($row->dueDate);
+                $due = $this->effectiveDueDate($row);
                 $diff = now()->startOfDay()->diffInDays($due->copy()->startOfDay(), false);
                 $formatted = $due->format('d-M-Y');
+                $note = $this->isDueDateEstimated($row)
+                    ? '<small class="d-block text-muted fs-11">Estimasi dari tanggal PO</small>'
+                    : '';
 
                 if ($row->paymentStatus != 'Paid' && $diff < 0) {
-                    return '<span class="badge bg-danger-subtle text-danger">'.$formatted.'</span>';
+                    return '<span class="badge bg-danger-subtle text-danger">'.$formatted.'</span>'.$note;
                 }
 
                 if ($row->paymentStatus != 'Paid' && $diff <= 7) {
-                    return '<span class="badge bg-warning-subtle text-warning-emphasis">'.$formatted.'</span>';
+                    return '<span class="badge bg-warning-subtle text-warning-emphasis">'.$formatted.'</span>'.$note;
                 }
 
-                return $formatted;
+                return $formatted.$note;
             })
             ->addColumn('totalPrice', fn ($row) => number_format($this->service->billingOf($row), 0, ',', '.'))
             ->addColumn('paidAmount', fn ($row) => number_format((float) $row->paidAmount, 0, ',', '.'))
@@ -296,10 +295,12 @@ class PurchasePaymentController extends Controller
 
                 return '<span class="badge bg-secondary">Unpaid</span>';
             })
+            ->orderColumn('dueDateHtml', PurchasePaymentService::effectiveDueDateSql().' $1')
             ->rawColumns(['dueDateHtml', 'paymentStatusHtml'])
             ->setRowClass(function ($row) {
-                if ($row->dueDate && $row->paymentStatus != 'Paid') {
-                    $diff = now()->startOfDay()->diffInDays(Carbon::parse($row->dueDate)->startOfDay(), false);
+                if ($row->paymentStatus != 'Paid') {
+                    $due = $this->effectiveDueDate($row);
+                    $diff = now()->startOfDay()->diffInDays($due->copy()->startOfDay(), false);
 
                     if ($diff < 0) {
                         return 'table-danger';
@@ -313,6 +314,49 @@ class PurchasePaymentController extends Controller
                 return '';
             })
             ->toJson();
+    }
+
+    /**
+     * Tanggal jatuh tempo efektif sebuah pembelian.
+     *
+     * Memakai `dueDate` hanya bila tahunnya wajar (2020-2030); bila tidak
+     * (mis. 0026, 0206), jatuh tempo diperkirakan dari tanggal PO. Logika ini
+     * sejalan dengan PurchasePaymentService::effectiveDueDateSql() agar urutan
+     * tabel konsisten dengan yang ditampilkan.
+     */
+    protected function effectiveDueDate($row): Carbon
+    {
+        if ($row->dueDate) {
+            $due = Carbon::parse($row->dueDate);
+
+            if ($due->year >= 2020 && $due->year <= 2030) {
+                return $due;
+            }
+        }
+
+        if ($row->date) {
+            $date = Carbon::parse($row->date);
+
+            if ($date->year >= 1000 && $date->year <= 9999) {
+                return $date;
+            }
+        }
+
+        return Carbon::now();
+    }
+
+    /** Apakah jatuh tempo hanya perkiraan dari tanggal PO (dueDate tidak wajar). */
+    protected function isDueDateEstimated($row): bool
+    {
+        if ($row->dueDate) {
+            $year = Carbon::parse($row->dueDate)->year;
+
+            if ($year >= 2020 && $year <= 2030) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function datatablePaid(Request $request)

@@ -3,7 +3,7 @@
     SETELAH library jQuery/SweetAlert2 dimuat). --}}
 
 <div class="modal fade" id="purchase-detail-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <div>

@@ -30,6 +30,100 @@
         #dt tbody tr td:first-child {
             cursor: default;
         }
+
+        /* ── Modal Pembayaran Batch (PHL Modal Standard §11) ──
+           Perbaikan scroll: <form> pembungkus header/body/footer dibuat flex-column
+           agar .modal-body benar-benar menjadi area scroll dan tidak terpotong. */
+        #batch-payment-modal .modal-dialog {
+            margin: 1.75rem auto;
+        }
+        #batch-payment-modal .modal-content {
+            max-height: calc(100vh - 3.5rem);
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+        }
+        #batch-payment-modal .modal-content > form {
+            display: flex;
+            flex: 1 1 auto;
+            flex-direction: column;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+        }
+        #batch-payment-modal .modal-header,
+        #batch-payment-modal .modal-footer {
+            flex-shrink: 0;
+        }
+        #batch-payment-modal .modal-header {
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        #batch-payment-modal .batch-payment-icon {
+            align-items: center;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 12px;
+            box-shadow: 0 6px 14px rgba(79, 70, 229, 0.28);
+            color: #ffffff;
+            display: inline-flex;
+            flex-shrink: 0;
+            font-size: 20px;
+            height: 40px;
+            justify-content: center;
+            width: 40px;
+        }
+        #batch-payment-modal .modal-title {
+            font-size: 16px;
+            font-weight: 700;
+        }
+        #batch-payment-modal .modal-body {
+            flex: 1 1 auto;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 20px 22px;
+        }
+        #batch-payment-modal .modal-footer {
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 14px 22px;
+        }
+        #batch-payment-modal .table-responsive {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+        #batch-payment-modal .payment-allocation-table {
+            margin-bottom: 0;
+        }
+        #batch-payment-modal fieldset legend {
+            border: 0;
+        }
+
+        /* ── Modal Pembayaran Batch — Dark mode ── */
+        html[data-bs-theme="dark"] #batch-payment-modal .modal-content {
+            background-color: var(--bs-card-bg);
+            border-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #batch-payment-modal .modal-header {
+            background-color: var(--bs-card-bg);
+            border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #batch-payment-modal .modal-body {
+            background-color: var(--bs-card-bg);
+            color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] #batch-payment-modal .modal-footer {
+            background-color: var(--bs-secondary-bg);
+            border-top-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] #batch-payment-modal .table-responsive {
+            background-color: var(--bs-card-bg);
+            border-color: var(--bs-border-color);
+        }
     </style>
 @endpush
 
@@ -236,18 +330,22 @@
     </div>
 
     {{-- Batch payment modal --}}
-    <div class="modal fade" id="batch-payment-modal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered">
+    <div class="modal fade" id="batch-payment-modal" tabindex="-1"
+        aria-labelledby="batchPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
                 <form id="batch-payment-form" action="{{ route('purchasing.purchase-payment.batch.store') }}"
                     method="POST" autocomplete="off">
                     @csrf
                     <div class="modal-header">
-                        <div>
-                            <h5 class="modal-title mb-0">
-                                <i class="mdi mdi-bank-transfer-out me-1 text-success"></i>Bayar Hutang Supplier
-                            </h5>
-                            <small class="text-muted">Satu transaksi dapat melunasi beberapa pembelian sekaligus.</small>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="batch-payment-icon" aria-hidden="true">
+                                <i class="mdi mdi-bank-transfer-out"></i>
+                            </span>
+                            <div>
+                                <h5 class="modal-title mb-0" id="batchPaymentModalLabel">Bayar Hutang Supplier</h5>
+                                <small class="text-muted">Satu transaksi dapat melunasi beberapa pembelian sekaligus.</small>
+                            </div>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                     </div>

@@ -63,6 +63,24 @@ class PurchasePaymentService
         return $this->service->newQuery()->where('code', $code)->first();
     }
 
+    /**
+     * Ekspresi SQL tanggal jatuh tempo efektif.
+     *
+     * Kolom `dueDate` kadang berisi tahun tidak wajar (mis. 0026, 0206, 2926)
+     * akibat salah input, sehingga bila diurutkan apa adanya baris sampah akan
+     * berada di paling atas. Karena itu dipakai tanggal jatuh tempo efektif:
+     * pakai `dueDate` bila tahunnya wajar (2020-2030); jika tidak, pakai tanggal
+     * PO; jika itu pun tidak wajar, pakai tanggal hari ini. Konsisten dengan
+     * laporan Supplier (SupplierPurchaseReport).
+     */
+    public static function effectiveDueDateSql(): string
+    {
+        return 'COALESCE('
+            .'CASE WHEN YEAR(purchase.dueDate) BETWEEN 2020 AND 2030 THEN DATE(purchase.dueDate) END,'
+            .'CASE WHEN YEAR(purchase.date) BETWEEN 1000 AND 9999 THEN DATE(purchase.date) END,'
+            .'CURRENT_DATE)';
+    }
+
     public function datatableUnpaid()
     {
         return $this->service->newQuery()->with([
@@ -72,7 +90,7 @@ class PurchasePaymentService
             'details',
         ])->where('is_direct', false)
             ->where('paymentStatus', '!=', 'Paid')
-            ->orderBy('dueDate', 'asc')
+            ->orderByRaw(self::effectiveDueDateSql().' asc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
     }
