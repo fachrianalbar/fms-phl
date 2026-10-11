@@ -20,6 +20,7 @@ class FleetCompany extends Model
         'code',
         'name',
         'type',
+        'companyCode',
         'address',
         'accountNumber',
         'bankName',
@@ -34,5 +35,10 @@ class FleetCompany extends Model
     public function fleets()
     {
         return $this->hasMany(Fleet::class, 'fleetCompanyCode', 'code');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class, 'companyCode', 'code');
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Master;
 use App\Exports\FleetCompanyDetailExport;
 use App\Exports\FleetCompanyExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Company;
 use App\Models\Master\Fleet;
 use App\Models\Master\FleetBrand;
 use App\Models\Master\FleetCompany;
@@ -46,10 +47,12 @@ class FleetCompanyController extends Controller
     public function index()
     {
         $companies = $this->service->findAll();
+        $companyList = Company::orderBy('name')->get();
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('companies', $companies)
+            ->with('companyList', $companyList)
             ->with('title', $this->title);
     }
 
@@ -69,6 +72,7 @@ class FleetCompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'required|in:Internal,External',
+            'companyCode' => 'required_if:type,Internal|nullable|string|max:36|exists:company,code',
             'accountNumber' => 'nullable|string|max:100',
             'bankName' => 'nullable|string|max:100',
             'pph' => 'nullable|numeric|min:0|max:100',
@@ -147,6 +151,7 @@ class FleetCompanyController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'type' => 'required|in:Internal,External',
+            'companyCode' => 'required_if:type,Internal|nullable|string|max:36|exists:company,code',
             'accountNumber' => 'nullable|string|max:100',
             'bankName' => 'nullable|string|max:100',
             'pph' => 'nullable|numeric|min:0|max:100',
@@ -206,6 +211,7 @@ class FleetCompanyController extends Controller
                     $updateUrl = route($this->view.'update', $row->id);
                     $companyName = e($row->name);
                     $companyType = e($row->type ?? 'Internal');
+                    $companyCode = e($row->companyCode ?? '');
                     $accountNumber = e($row->accountNumber ?? '');
                     $bankName = e($row->bankName ?? '');
                     $pph = e($row->pph ?? '0');
@@ -218,6 +224,7 @@ class FleetCompanyController extends Controller
                         .' data-id="'.$row->id.'"'
                         .' data-name="'.$companyName.'"'
                         .' data-type="'.$companyType.'"'
+                        .' data-company-code="'.$companyCode.'"'
                         .' data-account-number="'.$accountNumber.'"'
                         .' data-bank-name="'.$bankName.'"'
                         .' data-pph="'.$pph.'"'

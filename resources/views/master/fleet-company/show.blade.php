@@ -424,6 +424,10 @@
                                     </div>
                                     <div class="text-muted small mt-1">
                                         <i class="mdi mdi-identifier me-1"></i>Kode: <span class="font-monospace fw-semibold">{{ $company->code }}</span>
+                                        @if ($company->type === 'Internal' && $company->company)
+                                            <span class="mx-2">•</span>
+                                            <i class="mdi mdi-office-building me-1"></i>Perusahaan: <a href="{{ route('company.show', $company->company->code) }}" class="fw-semibold text-decoration-underline">{{ $company->company->name }}</a>
+                                        @endif
                                         <span class="mx-2">•</span>
                                         <i class="mdi mdi-bank me-1"></i>Bank: <span>{{ $company->bankName ? $company->bankName . ' (' . ($company->accountNumber ?? '-') . ')' : ($company->accountNumber ?? '-') }}</span>
                                         <span class="mx-2">•</span>

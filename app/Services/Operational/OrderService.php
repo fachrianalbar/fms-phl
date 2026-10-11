@@ -656,7 +656,23 @@ class OrderService
 
         $qty = (float) ($request->qty ?? 0);
 
-        if ($isExternalFleet) {
+        // --- NEW LOGIC: Customer's Company matches FleetCompany's Company ---
+        $isSameCompany = false;
+        $customer = $this->customer->where('code', $request->customerCode)->with('company')->first();
+        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company)
+        {
+            $fleetCompanyCode = $fleet->company->company->code ?? null;
+            $customerCompanyCode = $customer->company->code ?? null;
+            $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);
+        }
+
+        if ($isSameCompany) {
+            // Harga beli mengikuti routeAmount saat mobil dan pelanggan dimiliki oleh perusahaan yang sama
+            $vendorPriceSingle = ($qty > 0) ? ($routeAmount / $qty) : $route->price; // Harga per unit
+            $vendorPrice = $routeAmount;
+            $personalVendorPriceSingle = 0.0;
+            $personalVendorPrice = 0.0;
+        } elseif ($isExternalFleet) {
             $routePriceExt = RoutePriceExternal::where('route_id', $route->id)
                 ->where('fleet_company_id', $fleet->company->id)
                 ->first();

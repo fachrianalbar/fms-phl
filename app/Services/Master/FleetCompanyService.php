@@ -29,7 +29,7 @@ class FleetCompanyService
 
     public function getById($id)
     {
-        return $this->service->where('id', $id)->first();
+        return $this->service->where('id', $id)->with('company')->first();
     }
 
     public function getByIdWithFleets($id)
@@ -42,6 +42,7 @@ class FleetCompanyService
         $data = $this->service->create([
             'name' => $request->name,
             'type' => $request->type,
+            'companyCode' => $request->companyCode,
             'accountNumber' => $request->accountNumber,
             'bankName' => $request->bankName,
             'pph' => $request->pph ?? 0,
@@ -58,6 +59,7 @@ class FleetCompanyService
         $this->service->where('id', $id)->update([
             'name' => $request->name,
             'type' => $request->type,
+            'companyCode' => $request->companyCode,
             'accountNumber' => $request->accountNumber,
             'bankName' => $request->bankName,
             'pph' => $request->pph ?? 0,

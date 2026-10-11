@@ -749,6 +749,16 @@
                             </select>
                         </div>
 
+                        <div class="mb-3" id="fleetCompanyCrudCompanyContainer">
+                            <label class="form-label" for="fleetCompanyCrudCompany">Perusahaan <span class="text-danger">*</span></label>
+                            <select class="form-select select2-modal" name="companyCode" id="fleetCompanyCrudCompany">
+                                <option value="">Pilih Perusahaan</option>
+                                @foreach ($companyList as $company)
+                                    <option value="{{ $company->code }}">{{ $company->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         <div class="row g-2 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label" for="fleetCompanyCrudBankName">Nama Bank</label>
@@ -945,6 +955,36 @@
             // Sinkronkan URL export saat pertama dimuat
             syncExportUrls();
 
+            // 6. FleetCompany CRUD modal (create / edit)
+            const companyContainer = $('#fleetCompanyCrudCompanyContainer');
+            const companySelect = $('#fleetCompanyCrudCompany');
+            const typeInput = $('#fleetCompanyCrudType');
+
+            // Inisialisasi Select2 untuk dropdown company
+            companySelect.select2({
+                placeholder: 'Pilih Perusahaan',
+                allowClear: true,
+                dropdownParent: $('#fleetCompanyCrudModal'),
+                width: '100%',
+            });
+
+            // Fungsi untuk mengatur visibilitas dropdown company berdasarkan tipe
+            function toggleCompanySelect(isInternal) {
+                if (isInternal) {
+                    companyContainer.show();
+                    companySelect.prop('required', true);
+                } else {
+                    companyContainer.hide();
+                    companySelect.prop('required', false);
+                    companySelect.val(null).trigger('change'); // Reset nilai
+                }
+            }
+
+            // Atur visibilitas saat dropdown tipe berubah
+            typeInput.on('change', function() {
+                toggleCompanySelect($(this).val() === 'Internal');
+            });
+
             // 7. Reset modal ke mode tambah saat dibuka dari tombol tambah
             $('#fleetCompanyCrudModal').on('show.bs.modal', function(event) {
                 const trigger = $(event.relatedTarget);
@@ -964,7 +1004,9 @@
                     form.attr('action', trigger.data('action'));
                     methodInput.val('PUT');
                     nameInput.val(trigger.data('name'));
-                    typeInput.val(trigger.data('type') || 'Internal').trigger('change');
+                    typeInput.val(trigger.data('type') || 'Internal');
+                    companySelect.val(trigger.data('company-code')).trigger('change');
+                    toggleCompanySelect(typeInput.val() === 'Internal');
                     bankNameInput.val(trigger.data('bank-name') || '');
                     accountNumberInput.val(trigger.data('account-number') || '');
                     pphInput.val(trigger.data('pph') || '0');
@@ -975,7 +1017,9 @@
                     form.attr('action', "{{ route($view . 'store') }}");
                     methodInput.val('POST');
                     nameInput.val('');
-                    typeInput.val('Internal').trigger('change');
+                    typeInput.val('Internal');
+                    companySelect.val(null).trigger('change');
+                    toggleCompanySelect(true);
                     bankNameInput.val('');
                     accountNumberInput.val('');
                     pphInput.val('0');
