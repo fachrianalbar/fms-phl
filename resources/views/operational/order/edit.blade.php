@@ -368,15 +368,20 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="w-100">
                                         @php
+                                            $fleetCompany = $data->fleet?->company;
                                             $isExternalFleet =
-                                                $data->fleet &&
-                                                $data->fleet->company &&
-                                                strtolower($data->fleet->company->type) === 'external';
-                                            $vendorLabel = $isExternalFleet ? 'Vendor Price' : 'Personal Vendor Price';
-                                            $vendorSingle = $isExternalFleet
+                                                $fleetCompany &&
+                                                strtolower($fleetCompany->type) === 'external';
+                                            $isSameCompany = false;
+                                            if ($fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
+                                                $isSameCompany = ($fleetCompany->company->code === $data->customer->company->code);
+                                            }
+                                            $isVendorPrice = $isExternalFleet || $isSameCompany;
+                                            $vendorLabel = $isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
+                                            $vendorSingle = $isVendorPrice
                                                 ? $data->vendorPriceSingle ?? 0
                                                 : $data->personalVendorPriceSingle ?? 0;
-                                            $vendorTotal = $isExternalFleet
+                                            $vendorTotal = $isVendorPrice
                                                 ? $data->vendorPrice ?? 0
                                                 : $data->personalVendorPrice ?? 0;
                                         @endphp
@@ -1164,6 +1169,7 @@
             if (isInitialLoad) {
                 return;
             }
+            const customerCode = $('#customerCode').val();
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
             const qty = $('#qty').val() || 1;
@@ -1181,6 +1187,7 @@
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
+                    customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
                     qty: qty
@@ -1203,10 +1210,12 @@
                             formatNumber(response.routeAmount));
 
                         const isExternal = response.isExternal === true;
-                        const vendorSingle = isExternal ? response.vendorPriceSingle : response
+                        const isSameCompany = response.isSameCompany === true;
+                        const isVendorPrice = isExternal || isSameCompany;
+                        const vendorSingle = isVendorPrice ? response.vendorPriceSingle : response
                             .personalVendorPriceSingle;
-                        const vendorTotal = isExternal ? response.vendorPrice : response.personalVendorPrice;
-                        const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+                        const vendorTotal = isVendorPrice ? response.vendorPrice : response.personalVendorPrice;
+                        const vendorLabel = isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
 
                         $('#vendorPriceLabel').text(vendorLabel);
                         $('#vendorPriceDisplay').text('Rp ' + formatNumber(vendorTotal));
@@ -1249,17 +1258,19 @@
         }
 
         // Attach event listeners for real-time updates
-        $('#fleetCode, #routeData, #qty').on('change keyup', function() {
+        $('#customerCode, #fleetCode, #routeData, #qty').on('change keyup', function() {
             updatePriceInfo();
         });
 
-        // Also update when route is selected
         $('#routeData').on('select2:select', function() {
             updatePriceInfo();
         });
 
-        // Update when fleet is selected
         $('#fleetCode').on('select2:select', function() {
+            updatePriceInfo();
+        });
+
+        $('#customerCode').on('select2:select', function() {
             updatePriceInfo();
         });
 

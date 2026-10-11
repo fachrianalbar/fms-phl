@@ -648,7 +648,7 @@ class OrderService
         ]);
 
         // Check fleet company type
-        $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
+        $fleet = $this->fleet->where('code', $request->fleetCode)->with('company.company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strcasecmp((string) $fleet->company->type, 'external') === 0);
 
         // Route amount selalu dihitung dari route terbaru agar konsisten antara create dan edit.
@@ -790,14 +790,28 @@ class OrderService
         }
 
         // Get the fleet and check company type
-        $fleet = $this->fleet->where('code', $order->fleetCode)->with('company')->first();
+        $fleet = $this->fleet->where('code', $order->fleetCode)->with('company.company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strcasecmp((string) $fleet->company->type, 'external') === 0);
+
+        // Check if customer's company matches fleet's company
+        $customer = $this->customer->where('code', $order->customerCode)->with('company')->first();
+        $isSameCompany = false;
+        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+            $fleetCompanyCode = $fleet->company->company->code ?? null;
+            $customerCompanyCode = $customer->company->code ?? null;
+            $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);
+        }
 
         $qty = (float) ($order->qty ?? 0);
         $masterPrice = (float) ($route->price ?? 0);
         $computedRouteAmount = $masterPrice * $qty;
 
-        if ($isExternalFleet) {
+        if ($isSameCompany) {
+            $vendorPriceSingle = ($qty > 0) ? ($computedRouteAmount / $qty) : $masterPrice;
+            $vendorPrice = $computedRouteAmount;
+            $personalVendorPriceSingle = 0.0;
+            $personalVendorPrice = 0.0;
+        } elseif ($isExternalFleet) {
             $routePriceExt = RoutePriceExternal::where('route_id', $route->id)
                 ->where('fleet_company_id', $fleet->company->id)
                 ->first();

@@ -4,6 +4,7 @@ namespace App\Services\Operational;
 
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
+use App\Models\Master\Customer;
 use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
@@ -89,8 +90,19 @@ class NotReturnDoService
         $route = $this->route->where('code', $request->routeData)->firstOrFail();
 
         // Fetch fleet data
-        $fleet = $this->fleet->where('code', $request->fleetCode)->with('company')->first();
+        $fleet = $this->fleet->where('code', $request->fleetCode)->with('company.company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
+
+        // Customer & company correlation
+        $customerCode = $request->customerCode ?? $order->customerCode;
+        $customer = Customer::where('code', $customerCode)->with('company')->first();
+
+        $isSameCompany = false;
+        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+            $fleetCompanyCode = $fleet->company->company->code ?? null;
+            $customerCompanyCode = $customer->company->code ?? null;
+            $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);
+        }
 
         // Check whether user requested to update prices from master or customer changed
         $isUpdateMasterPrice = (string) $request->input('update_master_price', '0') === '1';
@@ -103,7 +115,13 @@ class NotReturnDoService
             $priceSingle = (float) ($route->price ?? 0);
             $routeAmount = (float) ($priceSingle * $qty);
 
-            if ($isExternalFleet) {
+            if ($isSameCompany) {
+                // Aturan baru: customer company sama dengan fleet company
+                $vendorPriceSingle = ($qty > 0) ? ($routeAmount / $qty) : $priceSingle;
+                $vendorPrice = $routeAmount;
+                $personalVendorPriceSingle = 0.0;
+                $personalVendorPrice = 0.0;
+            } elseif ($isExternalFleet) {
                 $routePriceExt = \App\Models\Data\RoutePriceExternal::where('route_id', $route->id)
                     ->where('fleet_company_id', $fleet->company->id)
                     ->first();
@@ -123,7 +141,13 @@ class NotReturnDoService
             $priceSingle = $existingPriceSingle > 0 ? $existingPriceSingle : (float) ($route->price ?? 0);
             $routeAmount = (float) ($priceSingle * $qty);
 
-            if ($isExternalFleet) {
+            if ($isSameCompany) {
+                // Aturan baru: harga vendor mengikuti routeAmount/harga satuan customer
+                $vendorPriceSingle = $priceSingle;
+                $vendorPrice = $routeAmount;
+                $personalVendorPriceSingle = 0.0;
+                $personalVendorPrice = 0.0;
+            } elseif ($isExternalFleet) {
                 $existingVendorPriceSingle = (float) ($order->vendorPriceSingle ?? ($order->qty > 0 ? $order->vendorPrice / $order->qty : 0));
                 $vendorPriceSingle = $existingVendorPriceSingle > 0 ? $existingVendorPriceSingle : 0.0;
                 $vendorPrice = (float) ($vendorPriceSingle * $qty);

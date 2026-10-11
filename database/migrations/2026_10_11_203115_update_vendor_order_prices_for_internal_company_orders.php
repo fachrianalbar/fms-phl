@@ -17,9 +17,26 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Hanya lanjutkan jika tabel 'order' ada
-        if (! Schema::hasTable('order')) {
+        // Hanya lanjutkan jika tabel 'order' dan 'fleet_company' ada
+        if (! Schema::hasTable('order') || ! Schema::hasTable('fleet_company')) {
             return;
+        }
+
+        // Backfill companyCode pada fleet_company untuk tipe 'Internal' jika belum terisi
+        if (Schema::hasColumn('fleet_company', 'companyCode')) {
+            $internalFleetCompanies = DB::table('fleet_company')
+                ->where('type', 'Internal')
+                ->whereNull('companyCode')
+                ->get();
+
+            foreach ($internalFleetCompanies as $fc) {
+                $matchingCompany = DB::table('company')->where('name', $fc->name)->first();
+                if ($matchingCompany) {
+                    DB::table('fleet_company')
+                        ->where('id', $fc->id)
+                        ->update(['companyCode' => $matchingCompany->code]);
+                }
+            }
         }
 
         // Dapatkan semua order yang relevan untuk diperbarui

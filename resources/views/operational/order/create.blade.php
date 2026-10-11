@@ -1058,6 +1058,7 @@
 
         // Function to update price information
         function updatePriceInfo() {
+            const customerCode = $('#customerCode').val();
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
             const qty = $('#qty').val() || 1;
@@ -1078,6 +1079,7 @@
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
+                    customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
                     qty: qty
@@ -1100,10 +1102,12 @@
                             formatNumber(response.routeAmount));
 
                         const isExternal = response.isExternal === true;
-                        const vendorSingle = isExternal ? response.vendorPriceSingle : response
+                        const isSameCompany = response.isSameCompany === true;
+                        const isVendorPrice = isExternal || isSameCompany;
+                        const vendorSingle = isVendorPrice ? response.vendorPriceSingle : response
                             .personalVendorPriceSingle;
-                        const vendorTotal = isExternal ? response.vendorPrice : response.personalVendorPrice;
-                        const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+                        const vendorTotal = isVendorPrice ? response.vendorPrice : response.personalVendorPrice;
+                        const vendorLabel = isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
 
                         $('#vendorPriceLabel').text(vendorLabel);
                         $('#vendorPriceDisplay').text('Rp ' + formatNumber(vendorTotal));
@@ -1146,7 +1150,7 @@
         }
 
         // Attach event listeners for real-time updates
-        $('#fleetCode, #routeData, #qty').on('change keyup', function() {
+        $('#customerCode, #fleetCode, #routeData, #qty').on('change keyup', function() {
             updatePriceInfo();
         });
 
@@ -1157,6 +1161,10 @@
 
         // Update when fleet is selected
         $('#fleetCode').on('select2:select', function() {
+            updatePriceInfo();
+        });
+
+        $('#customerCode').on('select2:select', function() {
             updatePriceInfo();
         });
     </script>

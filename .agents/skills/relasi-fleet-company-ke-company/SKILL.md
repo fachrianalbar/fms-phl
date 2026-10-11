@@ -160,23 +160,49 @@ echo $fc->company->name; // Harus mencetak nama Company yang sesuai
 
 ## Dampak & Hubungan dengan Modul Lain
 
-### Berinteraksi dengan Modul `Order` (Harga)
+### Berinteraksi dengan Modul `Order`, `Not Return DO`, dan `Return DO` (Harga)
 
-Relasi ini memiliki dampak langsung pada perhitungan harga di modul `Order`. Logika bisnis di dalam `OrderService`'s metode `buildOrderData()` menggunakan tipe `FleetCompany` yang terkait dengan `Kendaraan/Fleet` yang dipilih untuk sebuah order untuk menentukan cara menghitung harga beli (vendor price).
+Relasi ini memiliki dampak langsung pada perhitungan harga beli (vendor price) di seluruh modul operasional:
+1. **Order** (`OrderService`, `OrderController`, `order/create`, `order/edit`)
+2. **Not Return DO (DO Belum Kembali)** (`NotReturnDoService`, `NotReturnDoController`, `not-return-do/edit-order`)
+3. **Return DO (DO Sudah Kembali)** (`ReturnDoController`, `return-do/edit-order`, yang memakai `NotReturnDoService::updateOrder`)
+4. **AJAX Price Endpoint** (`OrderController::calculateOrderPrice` / `ajax.order-calculate-price`)
 
 Oleh karena itu, memahami rantai berikut sangat penting:
 
 1.  **Order** terhubung ke **Customer**.
-2.  **Customer** dapat memiliki relasi ke sebuah **Company** (perusahaan induk pelanggan).
+2.  **Customer** dapat memiliki relasi ke sebuah **Company** (`c.companyCode`).
 3.  **Order** juga terhubung langsung ke sebuah **Kendaraan/Fleet**.
-4.  **Kendaraan/Fleet** memiliki relasi ke sebuah **FleetCompany**.
-5.  **FleetCompany** (jika bertipe `Internal`) punya relasi ke sebuah **Company** (perusahaan induk fleet company).
+4.  **Kendaraan/Fleet** memiliki relasi ke sebuah **FleetCompany** (`f.fleetCompanyCode`).
+5.  **FleetCompany** (jika bertipe `Internal`) punya relasi ke sebuah **Company** (`fc.companyCode`).
 
-**Poin Penting tentang Harga:**
+**Aturan Final Penetapan Harga:**
 
-*   Harga **Jual** (`price`, `routeAmount`) pada sebuah order dihitung dari master harga **rute** dan tidak secara langsung bergantung pada hubungan antara `Customer.Company` dan `FleetCompany.Company`. Orang tua mana pun yang tidak memengaruhi harga jual.
-*   Harga **Beli** (`vendorPrice`, `personalVendorPrice`) sangat dipengaruhi oleh tipe `FleetCompany` dari kendaraan yang digunakan:
-    *   Jika kendaraan berasal dari **FleetCompany eksternal**, biaya vendor dihitung dari tabel `route_price_external`. Kolom `vendorPrice` dan `vendorPriceSingle` akan terisi.
-    *   Jika kendaraan berasal dari **FleetCompany internal**, biaya vendor dihitung dari kolom `personalVendorPrice` pada master rute. Kolom `personalVendorPrice` dan `personalVendorPriceSingle` akan terisi, sementara `vendorPrice` akan nol.
+*   Harga **Jual** (`price`, `routeAmount`) pada sebuah order selalu dihitung dari master harga **rute** (`price * qty`).
+*   Harga **Beli** (`vendorPrice`, `personalVendorPrice`) dievaluasi dengan 3 kondisi:
+    1.  **Kondisi 1 — Perusahaan Sama (`isSameCompany` = true):**
+        *   Terjadi jika `Customer.companyCode` sama dengan `FleetCompany.companyCode` (tipe armada `Internal`).
+        *   `vendorPrice = routeAmount` (mengikuti total harga jual customer).
+        *   `vendorPriceSingle = (qty > 0) ? (routeAmount / qty) : route.price`.
+        *   `personalVendorPrice = 0.0`.
+        *   `personalVendorPriceSingle = 0.0`.
+        *   Label tampilan di form: **Vendor Price**.
+    2.  **Kondisi 2 — Armada Eksternal (`isExternal` = true):**
+        *   Terjadi jika tipe `FleetCompany` armada adalah `External`.
+        *   `vendorPriceSingle` diambil dari master `route_price_external`.
+        *   `vendorPrice = vendorPriceSingle * qty`.
+        *   `personalVendorPrice = 0.0`.
+        *   `personalVendorPriceSingle = 0.0`.
+        *   Label tampilan di form: **Vendor Price**.
+    3.  **Kondisi 3 — Armada Internal Berbeda Perusahaan / Tanpa Relasi (`isSameCompany` = false):**
+        *   Terjadi jika armada bertipe `Internal`, namun perusahaan customer berbeda dengan perusahaan pemilik kendaraan, atau perusahaan belum ditautkan.
+        *   `vendorPrice = 0.0`.
+        *   `vendorPriceSingle = 0.0`.
+        *   `personalVendorPriceSingle` diambil dari `route.personalVendorPrice`.
+        *   `personalVendorPrice = personalVendorPriceSingle * qty`.
+        *   Label tampilan di form: **Personal Vendor Price**.
 
-**Kesimpulan:** Ini memungkinkan untuk ada sebuah order dimana `Customer`-nya milik `Company A` (mis., 'PT WIJAYA TRANS MAKMUR SEJAHTERA'), tetapi kendaraannya berasal dari `FleetCompany` yang berbeda yang berada di bawah naungan `Company B` (mis., 'PT PUTRI HOKI LOGISTIK'). Dalam hal ini, harga jual order akan tetap sama (berdasarkan rute), tetapi biaya beli dan jenis kolom harga beli yang terisi akan berbeda, mencerminkan kepemilikan fleet company yang berbeda.
+### 6. Migrasi Skema & Sinkronisasi Data Historis
+- Migration skema: `2026_10_11_203112_add_company_code_to_fleet_company_table.php` menambahkan kolom `companyCode` pada tabel `fleet_company`.
+- Migration data: `2026_10_11_203115_update_vendor_order_prices_for_internal_company_orders.php` yang berjalan setelah `203112`. Migration ini secara aman melakukan auto-backfill `companyCode` pada `fleet_company` tipe `Internal` yang cocok dengan nama `Company`, lalu memperbarui order yang relevan sesuai aturan baru.
+- Pengecekan ketidaksesuaian harga master di `OrderService::checkRoutePriceMismatch()` telah diselaraskan dengan aturan baru agar tidak menimbulkan false positive mismatch.

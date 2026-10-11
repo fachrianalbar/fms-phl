@@ -444,10 +444,16 @@
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div class="w-100">
                                         @php
-                                            $isExternalFleet = $data->fleet && $data->fleet->company && strtolower($data->fleet->company->type) === 'external';
-                                            $vendorLabel = $isExternalFleet ? 'Vendor Price' : 'Personal Vendor Price';
-                                            $vendorSingle = $isExternalFleet ? $data->vendorPriceSingle ?? 0 : $data->personalVendorPriceSingle ?? 0;
-                                            $vendorTotal = $isExternalFleet ? $data->vendorPrice ?? 0 : $data->personalVendorPrice ?? 0;
+                                            $fleetCompany = $data->fleet?->company;
+                                            $isExternalFleet = $fleetCompany && strtolower($fleetCompany->type) === 'external';
+                                            $isSameCompany = false;
+                                            if ($fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
+                                                $isSameCompany = ($fleetCompany->company->code === $data->customer->company->code);
+                                            }
+                                            $isVendorPrice = $isExternalFleet || $isSameCompany;
+                                            $vendorLabel = $isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
+                                            $vendorSingle = $isVendorPrice ? ($data->vendorPriceSingle ?? 0) : ($data->personalVendorPriceSingle ?? 0);
+                                            $vendorTotal = $isVendorPrice ? ($data->vendorPrice ?? 0) : ($data->personalVendorPrice ?? 0);
                                         @endphp
                                         <p class="text-white-50 mb-1 small text-uppercase font-weight-bold" id="vendorPriceLabel">{{ $vendorLabel }}</p>
                                         <h4 class="text-white mb-1 font-weight-bold" id="vendorPriceDisplay">
@@ -1158,6 +1164,7 @@
                 method: 'POST',
                 data: {
                     _token: '{{ csrf_token() }}',
+                    customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
                     qty: qty
@@ -1168,6 +1175,8 @@
                         $('#fleetTypeDisplay').text(response.fleetType || '-');
 
                         const isExternal = response.isExternal === true;
+                        const isSameCompany = response.isSameCompany === true;
+                        const isVendorPrice = isExternal || isSameCompany;
                         const isRouteChanged = (routeCode !== originalRouteCode);
                         const isCustomerChanged = (customerCode && customerCode !== originalCustomerCode);
                         const useMaster = isUpdateMaster || isRouteChanged || isCustomerChanged;
@@ -1182,7 +1191,7 @@
                             unitPrice = response.price || 0;
                             routeAmount = response.routeAmount || (unitPrice * qty);
                             
-                            if (isExternal) {
+                            if (isVendorPrice) {
                                 vendorSingle = response.vendorPriceSingle || 0;
                                 vendorTotal = response.vendorPrice || (vendorSingle * qty);
                             } else {
@@ -1194,7 +1203,10 @@
                             unitPrice = (originalOrderPrice > 0) ? originalOrderPrice : (response.price || 0);
                             routeAmount = unitPrice * qty;
 
-                            if (isExternal) {
+                            if (isSameCompany) {
+                                vendorSingle = unitPrice;
+                                vendorTotal = routeAmount;
+                            } else if (isExternal) {
                                 vendorSingle = (originalVendorPriceSingle > 0) ? originalVendorPriceSingle : (response.vendorPriceSingle || 0);
                                 vendorTotal = vendorSingle * qty;
                             } else {
@@ -1209,7 +1221,7 @@
                             priceBadge = '<span class="badge bg-secondary text-white ms-1"><i class="mdi mdi-history me-1"></i>Harga Order' + masterDiffNote + '</span>';
                         }
 
-                        const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+                        const vendorLabel = isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
 
                         // Update price displays
                         $('#priceDisplay').html('Rp ' + formatNumber(routeAmount) + ' ' + priceBadge);
@@ -1222,7 +1234,7 @@
                         // Update hidden form inputs
                         $('input[name="price"]').val(unitPrice);
                         $('input[name="routeAmount"]').val(routeAmount);
-                        if (isExternal) {
+                        if (isVendorPrice) {
                             $('input[name="vendorPrice"]').val(vendorTotal);
                             $('input[name="vendorPriceSingle"]').val(vendorSingle);
                             $('input[name="personalVendorPrice"]').val(0);

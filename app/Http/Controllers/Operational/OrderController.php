@@ -1076,6 +1076,7 @@ class OrderController extends Controller
     public function calculateOrderPrice(Request $request)
     {
         try {
+            $customerCode = $request->customerCode;
             $fleetCode = $request->fleetCode;
             $routeCode = $request->routeCode;
             $qty = (float) ($request->qty ?? 1);
@@ -1090,12 +1091,20 @@ class OrderController extends Controller
                 'personalVendorPrice' => 0,
                 'personalVendorPriceSingle' => 0,
                 'isExternal' => false,
+                'isSameCompany' => false,
                 'fleetType' => '',
             ];
 
+            // Get customer data
+            $customer = null;
+            if ($customerCode) {
+                $customer = Customer::with('company')->where('code', $customerCode)->first();
+            }
+
             // Get fleet data
+            $fleet = null;
             if ($fleetCode) {
-                $fleet = Fleet::with('company')->where('code', $fleetCode)->first();
+                $fleet = Fleet::with('company.company')->where('code', $fleetCode)->first();
 
                 $fleetType = $this->resolveFleetType($fleet);
                 if ($fleetType !== '') {
@@ -1104,16 +1113,36 @@ class OrderController extends Controller
                 }
             }
 
+            // Check if Customer's company matches FleetCompany's company
+            $isSameCompany = false;
+            if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+                $fleetCompanyCode = $fleet->company->company->code ?? null;
+                $customerCompanyCode = $customer->company->code ?? null;
+                $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);
+            }
+            $response['isSameCompany'] = $isSameCompany;
+
             // Get route data
             if ($routeCode) {
                 $route = Route::where('code', $routeCode)->first();
 
                 if ($route) {
-                    // Price calculations (always show these)
-                    $response['price'] = $route->price ?? 0; // harga satuan
-                    $response['routeAmount'] = ($route->price ?? 0) * $qty; // total
+                    $unitPrice = (float) ($route->price ?? 0);
+                    $routeAmount = $unitPrice * $qty;
 
-                    if ($response['isExternal']) {
+                    // Price calculations (always show these)
+                    $response['price'] = $unitPrice; // harga satuan
+                    $response['routeAmount'] = $routeAmount; // total
+
+                    if ($isSameCompany) {
+                        // Aturan baru: ketika perusahaan customer sama dengan perusahaan armada internal
+                        $vendorPriceSingle = ($qty > 0) ? ($routeAmount / $qty) : $unitPrice;
+
+                        $response['vendorPriceSingle'] = $vendorPriceSingle;
+                        $response['vendorPrice'] = $routeAmount;
+                        $response['personalVendorPriceSingle'] = 0;
+                        $response['personalVendorPrice'] = 0;
+                    } elseif ($response['isExternal']) {
                         // External: only vendor price is used
                         $routePriceExt = null;
                         if (isset($fleet) && $fleet->company) {
@@ -1128,19 +1157,19 @@ class OrderController extends Controller
                         $response['vendorPrice'] = $vendorPriceSingle * $qty;
                         $response['personalVendorPriceSingle'] = 0;
                         $response['personalVendorPrice'] = 0;
-                        
+
                         if ($vendorPriceSingle == 0) {
                             $response['priceNotSet'] = true;
                         }
                     } else {
-                        // Internal: only personal vendor price is used
+                        // Internal (berbeda perusahaan atau tanpa relasi): only personal vendor price is used
                         $personalVendorPriceSingle = (float) ($route->personalVendorPrice ?? 0);
-                        
+
                         $response['personalVendorPriceSingle'] = $personalVendorPriceSingle;
                         $response['personalVendorPrice'] = $personalVendorPriceSingle * $qty;
                         $response['vendorPriceSingle'] = 0;
                         $response['vendorPrice'] = 0;
-                        
+
                         if ($personalVendorPriceSingle == 0) {
                             $response['priceNotSetInternal'] = true;
                         }

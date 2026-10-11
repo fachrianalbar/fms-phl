@@ -421,7 +421,11 @@ class NotReturnDoController extends Controller
                     return 'Rp ' . number_format($row->routeAmount ?? 0, 2, ',', '.');
                 })
                 ->addColumn('harga_vendor', function ($row) {
-                    return 'Rp ' . number_format($row->personalVendorPrice ?? 0, 2, ',', '.');
+                    $amount = ((float) ($row->vendorPrice ?? 0) > 0)
+                        ? (float) $row->vendorPrice
+                        : (float) ($row->personalVendorPrice ?? 0);
+
+                    return 'Rp ' . number_format($amount, 2, ',', '.');
                 })
                 ->editColumn('status', function ($row) {
                     $status = '';
