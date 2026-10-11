@@ -14,6 +14,8 @@ return new class extends Migration
      * to match the new pricing rule: when a Customer's Company owns the FleetCompany
      * (Internal type) that provides the vehicle, the vendor price should equal the
      * customer price (routeAmount).
+     *
+     * Hanya order dengan `orderDate` pada bulan Oktober 2026 yang diperbarui.
      */
     public function up(): void
     {
@@ -39,6 +41,10 @@ return new class extends Migration
             }
         }
 
+        // Hanya order pada bulan Oktober 2026
+        $periodStart = '2026-10-01 00:00:00';
+        $periodEnd = '2026-10-31 23:59:59';
+
         // Dapatkan semua order yang relevan untuk diperbarui
         $ordersToUpdate = DB::table('order as o')
             ->join('customer as c', 'o.customerCode', '=', 'c.code')
@@ -48,6 +54,7 @@ return new class extends Migration
             ->where('fc.type', 'Internal')
             ->whereNotNull('fc.companyCode')
             ->whereColumn('customer_company.code', 'fc.companyCode')
+            ->whereBetween('o.orderDate', [$periodStart, $periodEnd])
             ->select([
                 'o.id',
                 'o.routeAmount',
@@ -55,7 +62,7 @@ return new class extends Migration
             ])
             ->get();
 
-        echo "\n--- Ditemukan " . count($ordersToUpdate) . " order yang perlu diperbarui ---\n";
+        echo "\n--- Ditemukan " . count($ordersToUpdate) . " order (periode " . $periodStart . " s/d " . $periodEnd . ") yang perlu diperbarui ---\n";
 
         $updatedCount = 0;
         foreach ($ordersToUpdate as $order) {
