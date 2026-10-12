@@ -447,7 +447,7 @@
                                             $fleetCompany = $data->fleet?->company;
                                             $isExternalFleet = $fleetCompany && strtolower($fleetCompany->type) === 'external';
                                             $isSameCompany = false;
-                                            if ($fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
+                                            if ($data->orderDate >= '2026-10-01' && $fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
                                                 $isSameCompany = ($fleetCompany->company->code === $data->customer->company->code);
                                             }
                                             $isVendorPrice = $isExternalFleet || $isSameCompany;
@@ -1159,6 +1159,7 @@
             }
 
             // Make AJAX request
+            const orderDate = $('#orderDate').val() || $('#datetime-local').val() || '{{ $data->orderDate }}';
             $.ajax({
                 url: '{{ route('ajax.order-calculate-price') }}',
                 method: 'POST',
@@ -1167,6 +1168,7 @@
                     customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
+                    orderDate: orderDate,
                     qty: qty
                 },
                 success: function(response) {

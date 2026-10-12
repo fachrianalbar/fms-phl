@@ -263,14 +263,31 @@
                                     style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
                                     <div class="d-flex align-items-center justify-content-between">
                                         <div class="w-100">
-                                            <p class="text-white-50 mb-1 small" id="vendorPriceLabel">Personal Vendor
-                                                Price</p>
+                                            @php
+                                                $fleetCompany = $data->fleet?->company;
+                                                $isExternalFleet =
+                                                    $fleetCompany &&
+                                                    strtolower($fleetCompany->type) === 'external';
+                                                $isSameCompany = false;
+                                                if ($data->orderDate >= '2026-10-01' && $fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
+                                                    $isSameCompany = ($fleetCompany->company->code === $data->customer->company->code);
+                                                }
+                                                $isVendorPrice = $isExternalFleet || $isSameCompany;
+                                                $vendorLabel = $isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
+                                                $vendorSingle = $isVendorPrice
+                                                    ? ($data->vendorPriceSingle ?? 0)
+                                                    : ($data->personalVendorPriceSingle ?? 0);
+                                                $vendorTotal = $isVendorPrice
+                                                    ? ($data->vendorPrice ?? 0)
+                                                    : ($data->personalVendorPrice ?? 0);
+                                            @endphp
+                                            <p class="text-white-50 mb-1 small" id="vendorPriceLabel">{{ $vendorLabel }}</p>
                                             <h4 class="text-white mb-0" id="vendorPriceDisplay">Rp
-                                                {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</h4>
+                                                {{ number_format($vendorTotal, 0, ',', '.') }}</h4>
                                             <p class="text-white-50 mb-0 small" id="vendorPriceDetailDisplay">
                                                 {{ $data->qty }} × Rp
-                                                {{ number_format($data->personalVendorPriceSingle ?? 0, 0, ',', '.') }} =
-                                                Rp {{ number_format($data->personalVendorPrice ?? 0, 0, ',', '.') }}</p>
+                                                {{ number_format($vendorSingle, 0, ',', '.') }} =
+                                                Rp {{ number_format($vendorTotal, 0, ',', '.') }}</p>
                                         </div>
                                         <div class="bg-white bg-opacity-25 p-3 rounded">
                                             <i class="mdi mdi-account-cash fs-2 text-white"></i>
@@ -654,8 +671,10 @@
 
             // Function to update price information
             function updatePriceInfo() {
+                const customerCode = '{{ $data->customerCode }}';
                 const fleetCode = '{{ $data->fleetCode }}';
                 const routeCode = '{{ $data->routeCode }}';
+                const orderDate = '{{ $data->orderDate }}';
                 const qty = '{{ $data->qty }}' || 1;
 
                 // Check if we have the required data
@@ -669,8 +688,10 @@
                     method: 'POST',
                     data: {
                         _token: '{{ csrf_token() }}',
+                        customerCode: customerCode,
                         fleetCode: fleetCode,
                         routeCode: routeCode,
+                        orderDate: orderDate,
                         qty: qty
                     },
                     success: function(response) {
@@ -684,10 +705,12 @@
                                 formatNumber(response.routeAmount));
 
                             const isExternal = response.isExternal === true;
-                            const vendorSingle = isExternal ? response.vendorPriceSingle : response
+                            const isSameCompany = response.isSameCompany === true;
+                            const isVendorPrice = isExternal || isSameCompany;
+                            const vendorSingle = isVendorPrice ? response.vendorPriceSingle : response
                                 .personalVendorPriceSingle;
-                            const vendorTotal = isExternal ? response.vendorPrice : response.personalVendorPrice;
-                            const vendorLabel = isExternal ? 'Vendor Price' : 'Personal Vendor Price';
+                            const vendorTotal = isVendorPrice ? response.vendorPrice : response.personalVendorPrice;
+                            const vendorLabel = isVendorPrice ? 'Vendor Price' : 'Personal Vendor Price';
 
                             $('#vendorPriceLabel').text(vendorLabel);
                             $('#vendorPriceDisplay').text('Rp ' + formatNumber(vendorTotal));

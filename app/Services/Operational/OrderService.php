@@ -656,10 +656,12 @@ class OrderService
 
         $qty = (float) ($request->qty ?? 0);
 
-        // --- NEW LOGIC: Customer's Company matches FleetCompany's Company ---
+        // --- NEW LOGIC: Customer's Company matches FleetCompany's Company (berlaku mulai 1 Oktober 2026) ---
         $isSameCompany = false;
+        $orderDate = $request->orderDate ?? now()->format('Y-m-d');
+        $isEffectiveNewRule = ($orderDate >= '2026-10-01');
         $customer = $this->customer->where('code', $request->customerCode)->with('company')->first();
-        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company)
+        if ($isEffectiveNewRule && $fleet && $fleet->company && $fleet->company->company && $customer && $customer->company)
         {
             $fleetCompanyCode = $fleet->company->company->code ?? null;
             $customerCompanyCode = $customer->company->code ?? null;
@@ -793,10 +795,11 @@ class OrderService
         $fleet = $this->fleet->where('code', $order->fleetCode)->with('company.company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strcasecmp((string) $fleet->company->type, 'external') === 0);
 
-        // Check if customer's company matches fleet's company
+        // Check if customer's company matches fleet's company (hanya berlaku mulai 1 Oktober 2026)
         $customer = $this->customer->where('code', $order->customerCode)->with('company')->first();
         $isSameCompany = false;
-        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+        $isEffectiveNewRule = ($order->orderDate >= '2026-10-01');
+        if ($isEffectiveNewRule && $fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
             $fleetCompanyCode = $fleet->company->company->code ?? null;
             $customerCompanyCode = $customer->company->code ?? null;
             $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);

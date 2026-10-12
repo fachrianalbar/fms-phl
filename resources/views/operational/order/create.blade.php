@@ -1061,6 +1061,7 @@
             const customerCode = $('#customerCode').val();
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
+            const orderDate = $('#datetime-local').val() || $('#orderDate').val();
             const qty = $('#qty').val() || 1;
 
             syncCostComponentVisibility();
@@ -1082,6 +1083,7 @@
                     customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
+                    orderDate: orderDate,
                     qty: qty
                 },
                 success: function(response) {

@@ -176,6 +176,32 @@ Oleh karena itu, memahami rantai berikut sangat penting:
 4.  **Kendaraan/Fleet** memiliki relasi ke sebuah **FleetCompany** (`f.fleetCompanyCode`).
 5.  **FleetCompany** (jika bertipe `Internal`) punya relasi ke sebuah **Company** (`fc.companyCode`).
 
+### Riwayat & Perbandingan: Aturan Lama vs Aturan Baru
+
+Agar selalu konsisten dan tidak kehilangan konteks historis sistem:
+
+#### A. Aturan Lama (Data Historis Sebelum Oktober 2026 & Fallback Default):
+Sebelum aturan baru diperkenalkan, sistem tidak memperhitungkan kesamaan entitas `Company`:
+1. **Armada Internal (Semua):**
+   * Apapun perusahaannya (baik customer dan armada bernaung di induk yang sama maupun tidak), seluruh biaya vendor internal masuk ke kolom **`personalVendorPrice`**.
+   * Dihitung dari master rute: `personalVendorPrice = route.personalVendorPrice * qty`.
+   * Kolom `vendorPrice` selalu `0.0`.
+2. **Armada Eksternal:**
+   * Biaya vendor masuk ke kolom **`vendorPrice`**.
+   * Dihitung dari tabel tarif vendor: `vendorPrice = route_price_external.amount * qty`.
+   * Kolom `personalVendorPrice` selalu `0.0`.
+
+#### B. Aturan Baru (Berlaku untuk Order Mulai 1 Oktober 2026):
+Memperkenalkan relasi `FleetCompany (Internal) -> Company` dan pencocokan dengan `Customer -> Company`:
+1. **Jika Tanggal Order Mulai 1 Oktober 2026 (`orderDate >= '2026-10-01'`) DAN Perusahaan Customer SAMA dengan Perusahaan Armada (`isSameCompany = true`):**
+   * Harga beli order mengikuti harga jual/tagihan rute customer: `vendorPrice = routeAmount`.
+   * `vendorPriceSingle = (qty > 0) ? (routeAmount / qty) : route.price`.
+   * `personalVendorPrice = 0.0`.
+2. **Jika Tanggal Order Sebelum 1 Oktober 2026 (`orderDate < '2026-10-01'`), ATAU Perusahaan BERBEDA, ATAU Belum Berelasi:**
+   * Tetap menggunakan **Aturan Lama** sebagai fallback:
+     * Jika armada `Internal`: `personalVendorPrice = route.personalVendorPrice * qty` dan `vendorPrice = 0.0`.
+     * Jika armada `External`: `vendorPrice = route_price_external.amount * qty` dan `personalVendorPrice = 0.0`.
+
 **Aturan Final Penetapan Harga:**
 
 *   Harga **Jual** (`price`, `routeAmount`) pada sebuah order selalu dihitung dari master harga **rute** (`price * qty`).
@@ -204,5 +230,5 @@ Oleh karena itu, memahami rantai berikut sangat penting:
 
 ### 6. Migrasi Skema & Sinkronisasi Data Historis
 - Migration skema: `2026_10_11_203112_add_company_code_to_fleet_company_table.php` menambahkan kolom `companyCode` pada tabel `fleet_company`.
-- Migration data: `2026_10_11_203115_update_vendor_order_prices_for_internal_company_orders.php` yang berjalan setelah `203112`. Migration ini secara aman melakukan auto-backfill `companyCode` pada `fleet_company` tipe `Internal` yang cocok dengan nama `Company`, lalu memperbarui order yang relevan sesuai aturan baru.
+- Migration data: `2026_10_11_203115_update_vendor_order_prices_for_internal_company_orders.php` yang berjalan setelah `203112`. Migration ini membatasi pembaruan harga order khusus untuk periode bulan Oktober 2026 (`whereBetween('o.orderDate', ['2026-10-01 00:00:00', '2026-10-31 23:59:59'])`).
 - Pengecekan ketidaksesuaian harga master di `OrderService::checkRoutePriceMismatch()` telah diselaraskan dengan aturan baru agar tidak menimbulkan false positive mismatch.

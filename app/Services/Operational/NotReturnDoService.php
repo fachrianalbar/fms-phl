@@ -93,12 +93,15 @@ class NotReturnDoService
         $fleet = $this->fleet->where('code', $request->fleetCode)->with('company.company')->first();
         $isExternalFleet = ($fleet && $fleet->company && strtolower($fleet->company->type) === 'external');
 
-        // Customer & company correlation
+        // Customer & company correlation (hanya berlaku mulai 1 Oktober 2026)
         $customerCode = $request->customerCode ?? $order->customerCode;
         $customer = Customer::where('code', $customerCode)->with('company')->first();
 
+        $orderDate = $request->orderDate ?? $order->orderDate;
+        $isEffectiveNewRule = ($orderDate >= '2026-10-01');
+
         $isSameCompany = false;
-        if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+        if ($isEffectiveNewRule && $fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
             $fleetCompanyCode = $fleet->company->company->code ?? null;
             $customerCompanyCode = $customer->company->code ?? null;
             $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);

@@ -373,7 +373,7 @@
                                                 $fleetCompany &&
                                                 strtolower($fleetCompany->type) === 'external';
                                             $isSameCompany = false;
-                                            if ($fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
+                                            if ($data->orderDate >= '2026-10-01' && $fleetCompany && $fleetCompany->company && $data->customer && $data->customer->company) {
                                                 $isSameCompany = ($fleetCompany->company->code === $data->customer->company->code);
                                             }
                                             $isVendorPrice = $isExternalFleet || $isSameCompany;
@@ -1172,6 +1172,7 @@
             const customerCode = $('#customerCode').val();
             const fleetCode = $('#fleetCode').val();
             const routeCode = $('#routeData').val();
+            const orderDate = $('#datetime-local').val() || $('#orderDate').val() || '{{ $data->orderDate }}';
             const qty = $('#qty').val() || 1;
 
             syncCostComponentVisibility();
@@ -1190,6 +1191,7 @@
                     customerCode: customerCode,
                     fleetCode: fleetCode,
                     routeCode: routeCode,
+                    orderDate: orderDate,
                     qty: qty
                 },
                 success: function(response) {

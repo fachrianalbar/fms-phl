@@ -1079,6 +1079,7 @@ class OrderController extends Controller
             $customerCode = $request->customerCode;
             $fleetCode = $request->fleetCode;
             $routeCode = $request->routeCode;
+            $orderDate = $request->orderDate;
             $qty = (float) ($request->qty ?? 1);
 
             // Initialize response data
@@ -1113,9 +1114,10 @@ class OrderController extends Controller
                 }
             }
 
-            // Check if Customer's company matches FleetCompany's company
+            // Check if Customer's company matches FleetCompany's company (hanya berlaku mulai 1 Oktober 2026)
             $isSameCompany = false;
-            if ($fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
+            $isEffectiveNewRule = empty($orderDate) || $orderDate >= '2026-10-01';
+            if ($isEffectiveNewRule && $fleet && $fleet->company && $fleet->company->company && $customer && $customer->company) {
                 $fleetCompanyCode = $fleet->company->company->code ?? null;
                 $customerCompanyCode = $customer->company->code ?? null;
                 $isSameCompany = ($fleetCompanyCode && $customerCompanyCode && $fleetCompanyCode === $customerCompanyCode);
