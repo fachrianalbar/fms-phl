@@ -63,7 +63,7 @@
 
                                     <input class="form-control" name="fleetCode" type="text" readonly required
                                         placeholder="{{ __('menu_order.plate_number') }}"
-                                        value="{{ $data->fleet->plateNumber }}">
+                                        value="{{ $data->plateNumber ?: ($data->fleet->plateNumber ?? '') }}">
                                 </div>
                             </div>
 

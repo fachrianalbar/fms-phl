@@ -28,7 +28,7 @@
                 <tr>
                     <td class="center">{{ $loop->iteration }}</td>
                     <td class="center">{{ $order->orderDate ? \Carbon\Carbon::parse($order->orderDate)->format('d-m-Y') : '-' }}</td>
-                    <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $order->plateNumber ?: ($order->fleet->plateNumber ?? '-') }}</td>
                     <td>{{ $order->route->name ?? '-' }}</td>
                     <td>{{ $order->driver->name ?? '-' }}</td>
                     <td>{{ $order->fleet->type->name ?? '-' }}</td>

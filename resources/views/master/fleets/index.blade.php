@@ -316,6 +316,34 @@
             font-size: 12px;
         }
 
+        /* ── Modal Table Styling (PHL Standard §11) ── */
+        .modal-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+        .modal-table thead th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 11.5px;
+            font-weight: 700;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 9px 12px;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .modal-table tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-size: 12px;
+            vertical-align: middle;
+        }
+        .modal-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
         /* ── Dark mode ─────────────────────────────── */
         html[data-bs-theme="dark"] #dt {
             border-color: var(--bs-border-color);
@@ -370,6 +398,30 @@
             background: var(--bs-tertiary-bg) !important;
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
+        }
+
+        /* Modal Dark Mode */
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-content,
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-header,
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-footer {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-title {
+            color: var(--bs-heading-color) !important;
+        }
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-body {
+            background-color: var(--bs-card-bg) !important;
+            color: var(--bs-body-color) !important;
+        }
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-table thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+            border-bottom-color: var(--bs-border-color) !important;
+        }
+        html[data-bs-theme="dark"] #plateHistoryModal .modal-table tbody td {
+            color: var(--bs-body-color) !important;
+            border-bottom-color: var(--bs-border-color) !important;
         }
     </style>
 @endpush
@@ -536,6 +588,35 @@
                     <div class="modal-body p-3 text-center bg-light">
                         <img id="modalImage" src="" alt="Image Preview" class="img-fluid rounded" style="max-height: 70vh; object-fit: contain;" />
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Riwayat Pergantian Plat Nomor (PHL Modal Standard §11) --}}
+    <div class="modal fade" id="plateHistoryModal" tabindex="-1" role="dialog" aria-labelledby="plateHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
+                <div class="modal-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="avatar-sm d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle"
+                            style="width: 36px; height: 36px;">
+                            <i class="mdi mdi-history fs-18"></i>
+                        </span>
+                        <div>
+                            <h5 class="modal-title mb-0 fw-bold text-dark" id="plateHistoryModalLabel">Riwayat Pergantian Nomor Polisi (Plat)</h5>
+                            <small class="text-muted" id="modalPlateSubtitle">Log perubahan nomor polisi armada</small>
+                        </div>
+                    </div>
+                    <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="plateHistoryModalBody">
+                    {{-- Dimuat via AJAX --}}
+                </div>
+                <div class="modal-footer bg-light py-2 px-4 border-top d-flex justify-content-end">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" style="border-radius: 8px; padding: 6px 16px;">
+                        Tutup
+                    </button>
                 </div>
             </div>
         </div>
@@ -783,5 +864,88 @@
                 }
             });
         }
+
+        // 11. Modal Riwayat Pergantian Nomor Polisi (Plat)
+        $(document).on('click', '.btn-view-plate-history', function(e) {
+            e.preventDefault();
+            const fleetId = $(this).data('id');
+            const url = '{{ route($view . 'plate-histories', ':id') }}'.replace(':id', fleetId);
+
+            $('#plateHistoryModalBody').html(`
+                <div class="text-center py-4">
+                    <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                    <div class="text-muted small">Memuat riwayat pergantian nomor polisi...</div>
+                </div>
+            `);
+            $('#plateHistoryModal').modal('show');
+
+            $.ajax({
+                url: url,
+                type: 'GET',
+                dataType: 'json',
+                success: function(res) {
+                    if (res.success && res.histories && res.histories.length > 0) {
+                        $('#modalPlateSubtitle').text('Armada: ' + (res.fleet.current_plate || '-') + ' (' + (res.fleet.code || '-') + ') • ' + (res.fleet.company || '-'));
+                        let rows = '';
+                        res.histories.forEach(function(item, idx) {
+                            rows += `
+                                <tr>
+                                    <td class="text-center">${idx + 1}</td>
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">${item.old_plate_number}</span>
+                                    </td>
+                                    <td class="text-center text-muted">
+                                        <i class="mdi mdi-arrow-right text-primary"></i>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary font-monospace fw-bold px-2 py-1">${item.new_plate_number}</span>
+                                    </td>
+                                    <td class="text-center font-monospace">${item.change_date}</td>
+                                    <td>${item.reason}</td>
+                                    <td><span class="fw-semibold text-dark">${item.changed_by}</span></td>
+                                </tr>
+                            `;
+                        });
+
+                        $('#plateHistoryModalBody').html(`
+                            <div class="table-responsive" style="border-radius: 8px; border: 1px solid #e2e8f0;">
+                                <table class="table align-middle mb-0 modal-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 45px;" class="text-center">No</th>
+                                            <th>Plat Lama</th>
+                                            <th class="text-center" style="width: 30px;"></th>
+                                            <th>Plat Baru</th>
+                                            <th class="text-center">Tgl Ganti</th>
+                                            <th>Alasan / Keterangan</th>
+                                            <th>Diubah Oleh</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `);
+                    } else {
+                        $('#modalPlateSubtitle').text('Armada: ' + (res.fleet.current_plate || '-') + ' (' + (res.fleet.code || '-') + ')');
+                        $('#plateHistoryModalBody').html(`
+                            <div class="text-center py-4 text-muted">
+                                <i class="mdi mdi-checkbox-marked-circle-outline fs-32 text-success d-block mb-1 opacity-75"></i>
+                                <span class="fs-13 fw-semibold text-dark d-block">Belum Pernah Berganti Nomor Polisi</span>
+                                <small class="text-muted">Armada ini masih menggunakan nomor polisi asli sejak pendaftaran pertama.</small>
+                            </div>
+                        `);
+                    }
+                },
+                error: function(xhr) {
+                    $('#plateHistoryModalBody').html(`
+                        <div class="alert alert-danger mb-0" role="alert">
+                            Gagal memuat data riwayat pergantian nomor polisi.
+                        </div>
+                    `);
+                }
+            });
+        });
     </script>
 @endpush

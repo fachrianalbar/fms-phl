@@ -116,7 +116,7 @@ class DriverSalaryController extends Controller
                     return $row->driver->name ?? '-';
                 })
                 ->addColumn('plateNumber', function ($row) {
-                    return $row->fleet->plateNumber ?? '-';
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '-');
                 })
                 ->addColumn('routeName', function ($row) {
                     if (! $row->route) {
@@ -359,7 +359,7 @@ class DriverSalaryController extends Controller
             $orderList[] = [
                 'orderCode' => $order->code,
                 'orderDate' => Carbon::parse($order->orderDate)->format('d-m-Y'),
-                'plateNumber' => $order->fleet->plateNumber ?? '-',
+                'plateNumber' => $order->plateNumber ?: ($order->fleet->plateNumber ?? '-'),
                 'routeName' => $routeName,
                 'salary' => $salaryAmount,
                 'salaryFormatted' => number_format($salaryAmount, 0, ',', '.'),
@@ -668,7 +668,7 @@ class DriverSalaryController extends Controller
                 'orderCode' => $order->code,
                 'shipmentNumber' => $order->shipmentNumber ?? '-',
                 'orderDate' => Carbon::parse($order->orderDate)->format('d-m-Y'),
-                'plateNumber' => $order->fleet->plateNumber ?? '-',
+                'plateNumber' => $order->plateNumber ?: ($order->fleet->plateNumber ?? '-'),
                 'routeName' => $routeName,
                 'salary' => $salary,
                 'salaryFormatted' => number_format($salary, 0, ',', '.'),

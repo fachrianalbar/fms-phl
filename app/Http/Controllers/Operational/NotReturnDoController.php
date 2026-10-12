@@ -89,6 +89,13 @@ class NotReturnDoController extends Controller
         $location = $this->locationSvc->findAll();
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
+        // Merge plate numbers that exist in orders so historical snapshots can always be filtered
+        $existingPlates = Order::whereNotNull('plateNumber')->where('plateNumber', '!=', '')->distinct()->pluck('plateNumber')->toArray();
+        $fleetPlates = $fleet->pluck('plateNumber')->toArray();
+        $missingPlates = array_diff($existingPlates, $fleetPlates);
+        foreach ($missingPlates as $missingPlate) {
+            $fleet->push((object) ['plateNumber' => $missingPlate, 'code' => null]);
+        }
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
@@ -165,6 +172,12 @@ class NotReturnDoController extends Controller
         $location = $this->locationSvc->findAll();
         $driver = $this->driverSvc->findAll();
         $fleet = $this->orderSvc->getFleet($data->fleetCode);
+        if ($data->fleetCode && ! $fleet->where('code', $data->fleetCode)->first()) {
+            $currentFleet = Fleet::withTrashed()->with('company')->where('code', $data->fleetCode)->first();
+            if ($currentFleet) {
+                $fleet->push($currentFleet);
+            }
+        }
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
         $routeType = $this->routeTypeSvc->findAll();
@@ -237,8 +250,19 @@ class NotReturnDoController extends Controller
 
     private function filteredQuery(Request $request)
     {
+        $query = $this->service->datatable();
+
+        if ($request->filled('plateNumber')) {
+            $plate = $request->plateNumber;
+            $query = $query->where(function ($q) use ($plate) {
+                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                    ->orWhereHas('fleet', function ($fq) use ($plate) {
+                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                    });
+            });
+        }
+
         $filters = [
-            'fleet_plateNumber' => $request->plateNumber,
             'customer_name' => $request->customerName,
             'driver_name' => $request->driverName,
             'fleetType_name' => $request->fleetTypeName,
@@ -248,7 +272,6 @@ class NotReturnDoController extends Controller
         ];
 
         $relations = [
-            'fleet_plateNumber' => 'fleet.plateNumber',
             'customer_name' => 'customer.name',
             'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',
@@ -263,7 +286,7 @@ class NotReturnDoController extends Controller
         ];
 
         return FilterHelper::applyFilters(
-            $this->service->datatable(),
+            $query,
             $filters,
             $relations,
             $dateFilters
@@ -303,13 +326,15 @@ class NotReturnDoController extends Controller
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
+                })
+                ->filterColumn('fleet.plateNumber', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.plateNumber', 'like', "%{$keyword}%")
+                            ->orWhereHas('fleet', function ($fq) use ($keyword) {
+                                $fq->where('plateNumber', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
                 ->editColumn('route.name', function ($row) {
                     $routeName = '';
@@ -467,6 +492,12 @@ class NotReturnDoController extends Controller
         $fleetType = $this->fleetTypeSvc->findAll();
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
+        if ($data->fleetCode && ! $fleet->where('code', $data->fleetCode)->first()) {
+            $currentFleet = Fleet::withTrashed()->with('company')->where('code', $data->fleetCode)->first();
+            if ($currentFleet) {
+                $fleet->push($currentFleet);
+            }
+        }
         $route = Route::get();
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleetDetail = $this->fleetSvc->getById($data->fleetCode);

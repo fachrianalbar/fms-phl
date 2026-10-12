@@ -76,4 +76,11 @@ class Fleet extends Model
     {
         return $this->belongsTo(BankAccount::class, 'bankCode', 'code');
     }
+
+    public function plateHistories()
+    {
+        return $this->hasMany(FleetPlateHistory::class, 'fleet_id', 'id')
+            ->orderBy('change_date', 'desc')
+            ->orderBy('created_at', 'desc');
+    }
 }

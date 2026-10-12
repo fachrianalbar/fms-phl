@@ -153,7 +153,7 @@ class VendorPaymentService
                 'order_count' => $group->count(),
                 'orders' => $orders,
                 'order_codes' => $group->pluck('orderCode')->values(),
-                'plate_numbers' => $orders->map(fn ($o) => $o?->fleet?->plateNumber)->filter()->values(),
+                'plate_numbers' => $orders->map(fn ($o) => $o?->plateNumber ?: ($o?->fleet?->plateNumber))->filter()->values(),
                 // Format ISO agar sorting di server (yajra) benar secara
                 // kronologis; tampilan diformat ulang di sisi JavaScript.
                 'nota_date' => optional($group->min('created_at'))->format('Y-m-d\TH:i:s'),

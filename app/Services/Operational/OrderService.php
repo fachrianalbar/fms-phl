@@ -161,8 +161,8 @@ class OrderService
             ignoreId: $data->id,
         );
 
-        // Prepare update data and sanitize numeric fields (pass isUpdate = true)
-        $updateData = array_merge(['shipmentNumber' => $shipmentNumber->resolvedCode], $this->buildOrderData($request, true));
+        // Prepare update data and sanitize numeric fields (pass existing order to preserve snapshots if unchanged)
+        $updateData = array_merge(['shipmentNumber' => $shipmentNumber->resolvedCode], $this->buildOrderData($request, $data));
 
         // Compute route's expected amount based on selected route and qty
         $selectedRoute = $this->route->where('code', $request->routeData)->first();
@@ -629,7 +629,7 @@ class OrderService
         }
     }
 
-    private function buildOrderData($request, $isUpdate = false)
+    private function buildOrderData($request, $existingOrder = null)
     {
         $route = $this->route->where('code', $request->routeData)->first();
 
@@ -711,12 +711,21 @@ class OrderService
             'fleetCode' => $request->fleetCode,
         ]);
 
+        // Preserve plateNumber snapshot if same fleet and snapshot exists, otherwise take current fleet's plate
+        $plateNumber = null;
+        if ($existingOrder instanceof Order && $existingOrder->fleetCode === $request->fleetCode && ! empty($existingOrder->plateNumber)) {
+            $plateNumber = $existingOrder->plateNumber;
+        } else {
+            $plateNumber = $fleet?->plateNumber ?? null;
+        }
+
         $data = [
             'orderDate' => $request->orderDate,
             'notes' => $request->notes,
             'sto' => $request->sto,
             'salesOrder' => $request->salesOrder,
             'fleetCode' => $request->fleetCode,
+            'plateNumber' => $plateNumber,
             'driverCode' => $request->driverCode,
             'routeCode' => $request->routeData,
             'qty' => $request->qty,

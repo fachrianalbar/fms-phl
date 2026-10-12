@@ -613,6 +613,86 @@
                     </div>
                 </div>
 
+                {{-- Riwayat Pergantian Nomor Polisi (Plat History) --}}
+                <div class="card border-0 mb-4" style="background: #ffffff; border: 1px solid #e2e8f0 !important; border-radius: 12px;">
+                    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center" style="border-color: #e2e8f0;">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="mdi mdi-history text-primary fs-18"></i>
+                            <h6 class="mb-0 fw-bold text-dark">Riwayat Pergantian Nomor Polisi (Plat)</h6>
+                        </div>
+                        @php
+                            $historiesCount = count($plateHistories ?? []);
+                        @endphp
+                        @if ($historiesCount > 0)
+                            <span class="badge bg-primary-subtle text-primary px-2 py-1" style="border-radius: 6px; font-weight: 600; font-size: 11px;">
+                                Pernah Berganti {{ $historiesCount }}x
+                            </span>
+                        @else
+                            <span class="badge bg-light text-muted border px-2 py-1" style="border-radius: 6px; font-weight: 600; font-size: 11px;">
+                                Belum Pernah Berganti (Plat Asli)
+                            </span>
+                        @endif
+                    </div>
+                    <div class="card-body p-3">
+                        @if ($historiesCount > 0)
+                            <div class="table-responsive custom-scrollbar">
+                                <table class="mini-data-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;" class="text-center">No</th>
+                                            <th>Plat Nomor Lama</th>
+                                            <th class="text-center" style="width: 40px;"></th>
+                                            <th>Plat Nomor Baru</th>
+                                            <th class="text-center">Tgl Perubahan</th>
+                                            <th>Alasan / Keterangan</th>
+                                            <th>Diubah Oleh</th>
+                                            <th class="text-center">Waktu Sistem</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($plateHistories as $history)
+                                            <tr>
+                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                                <td>
+                                                    <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" style="font-size: 12px; border-radius: 6px;">
+                                                        {{ $history->old_plate_number }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center text-muted">
+                                                    <i class="mdi mdi-arrow-right fs-16 text-primary"></i>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-primary-subtle text-primary font-monospace fw-bold px-2 py-1" style="font-size: 12px; border-radius: 6px;">
+                                                        {{ $history->new_plate_number }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-center font-monospace">
+                                                    {{ $history->change_date ? $history->change_date->format('d/m/Y') : '-' }}
+                                                </td>
+                                                <td>
+                                                    {{ $history->reason ?: '-' }}
+                                                </td>
+                                                <td>
+                                                    <span class="text-dark fw-semibold">{{ $history->changed_by ?: '-' }}</span>
+                                                </td>
+                                                <td class="text-center font-monospace text-muted" style="font-size: 11px;">
+                                                    {{ $history->created_at ? $history->created_at->format('d/m/Y H:i') : '-' }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-4 text-muted">
+                                <i class="mdi mdi-checkbox-marked-circle-outline fs-32 text-success d-block mb-1 opacity-75"></i>
+                                <span class="fs-13 fw-semibold text-dark d-block">Nomor Polisi Masih Sesuai Pendaftaran Awal</span>
+                                <small class="text-muted">Armada ini belum pernah mengalami pergantian nomor polisi sejak pertama kali didaftarkan (<strong>{{ $fleet->plateNumber }}</strong>).</small>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
                 {{-- Riwayat Aktivitas Armada: 10 Pengiriman & 10 Perawatan Terakhir --}}
                 <div class="row g-4">
                     {{-- Riwayat Pengiriman / Order --}}

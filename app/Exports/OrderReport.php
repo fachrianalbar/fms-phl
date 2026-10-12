@@ -37,7 +37,6 @@ class OrderReport implements FromView, ShouldAutoSize, WithColumnFormatting
         $type = $this->request->type;
 
         $filters = [
-            'fleet_plateNumber' => $this->request->plateNumber,
             'customer_name' => $this->request->customerName,
             'driver_name' => $this->request->driverName,
             'fleetType_name' => $this->request->fleetTypeName,
@@ -49,7 +48,6 @@ class OrderReport implements FromView, ShouldAutoSize, WithColumnFormatting
 
         // Define relations for filters
         $relations = [
-            'fleet_plateNumber' => 'fleet.plateNumber',
             'customer_name' => 'customer.name',
             'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',
@@ -74,6 +72,16 @@ class OrderReport implements FromView, ShouldAutoSize, WithColumnFormatting
             'material',
             'route.routeDetail',
         ]);
+
+        if (! empty($this->request->plateNumber)) {
+            $plate = $this->request->plateNumber;
+            $query = $query->where(function ($q) use ($plate) {
+                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                    ->orWhereHas('fleet', function ($fq) use ($plate) {
+                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                    });
+            });
+        }
 
         $query = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
 

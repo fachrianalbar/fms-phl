@@ -90,29 +90,11 @@ class OrderDetailController extends Controller
                 ->editColumn('orderDate', function ($row) {
                     return $row->orderDate ? \Carbon\Carbon::parse($row->orderDate)->format('d-m-Y') : '';
                 })
-                ->editColumn('fleet.plateNumber', function ($row) {
-                    return $row->fleet->plateNumber ?? '';
-                })
-                ->editColumn('customer.name', function ($row) {
-                    return $row->customer->name ?? '';
-                })
-                ->addColumn('customer_name', function ($row) {
-                    return $row->customer->name ?? '';
-                })
-                ->editColumn('driver.name', function ($row) {
-                    return $row->driver->name ?? '';
-                })
-                ->editColumn('route.originLocation.name', function ($row) {
-                    return $row->route->originLocation->name ?? '';
-                })
-                ->editColumn('route.destinationLocation.name', function ($row) {
-                    return $row->route->destinationLocation->name ?? '';
-                })
                 ->editColumn('shipmentNumber', function ($row) {
                     return '<strong class="text-primary font-weight-bold">' . e(mb_strtoupper($row->shipmentNumber ?? '')) . '</strong>';
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $plate = e(strtoupper($row->fleet->plateNumber ?? ''));
+                    $plate = e(strtoupper($row->plateNumber ?: ($row->fleet->plateNumber ?? '')));
                     return $plate ? '<span class="badge bg-light text-dark border font-weight-bold px-2 py-1">' . $plate . '</span>' : '';
                 })
                 ->addColumn('sales', function ($row) {
@@ -219,8 +201,17 @@ class OrderDetailController extends Controller
             'cost.costComponent',
         ])->orderBy('orderDate', 'desc');
 
+        if ($request->filled('plateNumber')) {
+            $plate = $request->plateNumber;
+            $query = $query->where(function ($q) use ($plate) {
+                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                    ->orWhereHas('fleet', function ($fq) use ($plate) {
+                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                    });
+            });
+        }
+
         $filters = [
-            'fleet_plateNumber' => $request->plateNumber,
             'customer_name' => $request->customerName,
             'driver_name' => $request->driverName,
             'fleetType_name' => $request->fleetTypeName,
@@ -231,7 +222,6 @@ class OrderDetailController extends Controller
         ];
 
         $relations = [
-            'fleet_plateNumber' => 'fleet.plateNumber',
             'customer_name' => 'customer.name',
             'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',

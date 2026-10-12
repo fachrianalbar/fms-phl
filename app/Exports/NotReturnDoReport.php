@@ -44,8 +44,17 @@ class NotReturnDoReport implements FromView, ShouldAutoSize, WithColumnFormattin
                 'orderStatus',
             ]);
 
+        if (! empty($this->request->plateNumber)) {
+            $plate = $this->request->plateNumber;
+            $query = $query->where(function ($q) use ($plate) {
+                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                    ->orWhereHas('fleet', function ($fq) use ($plate) {
+                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                    });
+            });
+        }
+
         $filters = [
-            'fleet_plateNumber' => $this->request->plateNumber,
             'customer_name' => $this->request->customerName,
             'driver_name' => $this->request->driverName,
             'fleetType_name' => $this->request->fleetTypeName,
@@ -55,7 +64,6 @@ class NotReturnDoReport implements FromView, ShouldAutoSize, WithColumnFormattin
         ];
 
         $relations = [
-            'fleet_plateNumber' => 'fleet.plateNumber',
             'customer_name' => 'customer.name',
             'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',

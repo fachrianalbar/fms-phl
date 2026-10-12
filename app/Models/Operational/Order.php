@@ -50,12 +50,12 @@ class Order extends Model
         'sto',
         'routeCode',
         'qty',
-        'routeCode',
         'orderTypeCode',
         'fleetTypeCode',
         'bonUjt',
         'driverCode',
         'fleetCode',
+        'plateNumber',
         'status',
         'companyCode',
         'estimatedTime',
@@ -69,6 +69,25 @@ class Order extends Model
         'personalVendorPrice',
         'personalVendorPriceSingle',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function (Order $order) {
+            if ($order->isDirty('fleetCode') || empty($order->plateNumber)) {
+                if (! empty($order->fleetCode)) {
+                    $fleet = Fleet::where('code', $order->fleetCode)->first();
+                    if ($fleet && ! empty($fleet->plateNumber)) {
+                        $order->plateNumber = $fleet->plateNumber;
+                    }
+                }
+            }
+        });
+    }
+
+    public function getPlateNumberAttribute($value)
+    {
+        return $value ?: ($this->fleet?->plateNumber);
+    }
 
     public function customer()
     {

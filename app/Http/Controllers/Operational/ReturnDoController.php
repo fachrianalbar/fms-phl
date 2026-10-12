@@ -108,13 +108,15 @@ class ReturnDoController extends Controller
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
+                })
+                ->filterColumn('fleet.plateNumber', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.plateNumber', 'like', "%{$keyword}%")
+                            ->orWhereHas('fleet', function ($fq) use ($keyword) {
+                                $fq->where('plateNumber', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
                 ->editColumn('customer.name', function ($row) {
                     $customer = '';
@@ -284,6 +286,12 @@ class ReturnDoController extends Controller
         $fleetType = $fleetTypeSvc->findAll();
         $driver    = $employeeSvc->findAll();
         $fleets    = $fleetSvc->findAll();
+        if ($data->fleetCode && ! $fleets->where('code', $data->fleetCode)->first()) {
+            $currentFleet = Fleet::withTrashed()->with('company')->where('code', $data->fleetCode)->first();
+            if ($currentFleet) {
+                $fleets->push($currentFleet);
+            }
+        }
         $route     = Route::get();
         $cost      = OrderCost::where('orderCode', $data->code)->get();
         $component = CostComponent::get();

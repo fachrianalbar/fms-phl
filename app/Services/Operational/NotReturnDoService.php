@@ -165,11 +165,18 @@ class NotReturnDoService
             }
         }
 
+        // Preserve plateNumber snapshot if same fleet and snapshot exists, otherwise take fleet's plate
+        $plateNumber = $order->plateNumber;
+        if ($order->fleetCode !== $request->fleetCode || empty($plateNumber)) {
+            $plateNumber = $fleet?->plateNumber ?? $plateNumber;
+        }
+
         // Prepare update data
         $updateData = [
             'customerCode' => $request->customerCode ?? $order->customerCode,
             'orderDate' => $request->orderDate,
             'fleetCode' => $request->fleetCode,
+            'plateNumber' => $plateNumber,
             'driverCode' => $request->driverCode,
             'routeCode' => $request->routeData,
             'qty' => $qty,

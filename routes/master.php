@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Route;
 // Route::middleware(['access'])->group(function () {
 Route::prefix('master')->name('master.')->group(function () {
     Route::resource('fleets', FleetController::class);
+    Route::get('fleets/{id}/plate-histories', [FleetController::class, 'getPlateHistories'])->name('fleets.plate-histories');
     Route::get('fleets-export/excel', [FleetController::class, 'exportExcel'])->name('fleets.export-excel');
     Route::get('fleets-export/pdf', [FleetController::class, 'exportPdf'])->name('fleets.export-pdf');
     Route::get('fleets/{id}/export/pdf', [FleetController::class, 'exportDetailPdf'])->name('fleets.detail-export-pdf');

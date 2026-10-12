@@ -129,7 +129,7 @@ class FleetController extends Controller
     public function show(string $id)
     {
         $fleet = Fleet::where('id', $id)
-            ->with(['brand', 'type', 'company', 'driver.position', 'pictures'])
+            ->with(['brand', 'type', 'company', 'driver.position', 'pictures', 'plateHistories'])
             ->first();
 
         if (! $fleet) {
@@ -165,6 +165,8 @@ class FleetController extends Controller
             ->limit(10)
             ->get();
 
+        $plateHistories = $fleet->plateHistories;
+
         return view($this->view.'show')
             ->with('view', $this->view)
             ->with('title', $this->title)
@@ -173,7 +175,8 @@ class FleetController extends Controller
             ->with('totalMaintenance', $totalMaintenance)
             ->with('totalMaintenanceCost', $totalMaintenanceCost)
             ->with('recentMaintenances', $recentMaintenances)
-            ->with('recentOrders', $recentOrders);
+            ->with('recentOrders', $recentOrders)
+            ->with('plateHistories', $plateHistories);
     }
 
     /**
@@ -257,6 +260,36 @@ class FleetController extends Controller
         return redirect()->back()->with('success', 'Delete Data Success');
     }
 
+    /**
+     * Get plate number change history for a fleet (AJAX modal).
+     */
+    public function getPlateHistories(string $id)
+    {
+        $fleet = Fleet::where('id', $id)->firstOrFail();
+        $histories = $fleet->plateHistories()->get()->map(function ($h) {
+            return [
+                'id' => $h->id,
+                'old_plate_number' => $h->old_plate_number,
+                'new_plate_number' => $h->new_plate_number,
+                'change_date' => $h->change_date ? $h->change_date->format('d/m/Y') : '-',
+                'reason' => $h->reason ?: '-',
+                'changed_by' => $h->changed_by ?: '-',
+                'created_at' => $h->created_at ? $h->created_at->format('d/m/Y H:i') : '-',
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'fleet' => [
+                'id' => $fleet->id,
+                'code' => $fleet->code,
+                'current_plate' => $fleet->plateNumber,
+                'company' => $fleet->company?->name ?? '-',
+            ],
+            'histories' => $histories,
+        ]);
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
@@ -265,7 +298,12 @@ class FleetController extends Controller
             return Datatables::of($query)
                 ->addIndexColumn()
                 ->editColumn('plateNumber', function ($row) {
-                    return '<span class="font-monospace fw-bold text-dark">'.$row->plateNumber.'</span>';
+                    $html = '<span class="font-monospace fw-bold text-dark">'.$row->plateNumber.'</span>';
+                    if (($row->plate_histories_count ?? 0) > 0) {
+                        $html .= ' <button type="button" class="btn btn-icon btn-sm bg-info-subtle ms-1 p-0 px-1 btn-view-plate-history" data-id="'.$row->id.'" data-bs-toggle="tooltip" title="Pernah ganti nopol '.$row->plate_histories_count.'x. Klik untuk riwayat">'
+                            .'<i class="mdi mdi-history text-info fs-12"></i> <span style="font-size: 10px; font-weight: 700;">'.$row->plate_histories_count.'x</span></button>';
+                    }
+                    return $html;
                 })
                 ->editColumn('code', function ($row) {
                     return '<span class="font-monospace text-muted" style="font-size: 11.5px;">'.$row->code.'</span>';
@@ -314,7 +352,14 @@ class FleetController extends Controller
                     $editUrl = route($this->view.'edit', $row->id);
                     $escapedId = e($row->id);
 
+                    $historyBtn = '';
+                    if (($row->plate_histories_count ?? 0) > 0) {
+                        $historyBtn = '<button type="button" class="btn btn-icon btn-sm bg-secondary-subtle btn-view-plate-history" data-id="'.$escapedId.'" data-bs-toggle="tooltip" title="Riwayat Nopol">'
+                            .'<i class="mdi mdi-history fs-14 text-secondary"></i></button>';
+                    }
+
                     $btn = '<div class="d-flex align-items-center justify-content-center gap-1">'
+                        .$historyBtn
                         .'<a href="'.$showUrl.'" class="btn btn-icon btn-sm bg-info-subtle" data-bs-toggle="tooltip" title="Detail">'
                         .'<i class="mdi mdi-eye-outline fs-14 text-info"></i></a>'
                         .'<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle" data-bs-toggle="tooltip" title="Edit">'
@@ -336,7 +381,7 @@ class FleetController extends Controller
      */
     private function buildFilteredQuery(Request $request)
     {
-        $query = $this->service->findAllQuery();
+        $query = $this->service->findAllQuery()->withCount('plateHistories');
 
         if ($request->filled('fleetBrandCode')) {
             $query->where('fleetBrandCode', $request->fleetBrandCode);

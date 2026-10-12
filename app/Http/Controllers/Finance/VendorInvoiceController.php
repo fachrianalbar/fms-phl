@@ -191,7 +191,7 @@ class VendorInvoiceController extends Controller
                     return e($row->code ?: '-');
                 })
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    return $row->fleet->plateNumber ?? '';
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
                 })
                 ->addColumn('fleet.company.name', function ($row) {
                     return $row->fleet->company->name ?? '';

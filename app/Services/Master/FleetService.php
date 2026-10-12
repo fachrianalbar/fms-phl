@@ -5,7 +5,9 @@ namespace App\Services\Master;
 use App\Helpers\GenerateCode;
 use App\Models\Master\Fleet;
 use App\Models\Master\FleetPicture;
+use App\Models\Master\FleetPlateHistory;
 use App\Traits\LogActivity;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -190,6 +192,21 @@ class FleetService
             }
 
             Storage::putFileAs($path, $file, $vehicleRegistrationNumber);
+        }
+
+        // Catat riwayat pergantian nomor polisi jika plateNumber berubah
+        $oldPlate = trim((string) ($data->plateNumber ?? ''));
+        $newPlate = trim((string) ($request->plateNumber ?? ''));
+        if ($newPlate !== '' && $oldPlate !== '' && strtoupper($oldPlate) !== strtoupper($newPlate)) {
+            FleetPlateHistory::create([
+                'fleet_id' => $data->id,
+                'fleet_code' => $data->code,
+                'old_plate_number' => $oldPlate,
+                'new_plate_number' => $newPlate,
+                'change_date' => $request->plate_change_date ? \Carbon\Carbon::parse($request->plate_change_date)->format('Y-m-d') : now()->toDateString(),
+                'reason' => $request->plate_change_reason ?? null,
+                'changed_by' => Auth::user()?->name ?? 'System',
+            ]);
         }
 
         $this->service->where('id', $id)->update([

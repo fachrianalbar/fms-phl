@@ -48,7 +48,7 @@
                 <td style="text-align: center">{{ $loop->iteration }}</td>
                 <td style="text-align: center">{{ Carbon::parse($item->orderDate)->format('d-m-Y') }}</td>
                 <td style="text-align: center">
-                    {{ isset($item->fleet->plateNumber) ? $item->fleet->plateNumber : '' }}
+                    {{ $item->plateNumber ?: ($item->fleet->plateNumber ?? '') }}
                 </td>
                 <td style="text-align: center">{{ isset($item->driver->name) ? $item->driver->name : '' }}</td>
                 <td style="text-align: center">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>

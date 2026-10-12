@@ -30,8 +30,17 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
                 'cost.costComponent',
             ])->orderBy('orderDate', 'desc');
 
+            if (! empty($ordersOrRequest->plateNumber)) {
+                $plate = $ordersOrRequest->plateNumber;
+                $query = $query->where(function ($q) use ($plate) {
+                    $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                        ->orWhereHas('fleet', function ($fq) use ($plate) {
+                            $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                        });
+                });
+            }
+
             $filters = [
-                'fleet_plateNumber' => $ordersOrRequest->plateNumber,
                 'customer_name' => $ordersOrRequest->customerName,
                 'driver_name' => $ordersOrRequest->driverName,
                 'fleetType_name' => $ordersOrRequest->fleetTypeName,
@@ -42,7 +51,6 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
             ];
 
             $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
                 'customer_name' => 'customer.name',
                 'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',

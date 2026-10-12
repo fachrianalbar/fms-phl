@@ -406,7 +406,7 @@ class InvoiceController extends Controller
                                 'code' => $order->code,
                                 'shipment' => $order->shipmentNumber ?? $order->code,
                                 'route' => ($order->route && $order->route->originLocation ? $order->route->originLocation->name : '-').' ➔ '.($order->route && $order->route->destinationLocation ? $order->route->destinationLocation->name : '-'),
-                                'plate' => $order->fleet->plateNumber ?? '-',
+                                'plate' => $order->plateNumber ?: ($order->fleet->plateNumber ?? '-'),
                                 'basePrice' => $routeAmt,
                                 'basePriceFormatted' => 'Rp '.number_format($routeAmt, 0, ',', '.'),
                                 'onCharge' => $orderOnCharge,
@@ -584,13 +584,7 @@ class InvoiceController extends Controller
             return DataTables::of($data->get())
                 ->addIndexColumn()
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if ($row->fleet && isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
                 })
                 ->editColumn('route.originLocation.name', function ($row) {
                     $origin = '';
@@ -708,7 +702,7 @@ class InvoiceController extends Controller
                         .'data-on-charge="'.$onChargeCost.'" '
                         .'data-costs=\''.$costsJson.'\' '
                         .'data-shipment="'.($row->shipmentNumber ?? $row->code).'" '
-                        .'data-plate="'.($row->fleet->plateNumber ?? '-').'" '
+                        .'data-plate="'.($row->plateNumber ?: ($row->fleet->plateNumber ?? '-')).'" '
                         .'value="'.$row->code.'">';
 
                     return $btn;

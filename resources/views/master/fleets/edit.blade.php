@@ -222,6 +222,7 @@
                             </label>
                             <input class="form-control font-monospace text-uppercase" name="plateNumber" id="plateNumber"
                                 type="text" placeholder="Contoh: B 1234 CD" value="{{ $data->plateNumber }}" required>
+                            <input type="hidden" id="originalPlateNumber" value="{{ $data->plateNumber }}">
                         </div>
 
                         <div class="col-md-6">
@@ -237,6 +238,29 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        {{-- Section Keterangan Pergantian Plat (Otomatis ditonjolkan bila plat diedit) --}}
+                        <div class="col-12" id="plateChangeNoteWrapper" style="display: none;">
+                            <div class="alert alert-info border-info-subtle d-flex align-items-start gap-2 p-3 mb-0" style="border-radius: 10px;">
+                                <i class="mdi mdi-information-outline fs-18 text-info mt-1"></i>
+                                <div class="w-100">
+                                    <strong class="d-block mb-1 text-dark">Perubahan Nomor Polisi Terdeteksi!</strong>
+                                    <small class="text-muted d-block mb-2">
+                                        Nomor polisi diubah dari <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ $data->plateNumber }}</span> menjadi <span class="badge bg-primary-subtle text-primary font-monospace" id="newPlatePreview">-</span>. Riwayat perubahan akan dicatat ke sistem audit armada.
+                                    </small>
+                                    <div class="row g-2">
+                                        <div class="col-md-8">
+                                            <input type="text" class="form-control form-control-sm" name="plate_change_reason" id="plate_change_reason"
+                                                placeholder="Alasan pergantian plat (misal: Perpanjangan STNK 5 tahunan, Mutasi wilayah, Ganti plat kuning)">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <input type="date" class="form-control form-control-sm" name="plate_change_date" id="plate_change_date"
+                                                value="{{ date('Y-m-d') }}" title="Tanggal efektif pergantian plat">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="col-md-4">
@@ -526,6 +550,18 @@
 
             // Trigger saat load
             $('#fleetCompanyCode').trigger('change');
+
+            // 4. Deteksi pergantian nomor polisi
+            const origPlate = ($('#originalPlateNumber').val() || '').trim().toUpperCase();
+            $('#plateNumber').on('input change', function() {
+                const currentPlate = ($(this).val() || '').trim().toUpperCase();
+                if (currentPlate !== '' && currentPlate !== origPlate) {
+                    $('#newPlatePreview').text(currentPlate);
+                    $('#plateChangeNoteWrapper').slideDown(200);
+                } else {
+                    $('#plateChangeNoteWrapper').slideUp(200);
+                }
+            });
         });
 
         // 4. Modal Image Preview

@@ -118,6 +118,13 @@ class OrderController extends Controller
         $location = $this->locationSvc->findAll();
         $driver = $this->driverSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
+        // Merge plate numbers that exist in orders so historical snapshots can always be filtered
+        $existingPlates = Order::whereNotNull('plateNumber')->where('plateNumber', '!=', '')->distinct()->pluck('plateNumber')->toArray();
+        $fleetPlates = $fleet->pluck('plateNumber')->toArray();
+        $missingPlates = array_diff($existingPlates, $fleetPlates);
+        foreach ($missingPlates as $missingPlate) {
+            $fleet->push((object) ['plateNumber' => $missingPlate, 'code' => null]);
+        }
         $orderType = $this->orderTypeSvc->findAll();
         $unit = $this->unitSvc->findAll();
 
@@ -330,6 +337,12 @@ class OrderController extends Controller
 
         $cost = OrderCost::where('orderCode', $data->code)->get();
         $fleet = $this->service->getFleet($data->fleetCode);
+        if ($data->fleetCode && ! $fleet->where('code', $data->fleetCode)->first()) {
+            $currentFleet = Fleet::withTrashed()->with('company')->where('code', $data->fleetCode)->first();
+            if ($currentFleet) {
+                $fleet->push($currentFleet);
+            }
+        }
         $component = CostComponent::get();
         $customerDetailOrder = $this->service->getCustomerDetailOrder($data->code);
         $unit = $this->unitSvc->findAll();
@@ -439,9 +452,18 @@ class OrderController extends Controller
                 $data->whereIn('status', [0, 1, 2]);
             }
 
+            if ($request->filled('plateNumber')) {
+                $plate = $request->plateNumber;
+                $data = $data->where(function ($q) use ($plate) {
+                    $q->where('order.plateNumber', 'like', '%' . $plate . '%')
+                        ->orWhereHas('fleet', function ($fq) use ($plate) {
+                            $fq->where('plateNumber', 'like', '%' . $plate . '%');
+                        });
+                });
+            }
+
             // Definisikan kolom filter dengan alias
             $filters = [
-                'fleet_plateNumber' => $request->plateNumber,
                 'customer_name' => $request->customerName,
                 'driver_name' => $request->driverName,
                 'fleetType_name' => $request->fleetTypeName,
@@ -454,7 +476,6 @@ class OrderController extends Controller
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
                 'customer_name' => 'customer.name',
                 'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
@@ -475,13 +496,15 @@ class OrderController extends Controller
                 ->addIndexColumn()
 
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
+                })
+                ->filterColumn('fleet.plateNumber', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.plateNumber', 'like', "%{$keyword}%")
+                            ->orWhereHas('fleet', function ($fq) use ($keyword) {
+                                $fq->where('plateNumber', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
 
                 ->editColumn('route.name', function ($row) {
