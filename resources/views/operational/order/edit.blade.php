@@ -88,6 +88,11 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @if(!empty($data->plateNumber) && $data->fleet && strtoupper(trim($data->plateNumber)) !== strtoupper(trim($data->fleet->plateNumber)))
+                                    <small class="text-info d-block mt-1">
+                                        <i class="mdi mdi-information-outline"></i> Nopol snapshot saat order: <strong class="font-monospace">{{ $data->plateNumber }}</strong> (Master armada saat ini: <span class="font-monospace">{{ $data->fleet->plateNumber }}</span>).
+                                    </small>
+                                @endif
                             </div>
                         </div>
 
