@@ -25,8 +25,12 @@ Route::prefix('purchasing')->name('purchasing.')->group(function () {
     Route::resource('direct-purchase', DirectPurchaseController::class);
 
     Route::prefix('purchase-payment')->name('purchase-payment.')->group(function () {
-        // Hutang Supplier Belum Lunas (bayar tunggal / batch)
+        // Hutang Supplier Belum Lunas — rekap per supplier (bayar tunggal / batch
+        // dilakukan di halaman detail PO per supplier).
         Route::get('/', [PurchasePaymentController::class, 'index'])->name('index');
+
+        // Daftar PO hutang milik satu supplier (dari rekap)
+        Route::get('supplier/{supplierCode}', [PurchasePaymentController::class, 'supplierDetail'])->name('supplier');
 
         // Operasi pembayaran
         Route::post('batch', [PurchasePaymentController::class, 'storeBatch'])->name('batch.store');
@@ -44,6 +48,7 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('purchase', [PurchaseController::class, 'datatable'])->name('purchase');
     Route::get('direct-purchase', [DirectPurchaseController::class, 'datatable'])->name('direct-purchase');
     Route::get('purchase-payment/unpaid', [PurchasePaymentController::class, 'datatableUnpaid'])->name('purchase-payment.unpaid');
+    Route::get('purchase-payment/unpaid-supplier', [PurchasePaymentController::class, 'datatableSupplierSummary'])->name('purchase-payment.unpaid-supplier');
     Route::get('purchase-payment/paid', [PurchasePaymentController::class, 'datatablePaid'])->name('purchase-payment.paid');
 });
 

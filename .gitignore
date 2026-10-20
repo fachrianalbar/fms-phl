@@ -18,9 +18,10 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/.playwright-mcp
+/.commandcode
+/.agents
 /db_tft.sql
 .DS_Store
 /storage/app/mpdf-temp/
 composer.lock
-
-

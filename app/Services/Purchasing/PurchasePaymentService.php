@@ -135,7 +135,52 @@ class PurchasePaymentService
         return (int) round($total);
     }
 
-    public function statsUnpaid(): array
+    /**
+     * Rekap hutang belum lunas per supplier — dasar halaman utama
+     * "Hutang Belum Lunas" yang menampilkan nama supplier + total utang.
+     *
+     * Nilai tagihan mengikuti statsUnpaid(): nominal bila terisi, jika tidak
+     * jumlah dari detail (price * qty/receivedQty) lewat joinSub agregat.
+     */
+    public function unpaidBySupplier()
+    {
+        $detailSums = DB::table('purchase_detail')
+            ->whereNull('deleted_at')
+            ->groupBy('purchaseCode')
+            ->selectRaw('purchaseCode, SUM(price * COALESCE(qty, receivedQty)) as detail_sum');
+
+        return $this->service->newQuery()
+            ->join('supplier', 'supplier.code', '=', 'purchase.supplierCode')
+            ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
+            ->where('purchase.is_direct', false)
+            ->where('purchase.paymentStatus', '!=', 'Paid')
+            ->whereNull('supplier.deleted_at')
+            ->groupBy('purchase.supplierCode', 'supplier.name')
+            ->selectRaw('purchase.supplierCode as supplierCode')
+            ->selectRaw('supplier.name as supplierName')
+            ->selectRaw('COUNT(*) as poCount')
+            ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Unpaid' THEN 1 ELSE 0 END) as unpaidCount")
+            ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Partial' THEN 1 ELSE 0 END) as partialCount")
+            ->selectRaw('SUM(COALESCE(NULLIF(purchase.nominal, 0), ds.detail_sum, 0)) as totalBilling')
+            ->selectRaw('SUM(COALESCE(purchase.paidAmount, 0)) as totalPaid')
+            ->selectRaw(
+                'SUM(COALESCE(NULLIF(purchase.nominal, 0), ds.detail_sum, 0))'
+                .' - SUM(COALESCE(purchase.paidAmount, 0)) as totalRemaining'
+            );
+    }
+
+    /**
+     * Detail rekap satu supplier untuk halaman daftar PO milik supplier.
+     */
+    public function supplierSummary(string $supplierCode): ?array
+    {
+        return $this->unpaidBySupplier()
+            ->where('purchase.supplierCode', $supplierCode)
+            ->first()
+            ?->toArray();
+    }
+
+    public function statsUnpaid(?string $supplierCode = null): array
     {
         // Nilai tagihan = nominal bila terisi, jika tidak dihitung dari detail.
         // Dihitung sebagai satu agregat SQL (derived table) agar tidak memuat
@@ -149,6 +194,7 @@ class PurchasePaymentService
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
             ->where('purchase.is_direct', false)
             ->where('purchase.paymentStatus', '!=', 'Paid')
+            ->when($supplierCode, fn ($query) => $query->where('purchase.supplierCode', $supplierCode))
             ->selectRaw('COUNT(*) as total_count')
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Unpaid' THEN 1 ELSE 0 END) as unpaid_count")
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Partial' THEN 1 ELSE 0 END) as partial_count")

@@ -63,20 +63,41 @@ class PurchasePaymentController extends Controller
     /* ------------------------------------------------------------------ */
 
     /**
-     * Halaman "Hutang Supplier Belum Lunas" — bayar satu / banyak pembelian.
+     * Halaman utama "Hutang Supplier Belum Lunas" — rekap per supplier:
+     * nama supplier + total utang. Klik supplier untuk melihat PO-nya.
      */
     public function index()
     {
-        $supplier = $this->supplierSvc->findAll();
-        $userBank = $this->userBankSvc->findCompany();
         $stats = $this->service->statsUnpaid();
+
+        return view($this->view.'supplier-summary')
+            ->with('view', $this->view)
+            ->with('stats', $stats)
+            ->with('title', $this->pageTitle('PURCHASE_PAYMENT', 'Hutang Supplier Belum Lunas'));
+    }
+
+    /**
+     * Halaman daftar PO hutang milik satu supplier (level detail dari rekap).
+     */
+    public function supplierDetail(string $supplierCode)
+    {
+        $supplier = $this->supplierSvc->findAll()
+            ->firstWhere('code', $supplierCode);
+
+        if (! $supplier) {
+            abort(404, 'Supplier tidak ditemukan.');
+        }
+
+        $userBank = $this->userBankSvc->findCompany();
+        $stats = $this->service->statsUnpaid($supplierCode);
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('userBank', $userBank)
             ->with('stats', $stats)
-            ->with('title', $this->pageTitle('PURCHASE_PAYMENT', 'Hutang Supplier Belum Lunas'));
+            ->with('title', 'Hutang '.$supplier->name)
+            ->with('pageTitle', 'Hutang Supplier Belum Lunas');
     }
 
     /**
@@ -225,6 +246,44 @@ class PurchasePaymentController extends Controller
     /* Datatable & detail                                                 */
     /* ------------------------------------------------------------------ */
 
+    public function datatableSupplierSummary(Request $request)
+    {
+        if (! $request->ajax()) {
+            return response()->json(['data' => []]);
+        }
+
+        $data = $this->service->unpaidBySupplier();
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->filterColumn('supplierName', function ($query, $keyword) {
+                // Builder kosong (tanpa join), jadi pakai subquery nama supplier.
+                $query->whereRaw(
+                    '(select s2.name from supplier s2 where s2.code = purchase.supplierCode and s2.deleted_at is null) LIKE ?',
+                    ['%'.$keyword.'%']
+                );
+            })
+            ->orderColumn('totalBillingHtml', 'totalBilling $1')
+            ->orderColumn('totalPaidHtml', 'totalPaid $1')
+            ->orderColumn('totalRemainingHtml', 'totalRemaining $1')
+            ->addColumn('totalBillingHtml', fn ($row) => number_format((float) $row->totalBilling, 0, ',', '.'))
+            ->addColumn('totalPaidHtml', fn ($row) => number_format((float) $row->totalPaid, 0, ',', '.'))
+            ->addColumn('totalRemainingHtml', function ($row) {
+                $remaining = max(0, (float) $row->totalRemaining);
+
+                return '<span class="fw-semibold text-danger">'.number_format($remaining, 0, ',', '.').'</span>';
+            })
+            ->addColumn('action', function ($row) {
+                $url = route('purchasing.purchase-payment.supplier', $row->supplierCode);
+
+                return '<a href="'.$url.'" class="btn btn-sm bg-primary-subtle text-primary rounded-pill px-3" '
+                    .'title="Lihat daftar PO supplier ini">'
+                    .'<i class="mdi mdi-file-document-multiple-outline me-1"></i>Detail</a>';
+            })
+            ->rawColumns(['totalRemainingHtml', 'action'])
+            ->toJson();
+    }
+
     public function datatableUnpaid(Request $request)
     {
         if (! $request->ajax()) {
@@ -296,6 +355,10 @@ class PurchasePaymentController extends Controller
                 return '<span class="badge bg-secondary">Unpaid</span>';
             })
             ->orderColumn('dueDateHtml', PurchasePaymentService::effectiveDueDateSql().' $1')
+            ->orderColumn('supplierName', self::supplierNameSql().' $1')
+            ->filterColumn('supplierName', function ($query, $keyword) {
+                $query->whereRaw(self::supplierNameSql().' LIKE ?', ['%'.$keyword.'%']);
+            })
             ->rawColumns(['dueDateHtml', 'paymentStatusHtml'])
             ->setRowClass(function ($row) {
                 if ($row->paymentStatus != 'Paid') {
@@ -357,6 +420,15 @@ class PurchasePaymentController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Ekspresi SQL nama supplier (subquery, tanpa join) — dipakai untuk
+     * pengurutan kolom supplier pada datatable server-side.
+     */
+    protected static function supplierNameSql(): string
+    {
+        return '(select s.name from supplier s where s.code = purchase.supplierCode and s.deleted_at is null)';
     }
 
     public function datatablePaid(Request $request)

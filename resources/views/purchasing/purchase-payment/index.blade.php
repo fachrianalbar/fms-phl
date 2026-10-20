@@ -150,6 +150,12 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
+                @if (isset($supplier))
+                    <a href="{{ route('purchasing.purchase-payment.index') }}"
+                        class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+                        <i class="mdi mdi-arrow-left me-1"></i>Rekap Supplier
+                    </a>
+                @endif
                 <a href="{{ route('purchasing.purchase-payment.paid') }}" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm">
                     <i class="mdi mdi-cash-check me-1"></i>Hutang Lunas
                 </a>
@@ -762,6 +768,7 @@
                     "url": "{{ route('dt.purchase-payment.unpaid') }}",
                     "data": function(d) {
                         d.paymentStatus = currentStatusFilter === 'all' ? '' : currentStatusFilter;
+                        d.supplierCode = @json($supplier->code ?? '');
                     }
                 },
                 "columns": [{
@@ -801,7 +808,9 @@
                     },
                     {
                         "data": 'supplier.name',
-                        "className": 'align-middle'
+                        "name": 'supplierName',
+                        "className": 'align-middle',
+                        "visible": {{ isset($supplier) ? 'false' : 'true' }}
                     },
                     {
                         "data": 'totalPrice',
