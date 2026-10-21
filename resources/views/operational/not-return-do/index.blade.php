@@ -982,7 +982,7 @@
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
 
     <link rel="stylesheet" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
-    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
     {{-- <script src="../assets/js/sweet-alert/app.js"></script> --}}
 
     <script>

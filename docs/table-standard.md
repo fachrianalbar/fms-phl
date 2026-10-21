@@ -179,7 +179,7 @@ Use the local Flatpickr asset for report date filters. Do not use native `type="
 Load the local scripts before the page script and use the backend-compatible `Y-m-d` format:
 
 ```blade
-<script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+<script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
 <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 ```
 

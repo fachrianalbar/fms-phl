@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Purchasing;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
 use App\Models\Inventory\Item;
 use App\Models\Purchasing\Purchase;
-use App\Services\Bank\UserBankService;
 use App\Services\Inventory\SupplierService;
 use App\Services\Inventory\WarehouseService;
 use App\Services\Master\FleetService;
@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Yajra\DataTables\DataTables;
 
 class DirectPurchaseController extends Controller
@@ -31,8 +32,6 @@ class DirectPurchaseController extends Controller
 
     protected WarehouseService $warehouseSvc;
 
-    protected UserBankService $userBankSvc;
-
     protected $title;
 
     protected $view;
@@ -44,14 +43,12 @@ class DirectPurchaseController extends Controller
         SupplierService $supplierSvc,
         FleetService $fleetSvc,
         WarehouseService $warehouseSvc,
-        UserBankService $userBankSvc,
         MenuService $menuSvc
     ) {
         $this->service = $directPurchaseSvc;
         $this->supplierSvc = $supplierSvc;
         $this->fleetSvc = $fleetSvc;
         $this->warehouseSvc = $warehouseSvc;
-        $this->userBankSvc = $userBankSvc;
         $this->view = 'purchasing.direct-purchase.';
 
         $menu = $menuSvc->getByName('Direct Purchase');
@@ -87,7 +84,6 @@ class DirectPurchaseController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
-        $userBank = $this->userBankSvc->findCompany();
         $items = Item::query()->orderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view . 'create')
@@ -95,8 +91,9 @@ class DirectPurchaseController extends Controller
             ->with('supplier', $supplier)
             ->with('fleet', $fleet)
             ->with('warehouse', $warehouse)
-            ->with('userBank', $userBank)
             ->with('items', $items)
+            ->with('paymentTypes', DirectPurchaseService::PAYMENT_TYPES)
+            ->with('internalBanks', $this->internalBanks())
             ->with('title', $this->title);
     }
 
@@ -110,6 +107,9 @@ class DirectPurchaseController extends Controller
             'supplierCode' => ['required', 'string'],
             'date' => ['required', 'date'],
             'time' => ['required'],
+            'dueDate' => ['required', 'date', 'after_or_equal:date'],
+            'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'transferUserBankCode' => $this->transferBankRules(),
             'itemCode' => ['required', 'array', 'min:1'],
             'itemCode.*' => ['required'],
             'description' => ['sometimes', 'array'],
@@ -132,7 +132,7 @@ class DirectPurchaseController extends Controller
                     }
                 }
             }],
-        ]);
+        ], $this->validationMessages());
 
         if ($validator->fails()) {
             return redirect()->back()->withInput()->with('fail', $validator->errors()->first());
@@ -178,7 +178,11 @@ class DirectPurchaseController extends Controller
                     'fleetBrand' => optional($data->fleet?->brand)->name ?? '',
                     'supplierName' => optional($data->supplier)->name ?? '-',
                     'maintenanceCode' => optional($data->maintenances->first())->code ?? '-',
-                    'paymentMethod' => $data->userBank ? (optional($data->userBank->bank)->name . ' - ' . $data->userBank->accountName) : 'Tunai Langsung',
+                    'paymentMethod' => $data->paymentType ?: 'Tunai',
+                    'transferBankName' => $data->transferUserBank?->bank?->name,
+                    'transferBankAccountNumber' => $data->transferUserBank?->accountNumber,
+                    'transferBankAccountName' => $data->transferUserBank?->accountName,
+                    'dueDate' => $data->dueDate ? Carbon::parse($data->dueDate)->format('d F Y') : '-',
                     'nominal' => (float) $data->nominal,
                     'nominalFormatted' => 'Rp ' . number_format((float) $data->nominal, 0, ',', '.'),
                     'editUrl' => route($this->view . 'edit', $data->id),
@@ -218,7 +222,6 @@ class DirectPurchaseController extends Controller
         $supplier = $this->supplierSvc->findAll();
         $fleet = $this->fleetSvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
-        $userBank = $this->userBankSvc->findCompany();
         $items = Item::query()->orderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view . 'edit')
@@ -226,8 +229,9 @@ class DirectPurchaseController extends Controller
             ->with('supplier', $supplier)
             ->with('fleet', $fleet)
             ->with('warehouse', $warehouse)
-            ->with('userBank', $userBank)
             ->with('items', $items)
+            ->with('paymentTypes', DirectPurchaseService::PAYMENT_TYPES)
+            ->with('internalBanks', $this->internalBanks())
             ->with('title', $this->title)
             ->with('data', $data);
     }
@@ -242,6 +246,9 @@ class DirectPurchaseController extends Controller
             'supplierCode' => ['required', 'string'],
             'date' => ['required', 'date'],
             'time' => ['required'],
+            'dueDate' => ['required', 'date', 'after_or_equal:date'],
+            'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'transferUserBankCode' => $this->transferBankRules(),
             'itemCode' => ['required', 'array', 'min:1'],
             'itemCode.*' => ['required'],
             'description' => ['sometimes', 'array'],
@@ -264,7 +271,7 @@ class DirectPurchaseController extends Controller
                     }
                 }
             }],
-        ]);
+        ], $this->validationMessages());
 
         if ($validator->fails()) {
             return redirect()->back()->withInput()->with('fail', $validator->errors()->first());
@@ -292,6 +299,44 @@ class DirectPurchaseController extends Controller
         } catch (\Throwable $th) {
             return redirect()->route($this->view . 'index')->with('fail', 'Gagal menghapus: ' . $th->getMessage());
         }
+    }
+
+    /**
+     * Daftar rekening internal (rekening_type = internal) untuk pilihan
+     * sumber dana saat jenis pembayaran Transfer.
+     */
+    private function internalBanks()
+    {
+        return UserBank::query()
+            ->with('bank')
+            ->whereRaw('LOWER(TRIM(rekening_type)) = ?', ['internal'])
+            ->orderBy('accountName')
+            ->get();
+    }
+
+    /**
+     * Aturan validasi rekening internal: wajib bila jenis pembayaran Transfer.
+     */
+    private function transferBankRules(): array
+    {
+        return [
+            'nullable',
+            'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TRANSFER,
+            Rule::exists('user_bank', 'code')
+                ->withoutTrashed()
+                ->using(fn ($query) => $query->whereRaw('LOWER(TRIM(rekening_type)) = ?', ['internal'])),
+        ];
+    }
+
+    /**
+     * Pesan validasi berbahasa Indonesia.
+     */
+    private function validationMessages(): array
+    {
+        return [
+            'transferUserBankCode.required_if' => 'Rekening bank internal wajib dipilih untuk jenis pembayaran Transfer.',
+            'transferUserBankCode.exists' => 'Rekening yang dipilih bukan rekening internal yang valid.',
+        ];
     }
 
     /**
@@ -355,13 +400,31 @@ class DirectPurchaseController extends Controller
                     return '<span class="badge bg-secondary-subtle text-secondary rounded-pill fs-11">Tidak Terhubung</span>';
                 })
                 ->addColumn('bankInfo', function ($row) {
-                    if ($row->userBank) {
-                        $bankName = optional($row->userBank->bank)->name ?? 'Bank';
-                        $accName = $row->userBank->accountName;
-                        return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11" title="' . e($accName) . '">'
-                            . '<i class="mdi mdi-cash-check me-1"></i>' . e($bankName) . '</span>';
-                    }
-                    return '<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11"><i class="mdi mdi-check me-1"></i>Lunas (Tunai)</span>';
+                    $type = $row->paymentType ?: 'Tunai';
+                    $map = [
+                        'Tunai' => ['bg-success-subtle text-success border-success-subtle', 'mdi-cash'],
+                        'Transfer' => ['bg-primary-subtle text-primary border-primary-subtle', 'mdi-bank-transfer'],
+                        'Tempo' => ['bg-warning-subtle text-warning-emphasis border-warning-subtle', 'mdi-clock-outline'],
+                    ];
+                    [$classes, $icon] = $map[$type] ?? $map['Tunai'];
+
+                    $status = $row->paymentStatus ?: 'Unpaid';
+                    $statusMap = [
+                        'Paid' => ['bg-success-subtle text-success', 'Lunas'],
+                        'Partial' => ['bg-warning-subtle text-warning-emphasis', 'Dibayar Sebagian'],
+                        'Unpaid' => ['bg-secondary-subtle text-secondary', 'Belum Dibayar'],
+                    ];
+                    [$statusClasses, $statusLabel] = $statusMap[$status] ?? $statusMap['Unpaid'];
+
+                    return '<span class="badge ' . $classes . ' border rounded-pill fs-11">'
+                        . '<i class="mdi ' . $icon . ' me-1"></i>' . e($type) . '</span>'
+                        . ($type === 'Transfer' && $row->transferUserBank
+                            ? '<small class="d-block text-muted fs-10 mt-1">'
+                                . e($row->transferUserBank->bank->name ?? 'Bank') . ' · '
+                                . e($row->transferUserBank->accountNumber) . '</small>'
+                            : '')
+                        . '<small class="d-block mt-1"><span class="badge ' . $statusClasses . ' rounded-pill fs-10">'
+                        . e($statusLabel) . '</span></small>';
                 })
                 ->addColumn('itemSummary', function ($row) {
                     $count = $row->details->count();

@@ -88,8 +88,8 @@ class PurchasePaymentService
             'warehouse',
             'purchaseStatus',
             'details',
-        ])->where('is_direct', false)
-            ->where('paymentStatus', '!=', 'Paid')
+            'transferUserBank.bank',
+        ])->where('paymentStatus', '!=', 'Paid')
             ->orderByRaw(self::effectiveDueDateSql().' asc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
@@ -103,8 +103,7 @@ class PurchasePaymentService
             'purchaseStatus',
             'details',
             'paymentBatch',
-        ])->where('is_direct', false)
-            ->where('paymentStatus', 'Paid')
+        ])->where('paymentStatus', 'Paid')
             ->orderBy('paymentDate', 'desc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
@@ -152,7 +151,6 @@ class PurchasePaymentService
         return $this->service->newQuery()
             ->join('supplier', 'supplier.code', '=', 'purchase.supplierCode')
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
-            ->where('purchase.is_direct', false)
             ->where('purchase.paymentStatus', '!=', 'Paid')
             ->whereNull('supplier.deleted_at')
             ->groupBy('purchase.supplierCode', 'supplier.name')
@@ -192,7 +190,6 @@ class PurchasePaymentService
 
         $row = $this->service->newQuery()
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
-            ->where('purchase.is_direct', false)
             ->where('purchase.paymentStatus', '!=', 'Paid')
             ->when($supplierCode, fn ($query) => $query->where('purchase.supplierCode', $supplierCode))
             ->selectRaw('COUNT(*) as total_count')
@@ -218,7 +215,6 @@ class PurchasePaymentService
     public function statsPaid(): array
     {
         $rows = $this->service->newQuery()
-            ->where('is_direct', false)
             ->where('paymentStatus', 'Paid')
             ->get();
 

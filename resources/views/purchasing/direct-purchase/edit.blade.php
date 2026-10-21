@@ -301,7 +301,7 @@
                     </div>
 
                     {{-- Supplier / Toko --}}
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label form-label-custom" for="supplierCode">
                             Supplier / Toko Spare Part <span class="required-star">*</span>
                         </label>
@@ -315,23 +315,45 @@
                         </select>
                     </div>
 
-                    {{-- Sumber Dana / Akun Kas-Bank --}}
-                    <div class="col-md-6">
-                        <label class="form-label form-label-custom" for="userBankCode">
-                            Sumber Dana (Kas / Bank)
+                    {{-- Jenis Pembayaran (Tunai / Transfer / Tempo) --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="paymentType">
+                            Jenis Pembayaran <span class="required-star">*</span>
                         </label>
-                        <select class="form-select select2-basic" name="userBankCode" id="userBankCode">
-                            <option value="">-- Pembayaran Tunai / Langsung Lunas --</option>
-                            @foreach ($userBank as $ub)
-                                @php
-                                    $bankName = optional($ub->bank)->name ?? 'Bank';
-                                    $balance = optional($ub->liveMutation)->balance ?? 0;
-                                @endphp
-                                <option value="{{ $ub->code }}" {{ (old('userBankCode', $data->userBankCode) == $ub->code) ? 'selected' : '' }}>
-                                    {{ $bankName }} - {{ $ub->accountName }} (Saldo: Rp {{ number_format($balance, 0, ',', '.') }})
+                        <select class="form-select select2-basic" name="paymentType" id="paymentType" required>
+                            @foreach ($paymentTypes as $type)
+                                <option value="{{ $type }}" {{ old('paymentType', $data->paymentType ?: 'Tunai') == $type ? 'selected' : '' }}>
+                                    {{ $type }}
                                 </option>
                             @endforeach
                         </select>
+                        <small class="text-muted fs-11">Hanya penanda jenis pembayaran, tidak memotong saldo kas/bank</small>
+                    </div>
+
+                    {{-- Rekening Internal (hanya muncul bila Transfer) --}}
+                    <div class="col-md-4 d-none" id="transferBankWrapper">
+                        <label class="form-label form-label-custom" for="transferUserBankCode">
+                            Rekening Bank Internal <span class="required-star">*</span>
+                        </label>
+                        <select class="form-select select2-basic" name="transferUserBankCode" id="transferUserBankCode">
+                            <option value="">Pilih rekening internal...</option>
+                            @foreach ($internalBanks as $bank)
+                                <option value="{{ $bank->code }}" {{ old('transferUserBankCode', $data->transferUserBankCode) == $bank->code ? 'selected' : '' }}>
+                                    {{ ($bank->bank->name ?? 'Bank') . ' · ' . $bank->accountNumber . ' · ' . $bank->accountName }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted fs-11">Rekening internal perusahaan yang dipakai untuk transfer.</small>
+                    </div>
+
+                    {{-- Jatuh Tempo --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="dueDate">
+                            Jatuh Tempo <span class="required-star">*</span>
+                        </label>
+                        <input class="form-control form-control-custom" name="dueDate" id="dueDate" type="date"
+                            required value="{{ old('dueDate', $data->dueDate ? \Carbon\Carbon::parse($data->dueDate)->toDateString() : $data->date) }}">
+                        <small class="text-muted fs-11">Terisi otomatis mengikuti tanggal pembelian, dapat diubah</small>
                     </div>
 
                     {{-- Hidden Gudang Logistik --}}
@@ -498,6 +520,20 @@
     <script>
         let rowCount = {{ max(1, count($data->details)) }};
 
+        // Tampilkan pilihan rekening internal hanya untuk jenis pembayaran Transfer
+        function toggleTransferBank() {
+            const isTransfer = $('#paymentType').val() === 'Transfer';
+            const $wrapper = $('#transferBankWrapper');
+            const $bank = $('#transferUserBankCode');
+
+            $wrapper.toggleClass('d-none', !isTransfer);
+            $bank.prop('required', isTransfer);
+
+            if (!isTransfer) {
+                $bank.val(null).trigger('change.select2');
+            }
+        }
+
         const itemsData = @json($items->map(fn($it) => [
             'code' => $it->code,
             'name' => $it->name,
@@ -519,6 +555,10 @@
                     width: '100%'
                 });
             });
+
+            // Rekening internal hanya relevan untuk jenis pembayaran Transfer
+            toggleTransferBank();
+            $('#paymentType').on('change', toggleTransferBank);
 
             updateSummary();
 

@@ -370,7 +370,7 @@ use App\Models\Data\Route;
 
 @push('script')
 <script src=" {{ asset('assets/js/helper.js') }}"></script>
-<script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+<script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
 <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>

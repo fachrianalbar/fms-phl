@@ -427,7 +427,7 @@
                                 {{ number_format($stats['totalCount'] ?? 0) }} Transaksi
                             </span>
                         </h4>
-                        <small class="text-muted">Pengadaan suku cadang langsung digunakan/dipasang pada armada mobil dan tercatat sebagai pemeliharaan (Lunas seketika).</small>
+                        <small class="text-muted">Pengadaan suku cadang langsung digunakan/dipasang pada armada mobil dan tercatat sebagai pemeliharaan.</small>
                     </div>
                 </div>
 
@@ -552,7 +552,7 @@
                                 <th class="text-center" style="width: 110px;">Armada</th>
                                 <th>Supplier / Toko</th>
                                 <th class="text-center" style="width: 140px;">Pemeliharaan (MNT)</th>
-                                <th class="text-center" style="width: 130px;">Metode Bayar</th>
+                                <th class="text-center" style="width: 130px;">Jenis Bayar</th>
                                 <th class="text-center" style="width: 100px;">Item / Qty</th>
                                 <th class="text-end" style="width: 130px;">Total Biaya</th>
                             </tr>
@@ -616,8 +616,12 @@
                                         <div id="modalMnt">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Metode Pembayaran</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jenis Pembayaran</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalPayment">-</div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jatuh Tempo</small>
+                                        <div class="fw-semibold text-dark fs-13" id="modalDueDate">-</div>
                                     </div>
                                 </div>
                             </div>
@@ -738,7 +742,7 @@
                     { data: 'fleetInfo', name: 'fleet.plateNumber', className: 'align-middle text-center' },
                     { data: 'supplierInfo', name: 'supplier.name', className: 'align-middle' },
                     { data: 'maintenanceBadge', name: 'maintenances.code', className: 'align-middle text-center' },
-                    { data: 'bankInfo', name: 'userBank.accountName', className: 'align-middle text-center' },
+                    { data: 'bankInfo', name: 'paymentType', className: 'align-middle text-center' },
                     { data: 'itemSummary', name: 'itemSummary', orderable: false, searchable: false, className: 'text-center align-middle' },
                     { data: 'totalPrice', name: 'nominal', className: 'text-end align-middle font-monospace fw-bold text-dark' },
                 ],
@@ -837,8 +841,20 @@
                             + '<i class="mdi mdi-tools me-1"></i>' + escapeHtml(d.maintenanceCode) + '</span>';
                         $('#modalMnt').html(mntHtml);
 
-                        $('#modalPayment').html('<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11">'
-                            + '<i class="mdi mdi-cash-check me-1"></i>' + escapeHtml(d.paymentMethod) + '</span>');
+                        const paymentType = d.paymentMethod || 'Tunai';
+                        const paymentMap = {
+                            Tunai: { classes: 'bg-success-subtle text-success border-success-subtle', icon: 'mdi-cash' },
+                            Transfer: { classes: 'bg-primary-subtle text-primary border-primary-subtle', icon: 'mdi-bank-transfer' },
+                            Tempo: { classes: 'bg-warning-subtle text-warning-emphasis border-warning-subtle', icon: 'mdi-clock-outline' },
+                        };
+                        const payment = paymentMap[paymentType] || paymentMap.Tunai;
+
+                        $('#modalPayment').html('<span class="badge ' + payment.classes + ' border rounded-pill fs-11">'
+                            + '<i class="mdi ' + payment.icon + ' me-1"></i>' + escapeHtml(paymentType) + '</span>'
+                            + (paymentType === 'Transfer' && d.transferBankAccountNumber
+                                ? '<small class="text-muted d-block mt-1">' + escapeHtml(d.transferBankName || 'Bank') + ' · ' + escapeHtml(d.transferBankAccountNumber) + '</small>'
+                                : ''));
+                        $('#modalDueDate').text(d.dueDate);
 
                         $('#modalBtnEdit').attr('href', d.editUrl);
                         $('#modalTotalBadge').text('Total: ' + d.nominalFormatted);

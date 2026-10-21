@@ -530,6 +530,8 @@
                 code: String(checkbox.attr('data-code') || ''),
                 supplier: String(checkbox.attr('data-supplier') || ''),
                 remaining: Math.round(Number(checkbox.attr('data-remaining')) || 0),
+                transferBankCode: String(checkbox.attr('data-transfer-bank') || ''),
+                transferBankLabel: String(checkbox.attr('data-transfer-bank-label') || ''),
             };
         }
 
@@ -573,6 +575,47 @@
         // =====================================================================
         // MODAL PEMBAYARAN BATCH
         // =====================================================================
+
+        /**
+         * Pilih otomatis rekening sumber dana dari Pembelian Langsung bertipe
+         * Transfer. Hanya dipakai bila SEMUA pembelian terpilih menunjuk
+         * rekening internal yang sama; bila berbeda, user memilih manual.
+         */
+        function resolveTransferBank(items) {
+            const codes = items
+                .map(function(item) {
+                    return String(item.transferBankCode || '');
+                })
+                .filter(function(code) {
+                    return code !== '';
+                });
+
+            if (codes.length !== items.length || codes.length === 0) {
+                return null;
+            }
+
+            const unique = codes.filter(function(code, index) {
+                return codes.indexOf(code) === index;
+            });
+
+            if (unique.length !== 1) {
+                return null;
+            }
+
+            const optionExists = $('#batchUserBankCode option').filter(function() {
+                return $(this).val() === unique[0];
+            }).length > 0;
+
+            if (!optionExists) {
+                return null;
+            }
+
+            return {
+                code: unique[0],
+                label: items[0].transferBankLabel || '',
+            };
+        }
+
         function renderBatchAllocations() {
             const body = $('#batchPaymentAllocationBody').empty();
             const fullPayment = $('#batchPaymentModeFull').is(':checked');
@@ -591,6 +634,12 @@
                     .append($('<span>', {
                         class: 'allocation-vendor'
                     }).text(item.supplier || '-'));
+                if (item.transferBankCode) {
+                    identity.append($('<span>', {
+                        class: 'allocation-vendor d-block text-muted fs-11'
+                    }).html('<i class="mdi mdi-bank-outline me-1"></i>' + escapeHtml(item.transferBankLabel ||
+                        'Transfer')));
+                }
                 const status = $('<td>', {
                     class: 'text-center'
                 }).append($('<span>', {
@@ -688,8 +737,12 @@
             $('#submitBatchPaymentBtn').prop('disabled', !ready);
 
             if (bankSelected) {
-                $('#batchBankStatus').text('Rekening siap digunakan.').removeClass('text-danger').addClass(
-                    'text-success');
+                const presetCode = String($('#batchBankStatus').data('presetCode') || '');
+                const isPreset = presetCode !== '' && presetCode === String($('#batchUserBankCode').val() || '');
+                $('#batchBankStatus')
+                    .text(isPreset ? 'Rekening terisi otomatis dari Pembelian Langsung, dapat diubah.' : 'Rekening siap digunakan.')
+                    .removeClass('text-danger')
+                    .addClass('text-success');
             } else {
                 $('#batchBankStatus').text('Pilih rekening sumber dana.').removeClass('text-danger text-success');
             }
@@ -748,6 +801,13 @@
             $('#batchDescription').val('');
             $('#batchDescriptionCount').text('0/255');
             $('#batchUserBankCode').val('').trigger('change.select2');
+
+            // Opsi A: rekening internal Pembelian Langsung dipakai sebagai
+            // default sumber dana (tetap bisa diubah user).
+            const presetBank = resolveTransferBank(items);
+            $('#batchUserBankCode').val(presetBank ? presetBank.code : '').trigger('change.select2');
+            $('#batchBankStatus').data('presetCode', presetBank ? presetBank.code : '');
+
             renderBatchAllocations();
             setBatchSubmitting(false);
             $('#batch-payment-modal').modal('show');
@@ -781,11 +841,19 @@
                             const remaining = (row.remainingRaw != null) ? row.remainingRaw : 0;
                             const disabled = remaining < 1 ? ' disabled' : '';
                             const title = remaining < 1 ? ' title="Tidak ada tagihan"' : '';
+                            const transferBank = row.transferBank || null;
+                            const transferBankCode = transferBank ? String(transferBank.code || '') : '';
+                            const transferBankLabel = transferBank
+                                ? [transferBank.bank, transferBank.accountNumber, transferBank.accountName]
+                                    .filter(Boolean).join(' · ')
+                                : '';
                             return '<input class="form-check-input row-payment-checkbox" type="checkbox"' +
                                 disabled + title +
                                 ' data-code="' + escapeHtml(row.code) + '"' +
                                 ' data-supplier="' + escapeHtml(supplier) + '"' +
-                                ' data-remaining="' + remaining + '">';
+                                ' data-remaining="' + remaining + '"' +
+                                ' data-transfer-bank="' + escapeHtml(transferBankCode) + '"' +
+                                ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '">';
                         }
                     },
                     {

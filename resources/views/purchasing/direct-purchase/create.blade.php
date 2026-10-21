@@ -248,7 +248,7 @@
                     </span>
                     <div>
                         <h5 class="mb-0 fw-bold text-dark">{{ $title }} — Tambah Data</h5>
-                        <small class="text-muted">Suku cadang yang dibeli langsung terpasang pada mobil dan tercatat sebagai pemeliharaan armada (Lunas)</small>
+                        <small class="text-muted">Suku cadang yang dibeli langsung terpasang pada mobil dan tercatat sebagai pemeliharaan armada</small>
                     </div>
                 </div>
                 <a href="{{ route($view . 'index') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
@@ -302,7 +302,7 @@
                     </div>
 
                     {{-- Supplier / Toko --}}
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label form-label-custom" for="supplierCode">
                             Supplier / Toko Spare Part <span class="required-star">*</span>
                         </label>
@@ -316,24 +316,45 @@
                         </select>
                     </div>
 
-                    {{-- Sumber Dana / Akun Kas-Bank (Lunas Langsung) --}}
-                    <div class="col-md-6">
-                        <label class="form-label form-label-custom" for="userBankCode">
-                            Sumber Dana (Kas / Bank)
+                    {{-- Jenis Pembayaran (Tunai / Transfer / Tempo) --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="paymentType">
+                            Jenis Pembayaran <span class="required-star">*</span>
                         </label>
-                        <select class="form-select select2-basic" name="userBankCode" id="userBankCode">
-                            <option value="">-- Pembayaran Tunai / Langsung Lunas --</option>
-                            @foreach ($userBank as $ub)
-                                @php
-                                    $bankName = optional($ub->bank)->name ?? 'Bank';
-                                    $balance = optional($ub->liveMutation)->balance ?? 0;
-                                @endphp
-                                <option value="{{ $ub->code }}" {{ old('userBankCode') == $ub->code ? 'selected' : '' }}>
-                                    {{ $bankName }} - {{ $ub->accountName }} (Saldo: Rp {{ number_format($balance, 0, ',', '.') }})
+                        <select class="form-select select2-basic" name="paymentType" id="paymentType" required>
+                            @foreach ($paymentTypes as $type)
+                                <option value="{{ $type }}" {{ old('paymentType', 'Tunai') == $type ? 'selected' : '' }}>
+                                    {{ $type }}
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted fs-11">Pilih akun jika ingin otomatis memotong saldo kas/bank perusahaan</small>
+                        <small class="text-muted fs-11">Penanda jenis pembayaran. Tagihan tetap masuk ke Hutang Vendor.</small>
+                    </div>
+
+                    {{-- Rekening Internal (hanya muncul bila Transfer) --}}
+                    <div class="col-md-4 d-none" id="transferBankWrapper">
+                        <label class="form-label form-label-custom" for="transferUserBankCode">
+                            Rekening Bank Internal <span class="required-star">*</span>
+                        </label>
+                        <select class="form-select select2-basic" name="transferUserBankCode" id="transferUserBankCode">
+                            <option value="">Pilih rekening internal...</option>
+                            @foreach ($internalBanks as $bank)
+                                <option value="{{ $bank->code }}" {{ old('transferUserBankCode') == $bank->code ? 'selected' : '' }}>
+                                    {{ ($bank->bank->name ?? 'Bank') . ' · ' . $bank->accountNumber . ' · ' . $bank->accountName }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted fs-11">Rekening internal perusahaan yang dipakai untuk transfer.</small>
+                    </div>
+
+                    {{-- Jatuh Tempo --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="dueDate">
+                            Jatuh Tempo <span class="required-star">*</span>
+                        </label>
+                        <input class="form-control form-control-custom" name="dueDate" id="dueDate" type="date"
+                            required value="{{ old('dueDate', now()->toDateString()) }}">
+                        <small class="text-muted fs-11">Terisi otomatis mengikuti tanggal pembelian, dapat diubah</small>
                     </div>
 
                     {{-- Hidden Gudang Logistik (Default Gudang) --}}
@@ -436,9 +457,12 @@
         {{-- Submit Button Card --}}
         <div class="card direct-card">
             <div class="card-body d-flex align-items-center justify-content-between">
-                <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-12">
-                        <i class="mdi mdi-check-decagram me-1"></i>Otomatis Tercatat Lunas & Terhubung ke Servis Armada
+                        <i class="mdi mdi-check-decagram me-1"></i>Otomatis Tercatat sebagai Pemeliharaan Armada
+                    </span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 rounded-pill fs-12">
+                        <i class="mdi mdi-receipt-text-outline me-1"></i>Tagihan Masuk ke Hutang Vendor
                     </span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -466,6 +490,21 @@
 
     <script>
         let rowCount = 1;
+        let dueDateTouched = false;
+
+        // Tampilkan pilihan rekening internal hanya untuk jenis pembayaran Transfer
+        function toggleTransferBank() {
+            const isTransfer = $('#paymentType').val() === 'Transfer';
+            const $wrapper = $('#transferBankWrapper');
+            const $bank = $('#transferUserBankCode');
+
+            $wrapper.toggleClass('d-none', !isTransfer);
+            $bank.prop('required', isTransfer);
+
+            if (!isTransfer) {
+                $bank.val(null).trigger('change.select2');
+            }
+        }
 
         const itemsData = @json($items->map(fn($it) => [
             'code' => $it->code,
@@ -483,11 +522,21 @@
 
             initSelect2Item(1);
 
+            // Rekening internal hanya relevan untuk jenis pembayaran Transfer
+            toggleTransferBank();
+            $('#paymentType').on('change', toggleTransferBank);
+
             // Fetch auto-generated code
             generateCode();
 
             $('#date').on('change', function() {
                 generateCode();
+                syncDueDate();
+            });
+
+            // Jatuh tempo mengikuti tanggal pembelian, kecuali sudah diubah manual
+            $('#dueDate').on('change', function() {
+                dueDateTouched = true;
             });
 
             // Add row
@@ -507,6 +556,13 @@
                 $('#btnSubmit').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status"></span> Menyimpan...');
             });
         });
+
+        function syncDueDate() {
+            if (dueDateTouched) {
+                return;
+            }
+            $('#dueDate').val($('#date').val());
+        }
 
         function generateCode() {
             const date = $('#date').val();

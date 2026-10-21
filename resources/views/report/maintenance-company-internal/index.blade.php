@@ -106,7 +106,7 @@
     <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
-    <script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+    <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
     <script>
         $(document).ready(function() {

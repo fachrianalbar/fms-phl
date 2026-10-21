@@ -342,6 +342,22 @@ class PurchasePaymentController extends Controller
                 return (int) round(max(0, $this->service->billingOf($row) - (float) $row->paidAmount));
             })
             ->addColumn('billingRaw', fn ($row) => $this->service->billingOf($row))
+            ->addColumn('transferBank', function ($row) {
+                // Rekening internal yang dipilih pada Pembelian Langsung
+                // (paymentType = Transfer); null untuk PO biasa.
+                $bank = $row->transferUserBank;
+
+                if (! $bank) {
+                    return null;
+                }
+
+                return [
+                    'code' => $bank->code,
+                    'bank' => $bank->bank->name ?? 'Bank',
+                    'accountNumber' => $bank->accountNumber,
+                    'accountName' => $bank->accountName,
+                ];
+            })
             ->editColumn('supplier.name', fn ($row) => $row->supplier->name ?? '')
             ->addColumn('paymentStatusHtml', function ($row) {
                 if ($row->paymentStatus == 'Paid') {

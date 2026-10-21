@@ -121,8 +121,16 @@
                     <div>
                         <h5 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                             Pembelian Langsung: <span class="font-monospace text-primary">{{ $data->code }}</span>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11 px-2 py-1">
-                                <i class="mdi mdi-check-circle me-1"></i>Lunas (Terpasang ke Mobil)
+                            @php
+                                $paymentStatus = $data->paymentStatus ?: 'Unpaid';
+                            @endphp
+                            <span class="badge rounded-pill fs-11 px-2 py-1 border
+                                {{ $paymentStatus === 'Paid' ? 'bg-success-subtle text-success border-success-subtle' : ($paymentStatus === 'Partial' ? 'bg-warning-subtle text-warning-emphasis border-warning-subtle' : 'bg-secondary-subtle text-secondary border-secondary-subtle') }}">
+                                <i class="mdi {{ $paymentStatus === 'Paid' ? 'mdi-check-circle' : ($paymentStatus === 'Partial' ? 'mdi-progress-clock' : 'mdi-clock-outline') }} me-1"></i>
+                                {{ $paymentStatus === 'Paid' ? 'Lunas' : ($paymentStatus === 'Partial' ? 'Dibayar Sebagian' : 'Belum Dibayar') }}
+                            </span>
+                            <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill fs-11 px-2 py-1">
+                                <i class="mdi mdi-wrench me-1"></i>Terpasang ke Armada
                             </span>
                         </h5>
                         <small class="text-muted">Transaksi pembelian suku cadang yang langsung dipasang di mobil dan tercatat sebagai pemeliharaan armada</small>
@@ -176,17 +184,33 @@
 
                     {{-- Baris Info 2 --}}
                     <div class="col-md-4">
-                        <div class="info-label">Sumber Dana / Kas-Bank</div>
+                        <div class="info-label">Jenis Pembayaran</div>
                         <div class="info-value">
-                            @if ($data->userBank)
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill fs-12 px-3 py-1">
-                                    <i class="mdi mdi-bank me-1"></i>{{ optional($data->userBank->bank)->name ?? 'Bank' }} - {{ $data->userBank->accountName }}
-                                </span>
-                            @else
-                                <span class="badge bg-secondary-subtle text-secondary rounded-pill fs-12 px-3 py-1">
-                                    <i class="mdi mdi-cash me-1"></i>Tunai Langsung
-                                </span>
+                            @php $paymentType = $data->paymentType ?: 'Tunai'; @endphp
+                            <span class="badge rounded-pill fs-12 px-3 py-1 border
+                                {{ $paymentType === 'Tunai' ? 'bg-success-subtle text-success border-success-subtle' : ($paymentType === 'Transfer' ? 'bg-primary-subtle text-primary border-primary-subtle' : 'bg-warning-subtle text-warning-emphasis border-warning-subtle') }}">
+                                <i class="mdi {{ $paymentType === 'Tunai' ? 'mdi-cash' : ($paymentType === 'Transfer' ? 'mdi-bank-transfer' : 'mdi-clock-outline') }} me-1"></i>{{ $paymentType }}
+                            </span>
+                            @if ($paymentType === 'Transfer')
+                                <small class="text-muted d-block mt-1">
+                                    <i class="mdi mdi-bank-outline me-1"></i>
+                                    @if ($data->transferUserBank)
+                                        {{ $data->transferUserBank->bank->name ?? 'Bank' }} ·
+                                        {{ $data->transferUserBank->accountNumber }} ·
+                                        {{ $data->transferUserBank->accountName }}
+                                    @else
+                                        <span class="fst-italic">Rekening internal belum dipilih</span>
+                                    @endif
+                                </small>
                             @endif
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="info-label">Jatuh Tempo</div>
+                        <div class="info-value">
+                            <i class="mdi mdi-calendar-alert text-muted me-1"></i>
+                            {{ $data->dueDate ? \Carbon\Carbon::parse($data->dueDate)->format('d F Y') : '-' }}
                         </div>
                     </div>
 

@@ -612,7 +612,7 @@
 <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-<script src="{{ asset('assets/js/flat-pickr/flatpickr.js') }}"></script>
+<script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
 <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 <script src=" {{ asset('assets/js/helper.js') }}"></script>
 

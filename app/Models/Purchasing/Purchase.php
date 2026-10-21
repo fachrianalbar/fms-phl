@@ -35,6 +35,8 @@ class Purchase extends Model
         'nominal',
         'paidAmount',
         'paymentStatus',
+        'paymentType',
+        'transferUserBankCode',
         'paymentCode',
         'userBankCode',
         'dueDate',
@@ -57,6 +59,15 @@ class Purchase extends Model
     public function userBank()
     {
         return $this->belongsTo(UserBank::class, 'userBankCode', 'code');
+    }
+
+    /**
+     * Rekening internal yang dipilih saat jenis pembayaran Transfer
+     * (hanya referensi, tidak memotong saldo).
+     */
+    public function transferUserBank()
+    {
+        return $this->belongsTo(UserBank::class, 'transferUserBankCode', 'code');
     }
 
     public function warehouse()

@@ -3,12 +3,10 @@
 namespace App\Services\Purchasing;
 
 use App\Helpers\GenerateCode;
-use App\Models\Bank\UserBank;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
 use App\Models\Inventory\Warehouse;
 use App\Models\LiveMutation;
-use App\Models\Master\Fleet;
 use App\Models\Mutation;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
@@ -31,6 +29,19 @@ class DirectPurchaseService
     /** Kode tipe mutasi "Purchase" pada tabel transaction_type */
     public const TRANSACTION_TYPE = 'FTT250306114138';
 
+    /** Jenis pembayaran pembelian langsung (tidak terhubung ke akun kas/bank) */
+    public const PAYMENT_TYPE_CASH = 'Tunai';
+
+    public const PAYMENT_TYPE_TRANSFER = 'Transfer';
+
+    public const PAYMENT_TYPE_TEMPO = 'Tempo';
+
+    public const PAYMENT_TYPES = [
+        self::PAYMENT_TYPE_CASH,
+        self::PAYMENT_TYPE_TRANSFER,
+        self::PAYMENT_TYPE_TEMPO,
+    ];
+
     protected Purchase $service;
 
     public function __construct(
@@ -49,7 +60,7 @@ class DirectPurchaseService
                 'fleet',
                 'details.item',
                 'maintenances',
-                'userBank.bank',
+                'transferUserBank.bank',
             ])
             ->where('is_direct', true)
             ->orderBy('date', 'desc')
@@ -86,8 +97,7 @@ class DirectPurchaseService
                 'fleet',
                 'details.item',
                 'maintenances.details.item',
-                'userBank.bank',
-                'paymentHistories.userBank.bank',
+                'transferUserBank.bank',
             ])
             ->first();
     }
@@ -95,7 +105,6 @@ class DirectPurchaseService
     public function store(Request $request, string $title)
     {
         $warehouseCode = $request->warehouseCode ?? Warehouse::query()->first()->code;
-        $fleet = Fleet::query()->where('code', $request->fleetCode)->first();
 
         // 1. Resolve Unique Code untuk Purchase (PL-...)
         $carbonDate = Carbon::parse($request->date);
@@ -131,7 +140,14 @@ class DirectPurchaseService
             }
         }
 
-        // 3. Simpan data Purchase (Direct Purchase, Langsung Lunas)
+        // 3. Simpan data Purchase (Direct Purchase)
+        //    Pembelian langsung tetap dicatat sebagai hutang supplier seperti PO
+        //    biasa (paymentStatus Unpaid), pelunasan dilakukan lewat menu Hutang Vendor.
+        $paymentType = $this->normalizePaymentType($request->paymentType);
+        $transferUserBankCode = $paymentType === self::PAYMENT_TYPE_TRANSFER
+            ? $request->transferUserBankCode
+            : null;
+
         $purchase = $this->service->newQuery()->create([
             'code' => $purchaseCode,
             'supplierCode' => $request->supplierCode,
@@ -140,14 +156,16 @@ class DirectPurchaseService
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->date,
+            'dueDate' => $request->dueDate ?: $request->date,
             'receivedDate' => $request->date,
-            'paymentDate' => $request->date,
-            'status' => 3, // Selesai / Complete
-            'paymentStatus' => 'Paid', // Lunas seketika
-            'paidAmount' => $totalNominal,
+            'paymentDate' => null,
+            'status' => 0, // Purchase Created, sama seperti PO belum dibayar
+            'paymentType' => $paymentType,
+            'transferUserBankCode' => $transferUserBankCode,
+            'paymentStatus' => 'Unpaid',
+            'paidAmount' => 0,
             'nominal' => $totalNominal,
-            'userBankCode' => $request->userBankCode ?: null,
+            'userBankCode' => null,
         ]);
 
         // 4. Simpan data Maintenance (Servis Mobil)
@@ -254,38 +272,7 @@ class DirectPurchaseService
             }
         }
 
-        // 7. Jika Akun Kas / Bank Dipilih, Catat Pengeluaran Kas
-        if (! empty($request->userBankCode) && $totalNominal > 0) {
-            $userBank = UserBank::query()->where('code', $request->userBankCode)->first();
-            if ($userBank) {
-                $batchCode = GenerateCode::generateUniqueCode('FSP', 'supplier_payment_batch');
-                $plateNumber = $fleet ? $fleet->plateNumber : $request->fleetCode;
-                $desc = 'Pembelian Langsung Armada ' . $plateNumber . ' (' . $purchaseCode . ')';
-
-                PurchasePaymentHistory::query()->create([
-                    'purchaseCode' => $purchaseCode,
-                    'batch_code' => $batchCode,
-                    'amount' => $totalNominal,
-                    'paymentDate' => $request->date,
-                    'userBankCode' => $userBank->code,
-                    'description' => $desc,
-                ]);
-
-                Mutation::query()->create([
-                    'code' => GenerateCode::generateUniqueCode('FMT', 'mutation'),
-                    'userBankCode' => $userBank->code,
-                    'nominal' => $totalNominal,
-                    'type' => 'Out',
-                    'date' => $request->date,
-                    'description' => $desc . ' sebesar Rp ' . number_format($totalNominal, 0, '.', ','),
-                    'transactionCode' => $purchaseCode,
-                    'transactionTypeCode' => self::TRANSACTION_TYPE,
-                ]);
-
-                $this->applyBankMovement($userBank->code, $totalNominal, 'out');
-            }
-        }
-
+        // 7. Catat aktivitas
         $this->logActivity($title, $purchase, 'Create');
 
         return $codePurchase;
@@ -300,7 +287,14 @@ class DirectPurchaseService
             throw new \Exception('Data Pembelian Langsung tidak ditemukan.');
         }
 
-        $fleet = Fleet::query()->where('code', $request->fleetCode)->first();
+        // Nominal tidak boleh diubah setelah ada pelunasan, karena sisa hutang
+        // dan mutasi bank dihitung dari nilai tagihan saat pembayaran.
+        if ((float) $purchase->paidAmount > 0) {
+            throw new \Exception(
+                'Pembelian ini sudah memiliki pembayaran. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum mengubah data.'
+            );
+        }
+
         $warehouseCode = $request->warehouseCode ?? $purchase->warehouseCode;
         $purchaseCode = $purchase->code;
 
@@ -328,13 +322,14 @@ class DirectPurchaseService
             $maintenance->details()->delete();
         }
 
-        // 3. Rollback Mutasi Bank lama jika ada
+        // 3. Rollback mutasi lama yang terikat langsung ke kode pembelian
+        //    (data lama). Mutasi Hutang Vendor terikat ke kode batch, bukan ke
+        //    kode pembelian, sehingga tidak tersentuh di sini.
         $oldMutations = Mutation::query()->where('transactionCode', $purchaseCode)->get();
         foreach ($oldMutations as $mut) {
             $this->applyBankMovement($mut->userBankCode, (float) $mut->nominal, 'in');
             $mut->forceDelete();
         }
-        PurchasePaymentHistory::query()->where('purchaseCode', $purchaseCode)->forceDelete();
 
         // 4. Hitung ulang total nominal baru
         $totalNominal = 0;
@@ -348,18 +343,29 @@ class DirectPurchaseService
         }
 
         // 5. Update Header Purchase
+        //    Status pembayaran tidak direset: pelunasan dikelola lewat menu
+        //    Hutang Vendor, jadi hanya disesuaikan bila nominal berubah.
+        $paymentType = $this->normalizePaymentType($request->paymentType);
+        $paidAmount = (float) $purchase->paidAmount;
+        $paymentStatus = $paidAmount <= 0
+            ? 'Unpaid'
+            : ($paidAmount >= $totalNominal ? 'Paid' : 'Partial');
+
         $purchase->update([
             'supplierCode' => $request->supplierCode,
             'warehouseCode' => $warehouseCode,
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->date,
+            'dueDate' => $request->dueDate ?: $request->date,
             'receivedDate' => $request->date,
-            'paymentDate' => $request->date,
             'nominal' => $totalNominal,
-            'paidAmount' => $totalNominal,
-            'userBankCode' => $request->userBankCode ?: null,
+            'paymentType' => $paymentType,
+            'transferUserBankCode' => $paymentType === self::PAYMENT_TYPE_TRANSFER
+                ? $request->transferUserBankCode
+                : null,
+            'paymentStatus' => $paymentStatus,
+            'status' => $paymentStatus === 'Paid' ? 3 : $purchase->status,
         ]);
 
         // 6. Update Header Maintenance
@@ -480,38 +486,7 @@ class DirectPurchaseService
             }
         }
 
-        // 8. Terapkan Mutasi Kas Baru jika Dipilih
-        if (! empty($request->userBankCode) && $totalNominal > 0) {
-            $userBank = UserBank::query()->where('code', $request->userBankCode)->first();
-            if ($userBank) {
-                $batchCode = GenerateCode::generateUniqueCode('FSP', 'supplier_payment_batch');
-                $plateNumber = $fleet ? $fleet->plateNumber : $request->fleetCode;
-                $desc = 'Pembelian Langsung Armada ' . $plateNumber . ' (' . $purchaseCode . ')';
-
-                PurchasePaymentHistory::query()->create([
-                    'purchaseCode' => $purchaseCode,
-                    'batch_code' => $batchCode,
-                    'amount' => $totalNominal,
-                    'paymentDate' => $request->date,
-                    'userBankCode' => $userBank->code,
-                    'description' => $desc,
-                ]);
-
-                Mutation::query()->create([
-                    'code' => GenerateCode::generateUniqueCode('FMT', 'mutation'),
-                    'userBankCode' => $userBank->code,
-                    'nominal' => $totalNominal,
-                    'type' => 'Out',
-                    'date' => $request->date,
-                    'description' => $desc . ' sebesar Rp ' . number_format($totalNominal, 0, '.', ','),
-                    'transactionCode' => $purchaseCode,
-                    'transactionTypeCode' => self::TRANSACTION_TYPE,
-                ]);
-
-                $this->applyBankMovement($userBank->code, $totalNominal, 'out');
-            }
-        }
-
+        // 8. Catat aktivitas
         $this->logActivity($title, $purchase, 'After Update');
     }
 
@@ -520,6 +495,15 @@ class DirectPurchaseService
         $purchase = $this->getById($id);
         if (! $purchase) {
             throw new \Exception('Data Pembelian Langsung tidak ditemukan.');
+        }
+
+        // Pembayaran dikelola lewat menu Hutang Vendor (batch + mutasi bank),
+        // sehingga penghapusan hanya aman bila belum ada pelunasan sama sekali.
+        if ((float) $purchase->paidAmount > 0
+            || PurchasePaymentHistory::query()->where('purchaseCode', $purchase->code)->exists()) {
+            throw new \Exception(
+                'Pembelian ini sudah memiliki pembayaran. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum menghapus.'
+            );
         }
 
         $this->logActivity($title, $purchase, 'Delete');
@@ -549,17 +533,27 @@ class DirectPurchaseService
             $maintenance->delete();
         }
 
-        // 3. Rollback Mutasi Kas & Bank jika ada
+        // 3. Rollback Mutasi Kas & Bank data lama (pembelian langsung tidak
+        //    lagi membuat mutasi sendiri; mutasi kini milik batch Hutang Vendor).
         $mutations = Mutation::query()->where('transactionCode', $purchaseCode)->get();
         foreach ($mutations as $mut) {
             $this->applyBankMovement($mut->userBankCode, (float) $mut->nominal, 'in');
             $mut->forceDelete();
         }
-        PurchasePaymentHistory::query()->where('purchaseCode', $purchaseCode)->forceDelete();
 
         // 4. Hapus detail purchase & purchase
         $purchase->details()->delete();
         $purchase->delete();
+    }
+
+    /**
+     * Normalisasi jenis pembayaran yang dikirim dari form.
+     */
+    private function normalizePaymentType(?string $paymentType): string
+    {
+        $normalized = ucfirst(strtolower(trim((string) $paymentType)));
+
+        return in_array($normalized, self::PAYMENT_TYPES, true) ? $normalized : self::PAYMENT_TYPE_CASH;
     }
 
     /**
