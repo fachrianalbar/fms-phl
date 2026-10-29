@@ -26,6 +26,7 @@
             $('#pd-status').html('-');
             $('#pd-date').text('-');
             $('#pd-due-date').text('-');
+            $('#pd-fleet').text('-');
             $('#pd-billing, #pd-paid, #pd-remaining').text('Rp 0');
             $('#pd-history-body').empty();
             $('#pd-history-empty').addClass('d-none');
@@ -46,6 +47,7 @@
                     $('#pd-status').html(pdStatusBadge(data.payment_status));
                     $('#pd-date').text(data.date || '-');
                     $('#pd-due-date').text(data.due_date || '-');
+                    $('#pd-fleet').text(data.fleet_plate || '-');
                     $('#pd-billing').text(pdFormatCurrency(data.billing));
                     $('#pd-paid').text(pdFormatCurrency(data.paid));
                     $('#pd-remaining').text(pdFormatCurrency(data.remaining));

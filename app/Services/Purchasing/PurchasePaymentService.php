@@ -89,6 +89,8 @@ class PurchasePaymentService
             'purchaseStatus',
             'details',
             'transferUserBank.bank',
+            'fleet',
+            'maintenances.fleet',
         ])->where('paymentStatus', '!=', 'Paid')
             ->orderByRaw(self::effectiveDueDateSql().' asc')
             ->orderBy('date', 'desc')
@@ -103,6 +105,8 @@ class PurchasePaymentService
             'purchaseStatus',
             'details',
             'paymentBatch',
+            'fleet',
+            'maintenances.fleet',
         ])->where('paymentStatus', 'Paid')
             ->orderBy('paymentDate', 'desc')
             ->orderBy('date', 'desc')
@@ -229,7 +233,10 @@ class PurchasePaymentService
      */
     public function findPaymentDetail(string $purchaseCode): array
     {
-        $purchase = $this->service->newQuery()->with(['supplier', 'details'])->where('code', $purchaseCode)->first();
+        $purchase = $this->service->newQuery()
+            ->with(['supplier', 'details', 'fleet', 'maintenances.fleet'])
+            ->where('code', $purchaseCode)
+            ->first();
 
         if (! $purchase) {
             return [];
@@ -254,6 +261,7 @@ class PurchasePaymentService
             'paid' => $paid,
             'remaining' => max(0, $billing - $paid),
             'payment_status' => $purchase->paymentStatus,
+            'fleet_plate' => $purchase->plate_number_display ?? '-',
             'histories' => $histories->map(fn ($h) => [
                 'batch_code' => $h->batch_code,
                 'amount' => (float) $h->amount,

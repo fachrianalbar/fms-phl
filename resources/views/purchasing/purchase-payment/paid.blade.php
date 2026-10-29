@@ -151,6 +151,7 @@
                                 <th>Kode Pembelian</th>
                                 <th class="text-center">Tanggal</th>
                                 <th class="text-center">Tanggal Bayar</th>
+                                <th>Mobil</th>
                                 <th>Supplier</th>
                                 <th class="text-end">Total Tagihan</th>
                                 <th class="text-end">Terbayar</th>
@@ -244,6 +245,27 @@
                     {
                         "data": 'paymentDateHtml',
                         "className": 'align-middle text-center'
+                    },
+                    {
+                        "data": 'fleetPlate',
+                        "name": 'fleetPlate',
+                        "className": 'align-middle',
+                        "orderable": false,
+                        "searchable": true,
+                        "render": function(data) {
+                            if (!data || data === '-') {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            const plates = String(data).split(',').map(function(p) {
+                                return p.trim();
+                            }).filter(Boolean);
+                            if (plates.length === 0) {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            return plates.map(function(plate) {
+                                return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
+                            }).join(' ');
+                        }
                     },
                     {
                         "data": 'supplier.name',

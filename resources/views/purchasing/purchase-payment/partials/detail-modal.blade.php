@@ -45,13 +45,17 @@
                         <div class="detail-tile-label">Status Pembayaran</div>
                         <div id="pd-status">-</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="detail-tile-label">Tanggal Pembelian</div>
                         <div class="fw-semibold" id="pd-date">-</div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="detail-tile-label">Jatuh Tempo</div>
                         <div class="fw-semibold" id="pd-due-date">-</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="detail-tile-label">Mobil / Armada</div>
+                        <div class="fw-semibold font-monospace" id="pd-fleet">-</div>
                     </div>
                 </div>
 

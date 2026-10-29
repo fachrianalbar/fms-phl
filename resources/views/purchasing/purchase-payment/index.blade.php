@@ -321,6 +321,7 @@
                                 <th>Kode Pembelian</th>
                                 <th class="text-center">Tanggal</th>
                                 <th class="text-center">Jatuh Tempo</th>
+                                <th>Mobil</th>
                                 <th>Supplier</th>
                                 <th class="text-end">Total Tagihan</th>
                                 <th class="text-end">Terbayar</th>
@@ -377,6 +378,7 @@
                                 <thead>
                                     <tr>
                                         <th>Kode Pembelian</th>
+                                        <th>Mobil</th>
                                         <th class="text-center">Status</th>
                                         <th class="text-end">Sisa Tagihan</th>
                                         <th style="min-width: 170px;">Nominal Bayar</th>
@@ -532,6 +534,7 @@
                 remaining: Math.round(Number(checkbox.attr('data-remaining')) || 0),
                 transferBankCode: String(checkbox.attr('data-transfer-bank') || ''),
                 transferBankLabel: String(checkbox.attr('data-transfer-bank-label') || ''),
+                fleetPlate: String(checkbox.attr('data-fleet-plate') || '-'),
             };
         }
 
@@ -640,6 +643,28 @@
                     }).html('<i class="mdi mdi-bank-outline me-1"></i>' + escapeHtml(item.transferBankLabel ||
                         'Transfer')));
                 }
+                const fleetCell = $('<td>');
+                if (item.fleetPlate && item.fleetPlate !== '-') {
+                    const plates = item.fleetPlate.split(',').map(function(p) {
+                        return p.trim();
+                    }).filter(Boolean);
+                    if (plates.length > 0) {
+                        plates.forEach(function(plate, idx) {
+                            if (idx > 0) fleetCell.append(' ');
+                            fleetCell.append($('<span>', {
+                                class: 'badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11'
+                            }).text(plate));
+                        });
+                    } else {
+                        fleetCell.append($('<span>', {
+                            class: 'text-muted'
+                        }).text('-'));
+                    }
+                } else {
+                    fleetCell.append($('<span>', {
+                        class: 'text-muted'
+                    }).text('-'));
+                }
                 const status = $('<td>', {
                     class: 'text-center'
                 }).append($('<span>', {
@@ -671,7 +696,7 @@
                     class: 'text-end payment-money allocation-after'
                 });
 
-                row.append(identity, status, before, amountCell, after);
+                row.append(identity, fleetCell, status, before, amountCell, after);
                 body.append(row);
             });
 
@@ -853,7 +878,8 @@
                                 ' data-supplier="' + escapeHtml(supplier) + '"' +
                                 ' data-remaining="' + remaining + '"' +
                                 ' data-transfer-bank="' + escapeHtml(transferBankCode) + '"' +
-                                ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '">';
+                                ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '"' +
+                                ' data-fleet-plate="' + escapeHtml(row.fleetPlate || '-') + '">';
                         }
                     },
                     {
@@ -873,6 +899,27 @@
                     {
                         "data": 'dueDateHtml',
                         "className": 'align-middle text-center'
+                    },
+                    {
+                        "data": 'fleetPlate',
+                        "name": 'fleetPlate',
+                        "className": 'align-middle',
+                        "orderable": false,
+                        "searchable": true,
+                        "render": function(data) {
+                            if (!data || data === '-') {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            const plates = String(data).split(',').map(function(p) {
+                                return p.trim();
+                            }).filter(Boolean);
+                            if (plates.length === 0) {
+                                return '<span class="text-muted">-</span>';
+                            }
+                            return plates.map(function(plate) {
+                                return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
+                            }).join(' ');
+                        }
                     },
                     {
                         "data": 'supplier.name',

@@ -342,6 +342,7 @@ class PurchasePaymentController extends Controller
                 return (int) round(max(0, $this->service->billingOf($row) - (float) $row->paidAmount));
             })
             ->addColumn('billingRaw', fn ($row) => $this->service->billingOf($row))
+            ->addColumn('fleetPlate', fn ($row) => $row->plate_number_display ?? '-')
             ->addColumn('transferBank', function ($row) {
                 // Rekening internal yang dipilih pada Pembelian Langsung
                 // (paymentType = Transfer); null untuk PO biasa.
@@ -374,6 +375,15 @@ class PurchasePaymentController extends Controller
             ->orderColumn('supplierName', self::supplierNameSql().' $1')
             ->filterColumn('supplierName', function ($query, $keyword) {
                 $query->whereRaw(self::supplierNameSql().' LIKE ?', ['%'.$keyword.'%']);
+            })
+            ->filterColumn('fleetPlate', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereHas('fleet', function ($fleetQuery) use ($keyword) {
+                        $fleetQuery->where('plateNumber', 'like', '%'.$keyword.'%');
+                    })->orWhereHas('maintenances.fleet', function ($maintQuery) use ($keyword) {
+                        $maintQuery->where('plateNumber', 'like', '%'.$keyword.'%');
+                    });
+                });
             })
             ->rawColumns(['dueDateHtml', 'paymentStatusHtml'])
             ->setRowClass(function ($row) {
@@ -476,7 +486,17 @@ class PurchasePaymentController extends Controller
             ->addColumn('totalPrice', fn ($row) => number_format($this->service->billingOf($row), 0, ',', '.'))
             ->addColumn('paidAmount', fn ($row) => number_format((float) $row->paidAmount, 0, ',', '.'))
             ->editColumn('supplier.name', fn ($row) => $row->supplier->name ?? '')
+            ->addColumn('fleetPlate', fn ($row) => $row->plate_number_display ?? '-')
             ->addColumn('paymentStatusHtml', fn ($row) => '<span class="badge bg-success">Paid</span>')
+            ->filterColumn('fleetPlate', function ($query, $keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->whereHas('fleet', function ($fleetQuery) use ($keyword) {
+                        $fleetQuery->where('plateNumber', 'like', '%'.$keyword.'%');
+                    })->orWhereHas('maintenances.fleet', function ($maintQuery) use ($keyword) {
+                        $maintQuery->where('plateNumber', 'like', '%'.$keyword.'%');
+                    });
+                });
+            })
             ->addColumn('action', function ($row) {
                 $btn = '<button type="button" class="btn btn-icon btn-sm bg-primary-subtle me-1 btn-detail-row" '
                     .'data-code="'.$row->code.'" data-bs-toggle="tooltip" title="Detail">'

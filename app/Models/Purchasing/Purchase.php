@@ -104,4 +104,31 @@ class Purchase extends Model
         return $this->belongsToMany(Maintenance::class, 'maintenance_purchase', 'purchase_id', 'maintenance_id')
             ->withTimestamps();
     }
+
+    /**
+     * Plat nomor mobil / armada yang berelasi dengan pembelian ini.
+     * Diambil dari direct fleet (fleetCode) atau melalui relasi maintenances.
+     */
+    public function getPlateNumberDisplayAttribute(): ?string
+    {
+        $plates = collect();
+
+        if ($this->fleet && !empty($this->fleet->plateNumber)) {
+            $plates->push($this->fleet->plateNumber);
+        }
+
+        $maintenances = $this->relationLoaded('maintenances')
+            ? $this->maintenances
+            : $this->maintenances()->with('fleet')->get();
+
+        foreach ($maintenances as $maintenance) {
+            if ($maintenance->fleet && !empty($maintenance->fleet->plateNumber)) {
+                $plates->push($maintenance->fleet->plateNumber);
+            }
+        }
+
+        $uniquePlates = $plates->filter()->unique()->values();
+
+        return $uniquePlates->isNotEmpty() ? $uniquePlates->implode(', ') : null;
+    }
 }
