@@ -849,8 +849,15 @@
                         };
                         const payment = paymentMap[paymentType] || paymentMap.Tunai;
 
+                        const status = d.paymentStatus || (paymentType === 'Tempo' ? 'Unpaid' : 'Paid');
+                        const statusBadge = status === 'Paid'
+                            ? '<span class="badge bg-success-subtle text-success rounded-pill fs-10 ms-1">Lunas</span>'
+                            : (status === 'Partial'
+                                ? '<span class="badge bg-warning-subtle text-warning-emphasis rounded-pill fs-10 ms-1">Sebagian</span>'
+                                : '<span class="badge bg-secondary-subtle text-secondary rounded-pill fs-10 ms-1">Belum Dibayar</span>');
+
                         $('#modalPayment').html('<span class="badge ' + payment.classes + ' border rounded-pill fs-11">'
-                            + '<i class="mdi ' + payment.icon + ' me-1"></i>' + escapeHtml(paymentType) + '</span>'
+                            + '<i class="mdi ' + payment.icon + ' me-1"></i>' + escapeHtml(paymentType) + '</span> ' + statusBadge
                             + (paymentType === 'Transfer' && d.transferBankAccountNumber
                                 ? '<small class="text-muted d-block mt-1">' + escapeHtml(d.transferBankName || 'Bank') + ' · ' + escapeHtml(d.transferBankAccountNumber) + '</small>'
                                 : ''));

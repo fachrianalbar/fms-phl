@@ -141,9 +141,13 @@ class DirectPurchaseService
         }
 
         // 3. Simpan data Purchase (Direct Purchase)
-        //    Pembelian langsung tetap dicatat sebagai hutang supplier seperti PO
-        //    biasa (paymentStatus Unpaid), pelunasan dilakukan lewat menu Hutang Vendor.
+        //    Jenis pembayaran Tempo dicatat sebagai Hutang Supplier (paymentStatus Unpaid)
+        //    dengan jatuh tempo, sedangkan Tunai & Transfer langsung lunas (paymentStatus Paid)
+        //    sehingga tidak menimbulkan hutang supplier.
         $paymentType = $this->normalizePaymentType($request->paymentType);
+        $isTempo = $paymentType === self::PAYMENT_TYPE_TEMPO;
+        $isPaid = ! $isTempo;
+
         $transferUserBankCode = $paymentType === self::PAYMENT_TYPE_TRANSFER
             ? $request->transferUserBankCode
             : null;
@@ -156,16 +160,16 @@ class DirectPurchaseService
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->dueDate ?: $request->date,
+            'dueDate' => $isTempo ? ($request->dueDate ?: $request->date) : null,
             'receivedDate' => $request->date,
-            'paymentDate' => null,
-            'status' => 0, // Purchase Created, sama seperti PO belum dibayar
+            'paymentDate' => $isPaid ? $request->date : null,
+            'status' => $isPaid ? 3 : 0, // 3: Complete / Lunas, 0: Purchase Created
             'paymentType' => $paymentType,
             'transferUserBankCode' => $transferUserBankCode,
-            'paymentStatus' => 'Unpaid',
-            'paidAmount' => 0,
+            'userBankCode' => $transferUserBankCode,
+            'paymentStatus' => $isPaid ? 'Paid' : 'Unpaid',
+            'paidAmount' => $isPaid ? $totalNominal : 0,
             'nominal' => $totalNominal,
-            'userBankCode' => null,
         ]);
 
         // 4. Simpan data Maintenance (Servis Mobil)
@@ -287,11 +291,10 @@ class DirectPurchaseService
             throw new \Exception('Data Pembelian Langsung tidak ditemukan.');
         }
 
-        // Nominal tidak boleh diubah setelah ada pelunasan, karena sisa hutang
-        // dan mutasi bank dihitung dari nilai tagihan saat pembayaran.
-        if ((float) $purchase->paidAmount > 0) {
+        // Nominal tidak boleh diubah setelah ada pelunasan lewat batch Hutang Vendor.
+        if (PurchasePaymentHistory::query()->where('purchaseCode', $purchase->code)->exists()) {
             throw new \Exception(
-                'Pembelian ini sudah memiliki pembayaran. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum mengubah data.'
+                'Pembelian ini sudah memiliki pembayaran di menu Hutang Vendor. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum mengubah data.'
             );
         }
 
@@ -343,13 +346,15 @@ class DirectPurchaseService
         }
 
         // 5. Update Header Purchase
-        //    Status pembayaran tidak direset: pelunasan dikelola lewat menu
-        //    Hutang Vendor, jadi hanya disesuaikan bila nominal berubah.
+        //    Jenis pembayaran Tempo dicatat sebagai Hutang Supplier (paymentStatus Unpaid),
+        //    sedangkan Tunai & Transfer langsung lunas (paymentStatus Paid).
         $paymentType = $this->normalizePaymentType($request->paymentType);
-        $paidAmount = (float) $purchase->paidAmount;
-        $paymentStatus = $paidAmount <= 0
-            ? 'Unpaid'
-            : ($paidAmount >= $totalNominal ? 'Paid' : 'Partial');
+        $isTempo = $paymentType === self::PAYMENT_TYPE_TEMPO;
+        $isPaid = ! $isTempo;
+
+        $transferUserBankCode = $paymentType === self::PAYMENT_TYPE_TRANSFER
+            ? $request->transferUserBankCode
+            : null;
 
         $purchase->update([
             'supplierCode' => $request->supplierCode,
@@ -357,15 +362,16 @@ class DirectPurchaseService
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->dueDate ?: $request->date,
+            'dueDate' => $isTempo ? ($request->dueDate ?: $request->date) : null,
             'receivedDate' => $request->date,
             'nominal' => $totalNominal,
             'paymentType' => $paymentType,
-            'transferUserBankCode' => $paymentType === self::PAYMENT_TYPE_TRANSFER
-                ? $request->transferUserBankCode
-                : null,
-            'paymentStatus' => $paymentStatus,
-            'status' => $paymentStatus === 'Paid' ? 3 : $purchase->status,
+            'transferUserBankCode' => $transferUserBankCode,
+            'userBankCode' => $transferUserBankCode,
+            'paymentDate' => $isPaid ? $request->date : null,
+            'paymentStatus' => $isPaid ? 'Paid' : 'Unpaid',
+            'paidAmount' => $isPaid ? $totalNominal : 0,
+            'status' => $isPaid ? 3 : 0,
         ]);
 
         // 6. Update Header Maintenance
@@ -498,11 +504,10 @@ class DirectPurchaseService
         }
 
         // Pembayaran dikelola lewat menu Hutang Vendor (batch + mutasi bank),
-        // sehingga penghapusan hanya aman bila belum ada pelunasan sama sekali.
-        if ((float) $purchase->paidAmount > 0
-            || PurchasePaymentHistory::query()->where('purchaseCode', $purchase->code)->exists()) {
+        // sehingga penghapusan hanya aman bila belum ada pelunasan di Hutang Vendor.
+        if (PurchasePaymentHistory::query()->where('purchaseCode', $purchase->code)->exists()) {
             throw new \Exception(
-                'Pembelian ini sudah memiliki pembayaran. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum menghapus.'
+                'Pembelian ini sudah memiliki riwayat pembayaran di menu Hutang Vendor. Batalkan pembayaran di menu Hutang Vendor terlebih dahulu sebelum menghapus.'
             );
         }
 

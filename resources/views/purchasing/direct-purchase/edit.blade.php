@@ -327,7 +327,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted fs-11">Hanya penanda jenis pembayaran, tidak memotong saldo kas/bank</small>
+                        <small class="text-muted fs-11" id="paymentTypeHelp">Pilih jenis pembayaran.</small>
                     </div>
 
                     {{-- Rekening Internal (hanya muncul bila Transfer) --}}
@@ -346,13 +346,13 @@
                         <small class="text-muted fs-11">Rekening internal perusahaan yang dipakai untuk transfer.</small>
                     </div>
 
-                    {{-- Jatuh Tempo --}}
-                    <div class="col-md-4">
+                    {{-- Jatuh Tempo (hanya muncul bila Tempo) --}}
+                    <div class="col-md-4 d-none" id="dueDateWrapper">
                         <label class="form-label form-label-custom" for="dueDate">
                             Jatuh Tempo <span class="required-star">*</span>
                         </label>
                         <input class="form-control form-control-custom" name="dueDate" id="dueDate" type="date"
-                            required value="{{ old('dueDate', $data->dueDate ? \Carbon\Carbon::parse($data->dueDate)->toDateString() : $data->date) }}">
+                            value="{{ old('dueDate', $data->dueDate ? \Carbon\Carbon::parse($data->dueDate)->toDateString() : $data->date) }}">
                         <small class="text-muted fs-11">Terisi otomatis mengikuti tanggal pembelian, dapat diubah</small>
                     </div>
 
@@ -489,9 +489,12 @@
         {{-- Submit Button Card --}}
         <div class="card direct-card">
             <div class="card-body d-flex align-items-center justify-content-between">
-                <div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fs-12">
                         <i class="mdi mdi-information-outline me-1"></i>Perubahan akan otomatis memperbarui histori stok & pemeliharaan armada
+                    </span>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fs-12" id="paymentStatusBadge">
+                        <i class="mdi mdi-cash-check me-1"></i><span id="paymentStatusBadgeText">Langsung Lunas</span>
                     </span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
@@ -519,18 +522,56 @@
 
     <script>
         let rowCount = {{ max(1, count($data->details)) }};
+        let dueDateTouched = {{ $data->dueDate ? 'true' : 'false' }};
 
-        // Tampilkan pilihan rekening internal hanya untuk jenis pembayaran Transfer
-        function toggleTransferBank() {
-            const isTransfer = $('#paymentType').val() === 'Transfer';
-            const $wrapper = $('#transferBankWrapper');
+        // Atur tampilan & keharusan field sesuai jenis pembayaran
+        function togglePaymentFields() {
+            const paymentType = $('#paymentType').val();
+            const isTransfer = paymentType === 'Transfer';
+            const isTempo = paymentType === 'Tempo';
+
+            // Rekening transfer
+            const $bankWrapper = $('#transferBankWrapper');
             const $bank = $('#transferUserBankCode');
-
-            $wrapper.toggleClass('d-none', !isTransfer);
+            $bankWrapper.toggleClass('d-none', !isTransfer);
             $bank.prop('required', isTransfer);
-
             if (!isTransfer) {
                 $bank.val(null).trigger('change.select2');
+            }
+
+            // Jatuh tempo (hanya untuk Tempo)
+            const $dueWrapper = $('#dueDateWrapper');
+            const $due = $('#dueDate');
+            $dueWrapper.toggleClass('d-none', !isTempo);
+            $due.prop('required', isTempo);
+            if (isTempo && !dueDateTouched) {
+                $due.val($('#date').val());
+            }
+
+            // Keterangan & badge
+            const $help = $('#paymentTypeHelp');
+            const $badge = $('#paymentStatusBadge');
+            const $badgeText = $('#paymentStatusBadgeText');
+            const $badgeIcon = $badge.find('i');
+
+            if (isTempo) {
+                $help.text('Pembayaran tempo akan tercatat sebagai Hutang Supplier dengan tanggal jatuh tempo.');
+                $badge.removeClass('bg-success-subtle text-success border-success-subtle')
+                      .addClass('bg-warning-subtle text-warning-emphasis border-warning-subtle');
+                $badgeIcon.attr('class', 'mdi mdi-receipt-text-outline me-1');
+                $badgeText.text('Tagihan Masuk ke Hutang Supplier');
+            } else if (isTransfer) {
+                $help.text('Pembayaran transfer langsung lunas melalui rekening bank internal perusahaan (tidak menimbulkan hutang supplier).');
+                $badge.removeClass('bg-warning-subtle text-warning-emphasis border-warning-subtle')
+                      .addClass('bg-success-subtle text-success border-success-subtle');
+                $badgeIcon.attr('class', 'mdi mdi-bank-transfer me-1');
+                $badgeText.text('Langsung Lunas via Transfer (Tanpa Hutang Supplier)');
+            } else {
+                $help.text('Pembayaran tunai langsung lunas saat transaksi dibuat (tidak menimbulkan hutang supplier).');
+                $badge.removeClass('bg-warning-subtle text-warning-emphasis border-warning-subtle')
+                      .addClass('bg-success-subtle text-success border-success-subtle');
+                $badgeIcon.attr('class', 'mdi mdi-cash-check me-1');
+                $badgeText.text('Langsung Lunas Tunai (Tanpa Hutang Supplier)');
             }
         }
 
@@ -556,9 +597,19 @@
                 });
             });
 
-            // Rekening internal hanya relevan untuk jenis pembayaran Transfer
-            toggleTransferBank();
-            $('#paymentType').on('change', toggleTransferBank);
+            // Inisialisasi field pembayaran
+            togglePaymentFields();
+            $('#paymentType').on('change', togglePaymentFields);
+
+            $('#date').on('change', function() {
+                if ($('#paymentType').val() === 'Tempo' && !dueDateTouched) {
+                    $('#dueDate').val($('#date').val());
+                }
+            });
+
+            $('#dueDate').on('change', function() {
+                dueDateTouched = true;
+            });
 
             updateSummary();
 

@@ -107,8 +107,13 @@ class DirectPurchaseController extends Controller
             'supplierCode' => ['required', 'string'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'dueDate' => ['required', 'date', 'after_or_equal:date'],
             'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'dueDate' => [
+                'nullable',
+                'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TEMPO,
+                'date',
+                'after_or_equal:date',
+            ],
             'transferUserBankCode' => $this->transferBankRules(),
             'itemCode' => ['required', 'array', 'min:1'],
             'itemCode.*' => ['required'],
@@ -179,10 +184,13 @@ class DirectPurchaseController extends Controller
                     'supplierName' => optional($data->supplier)->name ?? '-',
                     'maintenanceCode' => optional($data->maintenances->first())->code ?? '-',
                     'paymentMethod' => $data->paymentType ?: 'Tunai',
+                    'paymentStatus' => $data->paymentStatus ?: ($data->paymentType === DirectPurchaseService::PAYMENT_TYPE_TEMPO ? 'Unpaid' : 'Paid'),
                     'transferBankName' => $data->transferUserBank?->bank?->name,
                     'transferBankAccountNumber' => $data->transferUserBank?->accountNumber,
                     'transferBankAccountName' => $data->transferUserBank?->accountName,
-                    'dueDate' => $data->dueDate ? Carbon::parse($data->dueDate)->format('d F Y') : '-',
+                    'dueDate' => ($data->paymentType === DirectPurchaseService::PAYMENT_TYPE_TEMPO && $data->dueDate)
+                        ? Carbon::parse($data->dueDate)->format('d F Y')
+                        : '-',
                     'nominal' => (float) $data->nominal,
                     'nominalFormatted' => 'Rp ' . number_format((float) $data->nominal, 0, ',', '.'),
                     'editUrl' => route($this->view . 'edit', $data->id),
@@ -246,8 +254,13 @@ class DirectPurchaseController extends Controller
             'supplierCode' => ['required', 'string'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'dueDate' => ['required', 'date', 'after_or_equal:date'],
             'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'dueDate' => [
+                'nullable',
+                'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TEMPO,
+                'date',
+                'after_or_equal:date',
+            ],
             'transferUserBankCode' => $this->transferBankRules(),
             'itemCode' => ['required', 'array', 'min:1'],
             'itemCode.*' => ['required'],
@@ -334,6 +347,8 @@ class DirectPurchaseController extends Controller
     private function validationMessages(): array
     {
         return [
+            'dueDate.required_if' => 'Tanggal jatuh tempo wajib diisi untuk jenis pembayaran Tempo.',
+            'dueDate.after_or_equal' => 'Tanggal jatuh tempo harus sama atau setelah tanggal pembelian.',
             'transferUserBankCode.required_if' => 'Rekening bank internal wajib dipilih untuk jenis pembayaran Transfer.',
             'transferUserBankCode.exists' => 'Rekening yang dipilih bukan rekening internal yang valid.',
         ];

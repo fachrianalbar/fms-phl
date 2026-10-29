@@ -1227,8 +1227,9 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
 
-            $orders = Order::select('id', 'qty', 'vendorPriceSingle', 'personalVendorPriceSingle', 'vendorPrice', 'personalVendorPrice')->get();
+            $orders = Order::select('id', 'code', 'qty', 'vendorPriceSingle', 'personalVendorPriceSingle', 'vendorPrice', 'personalVendorPrice')->get();
             $updatedCount = 0;
+            $updatedOrderCodes = [];
 
             foreach ($orders as $order) {
                 $qty = (float) ($order->qty ?? 0);
@@ -1245,14 +1246,34 @@ class OrderController extends Controller
                         'personalVendorPrice' => $personalVendorPrice,
                     ]);
                     $updatedCount++;
+                    $updatedOrderCodes[] = $order->code;
                 }
             }
 
             DB::commit();
 
+            // Nominal nota vendor yang memuat order tersebut ikut disinkronkan.
+            $notaSynced = 0;
+            $vendorPaymentSvc = app(\App\Services\Finance\VendorPaymentService::class);
+            $notaNumbers = \App\Models\Finance\VendorPayment::whereIn('orderCode', $updatedOrderCodes)
+                ->whereNotNull('nota_number')
+                ->pluck('nota_number')
+                ->unique();
+
+            foreach ($notaNumbers as $notaNumber) {
+                try {
+                    if ($vendorPaymentSvc->syncNotaFromOrders($notaNumber)['changed']) {
+                        $notaSynced++;
+                    }
+                } catch (\Throwable $th) {
+                    report($th);
+                }
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil menghitung ulang harga vendor. Total {$updatedCount} order diperbarui dari " . $orders->count() . " order.",
+                'message' => "Berhasil menghitung ulang harga vendor. Total {$updatedCount} order diperbarui dari " . $orders->count() . " order."
+                    . ($notaSynced > 0 ? " {$notaSynced} nota vendor ikut disinkronkan." : ''),
             ]);
         } catch (\Throwable $th) {
             DB::rollBack();

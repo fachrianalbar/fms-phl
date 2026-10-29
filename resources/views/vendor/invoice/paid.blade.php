@@ -154,6 +154,7 @@
 </div>
 
 @include('vendor.invoice.partials.modals')
+@include('vendor.invoice.partials.nota-sync-modal')
 @endsection
 
 @push('script')
@@ -586,4 +587,6 @@
         });
     });
 </script>
+
+@include('vendor.invoice.partials.nota-sync-script')
 @endpush

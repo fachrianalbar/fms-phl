@@ -79,6 +79,9 @@ class VendorInvoiceController extends Controller
      */
     public function indexUnpaid()
     {
+        // Nominal nota yang belum dibayar selalu mengikuti harga order terkini.
+        $this->service->syncPendingNotas($this->title);
+
         return view($this->view.'unpaid')
             ->with('view', $this->view)
             ->with('title', $this->pageTitle('VENDOR_INV_UNPAID', 'Invoice Belum Dibayar'))
@@ -298,6 +301,9 @@ class VendorInvoiceController extends Controller
     public function datatableUnpaid(Request $request)
     {
         if ($request->ajax()) {
+            // Jaga nominal nota tetap sama dengan harga order (nota belum dibayar).
+            $this->service->syncPendingNotas($this->title);
+
             $data = $this->service->findPendingNotas();
 
             return DataTables::of($data)
@@ -314,6 +320,7 @@ class VendorInvoiceController extends Controller
 
                     $buttons = [];
                     $buttons[] = '<a href="'.route('vendor.invoice.pdf-nota', $firstOrderCode).'" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-secondary js-nota-sync" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Sinkronkan nominal dari harga order"><i class="mdi mdi-sync fs-14"></i></button>';
                     if ($row->paid_amount > 0 || $row->payment_status !== 'pending') {
                         $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
                         $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
@@ -330,8 +337,9 @@ class VendorInvoiceController extends Controller
                     return e($row->fleet_company_name ?? '-');
                 })
                 ->editColumn('order_count', function ($row) {
-                    return '<span class="badge rounded-pill text-bg-secondary">'.$row->order_count.' order</span>';
+                    return '<button type="button" class="btn btn-sm btn-outline-secondary js-nota-orders" data-bs-toggle="tooltip" title="Lihat order yang masuk ke nota ini"><i class="mdi mdi-format-list-bulleted me-1" aria-hidden="true"></i>'.$row->order_count.' order</button>';
                 })
+                ->addColumn('order_items', fn ($row) => $row->order_items)
                 ->editColumn('plate_numbers', function ($row) {
                     $plates = $row->plate_numbers->take(3)->implode(', ');
                     $more = $row->plate_numbers->count() > 3 ? ' +'.($row->plate_numbers->count() - 3) : '';
@@ -421,6 +429,7 @@ class VendorInvoiceController extends Controller
                 $firstOrderCode = $row->order_codes->first();
                 $buttons = [];
                 $buttons[] = '<a href="'.route('vendor.invoice.pdf-nota', $firstOrderCode).'" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="Cetak Nota"><i class="mdi mdi-printer fs-14"></i></a>';
+                $buttons[] = '<button type="button" class="btn btn-sm btn-outline-secondary js-nota-sync" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Sinkronkan nominal dari harga order"><i class="mdi mdi-sync fs-14"></i></button>';
                 $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
                 $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
 
@@ -428,7 +437,8 @@ class VendorInvoiceController extends Controller
             })
             ->editColumn('nota_number', fn ($row) => '<span class="badge rounded-pill text-bg-primary">'.e($row->nota_number).'</span>')
             ->editColumn('fleet_company_name', fn ($row) => e($row->fleet_company_name ?? '-'))
-            ->editColumn('order_count', fn ($row) => '<span class="badge rounded-pill text-bg-secondary">'.$row->order_count.' order</span>')
+            ->editColumn('order_count', fn ($row) => '<button type="button" class="btn btn-sm btn-outline-secondary js-nota-orders" data-bs-toggle="tooltip" title="Lihat order yang masuk ke nota ini"><i class="mdi mdi-format-list-bulleted me-1" aria-hidden="true"></i>'.$row->order_count.' order</button>')
+            ->addColumn('order_items', fn ($row) => $row->order_items)
             ->editColumn('plate_numbers', function ($row) {
                 $plates = $row->plate_numbers->take(3)->implode(', ');
                 $more = $row->plate_numbers->count() > 3 ? ' +'.($row->plate_numbers->count() - 3) : '';
@@ -465,6 +475,7 @@ class VendorInvoiceController extends Controller
 
                     $buttons = [];
                     $buttons[] = '<button type="button" class="btn btn-sm btn-outline-info js-vendor-payment-detail" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Detail"><i class="mdi mdi-eye fs-14"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-outline-secondary js-nota-sync" data-order-code="'.e($firstOrderCode).'" data-bs-toggle="tooltip" title="Sinkronkan nominal dari harga order"><i class="mdi mdi-sync fs-14"></i></button>';
                     $buttons[] = '<button type="button" class="btn btn-sm btn-outline-danger js-vendor-payment-cancel" data-order-code="'.e($firstOrderCode).'" data-batch-code="'.e($row->latest_batch_code ?? '').'" data-bs-toggle="tooltip" title="Batal Pembayaran"><i class="mdi mdi-close-circle fs-14"></i></button>';
 
                     return '<div class="btn-group" role="group" aria-label="Actions">'.implode('', $buttons).'</div>';
@@ -1108,6 +1119,81 @@ class VendorInvoiceController extends Controller
             }
 
             return redirect()->route('vendor.order.waiting')->with('fail', $message);
+        }
+    }
+
+    /**
+     * Pratinjau selisih nominal nota terhadap harga order terkini.
+     */
+    public function syncPreview($orderCode)
+    {
+        try {
+            $preview = $this->service->previewNotaSync($orderCode);
+        } catch (Throwable $th) {
+            report($th);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghitung pratinjau sinkronisasi nota.',
+            ], 500);
+        }
+
+        if (! $preview) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data nota untuk order ini tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $preview]);
+    }
+
+    /**
+     * Sinkronkan nominal nota dari harga order terkini (tombol per baris nota).
+     */
+    public function syncNota(Request $request, $orderCode)
+    {
+        try {
+            $result = DB::transaction(fn () => $this->service->syncNotaByOrderCode($orderCode, $this->title));
+
+            $message = $result['changed']
+                ? 'Nominal nota '.$result['nota_number'].' berhasil disinkronkan dengan harga order.'
+                : 'Nominal nota '.$result['nota_number'].' sudah sesuai harga order.';
+
+            if (! empty($result['warnings'])) {
+                $message = implode(' ', $result['warnings']);
+            }
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => empty($result['warnings']),
+                    'changed' => $result['changed'],
+                    'message' => $message,
+                ], empty($result['warnings']) ? 200 : 422);
+            }
+
+            return redirect()->back()->with(empty($result['warnings']) ? 'success' : 'fail', $message);
+        } catch (DomainException $exception) {
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
+
+            return redirect()->back()->with('fail', $exception->getMessage());
+        } catch (Throwable $th) {
+            report($th);
+            $message = 'Sinkronisasi nominal nota gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->back()->with('fail', $message);
         }
     }
 

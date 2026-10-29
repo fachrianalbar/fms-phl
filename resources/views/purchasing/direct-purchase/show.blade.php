@@ -184,13 +184,29 @@
 
                     {{-- Baris Info 2 --}}
                     <div class="col-md-4">
-                        <div class="info-label">Jenis Pembayaran</div>
+                        <div class="info-label">Jenis Pembayaran & Status</div>
                         <div class="info-value">
-                            @php $paymentType = $data->paymentType ?: 'Tunai'; @endphp
+                            @php
+                                $paymentType = $data->paymentType ?: 'Tunai';
+                                $status = $data->paymentStatus ?: ($paymentType === 'Tempo' ? 'Unpaid' : 'Paid');
+                            @endphp
                             <span class="badge rounded-pill fs-12 px-3 py-1 border
                                 {{ $paymentType === 'Tunai' ? 'bg-success-subtle text-success border-success-subtle' : ($paymentType === 'Transfer' ? 'bg-primary-subtle text-primary border-primary-subtle' : 'bg-warning-subtle text-warning-emphasis border-warning-subtle') }}">
                                 <i class="mdi {{ $paymentType === 'Tunai' ? 'mdi-cash' : ($paymentType === 'Transfer' ? 'mdi-bank-transfer' : 'mdi-clock-outline') }} me-1"></i>{{ $paymentType }}
                             </span>
+                            @if ($status === 'Paid')
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-11 px-2 py-1 ms-1">
+                                    <i class="mdi mdi-check-circle me-1"></i>Lunas
+                                </span>
+                            @elseif ($status === 'Partial')
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill fs-11 px-2 py-1 ms-1">
+                                    <i class="mdi mdi-clock-alert me-1"></i>Dibayar Sebagian
+                                </span>
+                            @else
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle rounded-pill fs-11 px-2 py-1 ms-1">
+                                    <i class="mdi mdi-alert-circle-outline me-1"></i>Belum Lunas
+                                </span>
+                            @endif
                             @if ($paymentType === 'Transfer')
                                 <small class="text-muted d-block mt-1">
                                     <i class="mdi mdi-bank-outline me-1"></i>
@@ -210,7 +226,7 @@
                         <div class="info-label">Jatuh Tempo</div>
                         <div class="info-value">
                             <i class="mdi mdi-calendar-alert text-muted me-1"></i>
-                            {{ $data->dueDate ? \Carbon\Carbon::parse($data->dueDate)->format('d F Y') : '-' }}
+                            {{ ($data->paymentType === \App\Services\Purchasing\DirectPurchaseService::PAYMENT_TYPE_TEMPO && $data->dueDate) ? \Carbon\Carbon::parse($data->dueDate)->format('d F Y') : '-' }}
                         </div>
                     </div>
 

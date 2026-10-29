@@ -549,6 +549,53 @@
         });
     }
 
+    /** Buang tag HTML (mis. badge pada kolom nota_number) sebelum ditampilkan sebagai teks. */
+    function stripHtml(value) {
+        return $('<div>').html(value || '').text().trim();
+    }
+
+    /**
+     * Tampilkan daftar order yang tercakup dalam satu nota vendor.
+     * Data berasal dari kolom `order_items` pada baris DataTable.
+     */
+    function showNotaOrdersModal(rowData) {
+        const items = Array.isArray(rowData.order_items) ? rowData.order_items : [];
+        const body = $('#nota-orders-body').empty();
+        const foot = $('#nota-orders-foot');
+        const total = items.reduce(function (sum, item) {
+            return sum + (Number(item.amount) || 0);
+        }, 0);
+
+        $('#nota-orders-number').text(stripHtml(rowData.nota_number) || '-');
+        $('#nota-orders-vendor').text(stripHtml(rowData.fleet_company_name) || '-');
+        $('#nota-orders-count').text(items.length + ' order');
+        $('#nota-orders-total').text(formatCurrency(total));
+
+        if (!items.length) {
+            body.html('<tr><td colspan="7" class="nota-orders-empty">Tidak ada order pada nota ini.</td></tr>');
+            foot.addClass('d-none');
+            $('#nota-orders-modal').modal('show');
+            return;
+        }
+
+        items.forEach(function (item, index) {
+            const route = [item.origin, item.destination].filter(Boolean).join(' → ') || '-';
+            const row = $('<tr>')
+                .append($('<td>', { class: 'text-center' }).text(index + 1))
+                .append($('<td>', { class: 'nota-orders-code' }).text(item.code || '-'))
+                .append($('<td>').text(item.shipment_number || '-'))
+                .append($('<td>').text(item.plate_number || '-'))
+                .append($('<td>').text(item.customer || '-'))
+                .append($('<td>').text(route))
+                .append($('<td>', { class: 'nota-orders-money' }).text(formatCurrency(item.amount)));
+            body.append(row);
+        });
+
+        $('#nota-orders-foot-total').text(formatCurrency(total));
+        foot.removeClass('d-none');
+        $('#nota-orders-modal').modal('show');
+    }
+
     function confirmCancelPayment(orderCode, batchCode) {
         if (!batchCode) {
             Swal.fire({
@@ -674,6 +721,15 @@
             minimumResultsForSearch: Infinity,
             width: '88px',
             dropdownAutoWidth: true,
+        });
+
+        $(document).on('click', '.js-nota-orders', function() {
+            let $row = $(this).closest('tr');
+            if ($row.hasClass('child')) {
+                $row = $row.prev('tr');
+            }
+
+            showNotaOrdersModal(vendorPaymentTable.row($row).data() || {});
         });
 
         $(document).on('click', '.js-vendor-payment-detail', function() {

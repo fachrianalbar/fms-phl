@@ -31,6 +31,7 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
     Route::post('invoice/payment', [VendorInvoiceController::class, 'store'])->name('invoice.payment.store');
     Route::post('invoice/generate-nota', [VendorInvoiceController::class, 'generateNota'])->name('invoice.generate-nota');
     Route::post('invoice/cancel-nota/{orderCode}', [VendorInvoiceController::class, 'cancelNota'])->name('invoice.cancel-nota');
+    Route::post('invoice/sync-nota/{orderCode}', [VendorInvoiceController::class, 'syncNota'])->name('invoice.sync-nota');
     Route::delete('invoice/payment/{orderCode}', [VendorInvoiceController::class, 'destroy'])->name('invoice.payment.cancel');
     Route::get('invoice/pdf/{orderCode}', [VendorInvoiceController::class, 'pdf'])->name('invoice.pdf');
     Route::get('invoice/pdf-nota/{orderCode}', [VendorInvoiceController::class, 'pdfNota'])->name('invoice.pdf-nota');
@@ -53,4 +54,5 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('vendor-invoice-detail/{orderCode}', [VendorInvoiceController::class, 'getDetail'])->name('vendor-invoice-detail');
+    Route::get('vendor-invoice-sync-preview/{orderCode}', [VendorInvoiceController::class, 'syncPreview'])->name('vendor-invoice-sync-preview');
 });

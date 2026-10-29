@@ -337,7 +337,7 @@
                             <th>No Nota</th>
                             <th>Tanggal Nota</th>
                             <th>Vendor (Perusahaan Kendaraan)</th>
-                            <th class="text-center">Jumlah Order</th>
+                            <th class="text-center">Order dalam Nota</th>
                             <th>Nopol</th>
                             <th class="text-end">Tagihan</th>
                             <th class="text-end">PPN</th>
@@ -355,6 +355,8 @@
 </div>
 
 @include('vendor.invoice.partials.modals')
+@include('vendor.invoice.partials.nota-orders-modal')
+@include('vendor.invoice.partials.nota-sync-modal')
 @endsection
 
 @push('script')
@@ -369,4 +371,5 @@
 @include('vendor.invoice.partials.flash-swal')
 
 @include('vendor.invoice.partials.unpaid-payment-script')
+@include('vendor.invoice.partials.nota-sync-script')
 @endpush
