@@ -158,6 +158,13 @@
 <script src="../assets/js/sweet-alert/sweetalert.min.js"></script>
 
 <script>
+    function formatQty(value) {
+        return (parseFloat(value) || 0).toLocaleString('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 1
+        });
+    }
+
     $(document).ready(function() {
         // Main DataTable - Warehouse List
         const table = $('#dt').DataTable({
@@ -184,13 +191,22 @@
                     "data": 'name'
                 },
                 {
-                    "data": 'totalIn'
+                    "data": 'totalIn',
+                    "render": function(data, type) {
+                        return type === 'display' ? formatQty(data) : data;
+                    }
                 },
                 {
-                    "data": 'totalOut'
+                    "data": 'totalOut',
+                    "render": function(data, type) {
+                        return type === 'display' ? formatQty(data) : data;
+                    }
                 },
                 {
-                    "data": 'totalStock'
+                    "data": 'totalStock',
+                    "render": function(data, type) {
+                        return type === 'display' ? formatQty(data) : data;
+                    }
                 }
             ],
             "order": [
@@ -227,9 +243,9 @@
                                         <td>${index + 1}</td>
                                         <td>${item.itemCode}</td>
                                         <td>${item.itemName}</td>
-                                        <td>${item.totalIn}</td>
-                                        <td>${item.totalOut}</td>
-                                        <td>${item.stock}</td>
+                                        <td>${formatQty(item.totalIn)}</td>
+                                        <td>${formatQty(item.totalOut)}</td>
+                                        <td>${formatQty(item.stock)}</td>
                                     </tr>
                                 `;
                             totalIn += item.totalIn;
@@ -238,9 +254,9 @@
                         });
 
                         $('#summaryBody').html(summaryHtml);
-                        $('#summaryTotalIn').text(totalIn);
-                        $('#summaryTotalOut').text(totalOut);
-                        $('#summaryTotalStock').text(totalStock);
+                        $('#summaryTotalIn').text(formatQty(totalIn));
+                        $('#summaryTotalOut').text(formatQty(totalOut));
+                        $('#summaryTotalStock').text(formatQty(totalStock));
 
                         // Populate detail table
                         let detailHtml = '';
@@ -262,8 +278,8 @@
                                         <td>${item.itemName}</td>
                                         <td>${item.transactionCode}</td>
                                         <td><span class="badge ${badgeClass}">${item.transactionType}</span></td>
-                                        <td>${item.qtyIn > 0 ? item.qtyIn : '-'}</td>
-                                        <td>${item.qtyOut > 0 ? item.qtyOut : '-'}</td>
+                                        <td>${item.qtyIn > 0 ? formatQty(item.qtyIn) : '-'}</td>
+                                        <td>${item.qtyOut > 0 ? formatQty(item.qtyOut) : '-'}</td>
                                     </tr>
                                 `;
                         });

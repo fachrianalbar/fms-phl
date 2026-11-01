@@ -107,7 +107,7 @@
                         <tr>
                             <td class="text-center">{{ $loop->iteration }}</td>
                             <td>{{ $item->itemCode }} - {{ $item->item->name ?? '' }}</td>
-                            <td class="text-center">{{ $item->qty }}</td>
+                            <td class="text-center">{{ rtrim(rtrim(number_format((float) $item->qty, 1, ',', '.'), '0'), ',') }}</td>
                             <td class="text-end">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
                             <td class="text-end">Rp {{ number_format($item->price * $item->qty, 0, ',', '.') }}</td>
                         </tr>
@@ -120,7 +120,7 @@
                     <tfoot class="table-light fw-bold">
                         <tr>
                             <td colspan="2" class="text-end">Total</td>
-                            <td class="text-center">{{ $totalQty }}</td>
+                            <td class="text-center">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</td>
                             <td></td>
                             <td class="text-end">Rp {{ number_format($totalPrice, 0, ',', '.') }}</td>
                         </tr>

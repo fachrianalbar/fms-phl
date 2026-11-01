@@ -307,7 +307,7 @@
                                         <strong>{{ optional($item->item)->name ?? '-' }}</strong>
                                     </td>
                                     <td class="text-center font-monospace fw-semibold">
-                                        {{ number_format($item->qty, 1, ',', '.') }}
+                                        {{ rtrim(rtrim(number_format((float) $item->qty, 1, ',', '.'), '0'), ',') }}
                                     </td>
                                     <td class="text-end font-monospace">
                                         Rp {{ number_format($item->price, 0, ',', '.') }}
@@ -324,7 +324,7 @@
                         <tfoot>
                             <tr style="background: #f8fafc; font-weight: 700;">
                                 <td colspan="3" class="text-end text-uppercase" style="padding: 12px 14px;">Total Kuantitas:</td>
-                                <td class="text-center font-monospace" style="padding: 12px 14px;">{{ number_format($totalQty, 1, ',', '.') }}</td>
+                                <td class="text-center font-monospace" style="padding: 12px 14px;">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</td>
                                 <td class="text-end text-uppercase" style="padding: 12px 14px;">Grand Total:</td>
                                 <td class="text-end font-monospace fs-15 text-success" style="padding: 12px 14px;">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
                                 <td></td>

@@ -414,7 +414,7 @@
                                     </td>
                                     <td>
                                         <input class="form-control form-control-custom text-center" type="number"
-                                            min="0.5" step="0.5" name="qty[]" id="qty_{{ $rowId }}" value="{{ $detail->qty }}" required
+                                            min="0.5" step="0.5" name="qty[]" id="qty_{{ $rowId }}" value="{{ $detail->qty + 0 }}" required
                                             oninput="recalculateRow({{ $rowId }})" onchange="recalculateRow({{ $rowId }})">
                                     </td>
                                     <td>
@@ -476,7 +476,7 @@
                     </div>
                     <div class="summary-item">
                         <div class="summary-label">Total Kuantitas (Qty)</div>
-                        <div class="summary-value" id="summaryTotalQty">{{ number_format($data->details->sum('qty'), 1, ',', '.') }}</div>
+                        <div class="summary-value" id="summaryTotalQty">{{ rtrim(rtrim(number_format((float) $data->details->sum('qty'), 1, ',', '.'), '0'), ',') }}</div>
                     </div>
                     <div class="summary-item grand-total-box">
                         <div class="summary-label" style="color: #93c5fd;">Grand Total Biaya</div>

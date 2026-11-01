@@ -757,6 +757,10 @@
     <script src="{{ asset('assets/js/helper.js') }}"></script>
 
     <script>
+        function qtyText(value) {
+            return (parseFloat(value) || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+        }
+
         let dataItem = [];
         let selectedWarehouse = null;
 
@@ -920,7 +924,7 @@
         function buildItemOptionsHtml() {
             let html = '<option selected="" disabled="" value="">{{ __("general.choose") }} Item...</option>';
             dataItem.forEach(i => {
-                const typeBadge = i.type === 'jasa' ? `[JASA: ${i.stock}]` : `[Stok: ${i.stock}]`;
+                const typeBadge = i.type === 'jasa' ? `[JASA: ${qtyText(i.stock)}]` : `[Stok: ${qtyText(i.stock)}]`;
                 html += `<option value="${i.code}" data-name="${i.name}" data-qty="${i.stock}" data-price="${i.price}" data-type="${i.type}">${i.code} - ${i.name} ${typeBadge}</option>`;
             });
             return html;
@@ -983,11 +987,11 @@
             // Update visual stock badge
             let stockHtml = '';
             if (isJasa) {
-                stockHtml = `<span class="stock-pill stock-jasa"><i class="mdi mdi-account-wrench me-1"></i>Jasa (${itemQty})</span>`;
+                stockHtml = `<span class="stock-pill stock-jasa"><i class="mdi mdi-account-wrench me-1"></i>Jasa (${qtyText(itemQty)})</span>`;
             } else if (itemQty > 5) {
-                stockHtml = `<span class="stock-pill stock-safe"><i class="mdi mdi-check-circle-outline me-1"></i>${itemQty}</span>`;
+                stockHtml = `<span class="stock-pill stock-safe"><i class="mdi mdi-check-circle-outline me-1"></i>${qtyText(itemQty)}</span>`;
             } else if (itemQty > 0) {
-                stockHtml = `<span class="stock-pill stock-warn"><i class="mdi mdi-alert-circle-outline me-1"></i>${itemQty} (Sisa)</span>`;
+                stockHtml = `<span class="stock-pill stock-warn"><i class="mdi mdi-alert-circle-outline me-1"></i>${qtyText(itemQty)} (Sisa)</span>`;
             } else {
                 stockHtml = '<span class="stock-pill stock-empty"><i class="mdi mdi-close-circle-outline me-1"></i>Habis</span>';
             }
@@ -1054,7 +1058,7 @@
             });
 
             $('#summaryTotalItems').text(totalItems + ' Item');
-            $('#summaryTotalQty').text((Math.round(totalQty * 10) / 10) + ' Unit');
+            $('#summaryTotalQty').text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + ' Unit');
             $('#grand_total_display').text(new Intl.NumberFormat('id-ID').format(grandTotal));
             $('#grand_total').val(grandTotal);
         }
@@ -1230,8 +1234,8 @@
                 if (qtyInput > qtyExisting) {
                     isValid = false;
                     errorMessage = itemType === 'jasa'
-                        ? `Kuantitas jasa "${itemName}" (${qtyInput}) melebihi sisa kuantitas pada PO terpilih (${qtyExisting}).`
-                        : `Kuantitas item "${itemName}" (${qtyInput}) melebihi stok yang tersedia di gudang (${qtyExisting}).`;
+                        ? `Kuantitas jasa "${itemName}" (${qtyText(qtyInput)}) melebihi sisa kuantitas pada PO terpilih (${qtyText(qtyExisting)}).`
+                        : `Kuantitas item "${itemName}" (${qtyText(qtyInput)}) melebihi stok yang tersedia di gudang (${qtyText(qtyExisting)}).`;
                     return false;
                 }
 

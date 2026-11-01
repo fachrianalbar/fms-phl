@@ -690,7 +690,7 @@
                             itemsHtml += '<td class="font-monospace">' + escapeHtml(item.itemCode) + '</td>';
                             itemsHtml += '<td>' + escapeHtml(item.item ? item.item.name : '-') + '</td>';
                             itemsHtml += '<td>' + escapeHtml(item.description || '-') + '</td>';
-                            itemsHtml += '<td class="text-end font-monospace">' + escapeHtml(parseFloat(item.qty) || 0) + '</td>';
+                            itemsHtml += '<td class="text-end font-monospace">' + (parseFloat(item.qty) || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + '</td>';
                             itemsHtml += '<td class="text-end font-monospace">Rp ' + formatNumber(item.price) + '</td>';
                             itemsHtml += '<td class="text-end font-monospace fw-semibold">Rp ' + formatNumber(item.total) + '</td>';
                             itemsHtml += '</tr>';

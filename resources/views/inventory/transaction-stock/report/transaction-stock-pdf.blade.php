@@ -142,6 +142,14 @@
         <h1>LAPORAN TRANSAKSI STOCK PER WAREHOUSE</h1>
         <p class="print-date">Dicetak pada: {{ $printDate }}</p>
 
+        @php
+            $fmtQty = function ($value) {
+                $qty = (float) $value;
+
+                return number_format($qty, abs($qty - round($qty)) > 0.0001 ? 1 : 0, ',', '.');
+            };
+        @endphp
+
         @foreach ($reportData as $data)
         <div class="warehouse-section">
             <div class="warehouse-header">
@@ -167,9 +175,9 @@
                         <td class="text-center">{{ $index + 1 }}</td>
                         <td>{{ $item['itemCode'] }}</td>
                         <td>{{ $item['itemName'] }}</td>
-                        <td class="text-center">{{ $item['totalIn'] }}</td>
-                        <td class="text-center">{{ $item['totalOut'] }}</td>
-                        <td class="text-center">{{ $item['stock'] }}</td>
+                        <td class="text-center">{{ $fmtQty($item['totalIn']) }}</td>
+                        <td class="text-center">{{ $fmtQty($item['totalOut']) }}</td>
+                        <td class="text-center">{{ $fmtQty($item['stock']) }}</td>
                     </tr>
                     @empty
                     <tr>
@@ -180,9 +188,9 @@
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="3" class="text-right">Total:</td>
-                        <td class="text-center">{{ $data['totalIn'] }}</td>
-                        <td class="text-center">{{ $data['totalOut'] }}</td>
-                        <td class="text-center">{{ $data['totalStock'] }}</td>
+                        <td class="text-center">{{ $fmtQty($data['totalIn']) }}</td>
+                        <td class="text-center">{{ $fmtQty($data['totalOut']) }}</td>
+                        <td class="text-center">{{ $fmtQty($data['totalStock']) }}</td>
                     </tr>
                 </tfoot>
             </table>
@@ -223,8 +231,8 @@
                         <td class="text-center">
                             <span class="badge {{ $badgeClass }}">{{ $item['transactionType'] }}</span>
                         </td>
-                        <td class="text-center">{{ $item['qtyIn'] > 0 ? $item['qtyIn'] : '-' }}</td>
-                        <td class="text-center">{{ $item['qtyOut'] > 0 ? $item['qtyOut'] : '-' }}</td>
+                        <td class="text-center">{{ $item['qtyIn'] > 0 ? $fmtQty($item['qtyIn']) : '-' }}</td>
+                        <td class="text-center">{{ $item['qtyOut'] > 0 ? $fmtQty($item['qtyOut']) : '-' }}</td>
                     </tr>
                     @empty
                     <tr>

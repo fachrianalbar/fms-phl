@@ -365,9 +365,9 @@ class StockController extends Controller
 
         return response()->json([
             'success' => true,
-            'totalIn' => (int) $totalIn,
-            'totalOut' => (int) $totalOut,
-            'currentStock' => (int) $currentStock,
+            'totalIn' => (float) $totalIn,
+            'totalOut' => (float) $totalOut,
+            'currentStock' => (float) $currentStock,
         ]);
     }
 

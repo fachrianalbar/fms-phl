@@ -28,6 +28,12 @@ class PurchaseDetail extends Model
         'description',
     ];
 
+    protected $casts = [
+        'qty' => 'decimal:1',
+        'receivedQty' => 'decimal:1',
+        'qtyUsed' => 'decimal:1',
+    ];
+
     public function purchase()
     {
         return $this->belongsTo(Purchase::class, 'purchaseCode', 'code');

@@ -877,7 +877,7 @@
                                         <td class="text-center text-muted fw-semibold">${idx + 1}</td>
                                         <td><span class="font-monospace text-primary fw-semibold">${escapeHtml(item.itemCode)}</span></td>
                                         <td><strong>${escapeHtml(item.itemName)}</strong></td>
-                                        <td class="text-center font-monospace">${item.qty}</td>
+                                        <td class="text-center font-monospace">${(parseFloat(item.qty) || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}</td>
                                         <td class="text-end font-monospace">${item.priceFormatted}</td>
                                         <td class="text-end font-monospace fw-bold text-dark">${item.subtotalFormatted}</td>
                                         <td>${escapeHtml(item.description)}</td>

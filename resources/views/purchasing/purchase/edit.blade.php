@@ -556,7 +556,7 @@
                     <div class="summary-divider d-none d-md-block"></div>
                     <div class="summary-item">
                         <div class="summary-label">Total Qty</div>
-                        <div class="summary-value" id="summaryTotalQty">{{ $totalQty }}</div>
+                        <div class="summary-value" id="summaryTotalQty">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</div>
                     </div>
                     <div class="summary-divider d-none d-md-block"></div>
                     <div class="summary-item grand-total-highlight">
@@ -767,7 +767,7 @@
         let $grand = $('#summaryGrandTotal');
 
         $items.text(totalItems);
-        $qty.text(totalQty % 1 === 0 ? totalItems === 0 ? '0' : totalQty : totalQty.toFixed(1));
+        $qty.text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }));
         $grand.text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
 
         // Pulse animation

@@ -445,7 +445,7 @@ class DirectPurchaseController extends Controller
                     $count = $row->details->count();
                     $totalQty = $row->details->sum('qty');
                     return '<span class="fw-semibold">' . number_format($count, 0, ',', '.') . ' Item</span>'
-                        . '<small class="text-muted d-block">' . number_format($totalQty, 1, ',', '.') . ' Qty</small>';
+                        . '<small class="text-muted d-block">' . rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') . ' Qty</small>';
                 })
                 ->addColumn('totalPrice', function ($row) {
                     $total = $row->nominal ?: $row->details->sum(fn ($d) => $d->price * $d->qty);

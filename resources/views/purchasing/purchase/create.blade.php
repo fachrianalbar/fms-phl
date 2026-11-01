@@ -729,7 +729,7 @@
         let $grand = $('#summaryGrandTotal');
 
         $items.text(totalItems);
-        $qty.text(totalQty % 1 === 0 ? totalItems === 0 ? '0' : totalQty : totalQty.toFixed(1));
+        $qty.text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }));
         $grand.text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
 
         // Pulse animation

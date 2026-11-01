@@ -105,7 +105,7 @@
                             <td>{{ isset($it->item->category->name) ? $it->item->category->name : '' }}</td>
                             <td>{{ isset($it->item->code) ? $it->item->code : '' }}</td>
                             <td>{{ isset($it->item->name) ? $it->item->name : '' }}</td>
-                            <td>{{ $it->qty }}</td>
+                            <td>{{ rtrim(rtrim(number_format((float) $it->qty, 1, ',', '.'), '0'), ',') }}</td>
                             <td>{{ isset($it->item->price) ? number_format($it->item->price, 0, ',', '.') : '' }}</td>
                             <td>{{ isset($it->item->price) ? number_format($it->item->price * $it->qty, 0, ',', '.') : 0 }}
                             </td>
