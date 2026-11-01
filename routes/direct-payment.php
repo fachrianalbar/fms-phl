@@ -38,6 +38,7 @@ Route::prefix('direct-payment')->name('direct-payment.')->group(function () {
     Route::post('order/payment', [DirectPaymentController::class, 'storeBatch'])->name('order.payment.store');
     Route::post('order/payment-single', [DirectPaymentController::class, 'store'])->name('order.payment-single.store');
     Route::post('order/generate-nota', [DirectPaymentController::class, 'generateNota'])->name('order.generate-nota');
+    Route::post('order/sync-nota/{orderCode}', [DirectPaymentController::class, 'syncNota'])->name('order.sync-nota');
     Route::post('order/cancel-nota/{orderCode}', [DirectPaymentController::class, 'cancelNota'])->name('order.cancel-nota');
     Route::delete('order/payment/{orderCode}', [DirectPaymentController::class, 'cancelPayment'])->name('order.payment.cancel');
 
@@ -60,5 +61,6 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('direct-payment-detail/{orderCode}', [DirectPaymentController::class, 'orderDetailPayment'])->name('direct-payment-detail');
     Route::get('direct-payment-nota-detail/{orderCode}', [DirectPaymentController::class, 'notaDetail'])->name('direct-payment-nota-detail');
+    Route::get('direct-payment-sync-preview/{orderCode}', [DirectPaymentController::class, 'syncPreview'])->name('direct-payment-sync-preview');
     Route::get('direct-payment-payment-detail/{transactionKey}', [DirectPaymentController::class, 'paymentDetail'])->name('direct-payment-payment-detail');
 });

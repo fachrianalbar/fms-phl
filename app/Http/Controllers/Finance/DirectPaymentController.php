@@ -404,6 +404,82 @@ class DirectPaymentController extends Controller
     }
 
     /**
+     * Pratinjau selisih nominal nota terhadap harga order terkini.
+     */
+    public function syncPreview($orderCode)
+    {
+        try {
+            $preview = $this->service->previewNotaSync($orderCode);
+        } catch (Throwable $th) {
+            report($th);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghitung pratinjau sinkronisasi nota.',
+            ], 500);
+        }
+
+        if (! $preview) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Data nota untuk order ini tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json(['success' => true, 'data' => $preview]);
+    }
+
+    /**
+     * Sinkronkan nominal nota dari harga order terkini (tombol per baris nota).
+     */
+    public function syncNota(Request $request, $orderCode)
+    {
+        try {
+            $result = DB::transaction(fn () => $this->service->syncNotaByOrderCode($orderCode, $this->title ?? 'Direct Payment'));
+
+            $message = $result['changed']
+                ? 'Nominal nota '.$result['nota_number'].' berhasil disinkronkan dengan harga order.'
+                : 'Nominal nota '.$result['nota_number'].' sudah sesuai harga order.';
+
+            if (! empty($result['warnings'])) {
+                $message .= ' '.implode(' ', $result['warnings']);
+            }
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'changed' => $result['changed'],
+                    'warnings' => $result['warnings'],
+                    'message' => $message,
+                ]);
+            }
+
+            return redirect()->back()->with('success', $message);
+        } catch (DomainException $exception) {
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $exception->getMessage(),
+                ], 422);
+            }
+
+            return redirect()->back()->with('fail', $exception->getMessage());
+        } catch (Throwable $th) {
+            report($th);
+            $message = 'Sinkronisasi nominal nota gagal diproses. Silakan coba lagi.';
+
+            if ($request->ajax() || $request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 500);
+            }
+
+            return redirect()->back()->with('fail', $message);
+        }
+    }
+
+    /**
      * Membatalkan nomor nota (jika belum ada pembayaran sama sekali).
      */
     public function cancelNota($orderCode)
@@ -699,6 +775,7 @@ class DirectPaymentController extends Controller
                     $buttons = [];
                     $buttons[] = '<a href="' . route('direct-payment.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Nota"><i class="mdi mdi-printer fs-15"></i></a>';
                     $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-info-subtle text-info hover-scale me-1 js-dp-nota-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Nota"><i class="mdi mdi-eye-outline fs-15"></i></button>';
+                    $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-secondary-subtle text-secondary hover-scale me-1 js-nota-sync" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Sinkronkan nominal dari harga order"><i class="mdi mdi-sync fs-15"></i></button>';
 
                     if ($row->paid_amount > 0 || $row->payment_status !== 'pending') {
                         if ($row->latest_batch_code) {
@@ -836,6 +913,7 @@ class DirectPaymentController extends Controller
                         $buttons = [];
                         $buttons[] = '<a href="' . route('direct-payment.pdf-nota', $firstOrderCode) . '" target="_blank" rel="noopener" class="btn btn-sm btn-icon bg-primary-subtle text-primary hover-scale me-1" data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Nota"><i class="mdi mdi-printer fs-15"></i></a>';
                         $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-info-subtle text-info hover-scale me-1 js-dp-nota-detail" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Rincian Nota"><i class="mdi mdi-eye-outline fs-15"></i></button>';
+                        $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-secondary-subtle text-secondary hover-scale me-1 js-nota-sync" data-order-code="' . e($firstOrderCode) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Sinkronkan nominal dari harga order"><i class="mdi mdi-sync fs-15"></i></button>';
 
                         if ($row->latest_batch_code) {
                             $buttons[] = '<button type="button" class="btn btn-sm btn-icon bg-danger-subtle text-danger hover-scale js-dp-payment-cancel" data-order-code="' . e($firstOrderCode) . '" data-batch-code="' . e($row->latest_batch_code) . '" data-bs-toggle="tooltip" data-bs-placement="top" title="Batal Pembayaran"><i class="mdi mdi-close-circle-outline fs-15"></i></button>';

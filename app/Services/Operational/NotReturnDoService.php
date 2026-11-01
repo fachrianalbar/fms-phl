@@ -10,6 +10,8 @@ use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\OrderDetail;
+use App\Services\Finance\DirectPaymentService;
+use App\Services\Finance\VendorPaymentService;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
@@ -28,7 +30,7 @@ class NotReturnDoService
 
     protected $fleet;
 
-    public function __construct(Order $notReturnDo, OrderCost $orderCost, Route $route, Fleet $fleet)
+    public function __construct(Order $notReturnDo, OrderCost $orderCost, Route $route, Fleet $fleet, private VendorPaymentService $vendorPayment, private DirectPaymentService $directPayment)
     {
         $this->service = $notReturnDo;
         $this->orderCost = $orderCost;
@@ -391,6 +393,12 @@ class NotReturnDoService
         // Log after update
         // Auto upsert salary cost components to order_driver_salary
         OrderDriverSalaryService::syncForOrder($order);
+
+        // Nominal nota vendor mengikuti harga order terkini (tanpa generate ulang).
+        $this->vendorPayment->syncNotaForOrderSafely($order->code, $title);
+
+        // Nominal nota Pembayaran Langsung (customer non-DO) juga mengikuti harga order.
+        $this->directPayment->syncNotaForOrderSafely($order->code, $title);
 
         $this->logActivity($title, $this->service->where('id', $id)->firstOrFail(), 'After Update');
     }

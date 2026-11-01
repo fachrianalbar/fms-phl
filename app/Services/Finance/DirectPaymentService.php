@@ -195,6 +195,319 @@ class DirectPaymentService
     }
 
     /**
+     * DPP satu order dari harga terkini: routeAmount + biaya On Charge.
+     * Berbeda dari orderFinancials() yang memakai nilai tersimpan pada
+     * order_payment bila nota sudah ada.
+     */
+    private function orderCurrentBilling($order): array
+    {
+        $cost = (float) ($order->routeAmount ?? 0);
+        $additionalCost = (float) collect($order->cost ?? [])
+            ->filter(fn ($c) => strtolower(trim((string) ($c->type ?? ''))) === 'on charge')
+            ->sum(fn ($c) => (float) ($c->nominal ?? 0));
+
+        return ['cost' => $cost, 'additional' => $additionalCost, 'dpp' => $cost + $additionalCost];
+    }
+
+    /**
+     * Hitung rencana sinkronisasi nota tanpa mengubah data.
+     *
+     * Dipakai bersama oleh pratinjau (modal konfirmasi) dan eksekusi agar
+     * angka yang ditampilkan selalu sama dengan yang disimpan.
+     *
+     * @return array<string, mixed>
+     */
+    private function buildNotaSyncPlan($payments): array
+    {
+        // Rate & claim tersimpan sama di seluruh baris nota → pakai MAX / SUM.
+        $ppnRate = (float) ($payments->max('ppn_percent') ?? 0);
+        $pphRate = (float) ($payments->max('pph_percent') ?? 0);
+        $claimAmount = (int) round((float) $payments->sum('claim'));
+
+        $billingByOrder = [];
+        $totalDpp = 0;
+        $invalidOrders = [];
+
+        foreach ($payments as $payment) {
+            $order = $payment->order;
+            $billing = $order
+                ? $this->orderCurrentBilling($order)
+                : [
+                    'cost' => (float) ($payment->cost ?? 0),
+                    'additional' => (float) ($payment->additional_cost ?? 0),
+                    'dpp' => (float) ($payment->cost ?? 0) + (float) ($payment->additional_cost ?? 0),
+                ];
+
+            $dpp = (int) round($billing['dpp']);
+
+            if ($dpp < 0) {
+                $invalidOrders[] = $payment->orderCode;
+            }
+
+            $billingByOrder[$payment->orderCode] = [
+                'cost' => $billing['cost'],
+                'additional' => $billing['additional'],
+                'dpp' => $dpp,
+            ];
+            $totalDpp += $dpp;
+        }
+
+        $plan = [
+            'nota_number' => $payments->first()->nota_number,
+            'ppn_rate' => $ppnRate,
+            'pph_rate' => $pphRate,
+            'claim_amount' => $claimAmount,
+            'ppn_amount' => 0,
+            'pph_amount' => 0,
+            'total_dpp' => $totalDpp,
+            'total_current' => 0,
+            'total_new' => 0,
+            'total_paid' => 0,
+            'has_change' => false,
+            'has_overpaid' => false,
+            'has_payment' => false,
+            'items' => [],
+            'warnings' => [],
+            'invalid' => false,
+        ];
+
+        if (! empty($invalidOrders)) {
+            $plan['invalid'] = true;
+            $plan['warnings'][] = 'Nilai DPP order '.implode(', ', $invalidOrders).' tidak valid.';
+
+            return $plan;
+        }
+
+        $ppnAmount = (int) round($totalDpp * $ppnRate / 100);
+        $pphAmount = (int) round($totalDpp * $pphRate / 100);
+
+        $plan['ppn_amount'] = $ppnAmount;
+        $plan['pph_amount'] = $pphAmount;
+
+        if ($totalDpp + $ppnAmount - $pphAmount - $claimAmount < 0) {
+            $plan['invalid'] = true;
+            $plan['warnings'][] = 'Total tagihan (DPP + PPN − PPh − Claim) negatif. Periksa harga order, tarif pajak, dan Biaya Claim pada nota ini.';
+
+            return $plan;
+        }
+
+        $weights = array_map(fn ($row) => $row['dpp'], $billingByOrder);
+        $ppnShares = $this->distributeProportionally($ppnAmount, $weights, $totalDpp);
+        $pphShares = $this->distributeProportionally($pphAmount, $weights, $totalDpp);
+        $claimShares = $this->distributeProportionally($claimAmount, $weights, $totalDpp);
+
+        foreach ($payments as $payment) {
+            $row = $billingByOrder[$payment->orderCode];
+            $ppn = (float) ($ppnShares[$payment->orderCode] ?? 0);
+            $pph = (float) ($pphShares[$payment->orderCode] ?? 0);
+            $claim = (float) ($claimShares[$payment->orderCode] ?? 0);
+
+            $currentAmount = (int) round($this->orderPaymentBilling($payment));
+            $newAmount = (int) round($row['cost'] + $row['additional'] + $ppn - $pph - $claim);
+            $paid = (int) round((float) ($payment->total ?? 0));
+            $newStatus = ($paid > 0 && $paid >= $newAmount) ? 1 : 0;
+
+            $item = [
+                'payment_id' => $payment->id,
+                'order_code' => $payment->orderCode,
+                'current_amount' => $currentAmount,
+                'new_amount' => $newAmount,
+                'difference' => $newAmount - $currentAmount,
+                'cost' => $row['cost'],
+                'additional' => $row['additional'],
+                'ppn' => $ppn,
+                'pph' => $pph,
+                'claim' => $claim,
+                'paid_amount' => $paid,
+                'new_remaining' => max(0, $newAmount - $paid),
+                'new_status' => $newStatus,
+                'overpaid' => $paid > $newAmount,
+                'changed' => $currentAmount !== $newAmount
+                    || (int) round((float) ($payment->ppn ?? 0)) !== (int) round($ppn)
+                    || (int) round((float) ($payment->pph ?? 0)) !== (int) round($pph)
+                    || (int) round((float) ($payment->claim ?? 0)) !== (int) round($claim)
+                    || (int) ($payment->status ?? 0) !== $newStatus,
+            ];
+
+            $plan['items'][] = $item;
+            $plan['total_current'] += $currentAmount;
+            $plan['total_new'] += $newAmount;
+            $plan['total_paid'] += $paid;
+            $plan['has_change'] = $plan['has_change'] || $item['changed'];
+            $plan['has_overpaid'] = $plan['has_overpaid'] || $item['overpaid'];
+            $plan['has_payment'] = $plan['has_payment'] || $paid > 0;
+        }
+
+        return $plan;
+    }
+
+    /**
+     * Hitung ulang nominal nota dari harga order terkini.
+     *
+     * Nomor nota, rekening sumber dana, dan tarif pajak tidak berubah; hanya
+     * cost, additional_cost, distribusi PPN/PPh/claim, dan status yang
+     * disesuaikan.
+     *
+     * Dipanggil otomatis saat order diedit maupun lewat tombol Sinkronkan,
+     * sehingga nominal tagihan selalu sama dengan nominal order terkini —
+     * termasuk saat nominal order turun di bawah pembayaran yang sudah
+     * tercatat (nota menjadi kelebihan bayar, riwayat bayar tidak diubah).
+     *
+     * @return array{changed: bool, warnings: array<int, string>}
+     */
+    public function syncNotaFromOrders(string $notaNumber, string $title = 'Direct Payment'): array
+    {
+        $payments = $this->service->newQuery()
+            ->with('order.cost')
+            ->where('nota_number', $notaNumber)
+            ->orderBy('orderCode')
+            ->orderBy('id')
+            ->lockForUpdate()
+            ->get();
+
+        if ($payments->isEmpty()) {
+            return ['changed' => false, 'warnings' => []];
+        }
+
+        $plan = $this->buildNotaSyncPlan($payments);
+
+        if ($plan['invalid']) {
+            return [
+                'changed' => false,
+                'warnings' => array_map(fn ($warning) => 'Nota '.$notaNumber.' tidak disinkronkan: '.$warning, $plan['warnings']),
+            ];
+        }
+
+        $changed = false;
+
+        foreach ($payments as $payment) {
+            $item = collect($plan['items'])->firstWhere('payment_id', $payment->id);
+
+            if (! $item || ! $item['changed']) {
+                continue;
+            }
+
+            $payment->update([
+                'cost' => $item['cost'],
+                'additional_cost' => $item['additional'],
+                'ppn' => $item['ppn'],
+                'pph' => $item['pph'],
+                'claim' => $item['claim'],
+                'status' => $item['new_status'],
+            ]);
+
+            $changed = true;
+        }
+
+        $warnings = [];
+
+        if ($changed) {
+            $overpaid = collect($plan['items'])->filter(fn ($item) => $item['overpaid']);
+
+            if ($overpaid->isNotEmpty()) {
+                $warnings[] = 'Nota '.$notaNumber.': nominal order '
+                    .$overpaid->pluck('order_code')->implode(', ')
+                    .' lebih kecil dari pembayaran yang sudah tercatat (kelebihan bayar).';
+            }
+
+            $this->logActivity($title, $payments->first(), 'Sync Nota '.$notaNumber.' dari harga order');
+        }
+
+        return ['changed' => $changed, 'warnings' => $warnings];
+    }
+
+    /**
+     * Pratinjau selisih nominal nota terhadap harga order terkini.
+     * Tidak mengubah data — dipakai modal konfirmasi tombol Sinkronkan.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function previewNotaSync(string $orderCode): ?array
+    {
+        $snapshot = $this->service->newQuery()->where('orderCode', $orderCode)->first();
+
+        if (! $snapshot || ! $snapshot->nota_number) {
+            return null;
+        }
+
+        $payments = $this->service->newQuery()
+            ->with(['order.cost', 'order.customer'])
+            ->where('nota_number', $snapshot->nota_number)
+            ->orderBy('orderCode')
+            ->orderBy('id')
+            ->get();
+
+        if ($payments->isEmpty()) {
+            return null;
+        }
+
+        $plan = $this->buildNotaSyncPlan($payments);
+        $plan['customer_name'] = $payments->first()->order?->customer?->name;
+
+        return $plan;
+    }
+
+    /**
+     * Sinkronisasi manual (tombol per baris nota) yang sudah dikonfirmasi user.
+     *
+     * @return array{changed: bool, warnings: array<int, string>, nota_number: ?string}
+     */
+    public function syncNotaByOrderCode(string $orderCode, string $title = 'Direct Payment'): array
+    {
+        $snapshot = $this->service->newQuery()->where('orderCode', $orderCode)->first();
+
+        if (! $snapshot) {
+            throw new \DomainException('Data nota tidak ditemukan.', 422);
+        }
+
+        if (! $snapshot->nota_number) {
+            throw new \DomainException('Order ini belum memiliki nota Pembayaran Langsung.', 422);
+        }
+
+        $result = $this->syncNotaFromOrders($snapshot->nota_number, $title);
+        $result['nota_number'] = $snapshot->nota_number;
+
+        return $result;
+    }
+
+    /**
+     * Versi aman untuk alur simpan order: kegagalan sinkronisasi tidak boleh
+     * membatalkan perubahan order, cukup menjadi peringatan di UI.
+     */
+    public function syncNotaForOrderSafely(string $orderCode, string $title = 'Direct Payment'): void
+    {
+        try {
+            $notaNumbers = $this->service->newQuery()
+                ->where('orderCode', $orderCode)
+                ->whereNotNull('nota_number')
+                ->pluck('nota_number')
+                ->unique();
+
+            foreach ($notaNumbers as $notaNumber) {
+                foreach ($this->syncNotaFromOrders($notaNumber, $title)['warnings'] as $warning) {
+                    $this->flashWarning($warning);
+                }
+            }
+        } catch (\Throwable $th) {
+            report($th);
+
+            $this->flashWarning('Nominal nota Pembayaran Langsung gagal disinkronkan dari harga order. Silakan periksa menu Pembayaran Langsung.');
+        }
+    }
+
+    /**
+     * Flash peringatan bila session tersedia (aman saat dipanggil di CLI/queue).
+     */
+    private function flashWarning(string $message): void
+    {
+        try {
+            session()->flash('warning', $message);
+        } catch (\Throwable $th) {
+            logger()->warning($message);
+        }
+    }
+
+    /**
      * Hitung nominal PPN/PPH dari input form.
      * Pajak dapat diisi sebagai persentase (dihitung dari subtotal)
      * atau langsung sebagai nominal.

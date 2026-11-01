@@ -1161,18 +1161,19 @@ class VendorInvoiceController extends Controller
                 : 'Nominal nota '.$result['nota_number'].' sudah sesuai harga order.';
 
             if (! empty($result['warnings'])) {
-                $message = implode(' ', $result['warnings']);
+                $message .= ' '.implode(' ', $result['warnings']);
             }
 
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([
-                    'success' => empty($result['warnings']),
+                    'success' => true,
                     'changed' => $result['changed'],
+                    'warnings' => $result['warnings'],
                     'message' => $message,
-                ], empty($result['warnings']) ? 200 : 422);
+                ]);
             }
 
-            return redirect()->back()->with(empty($result['warnings']) ? 'success' : 'fail', $message);
+            return redirect()->back()->with('success', $message);
         } catch (DomainException $exception) {
             if ($request->ajax() || $request->expectsJson()) {
                 return response()->json([

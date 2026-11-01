@@ -944,6 +944,9 @@ class OrderController extends Controller
             // Auto upsert salary cost components to order_driver_salary
             OrderDriverSalaryService::syncForOrder($request->orderCode);
 
+            // Biaya On Charge ikut menentukan tagihan → sinkronkan nominal nota.
+            $this->syncOrderNotaAmounts($request->orderCode);
+
             DB::commit();
 
             if ($request->ajax()) {
@@ -985,6 +988,9 @@ class OrderController extends Controller
 
             // Auto sync salary cost components
             OrderDriverSalaryService::syncForOrder($orderCode);
+
+            // Biaya On Charge ikut menentukan tagihan → sinkronkan nominal nota.
+            $this->syncOrderNotaAmounts($orderCode);
 
             return response()->json([
                 'success' => true,
@@ -1209,6 +1215,16 @@ class OrderController extends Controller
                 'message' => 'Error: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Sinkronkan nominal nota (vendor & Pembayaran Langsung) dengan harga order
+     * terkini. Kegagalan sinkronisasi hanya menjadi peringatan, bukan error.
+     */
+    private function syncOrderNotaAmounts(string $orderCode): void
+    {
+        app(\App\Services\Finance\VendorPaymentService::class)->syncNotaForOrderSafely($orderCode);
+        app(\App\Services\Finance\DirectPaymentService::class)->syncNotaForOrderSafely($orderCode);
     }
 
     /**

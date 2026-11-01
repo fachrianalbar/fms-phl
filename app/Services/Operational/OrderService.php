@@ -11,6 +11,7 @@ use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
 use App\Models\Operational\OrderMaterial;
+use App\Services\Finance\DirectPaymentService;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\UniqueCodeService;
@@ -35,7 +36,7 @@ class OrderService
 
     protected $orderMaterial;
 
-    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial, private UniqueCodeService $uniqueCode, private VendorPaymentService $vendorPayment)
+    public function __construct(Order $order, CustomerDetailOrder $customerDetailOrder, OrderCost $orderCost, Route $route, Customer $customer, Fleet $fleet, OrderMaterial $orderMaterial, private UniqueCodeService $uniqueCode, private VendorPaymentService $vendorPayment, private DirectPaymentService $directPayment)
     {
         $this->service = $order;
         $this->customerDetailOrder = $customerDetailOrder;
@@ -237,7 +238,10 @@ class OrderService
         OrderDriverSalaryService::syncForOrder($data);
 
         // Nominal nota vendor mengikuti harga order terkini (tanpa generate ulang).
-        $this->syncVendorNota($data->code, $title);
+        $this->vendorPayment->syncNotaForOrderSafely($data->code, $title);
+
+        // Nominal nota Pembayaran Langsung (customer non-DO) juga mengikuti harga order.
+        $this->directPayment->syncNotaForOrderSafely($data->code, $title);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
 
@@ -271,42 +275,6 @@ class OrderService
         // Hapus lewat instance model agar SoftDeletes berlaku (bukan hard delete),
         // sehingga order yang terhapus masih bisa dipulihkan.
         $data->delete();
-    }
-
-    /**
-     * Sinkronkan nominal nota vendor milik order ini dengan harga order terkini.
-     *
-     * Nota tetap memakai nomor & tarif pajak yang sama, hanya nominalnya yang
-     * dihitung ulang dari qty/harga order. Kegagalan sinkronisasi tidak boleh
-     * membatalkan proses simpan order — cukup tampilkan peringatan.
-     */
-    private function syncVendorNota(string $orderCode, string $title): void
-    {
-        try {
-            $result = $this->vendorPayment->syncNotaForOrder($orderCode, $title);
-        } catch (\Throwable $th) {
-            report($th);
-
-            $this->flashWarning('Nominal nota vendor gagal disinkronkan dari harga order. Silakan periksa menu Vendor → Invoice.');
-
-            return;
-        }
-
-        foreach ($result['warnings'] as $warning) {
-            $this->flashWarning($warning);
-        }
-    }
-
-    /**
-     * Flash peringatan bila session tersedia (aman saat dipanggil di CLI/queue).
-     */
-    private function flashWarning(string $message): void
-    {
-        try {
-            session()->flash('warning', $message);
-        } catch (\Throwable $th) {
-            logger()->warning($message);
-        }
     }
 
     public function getCustomerDetailOrder($orderCode)

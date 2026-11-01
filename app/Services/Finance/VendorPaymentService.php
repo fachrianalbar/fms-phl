@@ -1373,12 +1373,15 @@ class VendorPaymentService
      * Dipanggil otomatis saat order yang sudah memiliki nota diedit, sehingga
      * nominal nota tidak tertinggal dari perubahan qty/harga order.
      *
-     * @param  bool  $allowOverpaid  Izinkan nominal baru lebih kecil dari pembayaran
-     *                               yang sudah tercatat (khusus sinkronisasi manual
-     *                               yang sudah dikonfirmasi user).
+     * Dipanggil otomatis saat order yang sudah memiliki nota diedit maupun
+     * lewat tombol Sinkronkan, sehingga nominal tagihan selalu sama dengan
+     * nominal order terkini — termasuk saat nominal order turun di bawah
+     * pembayaran yang sudah tercatat (nota menjadi kelebihan bayar, riwayat
+     * bayar tidak diubah).
+     *
      * @return array{changed: bool, warnings: array<int, string>}
      */
-    public function syncNotaFromOrders(string $notaNumber, string $title = 'Vendor Payment', bool $allowOverpaid = false): array
+    public function syncNotaFromOrders(string $notaNumber, string $title = 'Vendor Payment'): array
     {
         $payments = $this->service->newQuery()
             ->where('nota_number', $notaNumber)
@@ -1397,19 +1400,6 @@ class VendorPaymentService
             return [
                 'changed' => false,
                 'warnings' => array_map(fn ($warning) => 'Nota '.$notaNumber.' tidak disinkronkan: '.$warning, $plan['warnings']),
-            ];
-        }
-
-        $overpaid = collect($plan['items'])->filter(fn ($item) => $item['overpaid']);
-
-        if ($overpaid->isNotEmpty() && ! $allowOverpaid) {
-            return [
-                'changed' => false,
-                'warnings' => [
-                    'Nota '.$notaNumber.' tidak disinkronkan: nominal order '
-                    .$overpaid->pluck('order_code')->implode(', ')
-                    .' lebih kecil dari pembayaran yang sudah tercatat.',
-                ],
             ];
         }
 
@@ -1437,11 +1427,21 @@ class VendorPaymentService
             $changed = true;
         }
 
+        $warnings = [];
+
         if ($changed) {
+            $overpaid = collect($plan['items'])->filter(fn ($item) => $item['overpaid']);
+
+            if ($overpaid->isNotEmpty()) {
+                $warnings[] = 'Nota '.$notaNumber.': nominal order '
+                    .$overpaid->pluck('order_code')->implode(', ')
+                    .' lebih kecil dari pembayaran yang sudah tercatat (kelebihan bayar).';
+            }
+
             $this->logActivity($title, $payments->first(), 'Sync Nota '.$notaNumber.' dari harga order');
         }
 
-        return ['changed' => $changed, 'warnings' => []];
+        return ['changed' => $changed, 'warnings' => $warnings];
     }
 
     /**
@@ -1503,11 +1503,40 @@ class VendorPaymentService
     }
 
     /**
+     * Versi aman untuk alur simpan order: kegagalan sinkronisasi tidak boleh
+     * membatalkan perubahan order, cukup menjadi peringatan di UI.
+     */
+    public function syncNotaForOrderSafely(string $orderCode, string $title = 'Vendor Payment'): void
+    {
+        try {
+            $result = $this->syncNotaForOrder($orderCode, $title);
+        } catch (\Throwable $th) {
+            report($th);
+
+            $this->flashWarning('Nominal nota vendor gagal disinkronkan dari harga order. Silakan periksa menu Vendor → Invoice.');
+
+            return;
+        }
+
+        foreach ($result['warnings'] as $warning) {
+            $this->flashWarning($warning);
+        }
+    }
+
+    /**
+     * Flash peringatan bila session tersedia (aman saat dipanggil di CLI/queue).
+     */
+    private function flashWarning(string $message): void
+    {
+        try {
+            session()->flash('warning', $message);
+        } catch (\Throwable $th) {
+            logger()->warning($message);
+        }
+    }
+
+    /**
      * Sinkronisasi manual (tombol per baris nota) yang sudah dikonfirmasi user.
-     *
-     * Berbeda dengan sinkronisasi otomatis, nominal boleh turun di bawah
-     * pembayaran yang sudah tercatat — sisa tagihan dijaga 0 dan status menjadi
-     * lunas, sehingga kelebihan bayar tetap terekam pada paid_amount.
      *
      * @return array{changed: bool, warnings: array<int, string>, nota_number: ?string}
      */
@@ -1523,7 +1552,7 @@ class VendorPaymentService
             throw new \DomainException('Order ini belum memiliki nota.', 422);
         }
 
-        $result = $this->syncNotaFromOrders($snapshot->nota_number, $title, true);
+        $result = $this->syncNotaFromOrders($snapshot->nota_number, $title);
         $result['nota_number'] = $snapshot->nota_number;
 
         return $result;

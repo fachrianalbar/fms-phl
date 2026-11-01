@@ -1,5 +1,7 @@
 {{-- Modal: pratinjau & konfirmasi sinkronisasi nominal nota dari harga order terkini.
-     Di-include dari vendor/invoice/unpaid.blade.php (unpaid & partial) dan paid.blade.php.
+     Dipakai menu Vendor (vendor/invoice/unpaid.blade.php & paid.blade.php) dan
+     menu Pembayaran Langsung (direct-payment/order/unpaid & paid).
+     Variabel opsional: $partyLabel (label pihak, default "Vendor").
      Handler JS: vendor/invoice/partials/nota-sync-script.blade.php --}}
 <style>
     /* ── Modal Sinkronkan Nominal Nota (PHL Modal Standard §11) ── */
@@ -328,7 +330,7 @@
 
 <div class="modal fade nota-sync-modal" id="nota-sync-modal" tabindex="-1" role="dialog"
     aria-labelledby="notaSyncModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header nota-sync-header d-flex align-items-center justify-content-between">
                 <div class="d-flex align-items-center gap-2">
@@ -350,7 +352,7 @@
                         <strong id="nota-sync-number">-</strong>
                     </div>
                     <div class="nota-sync-summary-item">
-                        <span>Vendor</span>
+                        <span>{{ $partyLabel ?? 'Vendor' }}</span>
                         <strong id="nota-sync-vendor">-</strong>
                     </div>
                     <div class="nota-sync-summary-item">

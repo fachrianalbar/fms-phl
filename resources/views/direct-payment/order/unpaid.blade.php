@@ -285,6 +285,8 @@
     </div>
 </div>
 
+@include('vendor.invoice.partials.nota-sync-modal', ['partyLabel' => 'Customer'])
+
 @include('direct-payment.partials.modals')
 @endsection
 
@@ -1279,4 +1281,10 @@
         updateSelectionUI();
     });
 </script>
+
+@include('vendor.invoice.partials.nota-sync-script', [
+    'previewRouteName' => 'ajax.direct-payment-sync-preview',
+    'syncRouteName' => 'direct-payment.order.sync-nota',
+    'partyNameKey' => 'customer_name',
+])
 @endpush

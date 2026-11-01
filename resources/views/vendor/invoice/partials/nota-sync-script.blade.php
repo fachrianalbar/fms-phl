@@ -1,10 +1,17 @@
 {{-- Handler tombol "Sinkronkan nominal" per baris nota (unpaid, partial, paid).
      Dipasangkan dengan vendor/invoice/partials/nota-sync-modal.blade.php.
-     Wajib di-include di dalam @push('script') agar jQuery & Bootstrap sudah tersedia. --}}
+     Wajib di-include di dalam @push('script') agar jQuery & Bootstrap sudah tersedia.
+
+     Variabel opsional (dipakai menu Pembayaran Langsung):
+     - $previewRouteName : nama route pratinjau (default ajax.vendor-invoice-sync-preview)
+     - $syncRouteName    : nama route eksekusi (default vendor.invoice.sync-nota)
+     - $partyNameKey     : key nama pihak pada payload pratinjau
+                           (default fleet_company_name; direct payment: customer_name) --}}
 <script>
     (function () {
-        const previewUrlTemplate = "{{ route('ajax.vendor-invoice-sync-preview', ['orderCode' => '__ORDER__']) }}";
-        const syncUrlTemplate = "{{ route('vendor.invoice.sync-nota', ['orderCode' => '__ORDER__']) }}";
+        const previewUrlTemplate = "{{ route($previewRouteName ?? 'ajax.vendor-invoice-sync-preview', ['orderCode' => '__ORDER__']) }}";
+        const syncUrlTemplate = "{{ route($syncRouteName ?? 'vendor.invoice.sync-nota', ['orderCode' => '__ORDER__']) }}";
+        const partyNameKey = @json($partyNameKey ?? 'fleet_company_name');
         const csrfMeta = document.querySelector('meta[name="csrf-token"]');
         const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : '';
 
@@ -163,7 +170,7 @@
             }, 0);
 
             $('#nota-sync-number').text(data.nota_number || '-');
-            $('#nota-sync-vendor').text(data.fleet_company_name || '-');
+            $('#nota-sync-vendor').text(data[partyNameKey] || '-');
             $('#nota-sync-total-old').text(money(totalOld));
             $('#nota-sync-total-new').text(money(totalNew));
 
