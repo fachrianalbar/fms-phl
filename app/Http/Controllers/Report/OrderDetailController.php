@@ -93,10 +93,52 @@ class OrderDetailController extends Controller
                 ->editColumn('shipmentNumber', function ($row) {
                     return '<strong class="text-primary font-weight-bold">' . e(mb_strtoupper($row->shipmentNumber ?? '')) . '</strong>';
                 })
-                ->editColumn('fleet.plateNumber', function ($row) {
-                    $plate = e(strtoupper($row->plateNumber ?: ($row->fleet->plateNumber ?? '')));
+                ->addColumn('customer_name', function ($row) {
+                    return $row->customer?->name ?? '';
+                })
+                ->filterColumn('customer_name', function ($query, $keyword) {
+                    $query->whereHas('customer', function ($customerQuery) use ($keyword) {
+                        $customerQuery->where('name', 'like', '%' . $keyword . '%');
+                    });
+                })
+                ->addColumn('origin_name', function ($row) {
+                    return $row->route?->originLocation?->name ?? '';
+                })
+                ->filterColumn('origin_name', function ($query, $keyword) {
+                    $query->whereHas('route.originLocation', function ($locationQuery) use ($keyword) {
+                        $locationQuery->where('name', 'like', '%' . $keyword . '%');
+                    });
+                })
+                ->addColumn('destination_name', function ($row) {
+                    return $row->route?->destinationLocation?->name ?? '';
+                })
+                ->filterColumn('destination_name', function ($query, $keyword) {
+                    $query->whereHas('route.destinationLocation', function ($locationQuery) use ($keyword) {
+                        $locationQuery->where('name', 'like', '%' . $keyword . '%');
+                    });
+                })
+                ->addColumn('plate_number', function ($row) {
+                    $plate = e(strtoupper($row->plateNumber ?: ($row->fleet?->plateNumber ?? '')));
+
                     return $plate ? '<span class="badge bg-light text-dark border font-weight-bold px-2 py-1">' . $plate . '</span>' : '';
                 })
+                ->filterColumn('plate_number', function ($query, $keyword) {
+                    $query->where(function ($plateQuery) use ($keyword) {
+                        $plateQuery->where('plateNumber', 'like', '%' . $keyword . '%')
+                            ->orWhereHas('fleet', function ($fleetQuery) use ($keyword) {
+                                $fleetQuery->where('plateNumber', 'like', '%' . $keyword . '%');
+                            });
+                    });
+                })
+                ->addColumn('driver_name', function ($row) {
+                    return $row->driver?->name ?? '';
+                })
+                ->filterColumn('driver_name', function ($query, $keyword) {
+                    $query->whereHas('driver', function ($driverQuery) use ($keyword) {
+                        $driverQuery->where('name', 'like', '%' . $keyword . '%');
+                    });
+                })
+
                 ->addColumn('sales', function ($row) {
                     $sales = $row->routeAmount ?? 0;
                     return '<span class="font-weight-bold text-dark">Rp ' . number_format($sales, 0, ',', '.') . '</span>';
@@ -183,7 +225,7 @@ class OrderDetailController extends Controller
                         return '<span class="badge bg-danger bg-opacity-10 text-danger font-weight-bold px-2.5 py-1.5 fs-12">Rp ' . number_format($profit, 0, ',', '.') . '</span>';
                     }
                 })
-                ->rawColumns(['shipmentNumber', 'fleet.plateNumber', 'sales', 'income', 'cost_detail', 'total_cost', 'profit'])
+                ->rawColumns(['shipmentNumber', 'plate_number', 'sales', 'income', 'cost_detail', 'total_cost', 'profit'])
                 ->toJson();
         }
     }

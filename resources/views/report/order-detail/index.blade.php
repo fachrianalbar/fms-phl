@@ -506,16 +506,16 @@
                     "data": 'customer_name'
                 },
                 {
-                    "data": 'route.originLocation.name'
+                    "data": 'origin_name'
                 },
                 {
-                    "data": 'route.destinationLocation.name'
+                    "data": 'destination_name'
                 },
                 {
-                    "data": 'fleet.plateNumber'
+                    "data": 'plate_number'
                 },
                 {
-                    "data": 'driver.name'
+                    "data": 'driver_name'
                 },
                 {
                     "data": 'sales'

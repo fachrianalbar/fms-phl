@@ -458,7 +458,7 @@ class ProfitLossController extends Controller
                     $basicSales = 0;
 
                     foreach ($row->orders as $item) {
-                        $basicSales += $item->qty * $item->route->price;
+                        $basicSales += $item->qty * ($item->route?->price ?? 0);
                     }
                     $this->totalMargin = $basicSales;
 
@@ -524,7 +524,7 @@ class ProfitLossController extends Controller
 
                     foreach ($row->maintenances as $item) {
                         foreach ($item->details as $details) {
-                            $maintenance += $details->qty * $details->item->price;
+                            $maintenance += $details->qty * ($details->item?->price ?? 0);
                         }
                     }
 
