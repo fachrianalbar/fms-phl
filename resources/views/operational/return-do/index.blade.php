@@ -471,6 +471,7 @@
                                             <option value="">Semua Status Faktur</option>
                                             <option value="uninvoiced">Belum Ada Faktur</option>
                                             <option value="invoiced">Sudah Ada Faktur</option>
+                                            <option value="no_invoice">Tanpa Faktur (Non-DO)</option>
                                         </select>
                                     </div>
 
@@ -666,7 +667,7 @@
                     { orderable: false, targets: [0, 1, 2] },
                     { defaultContent: '-', targets: '_all' }
                 ],
-                order: [[3, 'asc']],
+                order: [[3, 'desc']],
                 language: {
                     search: 'Cari:',
                     lengthMenu: 'Tampilkan _MENU_ data',

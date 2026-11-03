@@ -56,13 +56,26 @@ class ReturnDoService
 
         if ($request && $request->filled('invoiceStatus')) {
             if ($request->invoiceStatus === 'uninvoiced') {
-                $query->whereDoesntHave('invoiceDetail.invoice');
+                // Belum ada faktur padahal order ini memang harus difaktur (customer isDo = 1).
+                $query->whereDoesntHave('invoiceDetail.invoice')
+                    ->whereHas('customer', function ($q) {
+                        $q->where('isDo', 1);
+                    });
             } elseif ($request->invoiceStatus === 'invoiced') {
                 $query->whereHas('invoiceDetail.invoice');
+            } elseif ($request->invoiceStatus === 'no_invoice') {
+                // Order customer isDo = 0 (langsung cetak) tidak memakai faktur —
+                // pembayarannya ditangani menu Pembayaran Langsung.
+                $query->whereDoesntHave('invoiceDetail.invoice')
+                    ->whereHas('customer', function ($q) {
+                        $q->where('isDo', 0);
+                    });
             }
         }
 
-        return $query->orderBy('order.created_at', 'desc');
+        return $query
+            ->orderBy('order.orderDate', 'desc')
+            ->orderBy('order.created_at', 'desc');
     }
 
     public function getById($id)

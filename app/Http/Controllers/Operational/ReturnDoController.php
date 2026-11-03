@@ -93,11 +93,27 @@ class ReturnDoController extends Controller
                         return '<span class="badge bg-success-subtle text-success border border-success-subtle font-monospace"><i class="mdi mdi-receipt me-1"></i>' . e($invoice->invoiceNumber) . '</span>';
                     }
 
+                    // Customer isDo = 0 (langsung cetak) memang tidak memakai faktur —
+                    // pembayarannya ditangani menu Pembayaran Langsung.
+                    if ((int) ($row->customer->isDo ?? 1) === 0) {
+                        return '<span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"><i class="mdi mdi-file-cancel-outline me-1"></i>Tanpa Faktur</span>';
+                    }
+
                     return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="mdi mdi-alert-circle-outline me-1"></i>Belum Ada Invoice</span>';
                 })
                 ->filterColumn('invoiceNumber', function ($query, $keyword) {
-                    if (stripos('belum ada invoice', $keyword) !== false || stripos('belum', $keyword) !== false) {
-                        $query->whereDoesntHave('invoiceDetail.invoice');
+                    if (stripos($keyword, 'tanpa') !== false) {
+                        // Tanpa faktur = customer non-DO yang belum punya faktur sama sekali
+                        $query->whereDoesntHave('invoiceDetail.invoice')
+                            ->whereHas('customer', function ($q) {
+                                $q->where('isDo', 0);
+                            });
+                    } elseif (stripos($keyword, 'belum') !== false) {
+                        // Belum ada faktur = customer yang seharusnya difaktur (isDo = 1)
+                        $query->whereDoesntHave('invoiceDetail.invoice')
+                            ->whereHas('customer', function ($q) {
+                                $q->where('isDo', 1);
+                            });
                     } else {
                         $query->whereHas('invoiceDetail.invoice', function ($q) use ($keyword) {
                             $q->where('invoiceNumber', 'like', "%{$keyword}%");
