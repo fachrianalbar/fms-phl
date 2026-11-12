@@ -87,6 +87,40 @@ class OrderPlateNumberSnapshotTest extends TestCase
         $this->assertSame('B 3333 FALLBACK', $order->plateNumber);
     }
 
+    public function test_finance_and_report_plate_lookup_prefers_snapshot_over_master(): void
+    {
+        $fleet = Fleet::create([
+            'code' => 'FLEET-SNAP-FINANCE',
+            'plateNumber' => 'B 4444 OLD',
+        ]);
+
+        $this->createOrder([
+            'code' => 'ORD-SNAP-FINANCE-1',
+            'fleetCode' => $fleet->code,
+        ]);
+
+        // Master armada berubah setelah transaksi terjadi.
+        $fleet->update(['plateNumber' => 'B 5555 NEW']);
+
+        $order = Order::with('fleet')->where('code', 'ORD-SNAP-FINANCE-1')->first();
+
+        // Ekspresi yang dipakai datatable & PDF finance/report.
+        $displayed = $order->plateNumber ?: ($order->fleet->plateNumber ?? '-');
+        $this->assertSame('B 4444 OLD', $displayed);
+
+        // Filter laporan berbasis snapshot tetap menemukan order lama.
+        $this->assertSame(
+            ['ORD-SNAP-FINANCE-1'],
+            Order::query()->wherePlateNumberLike('B 4444 OLD')->pluck('code')->all()
+        );
+
+        // Filter tetap kompatibel dengan plat master terbaru.
+        $this->assertContains(
+            'ORD-SNAP-FINANCE-1',
+            Order::query()->wherePlateNumberLike('B 5555 NEW')->pluck('code')->all()
+        );
+    }
+
     public function test_plate_number_snapshot_is_preserved_through_not_return_do_and_return_do_flow(): void
     {
         $fleet = Fleet::create([
