@@ -11,6 +11,7 @@ use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\CostComponent;
 use App\Models\Master\Customer;
+use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
 use App\Models\Master\Location;
 use App\Models\Operational\Order;
@@ -453,19 +454,16 @@ class OrderController extends Controller
             }
 
             if ($request->filled('plateNumber')) {
-                $plate = $request->plateNumber;
-                $data = $data->where(function ($q) use ($plate) {
-                    $q->where('order.plateNumber', 'like', '%' . $plate . '%')
-                        ->orWhereHas('fleet', function ($fq) use ($plate) {
-                            $fq->where('plateNumber', 'like', '%' . $plate . '%');
-                        });
-                });
+                $data = $data->wherePlateNumberLike($request->plateNumber);
+            }
+
+            if ($request->filled('driverName')) {
+                $data = $data->whereDriverNameLike($request->driverName);
             }
 
             // Definisikan kolom filter dengan alias
             $filters = [
                 'customer_name' => $request->customerName,
-                'driver_name' => $request->driverName,
                 'fleetType_name' => $request->fleetTypeName,
                 'shipmentNumber' => $request->shipmentNumber,
                 // 'origin' => $request->origin,
@@ -477,7 +475,6 @@ class OrderController extends Controller
             // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
                 'customer_name' => 'customer.name',
-                'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 // 'origin' => 'route.originLocation.name',
                 'destination' => 'route.destinationLocation.name',
@@ -536,13 +533,15 @@ class OrderController extends Controller
                 })
 
                 ->editColumn('driver.name', function ($row) {
-                    $driver = '';
-
-                    if (isset($row->driver->name)) {
-                        $driver = $row->driver->name;
-                    }
-
-                    return $driver;
+                    return $row->driverName ?: ($row->driver->name ?? '');
+                })
+                ->filterColumn('driver.name', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.driverName', 'like', "%{$keyword}%")
+                            ->orWhereHas('driver', function ($driver) use ($keyword) {
+                                $driver->where('name', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
 
                 ->editColumn('fleet.type.name', function ($row) {
@@ -780,15 +779,19 @@ class OrderController extends Controller
                 return redirect()->route($this->view . 'index')->with('fail', $message);
             }
 
+            $driverName = Employee::where('code', $request->driverCode)->value('name');
+
             $orderDriver = new \App\Models\Operational\OrderDriver;
             $orderDriver->code = GenerateCode::generateCode('ODR');
             $orderDriver->orderCode = $request->orderCode;
             $orderDriver->driverCode = $request->driverCode;
+            $orderDriver->driverName = $driverName;
             $orderDriver->description = $request->description;
             $orderDriver->save();
 
-            // Update active driver on order
+            // Update active driver on order beserta snapshot namanya
             $order->driverCode = $request->driverCode;
+            $order->driverName = $driverName;
             $order->save();
 
             DB::commit();

@@ -5,10 +5,12 @@ namespace App\Services\Operational;
 use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
 use App\Models\Master\Customer;
+use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Operational\OrderDriver;
 use App\Models\OrderDetail;
 use App\Services\Finance\DirectPaymentService;
 use App\Services\Finance\VendorPaymentService;
@@ -173,13 +175,23 @@ class NotReturnDoService
             $plateNumber = $fleet?->plateNumber ?? $plateNumber;
         }
 
+        // Preserve driverName snapshot jika supir tidak berubah.
+        $driverCode = $request->driverCode ?: null;
+        $existingDriverName = $order->getRawOriginal('driverName');
+        if ($order->driverCode === $driverCode && ! empty($existingDriverName)) {
+            $driverName = $existingDriverName;
+        } else {
+            $driverName = $driverCode ? Employee::where('code', $driverCode)->value('name') : null;
+        }
+
         // Prepare update data
         $updateData = [
             'customerCode' => $request->customerCode ?? $order->customerCode,
             'orderDate' => $request->orderDate,
             'fleetCode' => $request->fleetCode,
             'plateNumber' => $plateNumber,
-            'driverCode' => $request->driverCode,
+            'driverCode' => $driverCode,
+            'driverName' => $driverName,
             'routeCode' => $request->routeData,
             'qty' => $qty,
             'price' => $priceSingle,
@@ -204,6 +216,17 @@ class NotReturnDoService
 
         // Perform update
         $this->service->where('id', $id)->update($updateData);
+
+        // Simpan histori perubahan supir agar penugasan lama tetap tercatat.
+        if ($driverCode && $driverCode !== $order->driverCode) {
+            OrderDriver::create([
+                'code' => GenerateCode::generateCode('ODR'),
+                'orderCode' => $order->code,
+                'driverCode' => $driverCode,
+                'driverName' => $driverName,
+                'description' => null,
+            ]);
+        }
 
         // Refresh data after update
         $order = $this->service->where('id', $id)->firstOrFail();

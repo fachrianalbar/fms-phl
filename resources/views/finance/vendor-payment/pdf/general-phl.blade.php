@@ -116,7 +116,7 @@
             @endphp
             <tr>
                 <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
-                <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                <td>{{ $order->plateNumber ?? '-' }}</td>
                 <td>
                     @foreach ($order->orderMaterial as $i => $mtr)
                         {{ $mtr->material->name }}@if (!$loop->last)

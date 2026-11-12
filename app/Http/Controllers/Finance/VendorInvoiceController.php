@@ -146,9 +146,9 @@ class VendorInvoiceController extends Controller
                             data_get($row, 'orderDate'),
                             data_get($row, 'code'),
                             data_get($row, 'shipmentNumber'),
-                            data_get($row, 'fleet.plateNumber'),
+                            $row->plateNumber ?: data_get($row, 'fleet.plateNumber'),
                             data_get($row, 'fleet.company.name'),
-                            data_get($row, 'driver.name'),
+                            $row->driverName ?: data_get($row, 'driver.name'),
                             data_get($row, 'customer.name'),
                             data_get($row, 'companyFormat'),
                             data_get($row, 'route.originLocation.name'),
@@ -203,7 +203,7 @@ class VendorInvoiceController extends Controller
                     return $row->customer->name ?? '';
                 })
                 ->editColumn('driver.name', function ($row) {
-                    return $row->driver->name ?? '';
+                    return $row->driverName ?: ($row->driver->name ?? '');
                 })
                 ->editColumn('route.originLocation.name', function ($row) {
                     return $row->route->originLocation->name ?? '';

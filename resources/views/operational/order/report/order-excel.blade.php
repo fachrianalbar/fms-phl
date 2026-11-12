@@ -50,7 +50,7 @@
                 <td style="text-align: center">
                     {{ $item->plateNumber ?: ($item->fleet->plateNumber ?? '') }}
                 </td>
-                <td style="text-align: center">{{ isset($item->driver->name) ? $item->driver->name : '' }}</td>
+                <td style="text-align: center">{{ isset($item->driverName) ? $item->driverName : '' }}</td>
                 <td style="text-align: center">{{ mb_strtoupper($item->shipmentNumber ?? '') }}</td>
                 <td style="text-align: center">{{ isset($item->customer->name) ? $item->customer->name : '' }}</td>
                 <td style="text-align: center">

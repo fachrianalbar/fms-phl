@@ -252,11 +252,17 @@ class ProfitLossController extends Controller
         if ($request->ajax()) {
             $data = $this->service->datatableOrder($request->fleetCode);
 
+            if ($request->filled('plateNumber')) {
+                $data = $data->wherePlateNumberLike($request->plateNumber);
+            }
+
+            if ($request->filled('driverName')) {
+                $data = $data->whereDriverNameLike($request->driverName);
+            }
+
             // Definisikan kolom filter dengan alias
             $filters = [
-                'fleet_plateNumber' => $request->plateNumber,
                 'customer_name' => $request->customerName,
-                'driver_name' => $request->driverName,
                 'fleetType_name' => $request->fleetTypeName,
                 'shipmentNumber' => $request->shipmentNumber,
                 // 'origin' => $request->origin,
@@ -267,9 +273,7 @@ class ProfitLossController extends Controller
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
                 'customer_name' => 'customer.name',
-                'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 // 'origin' => 'route.originLocation.name',
                 'destination' => 'route.destinationLocation.name',
@@ -288,13 +292,7 @@ class ProfitLossController extends Controller
                 ->addIndexColumn()
 
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
                 })
 
                 ->editColumn('customer.name', function ($row) {
@@ -308,13 +306,7 @@ class ProfitLossController extends Controller
                 })
 
                 ->editColumn('driver.name', function ($row) {
-                    $driver = '';
-
-                    if (isset($row->driver->name)) {
-                        $driver = $row->driver->name;
-                    }
-
-                    return $driver;
+                    return $row->driverName ?: ($row->driver->name ?? '');
                 })
 
                 ->editColumn('fleet.type.name', function ($row) {

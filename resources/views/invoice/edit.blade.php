@@ -40,7 +40,7 @@ foreach ($order as $item) {
         'id' => $item->id,
         'code' => $item->code,
         'shipment' => $item->shipmentNumber ?? $item->code,
-        'plate' => $item->fleet->plateNumber ?? '-',
+        'plate' => $item->plateNumber ?? '-',
         'route' => ($item->route && $item->route->originLocation ? $item->route->originLocation->name : '-') . ' ➔ ' . ($item->route && $item->route->destinationLocation ? $item->route->destinationLocation->name : '-'),
         'basePrice' => $bp,
         'basePriceFormatted' => 'Rp ' . number_format($bp, 0, ',', '.'),

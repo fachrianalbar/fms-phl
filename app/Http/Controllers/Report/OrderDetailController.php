@@ -124,18 +124,21 @@ class OrderDetailController extends Controller
                 })
                 ->filterColumn('plate_number', function ($query, $keyword) {
                     $query->where(function ($plateQuery) use ($keyword) {
-                        $plateQuery->where('plateNumber', 'like', '%' . $keyword . '%')
+                        $plateQuery->where('order.plateNumber', 'like', '%' . $keyword . '%')
                             ->orWhereHas('fleet', function ($fleetQuery) use ($keyword) {
                                 $fleetQuery->where('plateNumber', 'like', '%' . $keyword . '%');
                             });
                     });
                 })
                 ->addColumn('driver_name', function ($row) {
-                    return $row->driver?->name ?? '';
+                    return $row->driverName ?: ($row->driver?->name ?? '');
                 })
                 ->filterColumn('driver_name', function ($query, $keyword) {
-                    $query->whereHas('driver', function ($driverQuery) use ($keyword) {
-                        $driverQuery->where('name', 'like', '%' . $keyword . '%');
+                    $query->where(function ($driverQuery) use ($keyword) {
+                        $driverQuery->where('order.driverName', 'like', '%' . $keyword . '%')
+                            ->orWhereHas('driver', function ($driverQ) use ($keyword) {
+                                $driverQ->where('name', 'like', '%' . $keyword . '%');
+                            });
                     });
                 })
 
@@ -244,18 +247,15 @@ class OrderDetailController extends Controller
         ])->orderBy('orderDate', 'desc');
 
         if ($request->filled('plateNumber')) {
-            $plate = $request->plateNumber;
-            $query = $query->where(function ($q) use ($plate) {
-                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
-                    ->orWhereHas('fleet', function ($fq) use ($plate) {
-                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
-                    });
-            });
+            $query = $query->wherePlateNumberLike($request->plateNumber);
+        }
+
+        if ($request->filled('driverName')) {
+            $query = $query->whereDriverNameLike($request->driverName);
         }
 
         $filters = [
             'customer_name' => $request->customerName,
-            'driver_name' => $request->driverName,
             'fleetType_name' => $request->fleetTypeName,
             'shipmentNumber' => $request->shipmentNumber,
             'origin' => $request->origin,
@@ -265,7 +265,6 @@ class OrderDetailController extends Controller
 
         $relations = [
             'customer_name' => 'customer.name',
-            'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',
             'origin' => 'route.originLocation.name',
             'destination' => 'route.destinationLocation.name',

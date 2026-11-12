@@ -23,7 +23,7 @@
                 <td style="text-align: center; border: 1px solid #1f2937;">{{ $order->orderDate ? \Carbon\Carbon::parse($order->orderDate)->format('d-m-Y') : '-' }}</td>
                 <td style="border: 1px solid #1f2937;">{{ $order->plateNumber ?: ($order->fleet->plateNumber ?? '-') }}</td>
                 <td style="border: 1px solid #1f2937;">{{ $order->route->name ?? '-' }}</td>
-                <td style="border: 1px solid #1f2937;">{{ $order->driver->name ?? '-' }}</td>
+                <td style="border: 1px solid #1f2937;">{{ $order->driverName ?? '-' }}</td>
                 <td style="border: 1px solid #1f2937;">{{ $order->fleet->type->name ?? '-' }}</td>
                 <td style="border: 1px solid #1f2937;">{{ $order->code ?? '-' }}</td>
                 <td style="border: 1px solid #1f2937;">{{ $order->shipmentNumber ?? '-' }}</td>

@@ -88,9 +88,9 @@
                 <td class="text-left">{{ $item->customer->name ?? '' }}</td>
                 <td class="text-left">{{ $item->route->originLocation->name ?? '' }}</td>
                 <td class="text-left">{{ $item->route->destinationLocation->name ?? '' }}</td>
-                <td class="text-center">{{ $item->fleet->plateNumber ?? '' }}</td>
+                <td class="text-center">{{ $item->plateNumber ?? '' }}</td>
                 <!-- Fleet Type removed from exports -->
-                <td class="text-left">{{ $item->driver->name ?? '' }}</td>
+                <td class="text-left">{{ $item->driverName ?? '' }}</td>
                 <td class="text-left">{{ $item->material->name ?? '' }}</td>
                 <td class="text-center">{{ $item->qty }}</td>
                 <td class="text-right">

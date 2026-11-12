@@ -89,7 +89,7 @@
                                     <label class="form-label" for="driverCode">{{ __('menu_order.driver') }}</label>
                                     <input class="form-control" name="driverCode" id="driverCode" type="text" readonly
                                         required placeholder="{{ __('menu_order.driver') }}"
-                                        value="{{ mb_strtoupper($data->driver->name ?? '') }}">
+                                        value="{{ mb_strtoupper($data->driverName ?? '') }}">
                                 </div>
 
                                 <div class="col-md-6">

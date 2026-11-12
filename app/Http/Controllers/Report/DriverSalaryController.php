@@ -113,7 +113,7 @@ class DriverSalaryController extends Controller
                     return Carbon::parse($row->orderDate)->format('d-m-Y');
                 })
                 ->addColumn('driverName', function ($row) {
-                    return $row->driver->name ?? '-';
+                    return $row->driverName ?: ($row->driver->name ?? '-');
                 })
                 ->addColumn('plateNumber', function ($row) {
                     return $row->plateNumber ?: ($row->fleet->plateNumber ?? '-');
@@ -706,8 +706,9 @@ class DriverSalaryController extends Controller
         // Build data structure per driver
         $driverData = [];
         foreach ($grouped as $driverCode => $driverOrders) {
-            $driver = $driverOrders->first()->driver;
-            $fleet  = $driverOrders->first()->fleet;
+            $firstOrder = $driverOrders->first();
+            $driver = $firstOrder->driver;
+            $fleet  = $firstOrder->fleet;
 
             $rows = [];
             $grandTotal = 0;
@@ -742,8 +743,8 @@ class DriverSalaryController extends Controller
             }
 
             $driverData[] = [
-                'driverName'   => $driver->name ?? '-',
-                'plateNumber'  => $fleet->plateNumber ?? '-',
+                'driverName'   => $firstOrder->driverName ?: ($driver->name ?? '-'),
+                'plateNumber'  => $firstOrder->plateNumber ?: ($fleet->plateNumber ?? '-'),
                 'month'        => $monthLabel,
                 'rows'         => $rows,
                 'grandTotal'   => $grandTotal,
@@ -797,6 +798,7 @@ class DriverSalaryController extends Controller
         $rows = [];
         $grandTotal = 0;
         $fleet = null;
+        $plateNumber = null;
         $index = 1;
 
         foreach ($groupedOrders as $orderId => $items) {
@@ -808,6 +810,10 @@ class DriverSalaryController extends Controller
 
             if (!$fleet && $order->fleet) {
                 $fleet = $order->fleet;
+            }
+
+            if (!$plateNumber && $order->plateNumber) {
+                $plateNumber = $order->plateNumber;
             }
 
             $routeName = '-';
@@ -842,7 +848,7 @@ class DriverSalaryController extends Controller
 
         $driverData = [[
             'driverName'     => $salary->driver->name ?? '-',
-            'plateNumber'    => $fleet->plateNumber ?? '-',
+            'plateNumber'    => $plateNumber ?: ($fleet->plateNumber ?? '-'),
             'month'          => $monthLabel,
             'rows'           => $rows,
             'grandTotal'     => $salary->grandTotal,

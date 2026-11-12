@@ -253,18 +253,15 @@ class NotReturnDoController extends Controller
         $query = $this->service->datatable();
 
         if ($request->filled('plateNumber')) {
-            $plate = $request->plateNumber;
-            $query = $query->where(function ($q) use ($plate) {
-                $q->where('order.plateNumber', 'like', '%' . $plate . '%')
-                    ->orWhereHas('fleet', function ($fq) use ($plate) {
-                        $fq->where('plateNumber', 'like', '%' . $plate . '%');
-                    });
-            });
+            $query = $query->wherePlateNumberLike($request->plateNumber);
+        }
+
+        if ($request->filled('driverName')) {
+            $query = $query->whereDriverNameLike($request->driverName);
         }
 
         $filters = [
             'customer_name' => $request->customerName,
-            'driver_name' => $request->driverName,
             'fleetType_name' => $request->fleetTypeName,
             'shipmentNumber' => $request->shipmentNumber,
             'destination' => $request->destination,
@@ -273,7 +270,6 @@ class NotReturnDoController extends Controller
 
         $relations = [
             'customer_name' => 'customer.name',
-            'driver_name' => 'driver.name',
             'fleetType_name' => 'fleet.type.name',
             'destination' => 'route.destinationLocation.name',
         ];
@@ -364,13 +360,15 @@ class NotReturnDoController extends Controller
                     return $customer;
                 })
                 ->editColumn('driver.name', function ($row) {
-                    $driver = '';
-
-                    if (isset($row->driver->name)) {
-                        $driver = $row->driver->name;
-                    }
-
-                    return $driver;
+                    return $row->driverName ?: ($row->driver->name ?? '');
+                })
+                ->filterColumn('driver.name', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.driverName', 'like', "%{$keyword}%")
+                            ->orWhereHas('driver', function ($driver) use ($keyword) {
+                                $driver->where('name', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
                 ->editColumn('shipmentNumber', function ($row) {
                     $shipmentNumber = e($row->shipmentNumber ?? '-');

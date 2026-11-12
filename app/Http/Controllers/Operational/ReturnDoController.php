@@ -164,13 +164,15 @@ class ReturnDoController extends Controller
                 })
 
                 ->editColumn('driver.name', function ($row) {
-                    $driver = '';
-
-                    if (isset($row->driver->name)) {
-                        $driver = $row->driver->name;
-                    }
-
-                    return $driver;
+                    return $row->driverName ?: ($row->driver->name ?? '');
+                })
+                ->filterColumn('driver.name', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('order.driverName', 'like', "%{$keyword}%")
+                            ->orWhereHas('driver', function ($driver) use ($keyword) {
+                                $driver->where('name', 'like', "%{$keyword}%");
+                            });
+                    });
                 })
 
                 ->editColumn('returnDate', function ($row) {

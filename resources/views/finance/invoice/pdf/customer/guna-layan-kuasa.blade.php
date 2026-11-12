@@ -138,7 +138,7 @@
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         {{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
-                        {{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                        {{ $detail->order->plateNumber ?? '-' }}</td>
                     <td rowspan="{{ $detail->order->orderMaterial->count() + $detail->order->onChargeCost->count() }}">
                         @php
                             $sppb = $detail->order->customerDetailOrders->first(function ($cdo) {

@@ -54,6 +54,7 @@ class Order extends Model
         'fleetTypeCode',
         'bonUjt',
         'driverCode',
+        'driverName',
         'fleetCode',
         'plateNumber',
         'status',
@@ -81,12 +82,48 @@ class Order extends Model
                     }
                 }
             }
+
+            // Snapshot nama supir hanya diambil ulang saat supir berubah atau snapshot belum ada.
+            if ($order->isDirty('driverCode') || empty($order->getRawOriginal('driverName'))) {
+                $order->driverName = empty($order->driverCode)
+                    ? null
+                    : Employee::where('code', $order->driverCode)->value('name');
+            }
         });
     }
 
     public function getPlateNumberAttribute($value)
     {
         return $value ?: ($this->fleet?->plateNumber);
+    }
+
+    /**
+     * Nama supir snapshot saat transaksi dibuat/diubah.
+     * Fallback ke master employee hanya untuk data lama yang belum punya snapshot.
+     */
+    public function getDriverNameAttribute($value)
+    {
+        return $value ?: ($this->driver?->name);
+    }
+
+    public function scopeWherePlateNumberLike($query, string $plate)
+    {
+        return $query->where(function ($q) use ($plate) {
+            $q->where('order.plateNumber', 'like', "%{$plate}%")
+                ->orWhereHas('fleet', function ($fleet) use ($plate) {
+                    $fleet->where('plateNumber', 'like', "%{$plate}%");
+                });
+        });
+    }
+
+    public function scopeWhereDriverNameLike($query, string $name)
+    {
+        return $query->where(function ($q) use ($name) {
+            $q->where('order.driverName', 'like', "%{$name}%")
+                ->orWhereHas('driver', function ($driver) use ($name) {
+                    $driver->where('name', 'like', "%{$name}%");
+                });
+        });
     }
 
     public function customer()

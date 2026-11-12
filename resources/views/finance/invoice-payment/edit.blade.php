@@ -156,7 +156,7 @@ use Carbon\Carbon;
                         <td>{{ $item->route->originLocation->name }}</td>
                         <td>{{ $item->route->destinationLocation->name }}</td>
                         <td>{{ $item->shipmentNumber }}</td>
-                        <td>{{ $item->fleet->plateNumber }}</td>
+                        <td>{{ $item->plateNumber }}</td>
                         {{-- <td>{{ $item->orderType->name }}</td> --}}
                         <td>
                             @php

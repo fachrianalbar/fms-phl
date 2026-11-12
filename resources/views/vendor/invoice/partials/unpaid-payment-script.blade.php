@@ -493,9 +493,9 @@
                 const associated = Array.isArray(data.associated_payments) ? data.associated_payments : [];
                 $('#detail-order-code').val(associated.map(function(payment) { return payment.order ? payment.order.code : ''; }).filter(Boolean).join(', ') || '-');
                 $('#detail-shipment-number').val(associated.map(function(payment) { return payment.order ? (payment.order.shipmentNumber || '') : ''; }).filter(Boolean).join(', ') || '-');
-                $('#detail-plate-number').val(associated.map(function(payment) { return payment.order && payment.order.fleet ? payment.order.fleet.plateNumber : ''; }).filter(Boolean).join(', ') || '-');
+                $('#detail-plate-number').val(associated.map(function(payment) { return payment.order ? (payment.order.plateNumber || (payment.order.fleet ? payment.order.fleet.plateNumber : '')) : ''; }).filter(Boolean).join(', ') || '-');
                 $('#detail-fleet-company').val([...new Set(associated.map(function(payment) { return payment.order && payment.order.fleet && payment.order.fleet.company ? payment.order.fleet.company.name : ''; }).filter(Boolean))].join(', ') || '-');
-                $('#detail-driver').val([...new Set(associated.map(function(payment) { return payment.order && payment.order.driver ? payment.order.driver.name : ''; }).filter(Boolean))].join(', ') || '-');
+                $('#detail-driver').val([...new Set(associated.map(function(payment) { return payment.order ? (payment.order.driverName || (payment.order.driver ? payment.order.driver.name : '')) : ''; }).filter(Boolean))].join(', ') || '-');
                 $('#detail-customer').val([...new Set(associated.map(function(payment) { return payment.order && payment.order.customer ? payment.order.customer.name : ''; }).filter(Boolean))].join(', ') || '-');
 
                 const billingAmount = data.total_billing || data.amount || 0;

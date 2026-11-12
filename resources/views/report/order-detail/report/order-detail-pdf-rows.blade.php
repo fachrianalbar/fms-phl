@@ -9,8 +9,8 @@ $startIndex = isset($start) ? (int) $start : 0;
     <td class="text-left">{{ $item->customer->name ?? '' }}</td>
     <td class="text-left">{{ $item->route->originLocation->name ?? '' }}</td>
     <td class="text-left">{{ $item->route->destinationLocation->name ?? '' }}</td>
-    <td class="text-center">{{ $item->fleet->plateNumber ?? '' }}</td>
-    <td class="text-left">{{ $item->driver->name ?? '' }}</td>
+    <td class="text-center">{{ $item->plateNumber ?? '' }}</td>
+    <td class="text-left">{{ $item->driverName ?? '' }}</td>
     <td class="text-right">
         @php
         // `routeAmount` stored as total (unit price * qty)

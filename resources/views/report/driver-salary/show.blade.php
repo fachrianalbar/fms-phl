@@ -442,7 +442,7 @@
                                     <td>{{ \Carbon\Carbon::parse($order->orderDate)->format('d-m-Y') }}</td>
                                     <td>
                                         <span class="badge bg-light text-dark border fw-semibold" style="font-size: 11.5px; border-radius: 6px; padding: 4px 8px;">
-                                            {{ $order->fleet->plateNumber ?? '-' }}
+                                            {{ $order->plateNumber ?? '-' }}
                                         </span>
                                     </td>
                                     <td>

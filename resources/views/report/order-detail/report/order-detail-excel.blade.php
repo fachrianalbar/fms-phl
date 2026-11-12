@@ -85,7 +85,7 @@
                             <td rowspan="{{ $maxRows }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->originLocation->name ?? '' }}</td>
                             <td rowspan="{{ $maxRows }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->route->destinationLocation->name ?? '' }}</td>
                             <td rowspan="{{ $maxRows }}" style="text-align: center; border: 1px solid black; vertical-align: middle;">{{ $item->plateNumber ?: ($item->fleet->plateNumber ?? '') }}</td>
-                            <td rowspan="{{ $maxRows }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->driver->name ?? '' }}</td>
+                            <td rowspan="{{ $maxRows }}" style="text-align: left; border: 1px solid black; vertical-align: middle;">{{ $item->driverName ?? '' }}</td>
                             <td rowspan="{{ $maxRows }}" style="text-align: right; border: 1px solid black; vertical-align: middle;">{{ $sales }}</td>
                         @endif
 

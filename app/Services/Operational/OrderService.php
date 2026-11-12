@@ -6,10 +6,12 @@ use App\Helpers\GenerateCode;
 use App\Models\Data\Route;
 use App\Models\Data\RoutePriceExternal;
 use App\Models\Master\Customer;
+use App\Models\Master\Employee;
 use App\Models\Master\Fleet;
 use App\Models\Operational\CustomerDetailOrder;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Models\Operational\OrderDriver;
 use App\Models\Operational\OrderMaterial;
 use App\Services\Finance\DirectPaymentService;
 use App\Services\Finance\VendorPaymentService;
@@ -153,6 +155,7 @@ class OrderService
     {
 
         $data = $this->getById($id);
+        $previousDriverCode = $data->driverCode;
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $shipmentNumber = $this->uniqueCode->resolve(
@@ -178,6 +181,18 @@ class OrderService
 
         // Perform update
         $this->service->where('id', $id)->update($updateData);
+
+        // Simpan histori perubahan supir agar penugasan lama tetap tercatat.
+        $newDriverCode = $updateData['driverCode'] ?? null;
+        if ($newDriverCode && $newDriverCode !== $previousDriverCode) {
+            OrderDriver::create([
+                'code' => GenerateCode::generateCode('ODR'),
+                'orderCode' => $data->code,
+                'driverCode' => $newDriverCode,
+                'driverName' => $updateData['driverName'] ?? null,
+                'description' => null,
+            ]);
+        }
 
         // If submitted route amount differs from computed route price, record it
         if ($computedRouteAmount !== null && $submittedRouteAmount !== null && $submittedRouteAmount !== $computedRouteAmount) {
@@ -727,6 +742,15 @@ class OrderService
             $plateNumber = $fleet?->plateNumber ?? null;
         }
 
+        // Preserve driverName snapshot if the driver is unchanged, otherwise take the current employee name.
+        $driverCode = $request->driverCode ?: null;
+        $existingDriverName = $existingOrder instanceof Order ? $existingOrder->getRawOriginal('driverName') : null;
+        if ($existingOrder instanceof Order && $existingOrder->driverCode === $driverCode && ! empty($existingDriverName)) {
+            $driverName = $existingDriverName;
+        } else {
+            $driverName = $driverCode ? Employee::where('code', $driverCode)->value('name') : null;
+        }
+
         $data = [
             'orderDate' => $request->orderDate,
             'notes' => $request->notes,
@@ -734,7 +758,8 @@ class OrderService
             'salesOrder' => $request->salesOrder,
             'fleetCode' => $request->fleetCode,
             'plateNumber' => $plateNumber,
-            'driverCode' => $request->driverCode,
+            'driverCode' => $driverCode,
+            'driverName' => $driverName,
             'routeCode' => $request->routeData,
             'qty' => $request->qty,
             'orderTypeCode' => $request->orderTypeCode,

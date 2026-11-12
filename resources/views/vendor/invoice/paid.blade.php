@@ -331,9 +331,13 @@
 
                     // Driver names
                     const driverList = uniqueValues(associated.map(function(payment) {
-                        return payment && payment.order && payment.order.driver ? payment.order.driver.name : null;
+                        if (!payment || !payment.order) {
+                            return null;
+                        }
+
+                        return payment.order.driverName || (payment.order.driver ? payment.order.driver.name : null);
                     }));
-                    setDetailField('#detail-driver', driverList.join(', ') || (order && order.driver ? order.driver.name : null) || '-');
+                    setDetailField('#detail-driver', driverList.join(', ') || (order && (order.driverName || (order.driver ? order.driver.name : null))) || '-');
 
                     // Customer names
                     const customerList = uniqueValues(associated.map(function(payment) {

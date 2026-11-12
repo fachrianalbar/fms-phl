@@ -1217,7 +1217,7 @@
                             tbody.append(`
                                 <tr>
                                     <td>${index + 1}</td>
-                                    <td>${item.driver ? item.driver.name.toUpperCase() : '-'}</td>
+                                    <td>${item.driverName ? item.driverName.toUpperCase() : (item.driver ? item.driver.name.toUpperCase() : '-')}</td>
                                     <td>${item.description || '-'}</td>
                                     <td>
                                         <button type="button" class="btn btn-sm btn-icon btn-outline-danger" onclick="deleteOrderDriver('${item.id}', '${orderCode}')">

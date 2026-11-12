@@ -30,7 +30,7 @@
                     <td class="center">{{ $order->orderDate ? \Carbon\Carbon::parse($order->orderDate)->format('d-m-Y') : '-' }}</td>
                     <td>{{ $order->plateNumber ?: ($order->fleet->plateNumber ?? '-') }}</td>
                     <td>{{ $order->route->name ?? '-' }}</td>
-                    <td>{{ $order->driver->name ?? '-' }}</td>
+                    <td>{{ $order->driverName ?? '-' }}</td>
                     <td>{{ $order->fleet->type->name ?? '-' }}</td>
                     <td>{{ $order->code ?? '-' }}</td>
                     <td>{{ $order->shipmentNumber ?? '-' }}</td>

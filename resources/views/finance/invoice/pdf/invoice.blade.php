@@ -136,7 +136,7 @@
                     <td style="text-align: center">{{ $item->order->route->originLocation->name }}</td>
                     <td style="text-align: center">{{ $item->order->route->destinationLocation->name }}</td>
                     <td style="text-align: center">{{ $item->order->shipmentNumber }}</td>
-                    <td style="text-align: center">{{ $item->order->fleet->plateNumber }}</td>
+                    <td style="text-align: center">{{ $item->order->plateNumber }}</td>
                     <td style="text-align: center">
 
                         @php

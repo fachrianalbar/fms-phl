@@ -127,7 +127,7 @@
             @foreach ($data->details as $detail)
                 <tr>
                     <td>{{ Carbon::parse($detail->order->orderDate)->format('d/m/y') }}</td>
-                    <td>{{ $detail->order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $detail->order->plateNumber ?? '-' }}</td>
                     <td>{{ $detail->order->route->originLocation->name ?? '-' }}</td>
                     <td>{{ $detail->order->route->destinationLocation->name ?? '-' }}</td>
                     <td>

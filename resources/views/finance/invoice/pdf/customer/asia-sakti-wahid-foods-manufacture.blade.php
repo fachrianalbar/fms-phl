@@ -126,7 +126,7 @@
                 @endphp
                 <tr>
                     <td>{{ Carbon::parse($order->orderDate)->format('d/m/y') }}</td>
-                    <td>{{ $order->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $order->plateNumber ?? '-' }}</td>
                     <td>{{ $route->originLocation->name ?? '-' }}</td>
                     <td>{{ $route->destinationLocation->name ?? '-' }}</td>
                     <td>

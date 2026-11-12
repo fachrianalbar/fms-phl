@@ -87,13 +87,13 @@
                             <div class="col-md-6 col-lg-4">
                                 <div class="p-3 border rounded light-bg-detail h-100">
                                     <span class="text-muted d-block small mb-1">No. Polisi / Plat</span>
-                                    <span class="fw-bold text-dark">{{ $data->fleet->plateNumber ?? '-' }}</span>
+                                    <span class="fw-bold text-dark">{{ $data->plateNumber ?? '-' }}</span>
                                 </div>
                             </div>
                             <div class="col-md-6 col-lg-4">
                                 <div class="p-3 border rounded light-bg-detail h-100">
                                     <span class="text-muted d-block small mb-1">Driver</span>
-                                    <span class="fw-bold text-dark">{{ $data->driver->name ?? '-' }}</span>
+                                    <span class="fw-bold text-dark">{{ $data->driverName ?? '-' }}</span>
                                 </div>
                             </div>
 

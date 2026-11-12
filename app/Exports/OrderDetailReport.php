@@ -31,18 +31,15 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
             ])->orderBy('orderDate', 'desc');
 
             if (! empty($ordersOrRequest->plateNumber)) {
-                $plate = $ordersOrRequest->plateNumber;
-                $query = $query->where(function ($q) use ($plate) {
-                    $q->where('order.plateNumber', 'like', '%' . $plate . '%')
-                        ->orWhereHas('fleet', function ($fq) use ($plate) {
-                            $fq->where('plateNumber', 'like', '%' . $plate . '%');
-                        });
-                });
+                $query = $query->wherePlateNumberLike($ordersOrRequest->plateNumber);
+            }
+
+            if (! empty($ordersOrRequest->driverName)) {
+                $query = $query->whereDriverNameLike($ordersOrRequest->driverName);
             }
 
             $filters = [
                 'customer_name' => $ordersOrRequest->customerName,
-                'driver_name' => $ordersOrRequest->driverName,
                 'fleetType_name' => $ordersOrRequest->fleetTypeName,
                 'shipmentNumber' => $ordersOrRequest->shipmentNumber,
                 'origin' => $ordersOrRequest->origin,
@@ -52,7 +49,6 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
 
             $relations = [
                 'customer_name' => 'customer.name',
-                'driver_name' => 'driver.name',
                 'fleetType_name' => 'fleet.type.name',
                 'origin' => 'route.originLocation.name',
                 'destination' => 'route.destinationLocation.name',
