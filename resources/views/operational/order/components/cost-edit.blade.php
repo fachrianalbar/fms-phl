@@ -1,5 +1,8 @@
     <div class="tab-pane fade show active" id="icon-home" role="tabpanel" aria-labelledby="icon-home-tab">
 
+        {{-- Penanda bahwa form benar-benar mengirim daftar biaya komponen. --}}
+        <input type="hidden" name="costRowsSubmitted" value="1">
+
         <div class="row g-3 mt-3">
             <div class="row">
                 <div class="col-md-6">
@@ -87,11 +90,11 @@
                         </td>
                         {{-- <td>{{ $i++ }}</td> --}}
                         <td>
-                            @if ($item->costComponent)
+                            @if ($item->componentType)
                                 <input type="hidden" class="form-control" name="componentName[]"
-                                    value="{{ $item->costComponent->code }}">
+                                    value="{{ $item->componentType }}">
                                 <input type="hidden" name="is_route[]" value="{{ $item->is_route }}">
-                                {{ $item->costComponent->name }}
+                                {{ $item->componentName ?? $item->componentType }}
                             @else
                                 <span class="text-danger">Component not found</span>
                             @endif

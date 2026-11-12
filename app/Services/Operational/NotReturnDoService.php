@@ -329,13 +329,19 @@ class NotReturnDoService
 
                 // If this is an existing cost, update it
                 if (! empty($existingId)) {
-                    $this->orderCost->where('id', $existingId)->update([
-                        'componentType' => $componentCode,
-                        'driverCode'    => $driverCode,
-                        'nominal'       => $nominal,
-                        'type'          => $type,
-                        'description'   => $description,
-                    ]);
+                    $existingCost = $this->orderCost->where('id', $existingId)->first();
+
+                    if ($existingCost) {
+                        // Gunakan instance model agar snapshot componentName ikut terisi
+                        // saat komponennya berubah (query builder tidak memicu event).
+                        $existingCost->fill([
+                            'componentType' => $componentCode,
+                            'driverCode'    => $driverCode,
+                            'nominal'       => $nominal,
+                            'type'          => $type,
+                            'description'   => $description,
+                        ])->save();
+                    }
                 } else {
                     // Create new cost
                     $this->orderCost->create([

@@ -122,11 +122,10 @@ class OrderService
             OrderCost::where('orderCode', $data->code)->delete();
             logger()->info('OrderCost cleared for external fleet', ['order' => $data->code]);
         } else {
-            // Rule create:
-            // - Jika jumlah row / nominal komponen berubah dari route master -> simpan persis dari form.
-            // - Jika tidak berubah -> ambil ulang dari route master terbaru.
-            if ($this->shouldUseSubmittedCostRows($submittedCostRows, $routeCostRows)) {
-                $this->persistSubmittedCostRows($data->code, $submittedCostRows, $routeCostRows);
+            // Nominal komponen diambil dari isi form: default harga master route,
+            // tetapi tetap bisa di-override user saat order dibuat.
+            if ($request->has('costRowsSubmitted') || ! empty($submittedCostRows)) {
+                $this->syncOrderCostRows($data->code, $submittedCostRows, $routeCostRows, true, true);
             } else {
                 $this->persistRouteCostRows($data->code, $routeCostRows);
             }
@@ -156,6 +155,7 @@ class OrderService
 
         $data = $this->getById($id);
         $previousDriverCode = $data->driverCode;
+        $previousRouteCode = $data->routeCode;
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
         $shipmentNumber = $this->uniqueCode->resolve(
@@ -218,6 +218,7 @@ class OrderService
         // Ambil data terbaru route dan data komponen yang user kirim dari form edit.
         $routeCostRows = $this->getRouteCostRows($request->routeData ?? null);
         $submittedCostRows = $this->extractSubmittedOrderCostRows($request);
+        $routeChanged = (string) ($request->routeData ?? '') !== (string) $previousRouteCode;
 
         // Jika fleet external, hapus semua cost (tidak boleh ada cost untuk external fleet)
         // Ini juga mencakup cleanup jika sebelumnya ada data lama
@@ -226,18 +227,13 @@ class OrderService
             OrderCost::where('orderCode', $data->code)->delete();
             logger()->info('OrderCost cleared for external fleet on update', ['order' => $data->code]);
             // Jangan panggil storeOrderCost untuk fleet external
-        } else {
-            // Sync ulang semua cost berdasarkan isi form edit saat user menekan Simpan.
-            // Jika row/jumlah nominal berubah dari route master, pakai form.
-            // Jika tidak berubah, pakai data route master terbaru.
-            OrderCost::where('orderCode', $data->code)->delete();
-
-            if ($this->shouldUseSubmittedCostRows($submittedCostRows, $routeCostRows)) {
-                $this->persistSubmittedCostRows($data->code, $submittedCostRows, $routeCostRows);
-            } else {
-                $this->persistRouteCostRows($data->code, $routeCostRows);
-            }
+        } elseif ($request->has('costRowsSubmitted') || ! empty($submittedCostRows)) {
+            // Upsert: nominal & nama komponen yang sudah tersimpan dipertahankan,
+            // sehingga perubahan harga master tidak mengubah histori transaksi.
+            // Rebuild penuh hanya dilakukan bila route order diganti.
+            $this->syncOrderCostRows($data->code, $submittedCostRows, $routeCostRows, $routeChanged, true);
         }
+        // Form tidak mengirim komponen biaya: biaya tersimpan dibiarkan apa adanya.
 
         if (isset($request->customerDetailCode)) {
             $this->customerDetailOrder->where('orderCode', $data->code)->delete();
@@ -417,28 +413,109 @@ class OrderService
         return (int) round((float) $normalized);
     }
 
-    private function shouldUseSubmittedCostRows($submittedCostRows, $routeCostRows)
+    /**
+     * Sinkronkan baris biaya komponen order dengan isi form.
+     *
+     * Nominal & nama komponen disimpan sebagai snapshot transaksi: baris yang
+     * sudah ada hanya diubah bila user mengirim nilai yang berbeda, sehingga
+     * perubahan harga komponen/route master tidak menimpa order lama.
+     *
+     * @param  array<int, array<string, mixed>>  $submittedRows  baris dari form
+     * @param  array<int, array<string, mixed>>  $routeRows  baris master route saat ini
+     * @param  bool  $rebuildFromScratch  hapus dulu seluruh baris (mis. route diganti)
+     * @param  bool  $trustSubmitted  perlakukan isi form sebagai sumber kebenaran
+     */
+    public function syncOrderCostRows($orderCode, array $submittedRows, array $routeRows = [], $rebuildFromScratch = false, $trustSubmitted = false)
     {
-        if (count($submittedCostRows) !== count($routeCostRows)) {
-            return true;
+        $routeComponentCodes = [];
+        foreach ($routeRows as $row) {
+            if (! empty($row['componentType'])) {
+                $routeComponentCodes[$row['componentType']] = true;
+            }
         }
 
-        return $this->buildCostRowsSignature($submittedCostRows) !== $this->buildCostRowsSignature($routeCostRows);
-    }
+        if (empty($submittedRows) && ! $trustSubmitted) {
+            // Tidak ada baris dari form (mis. order lama): gunakan master route.
+            foreach ($routeRows as $row) {
+                $submittedRows[] = [
+                    'componentType' => $row['componentType'] ?? null,
+                    'nominal' => (int) ($row['nominal'] ?? 0),
+                    'description' => '',
+                    'type' => null,
+                ];
+            }
+        }
 
-    private function buildCostRowsSignature($rows)
-    {
-        $signature = [];
+        if ($rebuildFromScratch) {
+            $this->orderCost->where('orderCode', $orderCode)->delete();
+        }
 
-        foreach ($rows as $row) {
-            $componentType = $row['componentType'] ?? '';
+        $existing = $this->orderCost->where('orderCode', $orderCode)->get()->keyBy('componentType');
+        $keptIds = [];
+
+        foreach ($submittedRows as $row) {
+            $componentType = $row['componentType'] ?? null;
+
+            if (! $componentType) {
+                continue;
+            }
+
             $nominal = (int) ($row['nominal'] ?? 0);
-            $signature[] = $componentType . '|' . $nominal;
+            $existingRow = $existing->get($componentType);
+
+            if ($existingRow) {
+                $updates = [];
+
+                if ((int) $existingRow->nominal !== $nominal) {
+                    $updates['nominal'] = $nominal;
+                }
+
+                if (array_key_exists('description', $row)
+                    && (string) ($existingRow->description ?? '') !== (string) ($row['description'] ?? '')) {
+                    $updates['description'] = $row['description'] ?? '';
+                }
+
+                if (array_key_exists('type', $row)) {
+                    $typeValue = $this->resolveCostTypeValue($row['type'] ?? null);
+                    if ((string) ($existingRow->type ?? '') !== (string) ($typeValue ?? '')) {
+                        $updates['type'] = $typeValue;
+                    }
+                }
+
+                if (! empty($row['driverCode']) && $existingRow->driverCode !== $row['driverCode']) {
+                    $updates['driverCode'] = $row['driverCode'];
+                }
+
+                if (! empty($updates)) {
+                    $existingRow->fill($updates)->save();
+                }
+
+                $keptIds[] = $existingRow->id;
+
+                continue;
+            }
+
+            $created = $this->orderCost->create([
+                'code' => GenerateCode::generateUniqueCode('TOC', 'order_cost'),
+                'componentType' => $componentType,
+                'orderCode' => $orderCode,
+                'driverCode' => $row['driverCode'] ?? null,
+                'nominal' => $nominal,
+                'description' => $row['description'] ?? '',
+                'type' => $this->resolveCostTypeValue($row['type'] ?? null),
+                'is_route' => isset($routeComponentCodes[$componentType]) ? 1 : 0,
+            ]);
+
+            $keptIds[] = $created->id;
         }
 
-        sort($signature);
+        $cleanup = $this->orderCost->where('orderCode', $orderCode);
 
-        return $signature;
+        if (empty($keptIds)) {
+            $cleanup->delete();
+        } else {
+            $cleanup->whereNotIn('id', $keptIds)->delete();
+        }
     }
 
     private function persistRouteCostRows($orderCode, $routeCostRows)
@@ -451,47 +528,13 @@ class OrderService
             }
 
             $this->orderCost->create([
-                'code' => GenerateCode::generateCode('TOC', true),
+                'code' => GenerateCode::generateUniqueCode('TOC', 'order_cost'),
                 'componentType' => $componentType,
                 'orderCode' => $orderCode,
                 'nominal' => (int) ($detail['nominal'] ?? 0),
                 'description' => '',
                 'type' => null,
                 'is_route' => 1,
-            ]);
-        }
-    }
-
-    private function persistSubmittedCostRows($orderCode, $submittedCostRows, $routeCostRows)
-    {
-        $routeSignatureCounter = array_count_values($this->buildCostRowsSignature($routeCostRows));
-
-        foreach ($submittedCostRows as $row) {
-            $componentType = $row['componentType'] ?? null;
-
-            if (! $componentType) {
-                continue;
-            }
-
-            $nominal = (int) ($row['nominal'] ?? 0);
-            $signatureKey = $componentType . '|' . $nominal;
-
-            // Tetap tandai is_route=1 bila baris persis sama dengan master route.
-            $isRoute = 0;
-            if (! empty($routeSignatureCounter[$signatureKey])) {
-                $isRoute = 1;
-                $routeSignatureCounter[$signatureKey]--;
-            }
-
-            $this->orderCost->create([
-                'code' => GenerateCode::generateCode('TOC', true),
-                'componentType' => $componentType,
-                'orderCode' => $orderCode,
-                'driverCode' => $row['driverCode'] ?? null,
-                'nominal' => $nominal,
-                'description' => $row['description'] ?? '',
-                'type' => $this->resolveCostTypeValue($row['type'] ?? null),
-                'is_route' => $isRoute,
             ]);
         }
     }

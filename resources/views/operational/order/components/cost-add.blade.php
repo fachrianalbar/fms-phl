@@ -1,4 +1,6 @@
     <div class="tab-pane fade show active" id="icon-home" role="tabpanel" aria-labelledby="icon-home-tab">
+        {{-- Penanda bahwa form benar-benar mengirim daftar biaya komponen. --}}
+        <input type="hidden" name="costRowsSubmitted" value="1">
         <div class="row g-3 mt-3">
             <div class="row">
                 <div class="col-md-6">

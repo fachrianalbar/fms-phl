@@ -231,7 +231,7 @@
             @foreach ($detail->order->onChargeCost as $cost)
                 <tr>
 
-                    <td>{{ $cost->costComponent->name ?? '-' }}</td>
+                    <td>{{ $cost->componentName ?? '-' }}</td>
                     <td>-</td>
                     <td>-</td>
                     <td>-</td>

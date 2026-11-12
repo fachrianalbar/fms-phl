@@ -243,7 +243,7 @@ class VendorInvoiceController extends Controller
 
                     $amount = (float) $costs->sum('nominal');
                     $details = $costs->map(function ($cost) {
-                        $name = $cost->costComponent->name ?? ($cost->description ?? 'Biaya Tambahan');
+                        $name = $cost->componentName ?? ($cost->description ?? 'Biaya Tambahan');
 
                         return e($name).' · Rp '.number_format((float) ($cost->nominal ?? 0), 0, ',', '.');
                     })->implode('<br>');

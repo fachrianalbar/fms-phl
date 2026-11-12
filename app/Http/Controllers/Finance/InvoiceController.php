@@ -391,7 +391,7 @@ class InvoiceController extends Controller
                                     if (isset($c->type) && strtolower($c->type) === 'on charge') {
                                         $nom = (float) $c->nominal;
                                         $orderOnCharge += $nom;
-                                        $cName = $c->costComponent->name ?? ($c->description ?? 'Biaya Tambahan');
+                                        $cName = $c->componentName ?? ($c->description ?? 'Biaya Tambahan');
                                         $onChargeSummary[$cName] = ($onChargeSummary[$cName] ?? 0) + $nom;
                                         $orderCosts[] = [
                                             'component' => $cName,
@@ -628,7 +628,7 @@ class InvoiceController extends Controller
                                 $nom = (float) $item->nominal;
                                 $onChargeCost += $nom;
                                 $onChargeItems[] = [
-                                    'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
+                                    'component' => $item->componentName ?? ($item->description ?? 'Biaya Tambahan'),
                                     'nominal' => $nom,
                                     'nominalFormatted' => 'Rp '.number_format($nom, 0, ',', '.'),
                                     'description' => $item->description ?? '',
@@ -683,7 +683,7 @@ class InvoiceController extends Controller
                                 $nom = (float) $item->nominal;
                                 $onChargeCost += $nom;
                                 $onChargeItems[] = [
-                                    'component' => $item->costComponent->name ?? ($item->description ?? 'Biaya Tambahan'),
+                                    'component' => $item->componentName ?? ($item->description ?? 'Biaya Tambahan'),
                                     'nominal' => $nom,
                                     'nominalFormatted' => 'Rp '.number_format($nom, 0, ',', '.'),
                                     'description' => $item->description ?? '',

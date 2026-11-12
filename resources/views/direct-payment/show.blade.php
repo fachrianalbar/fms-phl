@@ -176,7 +176,7 @@
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>
-                                                    <span class="fw-semibold text-dark">{{ $c->costComponent->name ?? 'Custom Component' }}</span>
+                                                    <span class="fw-semibold text-dark">{{ $c->componentName ?? 'Custom Component' }}</span>
                                                 </td>
                                                 <td><span class="text-muted small">{{ $c->description ?? '-' }}</span></td>
                                                 <td class="text-end fw-bold text-dark">Rp {{ number_format($c->nominal, 0, ',', '.') }}</td>

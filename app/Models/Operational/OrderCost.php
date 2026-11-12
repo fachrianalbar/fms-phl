@@ -18,6 +18,7 @@ class OrderCost extends Model
     protected $fillable = [
         'code',
         'componentType',
+        'componentName',
         'orderCode',
         'driverCode',
         'nominal',
@@ -25,6 +26,25 @@ class OrderCost extends Model
         'description',
         'is_route',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function (OrderCost $orderCost) {
+            if ($orderCost->isDirty('componentType') || empty($orderCost->getRawOriginal('componentName'))) {
+                $orderCost->componentName = empty($orderCost->componentType)
+                    ? null
+                    : CostComponent::where('code', $orderCost->componentType)->value('name');
+            }
+        });
+    }
+
+    /**
+     * Nama komponen snapshot saat biaya dicatat pada order.
+     */
+    public function getComponentNameAttribute($value)
+    {
+        return $value ?: ($this->costComponent?->name);
+    }
 
     public function order()
     {

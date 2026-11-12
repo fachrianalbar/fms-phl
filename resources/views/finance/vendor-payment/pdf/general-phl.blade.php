@@ -160,7 +160,7 @@
                 @foreach ($order->cost as $cost)
                     <tr>
                         <td colspan="7" style="text-align: center;">
-                            {{ $cost->costComponent->name ?? 'Biaya Tambahan' }}</td>
+                            {{ $cost->componentName ?? 'Biaya Tambahan' }}</td>
                         <td style="text-align: right;">
                             {{ number_format($cost->nominal ?? 0, 0, ',', '.') }}</td>
                     </tr>

@@ -150,7 +150,7 @@
                         <td></td>
                         <td></td>
                         <td></td>
-                        <td>{{ $cost->costComponent->name ?? null }}</td>
+                        <td>{{ $cost->componentName ?? null }}</td>
                         <td></td>
                         <td></td>
                         <td>
