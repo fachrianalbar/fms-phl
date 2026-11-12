@@ -797,6 +797,17 @@
                                 componentList.insertAdjacentHTML('beforeend', row);
                                 index++;
                             });
+
+                            // Tandai bahwa form mengirim baris biaya hasil render
+                            // supaya nominal dari form dipakai saat menyimpan order.
+                            if (! document.getElementById('costRowsSubmittedFlag')) {
+                                const flag = document.createElement('input');
+                                flag.type = 'hidden';
+                                flag.name = 'costRowsSubmitted';
+                                flag.value = '1';
+                                flag.id = 'costRowsSubmittedFlag';
+                                document.getElementById('create-form').appendChild(flag);
+                            }
                         }
                     });
             }
