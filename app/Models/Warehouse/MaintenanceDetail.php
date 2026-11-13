@@ -66,7 +66,9 @@ class MaintenanceDetail extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class, 'itemCode', 'code');
+        // withTrashed: riwayat pemeliharaan tetap menampilkan nama item
+        // meskipun item sudah di-soft-delete.
+        return $this->belongsTo(Item::class, 'itemCode', 'code')->withTrashed();
     }
 
     public function stock()

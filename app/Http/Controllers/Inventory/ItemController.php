@@ -90,6 +90,8 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
+        $this->normalizePriceInput($request);
+
         $validator = Validator::make($request->all(), [
             'code' => ['required', 'string', 'max:30'],
             'name' => 'required',
@@ -100,7 +102,7 @@ class ItemController extends Controller
             'unitCode' => 'required',
             'type' => ['required', Rule::in(array_keys(Item::types()))],
             // 'supplierCode' => 'required',
-            // 'price' => 'required',
+            'price' => ['nullable', 'numeric', 'min:0'],
         ]);
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -160,6 +162,8 @@ class ItemController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $this->normalizePriceInput($request);
+
         $validator = Validator::make($request->all(), [
             // 'code' => 'required',
             'name' => 'required',
@@ -170,7 +174,7 @@ class ItemController extends Controller
             'unitCode' => 'required',
             'type' => ['required', Rule::in(array_keys(Item::types()))],
             // 'supplierCode' => 'required',
-            // 'price' => 'required',
+            'price' => ['nullable', 'numeric', 'min:0'],
         ]);
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -195,9 +199,15 @@ class ItemController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->service->destroy($id, $this->title);
+        try {
+            $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+            return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+        } catch (\DomainException|\RuntimeException $th) {
+            return redirect()->route($this->view.'index')->with('fail', $th->getMessage());
+        } catch (\Throwable $th) {
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+        }
     }
 
     public function syncLatestPurchasePrice()
@@ -230,7 +240,7 @@ class ItemController extends Controller
                     continue;
                 }
 
-                $latestPriceByItem[$row->itemCode] = (int) $row->price;
+                $latestPriceByItem[$row->itemCode] = (float) $row->price;
             }
 
             if (empty($latestPriceByItem)) {
@@ -323,8 +333,10 @@ class ItemController extends Controller
             $data = $this->service->findAll();
 
             // Definisikan kolom filter dengan alias
+            // Pakai nama kolom yang ter-qualify karena sorting relasi membuat query
+            // melakukan left join ke tabel `unit` (kolom `code` jadi ambigu).
             $filters = [
-                'code' => $request->itemCode,
+                'item.code' => $request->itemCode,
             ];
 
             // Hubungkan alias ke relasi dan kolom yang sesuai
@@ -339,36 +351,78 @@ class ItemController extends Controller
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
                 })
+                ->filterColumn('unit.name', function ($query, $keyword) {
+                    $query->whereHas('unit', function ($unit) use ($keyword) {
+                        $unit->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($keyword).'%']);
+                    });
+                })
+                ->filterColumn('price', function ($query, $keyword) {
+                    $digits = preg_replace('/[^\d]/', '', (string) $keyword);
+
+                    if ($digits === '') {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $query->whereRaw('CAST(item.price AS CHAR) LIKE ?', ['%'.$digits.'%']);
+                })
+                ->orderColumn('code', function ($query, $order) {
+                    $query->orderBy('item.code', $order);
+                })
+                ->orderColumn('name', function ($query, $order) {
+                    $query->orderBy('item.name', $order);
+                })
+                ->orderColumn('type', function ($query, $order) {
+                    $query->orderBy('item.type', $order);
+                })
+                ->orderColumn('price', function ($query, $order) {
+                    $query->orderBy('item.price', $order);
+                })
+                ->orderColumn('unit.name', function ($query, $order) {
+                    // Yajra sudah melakukan left join `unit`, cukup arahkan ke kolom relasinya.
+                    $query->orderBy('unit.name', $order);
+                })
                 ->filter(function ($query) use ($request) {
-                    if ($request->has('search') && ! empty($request->search['value'])) {
-                        $search = strtolower($request->search['value']);
-                        $query->where(function ($q) use ($search) {
-                            $q->whereRaw('LOWER(code) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER(type) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('CAST(price AS CHAR) LIKE ?', ['%'.$search.'%']);
+                    if (! $request->has('search') || empty($request->search['value'])) {
+                        return;
+                    }
+
+                    $terms = preg_split('/\s+/', strtolower(trim($request->search['value']))) ?: [];
+
+                    foreach ($terms as $term) {
+                        // Abaikan kata mata uang agar "Rp 1.500.000" tetap menemukan datanya.
+                        if ($term === '' || in_array($term, ['rp', 'rp.', 'idr'], true)) {
+                            continue;
+                        }
+
+                        $priceTerm = preg_replace('/[^\d]/', '', $term);
+
+                        $query->where(function ($group) use ($term, $priceTerm) {
+                            $group->whereRaw('LOWER(item.code) LIKE ?', ['%'.$term.'%'])
+                                ->orWhereRaw('LOWER(item.name) LIKE ?', ['%'.$term.'%'])
+                                ->orWhereRaw('LOWER(item.type) LIKE ?', ['%'.$term.'%'])
+                                ->orWhereHas('unit', function ($unit) use ($term) {
+                                    $unit->whereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
+                                });
+
+                            if ($priceTerm !== '') {
+                                $group->orWhereRaw('CAST(item.price AS CHAR) LIKE ?', ['%'.$priceTerm.'%']);
+                            }
                         });
                     }
                 })
                 ->editColumn('type', function ($row) {
                     return Item::types()[$row->type] ?? ucfirst($row->type ?? '-');
                 })
-                ->editColumn('unit.name', function ($row) {
-                    $unit = '';
-
-                    if (isset($row->unit->name)) {
-                        $unit = $row->unit->name;
-                    }
-
-                    return $unit;
-                })
+                ->escapeColumns(['code', 'name', 'unit.name'])
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="javascript:void(0)"
            class="btn btn-icon btn-sm bg-info-subtle me-1 btn-purchase-history"
-           data-item-code="'.$row->code.'"
+           data-item-code="'.e($row->code).'"
            data-item-name="'.e($row->name).'"
-           data-url="'.route($this->view.'purchase-history', $row->code).'"
+           data-url="'.e(route($this->view.'purchase-history', $row->code)).'"
            data-bs-toggle="tooltip" title="History Pembelian">
             <i class="mdi mdi-history fs-14 text-info"></i>
         </a>
@@ -379,7 +433,7 @@ class ItemController extends Controller
             <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
         </a>
 
-        <a href="javascript:deleteData(\''.$row->id.'\')"
+        <a href="javascript:deleteData(\''.e($row->id).'\')"
            class="btn btn-icon btn-sm bg-danger-subtle"
            data-bs-toggle="tooltip" title="Delete">
             <i class="mdi mdi-delete fs-14 text-danger"></i>
@@ -388,8 +442,59 @@ class ItemController extends Controller
 
                     return $btn;
                 })
-                ->rawColumns(['action', 'unit.name', 'type'])
+                ->rawColumns(['action', 'type'])
                 ->make();
         }
+    }
+
+    /**
+     * Normalisasi input price agar format ribuan/decimal Indonesia ("1.500.000", "1.500,50")
+     * tetap tersimpan benar, dan nilai kosong dikirim sebagai null.
+     */
+    private function normalizePriceInput(Request $request): void
+    {
+        if (! $request->has('price')) {
+            return;
+        }
+
+        $raw = trim((string) $request->input('price'));
+
+        if ($raw === '') {
+            $request->merge(['price' => null]);
+
+            return;
+        }
+
+        $parsed = $this->parseRupiah($raw);
+
+        // Biarkan nilai asli bila tidak bisa di-parse supaya rule numeric menolaknya.
+        $request->merge(['price' => $parsed ?? $raw]);
+    }
+
+    private function parseRupiah(string $value): ?float
+    {
+        $value = preg_replace('/[^\d,.\-]/', '', $value) ?? '';
+        $value = rtrim($value, '.,');
+
+        if ($value === '' || preg_match('/-?\d/', $value) !== 1) {
+            return null;
+        }
+
+        $hasComma = str_contains($value, ',');
+        $hasDot = str_contains($value, '.');
+
+        if ($hasComma && $hasDot) {
+            // Format id-ID: 1.500.000,50
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif ($hasComma) {
+            // Format desimal koma: 1500,50
+            $value = str_replace(',', '.', $value);
+        } elseif ($hasDot && preg_match('/^-?\d{1,3}(\.\d{3})+$/', $value) === 1) {
+            // Pemisah ribuan: 1.500.000
+            $value = str_replace('.', '', $value);
+        }
+
+        return is_numeric($value) ? (float) $value : null;
     }
 }

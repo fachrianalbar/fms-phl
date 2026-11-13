@@ -34,18 +34,26 @@ function formatAngka(input) {
     }
 }
 
-// konversi string angka menjadi int
+// konversi string angka menjadi int/decimal
 function submitForm(id) {
-    // Ambil nilai input
     const input = document.getElementById(id);
 
-    // Hilangkan titik pemisah ribuan sebelum submit
-    const angkaAsli = input.value.replace(/\./g, "");
+    if (!input) {
+        return true;
+    }
 
-    // Ubah nilai input menjadi angka asli (tanpa titik)
-    input.value = angkaAsli;
+    let value = String(input.value).trim();
 
-    // Setelah itu form bisa dikirim
+    if (value.includes(",")) {
+        // Format id-ID: 1.500,50 -> 1500.50
+        value = value.replace(/\./g, "").replace(",", ".");
+    } else if (/^-?\d{1,3}(\.\d{3})+$/.test(value)) {
+        // Pemisah ribuan: 1.500.000 -> 1500000
+        value = value.replace(/\./g, "");
+    }
+
+    input.value = value;
+
     return true; // Return true untuk melanjutkan submit form
 }
 

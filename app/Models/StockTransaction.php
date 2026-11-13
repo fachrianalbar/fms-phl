@@ -33,7 +33,9 @@ class StockTransaction extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class, 'itemCode', 'code');
+        // withTrashed: transaksi stock lama tetap bisa menampilkan item
+        // yang sudah di-soft-delete.
+        return $this->belongsTo(Item::class, 'itemCode', 'code')->withTrashed();
     }
 
     public function warehouse()

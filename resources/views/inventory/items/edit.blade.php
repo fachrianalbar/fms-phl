@@ -65,9 +65,17 @@
                         <div class="col-md-4 mt-4">
                             <label class="form-label" for="price">Price <i
                                     class="mdi mdi-information text-danger"></i></label>
+                            @php
+                                $priceValue = old('price');
+                                if ($priceValue === null) {
+                                    $price = $data->price === null ? null : (float) $data->price;
+                                    $priceValue = $price === null
+                                        ? ''
+                                        : number_format($price, fmod($price, 1.0) !== 0.0 ? 2 : 0, ',', '.');
+                                }
+                            @endphp
                             <input class="form-control text-end" name="price" id="price" type="text"
-                                inputmode="decimal" placeholder="Price"
-                                value="{{ old('price', number_format((float) $data->price, 0, ',', '.')) }}"
+                                inputmode="decimal" placeholder="Price" value="{{ $priceValue }}"
                                 oninput="formatAngka(this)">
                         </div>
 
@@ -86,5 +94,5 @@
 @push('script')
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src=" {{ asset('assets/js/select2/select2-custom.js') }}"></script>
-    <script src=" {{ asset('assets/js/helper.js') }}"></script>
+    <script src="{{ asset('assets/js/helper.js') }}?v={{ filemtime(public_path('assets/js/helper.js')) }}"></script>
 @endpush

@@ -41,6 +41,8 @@ class PurchaseDetail extends Model
 
     public function item()
     {
-        return $this->belongsTo(Item::class, 'itemCode', 'code');
+        // withTrashed: riwayat pembelian tetap menampilkan nama item
+        // meskipun item sudah di-soft-delete.
+        return $this->belongsTo(Item::class, 'itemCode', 'code')->withTrashed();
     }
 }

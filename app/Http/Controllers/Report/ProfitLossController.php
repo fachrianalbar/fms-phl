@@ -132,7 +132,7 @@ class ProfitLossController extends Controller
         }
         foreach ($data->maintenances as $item) {
             foreach ($item->details as $details) {
-                $maintenance += $details->qty * $details->item->price;
+                $maintenance += $details->qty * ($details->item?->price ?? 0);
             }
         }
 
@@ -189,7 +189,7 @@ class ProfitLossController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('maintenanceDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
@@ -210,7 +210,7 @@ class ProfitLossController extends Controller
                 ->addColumn('items', function ($row) {
                     $items = '';
                     foreach ($row->details as $item) {
-                        $items .= $item->itemCode.': '.$item->item->name.' Qty : '.$item->qty.'<br>';
+                        $items .= $item->itemCode.': '.($item->item?->name ?? '(item dihapus)').' Qty : '.$item->qty.'<br>';
                     }
 
                     return $items;
@@ -220,7 +220,7 @@ class ProfitLossController extends Controller
 
                     foreach ($row->details as $item) {
 
-                        $price += intval($item->item->price) * $item->qty;
+                        $price += intval($item->item?->price ?? 0) * $item->qty;
                     }
 
                     return ''.number_format($price, 0, ',', '.');
@@ -288,7 +288,7 @@ class ProfitLossController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
 
                 ->editColumn('fleet.plateNumber', function ($row) {
@@ -435,7 +435,7 @@ class ProfitLossController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->editColumn('type.name', function ($row) {
                     $type = '';
@@ -618,7 +618,7 @@ class ProfitLossController extends Controller
 
         foreach ($data->maintenances as $item) {
             foreach ($item->details as $details) {
-                $maintenance += $details->qty * $details->item->price;
+                $maintenance += $details->qty * ($details->item?->price ?? 0);
             }
         }
 
