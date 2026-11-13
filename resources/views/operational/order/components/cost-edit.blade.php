@@ -11,7 +11,7 @@
                     <select class="js-example-basic-single" id="componentName">
                         <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                         @foreach ($component as $item)
-                            <option value="{{ $item->code }}">{{ $item->name }}</option>
+                            <option value="{{ $item->code }}" data-price="{{ $item->price }}">{{ $item->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -201,6 +201,50 @@
         });
 
 
+
+
+
+        // Isi nominal otomatis dari harga master komponen biaya saat komponen dipilih.
+        // Nilainya tetap bisa diubah manual (override) sebelum ditambahkan.
+        // Binding lewat jQuery diperlukan karena Select2 memicu event `change`
+        // memakai jQuery trigger, yang tidak menjangkau listener native.
+        (function() {
+            function bindMasterPriceAutoFill() {
+                const componentSelect = document.getElementById('componentName');
+                const nominalInput = document.getElementById('nominal');
+
+                if (! componentSelect || ! nominalInput) {
+                    return;
+                }
+
+                function applyMasterPrice() {
+                    const selectedOption = componentSelect.options[componentSelect.selectedIndex];
+                    const masterPrice = selectedOption ? selectedOption.getAttribute('data-price') : null;
+
+                    if (masterPrice === null || masterPrice === '') {
+                        return;
+                    }
+
+                    nominalInput.value = String(Number(masterPrice));
+
+                    if (typeof formatAngka === 'function') {
+                        formatAngka(nominalInput);
+                    }
+                }
+
+                if (window.jQuery) {
+                    window.jQuery(componentSelect).on('change', applyMasterPrice);
+                } else {
+                    componentSelect.addEventListener('change', applyMasterPrice);
+                }
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bindMasterPriceAutoFill);
+            } else {
+                bindMasterPriceAutoFill();
+            }
+        })();
 
         // Function to remove a row
         function removeRow(target) {
