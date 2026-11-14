@@ -141,14 +141,16 @@ class VendorInvoiceController extends Controller
 
                     $terms = preg_split('/\s+/u', mb_strtolower($keyword), -1, PREG_SPLIT_NO_EMPTY) ?: [];
 
+                    // Catatan: pada engine CollectionDataTable, callback filter() dijalankan
+                    // SETELAH transform, sehingga tiap $row sudah berupa array (bukan model).
                     $dataTable->collection = $dataTable->collection->filter(function ($row) use ($normalize, $terms) {
                         $searchableValues = [
                             data_get($row, 'orderDate'),
                             data_get($row, 'code'),
                             data_get($row, 'shipmentNumber'),
-                            $row->plateNumber ?: data_get($row, 'fleet.plateNumber'),
+                            data_get($row, 'plateNumber') ?: data_get($row, 'fleet.plateNumber'),
                             data_get($row, 'fleet.company.name'),
-                            $row->driverName ?: data_get($row, 'driver.name'),
+                            data_get($row, 'driverName') ?: data_get($row, 'driver.name'),
                             data_get($row, 'customer.name'),
                             data_get($row, 'companyFormat'),
                             data_get($row, 'route.originLocation.name'),
