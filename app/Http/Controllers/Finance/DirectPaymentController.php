@@ -740,8 +740,8 @@ class DirectPaymentController extends Controller
                         $searchableValues = [
                             data_get($row, 'nota_number'),
                             data_get($row, 'customer_name'),
-                            data_get($row, 'plate_numbers')->implode(' '),
-                            data_get($row, 'order_codes')->implode(' '),
+                            collect(data_get($row, 'plate_numbers', []))->implode(' '),
+                            collect(data_get($row, 'order_codes', []))->implode(' '),
                             data_get($row, 'payment_status'),
                         ];
 
