@@ -36,7 +36,7 @@ class FleetCompanyController extends Controller
         $this->title = 'Fleet Company';
         $menu = $menuSvc->getByName('Fleet Company');
         if ($menu) {
-            $this->title = (Auth::check() && Auth::user()->languange == 'en') ? $menu->name : $menu->nama;
+            $this->title = (Auth::user()?->languange ?? 'id') === 'en' ? ($menu->name ?? 'Fleet Company') : ($menu->nama ?? 'Fleet Company');
         }
         $this->view = 'master.fleet-company.';
     }

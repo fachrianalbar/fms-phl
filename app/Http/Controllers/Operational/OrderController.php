@@ -90,9 +90,10 @@ class OrderController extends Controller
 
     ) {
         $this->service = $orderSvc;
-        $this->title = 'Order';
         $this->menuSvc = $menuSvc->getByName('Order');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Order')
+            : ($this->menuSvc?->nama ?? 'Order');
         $this->view = 'operational.order.';
         $this->materialSvc = $materialSvc;
         $this->customerSvc = $customerSvc;
@@ -814,7 +815,7 @@ class OrderController extends Controller
 
     public function getOrderDrivers(Request $request)
     {
-        $orderCode = $request->get('orderCode');
+        $orderCode = $request->input('orderCode');
 
         if (! $orderCode) {
             return response()->json(['success' => false, 'message' => 'Order code is required']);
@@ -837,7 +838,7 @@ class OrderController extends Controller
 
     public function deleteOrderDriver(Request $request)
     {
-        $id = $request->get('id');
+        $id = $request->input('id');
 
         if (! $id) {
             return response()->json(['success' => false, 'message' => 'ID is required']);
@@ -885,7 +886,7 @@ class OrderController extends Controller
 
     public function getOrderCosts(Request $request)
     {
-        $orderCode = $request->get('orderCode');
+        $orderCode = $request->input('orderCode');
 
         if (! $orderCode) {
             return response()->json(['success' => false, 'message' => 'Order code is required']);

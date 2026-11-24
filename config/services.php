@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'whatsapp' => [
+        'url' => env('WA_URL'),
+        'user_key' => env('WA_USER_KEY'),
+        'pass_key' => env('WA_PASS_KEY'),
+        'verify_ssl' => env('WA_VERIFY_SSL', true),
+    ],
+
+    'total_kilat' => [
+        'url' => env('API_TOTAL_KILAT'),
+    ],
+
 ];

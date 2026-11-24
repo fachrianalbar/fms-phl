@@ -202,8 +202,8 @@ class EmployeeController extends Controller
     {
         if ($request->ajax()) {
             $filters = [
-                'positionCode' => $request->get('positionCode'),
-                'status' => $request->get('status'),
+                'positionCode' => $request->input('positionCode'),
+                'status' => $request->input('status'),
             ];
 
             $data = $this->service->findAllQuery($filters);

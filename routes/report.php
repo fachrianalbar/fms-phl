@@ -10,13 +10,15 @@ use App\Http\Controllers\Report\SupplierPurchaseController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('report')->name('report.')->group(function () {
-    Route::resource('profit-loss', ProfitLossController::class);
-    Route::get('excel-profit-loss', [ProfitLossController::class, 'excelProfitLoss'])->name('profit-loss.excel-profit-loss');
-    Route::resource('driver-salary', DriverSalaryController::class);
+    Route::middleware(['access:SPRADMIN,SPRUSER,TRL250604212202'])->group(function () {
+        Route::resource('profit-loss', ProfitLossController::class)->only(['index', 'show']);
+        Route::get('excel-profit-loss', [ProfitLossController::class, 'excelProfitLoss'])->name('profit-loss.excel-profit-loss');
+    });
+    Route::resource('driver-salary', DriverSalaryController::class)->except(['create']);
     Route::post('driver-salary/sync-existing-status', [DriverSalaryController::class, 'syncExistingStatus'])->name('driver-salary.sync-existing-status');
     Route::get('pdf-driver-salary', [DriverSalaryController::class, 'pdfDriverSalary'])->name('driver-salary.pdf-driver-salary');
     Route::get('pdf-driver-salary-processed/{id}', [DriverSalaryController::class, 'pdfDriverSalaryProcessed'])->name('driver-salary.pdf-processed');
-    Route::resource('order-detail', OrderDetailController::class);
+    Route::resource('order-detail', OrderDetailController::class)->only(['index']);
     Route::get('excel-order-detail', [OrderDetailController::class, 'excelOrderDetail'])->name('order-detail.excel-order-detail');
     Route::get('excel-order-detail-init', [OrderDetailController::class, 'excelOrderDetailInit'])->name('order-detail.excel-order-detail-init');
     Route::get('excel-order-detail-chunk', [OrderDetailController::class, 'excelOrderDetailChunk'])->name('order-detail.excel-order-detail-chunk');
@@ -44,9 +46,11 @@ Route::prefix('report')->name('report.')->group(function () {
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
-    Route::get('profit-loss', [ProfitLossController::class, 'datatable'])->name('profit-loss');
-    Route::get('profit-loss-order', [ProfitLossController::class, 'datatableOrder'])->name('profit-loss-order');
-    Route::get('profit-loss-maintenance', [ProfitLossController::class, 'datatableMaintenance'])->name('profit-loss-maintenance');
+    Route::middleware(['access:SPRADMIN,SPRUSER,TRL250604212202'])->group(function () {
+        Route::get('profit-loss', [ProfitLossController::class, 'datatable'])->name('profit-loss');
+        Route::get('profit-loss-order', [ProfitLossController::class, 'datatableOrder'])->name('profit-loss-order');
+        Route::get('profit-loss-maintenance', [ProfitLossController::class, 'datatableMaintenance'])->name('profit-loss-maintenance');
+    });
     Route::get('driver-salary', [DriverSalaryController::class, 'datatable'])->name('driver-salary');
     Route::get('driver-salary-processed', [DriverSalaryController::class, 'datatableProcessed'])->name('driver-salary-processed');
     Route::get('order-detail', [OrderDetailController::class, 'datatable'])->name('order-detail');
@@ -61,7 +65,9 @@ Route::prefix('datatable')->name('dt.')->group(function () {
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
-    Route::get('profit-loss-summary/{id}', [ProfitLossController::class, 'getProfitLossSummary'])->name('profit-loss-summary');
+    Route::get('profit-loss-summary/{id}', [ProfitLossController::class, 'getProfitLossSummary'])
+        ->middleware('access:SPRADMIN,SPRUSER,TRL250604212202')
+        ->name('profit-loss-summary');
     Route::get('maintenance-fleet-detail-items/{maintenanceCode}', [MaintenancePerFleetController::class, 'detailItems'])->name('maintenance-fleet-detail-items');
     Route::get('maintenance-company-internal-detail-items/{maintenanceCode}', [MaintenancePerCompanyController::class, 'detailItems'])->name('maintenance-company-internal-detail-items');
     Route::get('supplier-purchase-detail-items/{purchaseCode}', [SupplierPurchaseController::class, 'detailItems'])->name('supplier-purchase-detail-items');

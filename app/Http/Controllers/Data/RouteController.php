@@ -51,9 +51,10 @@ class RouteController extends Controller
         MenuService $menuSvc
     ) {
         $this->service = $routeSvc;
-        $this->title = 'Route';
         $this->menuSvc = $menuSvc->getByName('Route');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Route')
+            : ($this->menuSvc?->nama ?? 'Route');
         $this->view = 'data.route.';
         $this->customerSvc = $customerSvc;
         $this->locationSvc = $locationSvc;

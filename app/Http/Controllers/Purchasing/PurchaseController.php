@@ -37,9 +37,10 @@ class PurchaseController extends Controller
     {
         $this->service = $purchaseSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = 'Purchase';
         $this->menuSvc = $menuSvc->getByName('Purchase');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Purchase')
+            : ($this->menuSvc?->nama ?? 'Purchase');
         $this->view = 'purchasing.purchase.';
     }
 

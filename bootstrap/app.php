@@ -16,9 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'download_token',
         ]);
 
-        $middleware->alias(['jwt.verify' => \App\Http\Middleware\JwtVerify::class]);
         $middleware->alias(['access' => \App\Http\Middleware\RoleAccess::class]);
-        $middleware->alias(['api-key' => \App\Http\Middleware\ApiKey::class]);
 
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\SetLocale::class,

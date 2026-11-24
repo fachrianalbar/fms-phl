@@ -35,7 +35,7 @@ class FleetTypeController extends Controller
         $this->title = 'Fleet Type';
         $menu = $menuSvc->getByName('Fleet Type');
         if ($menu) {
-            $this->title = (Auth::check() && Auth::user()->languange == 'en') ? $menu->name : $menu->nama;
+            $this->title = (Auth::user()?->languange ?? 'id') === 'en' ? ($menu->name ?? 'Fleet Type') : ($menu->nama ?? 'Fleet Type');
         }
         $this->view = 'master.fleet-type.';
     }

@@ -453,22 +453,6 @@
             border-bottom-color: var(--bs-border-color) !important;
         }
 
-        html[data-bs-theme="dark"] #modal-null table {
-            border-color: var(--bs-border-color) !important;
-            color: var(--bs-body-color) !important;
-        }
-
-        html[data-bs-theme="dark"] #modal-null table th {
-            background-color: var(--bs-tertiary-bg) !important;
-            color: var(--bs-emphasis-color) !important;
-            border-color: var(--bs-border-color) !important;
-        }
-
-        html[data-bs-theme="dark"] #modal-null table td {
-            border-color: var(--bs-border-color) !important;
-            color: var(--bs-body-color) !important;
-        }
-
         html[data-bs-theme="dark"] .modal .form-control,
         html[data-bs-theme="dark"] .modal textarea {
             background-color: var(--bs-tertiary-bg) !important;
@@ -688,34 +672,6 @@
                         <label class="form-label text-muted small fw-semibold mb-2" for="note">Isi Catatan</label>
                         <textarea class="form-control" id="note" rows="4" readonly
                             style="border-radius: 8px; font-size: 13px; line-height: 1.5; resize: none;"></textarea>
-                    </div>
-                    <div class="modal-footer bg-light py-2 px-4 border-top">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"
-                            style="border-radius: 8px; padding: 6px 16px;">Tutup</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Modal Data Belum Lengkap -->
-        <div class="modal fade" tabindex="-1" role="dialog" id="modal-null"
-            aria-labelledby="modalNullLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
-                    <div class="modal-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="avatar-sm d-flex align-items-center justify-content-center bg-warning-subtle text-warning rounded-circle" style="width: 36px; height: 36px;">
-                                <i class="mdi mdi-alert-circle-outline fs-18"></i>
-                            </span>
-                            <div>
-                                <h5 class="modal-title mb-0 fw-bold" id="modalNullLabel">Data Belum Lengkap</h5>
-                                <small class="text-muted">Daftar pesanan dengan kelengkapan data yang belum terpenuhi</small>
-                            </div>
-                        </div>
-                        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body card-body p-4">
-                        {{-- Diinjeksi oleh AJAX JS --}}
                     </div>
                     <div class="modal-footer bg-light py-2 px-4 border-top">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal"
@@ -1064,60 +1020,6 @@
             });
 
             syncExportUrls();
-
-            $('#check-null').on('click', function() {
-                $.ajax({
-                    url: "{{ route('operational.order.check-null-relation') }}",
-                    method: "GET",
-                    success: function(response) {
-                        if (response.success) {
-                            let data = response.data;
-                            let content = `
-                                <table class="table table-striped table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>No</th>
-                                            <th>Shipment Number</th>
-                                            <th>Empty Data</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                            `;
-
-                            data.forEach((item, index) => {
-                                content += `
-                                    <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${item.shipmentNumber ? item.shipmentNumber.toUpperCase() : ''}</td>
-                                        <td>${item.nullRelations}</td>
-                                    </tr>
-                                `;
-                            });
-
-                            content += `
-                                    </tbody>
-                                </table>
-                            `;
-
-                            $('#modal-null .card-body').html(content);
-                            $('#modal-null').modal('show');
-                        } else {
-                            swal({
-                                title: "Info",
-                                text: "No empty data found",
-                                icon: "info",
-                            });
-                        }
-                    },
-                    error: function() {
-                        swal({
-                            title: "{{ __('general.warning') }}",
-                            text: "An error occurred while checking null relations.",
-                            icon: "warning",
-                        });
-                    }
-                });
-            });
 
             // Event listener untuk modal add driver
             $('#modal-add-driver').on('shown.bs.modal', function() {

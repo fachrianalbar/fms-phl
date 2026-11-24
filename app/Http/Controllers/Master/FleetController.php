@@ -51,9 +51,10 @@ class FleetController extends Controller
         $this->fleetTypeSvc = $fleetTypeSvc;
         $this->driverSvc = $driverSvc;
         $this->fleetCompanySvc = $fleetCompanySvc;
-        $this->title = 'Fleet';
         $this->menuSvc = $menuSvc->getByName('Fleet');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Fleet')
+            : ($this->menuSvc?->nama ?? 'Fleet');
         $this->view = 'master.fleets.';
     }
 
@@ -98,13 +99,7 @@ class FleetController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
-            // 'fleetBrandCode' => 'required',
-            // 'fleetTypeCode' => 'required',
-            // 'frameNumber' => 'required',
-            // 'engineNumber' => 'required'
-        ]);
+        $validator = Validator::make($request->all(), $this->uploadValidationRules());
 
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -118,8 +113,9 @@ class FleetController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
     }
 
@@ -210,13 +206,7 @@ class FleetController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $validator = Validator::make($request->all(), [
-            // 'year' => 'required|integer|digits:4|min:1900|max:' . date('Y'),
-            // 'fleetBrandCode' => 'required',
-            // 'fleetTypeCode' => 'required',
-            // 'frameNumber' => 'required',
-            // 'engineNumber' => 'required'
-        ]);
+        $validator = Validator::make($request->all(), $this->uploadValidationRules(includeNewPictures: true));
 
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -231,8 +221,9 @@ class FleetController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
     }
 
@@ -524,8 +515,33 @@ class FleetController extends Controller
             return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
+    }
+
+    private function uploadValidationRules(bool $includeNewPictures = false): array
+    {
+        $rules = [
+            'barcode' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'vehicleRegistrationNumber' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:4096',
+            'fleetPicture' => 'nullable|array',
+            'fleetPicture.*' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:4096',
+        ];
+
+        if ($includeNewPictures) {
+            $rules['newFleetPicture'] = 'nullable|array';
+            $rules['newFleetPicture.*'] = 'nullable|file|mimes:jpg,jpeg,png,webp|max:4096';
+        }
+
+        return $rules;
+    }
+
+    private function safeErrorMessage(\Throwable $th): string
+    {
+        return app()->hasDebugModeEnabled()
+            ? 'Line : '.$th->getLine().' - '.$th->getMessage()
+            : 'Terjadi kesalahan pada sistem. Silakan coba lagi.';
     }
 }

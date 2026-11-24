@@ -43,7 +43,7 @@ class VendorPaymentListController extends Controller
 
         $menu = $this->menuSvc->getByCode('VENDOR_PAY_LIST');
         $title = $menu
-            ? (Auth::user()->languange == 'id' ? $menu->nama : $menu->name)
+            ? ((Auth::user()?->languange ?? 'id') === 'id' ? $menu->nama : $menu->name)
             : 'Daftar Pembayaran';
 
         return view($this->view.'index')

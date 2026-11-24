@@ -36,9 +36,10 @@ class LocationController extends Controller
     public function __construct(LocationService $locationSvc, ProvinceService $provinceSvc, CustomerService $customerSvc, CityService $citySvc, DistrictService $districtSvc, MenuService $menuSvc)
     {
         $this->service = $locationSvc;
-        $this->title = 'Location';
         $this->menuSvc = $menuSvc->getByName('Location');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Location')
+            : ($this->menuSvc?->nama ?? 'Location');
         $this->view = 'master.location.';
         $this->provinceSvc = $provinceSvc;
         $this->customerSvc = $customerSvc;

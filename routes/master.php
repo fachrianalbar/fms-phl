@@ -60,7 +60,7 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::get('fleet-company/{id}/export/pdf', [FleetCompanyController::class, 'exportDetailPdf'])->name('fleet-company.detail-export-pdf');
 
     // Menu routes
-    Route::resource('menu', MenuController::class);
+    Route::resource('menu', MenuController::class)->except(['show']);
     Route::get('menu/sub-menu/{parentCode}', [MenuController::class, 'subMenu'])->name('menu.sub-menu');
     Route::get('menu/create-sub-menu/{parentCode}', [MenuController::class, 'createSubMenu'])->name('menu.create-sub-menu');
 });

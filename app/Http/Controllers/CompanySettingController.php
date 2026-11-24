@@ -45,7 +45,7 @@ class CompanySettingController extends Controller
     {
         // $token = GetTokenHelper::getToken();
 
-        $response = Http::get(env('API_TOTAL_KILAT').'deviceInfo', [
+        $response = Http::get(config('services.total_kilat.url').'deviceInfo', [
             'grant_type' => 'totalkilatgps',
             'access_token' => GetTokenHelper::getToken(),
         ]);
@@ -82,6 +82,7 @@ class CompanySettingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
+            'logo' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -96,8 +97,9 @@ class CompanySettingController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
     }
 
@@ -133,6 +135,7 @@ class CompanySettingController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required',
+            'logo' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -147,9 +150,17 @@ class CompanySettingController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
+    }
+
+    private function safeErrorMessage(\Throwable $th): string
+    {
+        return app()->hasDebugModeEnabled()
+            ? 'Line : '.$th->getLine().' - '.$th->getMessage()
+            : 'Terjadi kesalahan pada sistem. Silakan coba lagi.';
     }
 
     /**

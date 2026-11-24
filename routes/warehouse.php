@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('warehouse')->name('warehouse.')->group(function () {
     Route::resource('maintenance', MaintenanceController::class);
-    Route::resource('maintenance-detail', MaintenanceDetailController::class)->except(['create', 'edit']);
+    Route::resource('maintenance-detail', MaintenanceDetailController::class)->only(['store', 'update']);
     Route::delete('maintenance-detail/{id}', [MaintenanceController::class, 'deleteMaintenanceDetail'])->name('maintenance-detail.destroy');
     Route::get('pdf-maintenance', [MaintenanceController::class, 'pdfMaintenance'])->name('maintenance.pdf-maintenance');
 });

@@ -13,8 +13,22 @@ class RoleAccess
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
+        $user = $request->user();
+
+        if (! $user) {
+            abort(401);
+        }
+
+        if ($user->roleCode === 'SPRADMIN' || $user->role?->name === 'System Administrator') {
+            return $next($request);
+        }
+
+        if (! empty($roles) && ! in_array($user->roleCode, $roles, true)) {
+            abort(403, 'Anda tidak memiliki akses ke halaman ini.');
+        }
+
         return $next($request);
     }
 }

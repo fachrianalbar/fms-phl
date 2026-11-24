@@ -35,7 +35,7 @@ class FleetBrandController extends Controller
         $this->title = 'Fleet Brand';
         $menu = $menuSvc->getByName('Fleet Brand');
         if ($menu) {
-            $this->title = (Auth::check() && Auth::user()->languange == 'en') ? $menu->name : $menu->nama;
+            $this->title = (Auth::user()?->languange ?? 'id') === 'en' ? ($menu->name ?? 'Fleet Brand') : ($menu->nama ?? 'Fleet Brand');
         }
         $this->view = 'master.fleet-brand.';
     }

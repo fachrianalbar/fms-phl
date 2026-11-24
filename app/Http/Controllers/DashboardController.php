@@ -300,8 +300,8 @@ class DashboardController extends Controller
     // API untuk filter customer berdasarkan tahun dan bulan
     public function getCustomerStats(Request $request)
     {
-        $year = $request->get('year', now()->year);
-        $month = $request->get('month');
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month');
 
         $query = Order::join('customer', 'order.customerCode', '=', 'customer.code')
             ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
@@ -322,8 +322,8 @@ class DashboardController extends Controller
     // API untuk filter fleet berdasarkan tahun dan bulan
     public function getFleetStats(Request $request)
     {
-        $year = $request->get('year', now()->year);
-        $month = $request->get('month');
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month');
 
         $query = Order::join('fleet', 'order.fleetCode', '=', 'fleet.code')
             ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
@@ -344,7 +344,7 @@ class DashboardController extends Controller
     // API untuk mendapatkan statistik order berdasarkan tahun
     public function getOrderStatsByYear(Request $request)
     {
-        $year = $request->get('year', now()->year);
+        $year = $request->input('year', now()->year);
 
         $orders = Order::whereYear('created_at', $year)
             ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
@@ -362,8 +362,8 @@ class DashboardController extends Controller
     // API untuk mendapatkan jumlah order berdasarkan tahun dan bulan
     public function getOrderCount(Request $request)
     {
-        $year = $request->get('year', now()->year);
-        $month = $request->get('month');
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month');
 
         $query = Order::whereYear('created_at', $year);
 
@@ -383,8 +383,8 @@ class DashboardController extends Controller
     // API untuk mendapatkan jumlah order yang belum dibuat invoice
     public function getPendingInvoiceOrders(Request $request)
     {
-        $year = $request->get('year', now()->year);
-        $month = $request->get('month');
+        $year = $request->input('year', now()->year);
+        $month = $request->input('month');
 
         $query = Order::where('status', '<', 5)
             ->where('status', '!=', 5)

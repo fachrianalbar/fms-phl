@@ -106,25 +106,6 @@
                 </div>
             </div>
 
-            <div class="modal fade bd-example-modal-xl" tabindex="-1" role="dialog" id="modal-null"
-                aria-labelledby="myLargeModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-xl">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h4 class="modal-title" id="myLargeModalLabel">Empty Data</h4>
-                            <button class="btn-close py-0" type="button" data-bs-dismiss="modal"
-                                aria-label="Close"></button>
-                        </div>
-                        <div class="card">
-                            <div class="card-body col-md-12">
-
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
         </div>
     </div>
 
@@ -211,62 +192,6 @@
                 e.preventDefault();
 
                 table.ajax.reload(); // Reload DataTable dengan filter baru
-            });
-
-            $('#check-null').on('click', function() {
-                $.ajax({
-                    url: "{{ route('operational.order.check-null-relation') }}", // Endpoint untuk mengecek relasi null
-                    method: "GET",
-                    success: function(response) {
-                        if (response.success) {
-                            let data = response.data;
-
-                            // Buat tabel dengan Bootstrap
-                            let content = `
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Shipment Number</th>
-                                <th>Empty Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                            data.forEach((item, index) => {
-                                content += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.shipmentNumber}</td>
-                            <td>${item.nullRelations}</td>
-                        </tr>
-                    `;
-                            });
-
-                            content += `
-                        </tbody>
-                    </table>
-                `;
-
-                            $('#modal-null .card-body').html(content); // Isi modal dengan data
-                            $('#modal-null').modal('show'); // Tampilkan modal
-                        } else {
-                            swal({
-                                title: "Info",
-                                text: "No empty data found",
-                                icon: "info",
-                            })
-                        }
-                    },
-                    error: function() {
-                        swal({
-                            title: "{{ __('general.warning') }}",
-                            text: "An error occurred while checking null relations.",
-                            icon: "warning",
-                        })
-                    }
-                });
             });
         });
 

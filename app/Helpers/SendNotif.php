@@ -8,28 +8,18 @@ class SendNotif
 {
     public static function sendWa(string $telephone, string $message)
     {
-        $userkey = env('WA_USER_KEY');
-        $passkey = env('WA_PASS_KEY');
-        $url = env('WA_URL');
+        $userkey = config('services.whatsapp.user_key');
+        $passkey = config('services.whatsapp.pass_key');
+        $url = config('services.whatsapp.url');
+        $verifySsl = filter_var(config('services.whatsapp.verify_ssl', true), FILTER_VALIDATE_BOOLEAN);
 
         Http::withOptions([
-            'verify' => false,
-
+            'verify' => $verifySsl,
         ])->post($url, [
             'userkey' => $userkey,
             'passkey' => $passkey,
             'to' => $telephone,
             'message' => $message,
-        ]);
-    }
-
-    public static function sendTelegram(string $chat_id, string $message)
-    {
-        $url = env('TELE_BOT_URL').env('TELE_BOT_KEY').'/sendMessage';
-        Http::post($url, [
-            'chat_id' => $chat_id,
-            'text' => $message,
-            'parse_mode' => 'Markdown',
         ]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Helpers\GenerateCode;
 use App\Models\CompanySetting;
 use App\Traits\LogActivity;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class CompanySettingService
@@ -30,17 +31,8 @@ class CompanySettingService
 
     public function store($request, $title)
     {
-        $logo = null;
-        if ($request->logo) {
-            $file = $request->logo;
-            $logo = $file->getClientOriginalName();
-
-            $logo = str_replace(' ', '_', $logo);
-
-            $path = 'public/company_setting/logo';
-
-            Storage::putFileAs($path, $file, $logo);
-        }
+        $logoFile = $this->resolveUploadedLogo($request);
+        $logo = $logoFile ? $this->storeLogoFile($logoFile) : null;
 
         $data = $this->service->create([
             'code' => GenerateCode::generateCode('FMSCS'),
@@ -62,21 +54,13 @@ class CompanySettingService
         $data = $this->getById($id);
 
         $logo = $data->logo;
+        $logoFile = $this->resolveUploadedLogo($request);
 
-        if ($request->logo) {
-            $file = $request->logo;
-            $logo = $file->getClientOriginalName();
-
-            $path = 'public/company_setting/logo/';
-            if ($data->logo) {
-                Storage::delete($path.$data->logo);
-            }
-
-            Storage::putFileAs($path, $file, $logo);
+        if ($logoFile) {
+            $logo = $this->storeLogoFile($logoFile, $data->logo);
         }
 
         $this->service->where('id', $id)->update([
-            'name' => $request->name,
             'name' => $request->name,
             'owner' => $request->owner,
             'address' => $request->address,
@@ -86,6 +70,29 @@ class CompanySettingService
         ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
+    }
+
+    private function resolveUploadedLogo($request): ?UploadedFile
+    {
+        if (method_exists($request, 'file') && $request->file('logo') instanceof UploadedFile) {
+            return $request->file('logo');
+        }
+
+        return $request->logo instanceof UploadedFile ? $request->logo : null;
+    }
+
+    private function storeLogoFile(UploadedFile $file, ?string $oldLogo = null): string
+    {
+        $path = 'public/company_setting/logo';
+
+        if ($oldLogo) {
+            Storage::delete($path.'/'.$oldLogo);
+        }
+
+        $filename = $file->hashName();
+        Storage::putFileAs($path, $file, $filename);
+
+        return $filename;
     }
 
     public function destroy($id, $title)

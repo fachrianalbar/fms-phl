@@ -75,19 +75,10 @@ class UserController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_save_successfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
-    }
-
-    public function balance(string $id)
-    {
-        $data = $this->service->getById($id);
-
-        return view($this->view.'balance')
-            ->with('view', $this->view)
-            ->with('title', $this->title)
-            ->with('data', $data);
     }
 
     /**
@@ -138,8 +129,9 @@ class UserController extends Controller
             return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
+            report($th);
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', $this->safeErrorMessage($th));
         }
     }
 
@@ -206,5 +198,12 @@ class UserController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    private function safeErrorMessage(\Throwable $th): string
+    {
+        return app()->hasDebugModeEnabled()
+            ? 'Line : '.$th->getLine().' - '.$th->getMessage()
+            : 'Terjadi kesalahan pada sistem. Silakan coba lagi.';
     }
 }

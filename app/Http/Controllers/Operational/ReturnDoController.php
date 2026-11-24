@@ -41,9 +41,10 @@ class ReturnDoController extends Controller
     public function __construct(ReturnDoService $returnDoService, MenuService $menuSvc)
     {
         $this->service = $returnDoService;
-        $this->title = 'Return Do';
         $this->menuSvc = $menuSvc->getByName('Return Do');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Return Do')
+            : ($this->menuSvc?->nama ?? 'Return Do');
         $this->view = 'operational.return-do.';
     }
 

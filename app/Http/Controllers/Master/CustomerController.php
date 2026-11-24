@@ -31,9 +31,10 @@ class CustomerController extends Controller
     public function __construct(CustomerService $customerSvc, MenuService $menuSvc, CompanyService $companySvc)
     {
         $this->service = $customerSvc;
-        $this->title = 'Customer';
         $this->menuSvc = $menuSvc->getByName('Customer');
-        $this->title = Auth::user()->languange == 'en' ? $this->menuSvc->name : $this->menuSvc->nama;
+        $this->title = (Auth::user()?->languange ?? 'id') === 'en'
+            ? ($this->menuSvc?->name ?? 'Customer')
+            : ($this->menuSvc?->nama ?? 'Customer');
         $this->companySvc = $companySvc;
         $this->view = 'master.customer.';
     }

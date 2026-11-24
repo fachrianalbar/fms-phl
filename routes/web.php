@@ -10,7 +10,12 @@ require __DIR__.'/auth.php';
 require __DIR__.'/guest.php';
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
+    Route::resource('change-password', \App\Http\Controllers\ChangePasswordController::class)
+        ->only(['index', 'store']);
+
+    Route::middleware(['access:SPRADMIN'])->group(function () {
+        Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
+    });
 
     require __DIR__.'/master.php';
     require __DIR__.'/data.php';

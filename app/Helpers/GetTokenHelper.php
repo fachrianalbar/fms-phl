@@ -9,7 +9,7 @@ class GetTokenHelper
 {
     public static function fetchToken()
     {
-        $response = Http::get(env('API_TOTAL_KILAT').'token', [
+        $response = Http::get(config('services.total_kilat.url').'token', [
             'grant_type' => 'totalkilatgps',
             'account_name' => 'pushdata',
             'account_password' => 'password',

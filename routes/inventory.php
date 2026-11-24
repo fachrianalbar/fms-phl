@@ -20,12 +20,12 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::get('supplier/export-pdf', [SupplierController::class, 'pdfSupplier'])->name('supplier.export-pdf');
     Route::resource('supplier', SupplierController::class);
     Route::resource('item-unit', ItemUnitController::class);
-    Route::resource('transaction-stock', StockTransactionController::class);
+    Route::resource('transaction-stock', StockTransactionController::class)->only(['index']);
     Route::get('stock-sync', [StockSyncController::class, 'index'])->name('stock-sync.index');
     Route::post('stock-sync', [StockSyncController::class, 'sync'])->name('stock-sync.sync');
     Route::post('stock-sync/prepare', [StockSyncController::class, 'prepare'])->name('stock-sync.prepare');
     Route::post('stock-sync/process-chunk', [StockSyncController::class, 'processChunk'])->name('stock-sync.process-chunk');
-    Route::resource('stock', StockController::class);
+    Route::resource('stock', StockController::class)->only(['index']);
     Route::get('pdf-stock', [StockController::class, 'pdfStock'])->name('stock.pdf-stock');
     Route::post('stock/update-initial', [StockController::class, 'updateInitialStock'])->name('stock.update-initial');
     Route::get('stock-detail', [StockController::class, 'getItemDetail'])->name('stock.detail');

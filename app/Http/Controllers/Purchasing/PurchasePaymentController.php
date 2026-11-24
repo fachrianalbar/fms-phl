@@ -55,7 +55,7 @@ class PurchasePaymentController extends Controller
             return $fallback;
         }
 
-        return Auth::user()->languange == 'id' ? $menu->nama : $menu->name;
+        return (Auth::user()?->languange ?? 'id') === 'id' ? $menu->nama : $menu->name;
     }
 
     /* ------------------------------------------------------------------ */

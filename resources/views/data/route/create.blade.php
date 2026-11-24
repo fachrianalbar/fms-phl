@@ -224,7 +224,7 @@
             @if (Session::has('fail'))
                 swal({
                     title: "{{ __('general.warning') }}",
-                    text: "{!! Session::get('fail') !!}",
+                    text: @json(Session::get('fail')),
                     icon: "error",
                 })
             @endif
