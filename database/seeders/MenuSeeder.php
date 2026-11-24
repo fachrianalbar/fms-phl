@@ -91,15 +91,17 @@ class MenuSeeder extends Seeder
         // ── FAKTUR (Piutang / AR) ─────────────────────────────────────────
         ['code' => 'FAKTUR_PEMBUATAN', 'name' => 'Create Invoice', 'nama' => 'Buat Faktur', 'parentCode' => 'FAKTUR', 'url' => 'invoice/create', 'sort' => 1],
         ['code' => 'FAKTUR_BELUM_LUNAS', 'name' => 'Unpaid Invoice', 'nama' => 'Faktur Belum Lunas', 'parentCode' => 'FAKTUR', 'url' => 'invoice/unpaid', 'sort' => 2],
-        ['code' => 'FAKTUR_LUNAS', 'name' => 'Paid Invoice', 'nama' => 'Faktur Lunas', 'parentCode' => 'FAKTUR', 'url' => 'invoice/paid', 'sort' => 3],
-        ['code' => 'FAKTUR_PEMBAYARAN', 'name' => 'Invoice Payment', 'nama' => 'Pembayaran Faktur', 'parentCode' => 'FAKTUR', 'url' => 'invoice/payment', 'sort' => 4],
-        ['code' => 'FAKTUR_TRANSAKSI_PEMBAYARAN', 'name' => 'Payment Transaction', 'nama' => 'Transaksi Pembayaran', 'parentCode' => 'FAKTUR', 'url' => 'invoice/payment-transaction', 'sort' => 5],
+        ['code' => 'FAKTUR_PEMBAYARAN_SEBAGIAN', 'name' => 'Partially Paid Invoice', 'nama' => 'Faktur Pembayaran Sebagian', 'parentCode' => 'FAKTUR', 'url' => 'invoice/partial', 'sort' => 3],
+        ['code' => 'FAKTUR_LUNAS', 'name' => 'Paid Invoice', 'nama' => 'Faktur Lunas', 'parentCode' => 'FAKTUR', 'url' => 'invoice/paid', 'sort' => 4],
+        ['code' => 'FAKTUR_PEMBAYARAN', 'name' => 'Invoice Payment', 'nama' => 'Pembayaran Faktur', 'parentCode' => 'FAKTUR', 'url' => 'invoice/payment', 'sort' => 5],
+        ['code' => 'FAKTUR_TRANSAKSI_PEMBAYARAN', 'name' => 'Payment Transaction', 'nama' => 'Transaksi Pembayaran', 'parentCode' => 'FAKTUR', 'url' => 'invoice/payment-transaction', 'sort' => 6],
 
         // ── VENDOR (Hutang / AP) ──────────────────────────────────────────
         ['code' => 'VENDOR_ORDER_WAITING', 'name' => 'Order Awaiting Invoice', 'nama' => 'Order Menunggu Faktur', 'parentCode' => 'VENDOR', 'url' => 'vendor/order/waiting', 'sort' => 1],
         ['code' => 'VENDOR_INV_UNPAID', 'name' => 'Unpaid Vendor Invoice', 'nama' => 'Faktur Vendor Belum Lunas', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/unpaid', 'sort' => 2],
-        ['code' => 'VENDOR_INV_PAID', 'name' => 'Paid Vendor Invoice', 'nama' => 'Faktur Vendor Lunas', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/paid', 'sort' => 3],
-        ['code' => 'VENDOR_PAY_LIST', 'name' => 'Vendor Payment List', 'nama' => 'Daftar Pembayaran Vendor', 'parentCode' => 'VENDOR', 'url' => 'vendor/payment', 'sort' => 4],
+        ['code' => 'VENDOR_INV_PARTIAL', 'name' => 'Partially Paid Vendor Invoice', 'nama' => 'Invoice Dibayar Sebagian', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/partial', 'sort' => 3],
+        ['code' => 'VENDOR_INV_PAID', 'name' => 'Paid Vendor Invoice', 'nama' => 'Faktur Vendor Lunas', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/paid', 'sort' => 4],
+        ['code' => 'VENDOR_PAY_LIST', 'name' => 'Vendor Payment List', 'nama' => 'Daftar Pembayaran Vendor', 'parentCode' => 'VENDOR', 'url' => 'vendor/payment', 'sort' => 5],
 
         // ── DIRECT_PAYMENT ────────────────────────────────────────────────
         ['code' => 'DIRECT_PAYMENT_WAITING', 'name' => 'Direct Payment Waiting Order', 'nama' => 'Order Menunggu Nota', 'parentCode' => 'DIRECT_PAYMENT', 'url' => 'direct-payment/order/waiting', 'sort' => 1],
@@ -118,6 +120,7 @@ class MenuSeeder extends Seeder
         ['code' => 'DRIVER_SALARY', 'name' => 'Driver Salary', 'nama' => 'Gaji Sopir', 'parentCode' => 'REPORT', 'url' => 'report/driver-salary', 'sort' => 3],
         ['code' => 'MAINTENANCE_FLEET', 'name' => 'Maintenance Per Fleet', 'nama' => 'Perawatan Per Armada', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-fleet', 'sort' => 4],
         ['code' => 'MAINTENANCE_COMPANY', 'name' => 'Maintenance Per Fleet Company', 'nama' => 'Perawatan Per Perusahaan', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-company-internal', 'sort' => 5],
+        ['code' => 'RECEIVABLE_AGING', 'name' => 'Receivable Aging', 'nama' => 'Umur Piutang', 'parentCode' => 'REPORT', 'url' => 'report/receivable-aging', 'sort' => 6],
 
         // ── ADMINISTRATOR ─────────────────────────────────────────────────
         ['code' => 'USER', 'name' => 'User', 'nama' => 'Pengguna', 'parentCode' => 'ADMINISTRATOR', 'url' => 'administrator/user', 'sort' => 1],

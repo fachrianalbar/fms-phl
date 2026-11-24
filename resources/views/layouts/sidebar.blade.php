@@ -86,6 +86,7 @@
         'report/driver-salary' => 'mdi-cash',
         'report/maintenance-fleet' => 'mdi-wrench-clock',
         'report/maintenance-company-internal' => 'mdi-domain',
+        'report/receivable-aging' => 'mdi-account-cash-outline',
     ];
 @endphp
 

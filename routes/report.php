@@ -5,6 +5,7 @@ use App\Http\Controllers\Report\MaintenancePerCompanyController;
 use App\Http\Controllers\Report\MaintenancePerFleetController;
 use App\Http\Controllers\Report\OrderDetailController;
 use App\Http\Controllers\Report\ProfitLossController;
+use App\Http\Controllers\Report\ReceivableAgingController;
 use App\Http\Controllers\Report\SupplierPurchaseController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,11 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('pdf-supplier', [SupplierPurchaseController::class, 'pdfSupplier'])->name('supplier.pdf-supplier');
     Route::get('excel-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'excelSupplierDetail'])->name('supplier.excel-supplier-detail');
     Route::get('pdf-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'pdfSupplierDetail'])->name('supplier.pdf-supplier-detail');
+
+    Route::get('receivable-aging', [ReceivableAgingController::class, 'index'])->name('receivable-aging.index');
+    Route::get('receivable-aging/detail/{customerCode}', [ReceivableAgingController::class, 'detail'])->name('receivable-aging.detail');
+    Route::get('excel-receivable-aging', [ReceivableAgingController::class, 'excel'])->name('receivable-aging.excel');
+    Route::get('pdf-receivable-aging', [ReceivableAgingController::class, 'pdf'])->name('receivable-aging.pdf');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -50,6 +56,8 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('maintenance-company-internal-detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'datatableDetail'])->name('maintenance-company-internal-detail');
     Route::get('report-supplier', [SupplierPurchaseController::class, 'datatable'])->name('report-supplier');
     Route::get('report-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'datatableDetail'])->name('report-supplier-detail');
+    Route::get('receivable-aging', [ReceivableAgingController::class, 'datatable'])->name('receivable-aging');
+    Route::get('receivable-aging-detail/{customerCode}', [ReceivableAgingController::class, 'datatableDetail'])->name('receivable-aging-detail');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {
@@ -59,4 +67,5 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('supplier-purchase-detail-items/{purchaseCode}', [SupplierPurchaseController::class, 'detailItems'])->name('supplier-purchase-detail-items');
     Route::get('driver-salary-orders', [DriverSalaryController::class, 'getOrderSalary'])->name('driver-salary-orders');
     Route::get('driver-salary-detail/{id}', [DriverSalaryController::class, 'getDetail'])->name('driver-salary-detail');
+    Route::get('receivable-aging-summary', [ReceivableAgingController::class, 'summary'])->name('receivable-aging-summary');
 });
