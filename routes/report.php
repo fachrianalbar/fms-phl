@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Report\CommissionReportController;
 use App\Http\Controllers\Report\DriverSalaryController;
 use App\Http\Controllers\Report\MaintenancePerCompanyController;
 use App\Http\Controllers\Report\MaintenancePerFleetController;
+use App\Http\Controllers\Report\OmsetReportController;
 use App\Http\Controllers\Report\OrderDetailController;
 use App\Http\Controllers\Report\ProfitLossController;
 use App\Http\Controllers\Report\ReceivableAgingController;
@@ -18,6 +20,16 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::post('driver-salary/sync-existing-status', [DriverSalaryController::class, 'syncExistingStatus'])->name('driver-salary.sync-existing-status');
     Route::get('pdf-driver-salary', [DriverSalaryController::class, 'pdfDriverSalary'])->name('driver-salary.pdf-driver-salary');
     Route::get('pdf-driver-salary-processed/{id}', [DriverSalaryController::class, 'pdfDriverSalaryProcessed'])->name('driver-salary.pdf-processed');
+
+    Route::post('commission/order-payment-date', [CommissionReportController::class, 'updateOrderPaymentDate'])->name('commission.order-payment-date');
+    Route::resource('commission', CommissionReportController::class)->except(['create']);
+    Route::post('commission/{id}/payment-date', [CommissionReportController::class, 'updatePaymentDate'])->name('commission.payment-date');
+    Route::get('pdf-commission', [CommissionReportController::class, 'pdfByDate'])->name('commission.pdf-by-date');
+    Route::get('pdf-commission-processed/{id}', [CommissionReportController::class, 'pdfProcessed'])->name('commission.pdf-processed');
+
+    Route::get('omset', [OmsetReportController::class, 'index'])->name('omset.index');
+    Route::get('excel-omset', [OmsetReportController::class, 'exportExcel'])->name('omset.excel');
+    Route::get('pdf-omset', [OmsetReportController::class, 'exportPdf'])->name('omset.pdf');
     Route::resource('order-detail', OrderDetailController::class)->only(['index']);
     Route::get('excel-order-detail', [OrderDetailController::class, 'excelOrderDetail'])->name('order-detail.excel-order-detail');
     Route::get('excel-order-detail-init', [OrderDetailController::class, 'excelOrderDetailInit'])->name('order-detail.excel-order-detail-init');
@@ -53,6 +65,9 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     });
     Route::get('driver-salary', [DriverSalaryController::class, 'datatable'])->name('driver-salary');
     Route::get('driver-salary-processed', [DriverSalaryController::class, 'datatableProcessed'])->name('driver-salary-processed');
+    Route::get('commission-orders', [CommissionReportController::class, 'datatableOrders'])->name('commission-orders');
+    Route::get('commission-processed', [CommissionReportController::class, 'datatableProcessed'])->name('commission-processed');
+    Route::get('omset', [OmsetReportController::class, 'datatable'])->name('omset');
     Route::get('order-detail', [OrderDetailController::class, 'datatable'])->name('order-detail');
     Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'datatable'])->name('maintenance-fleet');
     Route::get('maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'datatableDetail'])->name('maintenance-fleet-detail');
@@ -73,5 +88,6 @@ Route::prefix('ajax')->name('ajax.')->group(function () {
     Route::get('supplier-purchase-detail-items/{purchaseCode}', [SupplierPurchaseController::class, 'detailItems'])->name('supplier-purchase-detail-items');
     Route::get('driver-salary-orders', [DriverSalaryController::class, 'getOrderSalary'])->name('driver-salary-orders');
     Route::get('driver-salary-detail/{id}', [DriverSalaryController::class, 'getDetail'])->name('driver-salary-detail');
+    Route::get('commission-orders', [CommissionReportController::class, 'getOrderCommission'])->name('commission-orders');
     Route::get('receivable-aging-summary', [ReceivableAgingController::class, 'summary'])->name('receivable-aging-summary');
 });

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Profit and Loss Report</title>
+    <title>Laporan Laba Rugi</title>
 </head>
 
 <body>
@@ -13,96 +13,59 @@
         <thead>
             <!-- Header Utama -->
             <tr>
-                <th colspan="3" style="font-size: 14px; font-weight: bold; text-align: center">Fleet Data</th>
-                <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center">Sales (A)</th>
-                <th colspan="2" style="font-size: 14px; font-weight: bold; text-align: center">Cost (B)</th>
-                <th rowspan="1" style="font-size: 14px; font-weight: bold; text-align: center">Margin (A - B)
-                </th>
+                <th colspan="3" style="font-size: 14px; font-weight: bold; text-align: center;">Data Kendaraan</th>
+                <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center;">Penjualan (A)</th>
+                <th colspan="2" style="font-size: 14px; font-weight: bold; text-align: center;">Biaya (B)</th>
+                <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center;">Pajak (C)</th>
+                <th colspan="1" style="font-size: 14px; font-weight: bold; text-align: center;">Laba Bersih (A - B - C)</th>
             </tr>
             <!-- Sub-header -->
             <tr>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">No</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Fleet</th>
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Fleet Type</th>
-
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Basic Sales</th>
-                {{-- <th>Total Sales</th> --}}
-
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Order Cost</th>
-
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Maintenance</th>
-
-                <th style="font-size: 14px; font-weight: bold; text-align: center">Total Margin</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">No</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Plat Nomor</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Perusahaan Kendaraan</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Penjualan Dasar</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Biaya Order</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Biaya Perawatan</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Pajak (PPh)</th>
+                <th style="font-size: 14px; font-weight: bold; text-align: center;">Laba Bersih</th>
             </tr>
         </thead>
 
         <tbody>
-            @php
-                use App\Models\Data\TonaseBonus;
-                use Carbon\Carbon;
-                use App\Models\Data\Route;
-                $totalMargin = 0;
-            @endphp
-
-            @foreach ($data as $row)
+            @forelse ($rows as $row)
+                @php
+                    $fleet = $row['fleet'];
+                    $summary = $row['summary'];
+                @endphp
                 <tr>
-                    <td style="text-align: center">{{ $loop->iteration }}</td>
-                    <td style="text-align: center">{{ $row->plateNumber }}</td>
-                    <td style="text-align: center">{{ isset($row->type->name) ? $row->type->name : '' }}</td>
-                    {{-- Basic Sales --}}
-                    <td style="text-align: center">
-                        @php
-                            $basicSales = 0;
-
-                            foreach ($row->orders as $item) {
-                                $basicSales += $item->qty * $item->route->price;
-                            }
-                            $totalMargin = $basicSales;
-                        @endphp
-                        {{ number_format($basicSales, 0, '.', ',') }}
-                    </td>
-                    {{-- Additional Cost --}}
-                    <td style="text-align: center">
-                        @php
-                            $additionalCost = 0;
-
-                            foreach ($row->orders as $item) {
-                                if (isset($item->cost)) {
-                                    foreach ($item->cost as $cost) {
-                                        $additionalCost += $cost->nominal;
-                                    }
-                                }
-                            }
-
-                            $totalMargin -= $additionalCost;
-                        @endphp
-                        {{ number_format($additionalCost, 0, '.', ',') }}
-                    </td>
-                    {{-- Maintenance --}}
-                    <td style="text-align: center">
-                        @php
-                            $maintenance = 0;
-
-                            foreach ($row->maintenances as $item) {
-                                foreach ($item->details as $details) {
-                                    $maintenance += $details->qty * $details->item->price;
-                                }
-                            }
-
-                            $totalMargin -= $maintenance;
-                        @endphp
-                        {{ number_format($maintenance, 0, '.', ',') }}
-                    </td>
-                    {{-- Total Margin --}}
-                    <td style="text-align: center">
-                        {{ number_format($totalMargin, 0, '.', ',') }}
-                    </td>
+                    <td style="text-align: center;">{{ $loop->iteration }}</td>
+                    <td style="text-align: center;">{{ $fleet->plateNumber ?? '-' }}</td>
+                    <td style="text-align: left;">{{ $fleet->company?->name ?? '-' }}</td>
+                    <td style="text-align: right;">{{ number_format($summary['basicSales'], 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($summary['orderCost'], 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($summary['maintenance'], 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($summary['tax'], 0, ',', '.') }}</td>
+                    <td style="text-align: right;">{{ number_format($summary['netProfit'], 0, ',', '.') }}</td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="8" style="text-align: center;">Tidak ada data laporan laba rugi.</td>
+                </tr>
+            @endforelse
         </tbody>
 
+        <tfoot>
+            <tr style="font-weight: bold; background-color: #d9eaf7;">
+                <td colspan="3" style="text-align: right;">Total Keseluruhan</td>
+                <td style="text-align: right;">{{ number_format($grandTotals['basicSales'] ?? 0, 0, ',', '.') }}</td>
+                <td style="text-align: right;">{{ number_format($grandTotals['orderCost'] ?? 0, 0, ',', '.') }}</td>
+                <td style="text-align: right;">{{ number_format($grandTotals['maintenance'] ?? 0, 0, ',', '.') }}</td>
+                <td style="text-align: right;">{{ number_format($grandTotals['tax'] ?? 0, 0, ',', '.') }}</td>
+                <td style="text-align: right;">{{ number_format($grandTotals['netProfit'] ?? 0, 0, ',', '.') }}</td>
+            </tr>
+        </tfoot>
     </table>
-
 </body>
 
 </html>

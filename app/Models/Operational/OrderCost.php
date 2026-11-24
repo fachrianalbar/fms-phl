@@ -65,4 +65,9 @@ class OrderCost extends Model
     {
         return $this->hasOne(OrderDriverSalary::class, 'order_cost_id', 'id');
     }
+
+    public function orderCommission()
+    {
+        return $this->hasOne(OrderCommission::class, 'order_cost_id', 'id');
+    }
 }

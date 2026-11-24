@@ -6,4 +6,5 @@ enum CostComponentType: string
 {
     case Salary = 'salary';
     case Cost = 'cost';
+    case Commission = 'commission';
 }

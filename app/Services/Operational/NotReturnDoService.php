@@ -14,6 +14,7 @@ use App\Models\Operational\OrderDriver;
 use App\Models\OrderDetail;
 use App\Services\Finance\DirectPaymentService;
 use App\Services\Finance\VendorPaymentService;
+use App\Services\Operational\OrderCommissionService;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Traits\LogActivity;
 use Illuminate\Support\Arr;
@@ -420,8 +421,9 @@ class NotReturnDoService
         }
 
         // Log after update
-        // Auto upsert salary cost components to order_driver_salary
+        // Auto upsert salary & commission cost components
         OrderDriverSalaryService::syncForOrder($order);
+        OrderCommissionService::syncForOrder($order);
 
         // Nominal nota vendor mengikuti harga order terkini (tanpa generate ulang).
         $this->vendorPayment->syncNotaForOrderSafely($order->code, $title);

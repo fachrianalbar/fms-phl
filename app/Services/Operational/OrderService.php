@@ -15,6 +15,7 @@ use App\Models\Operational\OrderDriver;
 use App\Models\Operational\OrderMaterial;
 use App\Services\Finance\DirectPaymentService;
 use App\Services\Finance\VendorPaymentService;
+use App\Services\Operational\OrderCommissionService;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\UniqueCodeService;
 use App\Traits\LogActivity;
@@ -139,8 +140,9 @@ class OrderService
             $this->storeOrderMaterial($request);
         }
 
-        // Auto upsert salary cost components to order_driver_salary
+        // Auto upsert salary & commission cost components
         OrderDriverSalaryService::syncForOrder($data);
+        OrderCommissionService::syncForOrder($data);
 
         $this->logActivity($title, $data, 'Create');
 
@@ -245,8 +247,9 @@ class OrderService
             $this->storeOrderMaterial($request);
         }
 
-        // Auto upsert salary cost components to order_driver_salary
+        // Auto upsert salary & commission cost components
         OrderDriverSalaryService::syncForOrder($data);
+        OrderCommissionService::syncForOrder($data);
 
         // Nominal nota vendor mengikuti harga order terkini (tanpa generate ulang).
         $this->vendorPayment->syncNotaForOrderSafely($data->code, $title);
@@ -282,6 +285,7 @@ class OrderService
         $this->orderMaterial->where('orderCode', $data->code)->delete();
 
         \App\Models\Operational\OrderDriverSalary::where('order_id', $data->id)->where('status', '0')->delete();
+        \App\Models\Operational\OrderCommission::where('order_id', $data->id)->where('status', '0')->delete();
 
         // Hapus lewat instance model agar SoftDeletes berlaku (bukan hard delete),
         // sehingga order yang terhapus masih bisa dipulihkan.

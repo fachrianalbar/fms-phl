@@ -211,6 +211,11 @@ class Order extends Model
         return $this->hasMany(OrderDriverSalary::class, 'order_id', 'id');
     }
 
+    public function orderCommissions()
+    {
+        return $this->hasMany(OrderCommission::class, 'order_id', 'id');
+    }
+
     public function invoiceDetail()
     {
         return $this->hasOne(\App\Models\Finance\InvoiceDetail::class, 'orderCode', 'code');

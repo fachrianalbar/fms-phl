@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Report;
 use App\Exports\ProfitLossReport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Data\Route;
 use App\Models\Data\TonaseBonus;
 use App\Models\Master\Fleet;
+use App\Models\Master\FleetCompany;
 use App\Services\Master\FleetService;
-use App\Services\Master\FleetTypeService;
 use App\Services\Report\ProfitLossService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,26 +25,14 @@ class ProfitLossController extends Controller
 
     protected $view;
 
-    protected $menuSvc;
-
-    protected $totalMargin;
-
-    protected $fleetTypeSvc;
-
-    protected $totalPrice;
-
     public function __construct(
         FleetService $fleetSvc,
-        FleetTypeService $fleetTypeSvc,
         ProfitLossService $profitLossSvc
     ) {
         $this->service = $profitLossSvc;
-        $this->title = 'Profit & Loss';
+        $this->title = 'Laporan Laba Rugi';
         $this->view = 'report.profit-loss.';
         $this->fleetSvc = $fleetSvc;
-        $this->fleetTypeSvc = $fleetTypeSvc;
-        $this->totalMargin = 0;
-        $this->totalPrice = 0;
     }
 
     /**
@@ -53,13 +40,16 @@ class ProfitLossController extends Controller
      */
     public function index()
     {
-        $fleet = $this->fleetSvc->findAll();
-        $fleetType = $this->fleetTypeSvc->findAll();
+        $fleet = Fleet::select('plateNumber')
+            ->whereNotNull('plateNumber')
+            ->orderBy('plateNumber')
+            ->get();
+        $fleetCompanies = FleetCompany::orderBy('name')->get();
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
-            ->with('fleetType', $fleetType)
+            ->with('fleetCompanies', $fleetCompanies)
             ->with('title', $this->title);
     }
 
@@ -68,113 +58,34 @@ class ProfitLossController extends Controller
      */
     public function show(string $id, Request $request)
     {
-        $data = Fleet::with(['type', 'orders' => function ($query) use ($request) {
-            if ($request->startDate && $request->endDate) {
-                $query->whereDate('orderDate', '>=', $request->startDate)
-                    ->whereDate('orderDate', '<=', $request->endDate);
-            }
-        }, 'maintenances' => function ($query) use ($request) {
-            if ($request->startDate && $request->endDate) {
-                $query->whereDate('date', '>=', $request->startDate)
-                    ->whereDate('date', '<=', $request->endDate);
-            }
-        }, 'orders.route.routeDetail', 'maintenances.details', 'orders.cost'])->where('id', $id)->first();
+        $data = Fleet::with($this->service->fleetReportRelations($request->startDate, $request->endDate))
+            ->where('id', $id)
+            ->firstOrFail();
 
-        $basicSales = 0;
-        $basicAllowance = 0;
-        $additionalCost = 0;
-        $maintenance = 0;
-        $tonase = 0;
-        $orderCost = 0;
-
-        foreach ($data->orders as $item) {
-            // Basic Sales
-            $basicSales += $item->qty * $item->route->price;
-
-            $dataRoute = $item->route->routeDetail;
-            $allowance = 0;
-
-            // Additional Cost
-            if (isset($item->cost)) {
-                foreach ($item->cost as $cost) {
-                    $additionalCost += $cost->nominal;
-                }
-            }
-
-            // Basic Allowance
-            foreach ($dataRoute as $itemRoute) {
-                if ($itemRoute->costComponent->type == 'Allowance') {
-                    if ($itemRoute->amount != 0) {
-                        $allowance += $itemRoute->amount;
-                    }
-
-                    if ($itemRoute->percentage) {
-                        $route = Route::where('code', $itemRoute->routeCode)->first();
-
-                        $allowance += $route->price * ($itemRoute->percentage / 100);
-                    }
-                }
-
-                if ($itemRoute->costComponent->type == 'Allowance Office') {
-                    if ($itemRoute->amount != 0) {
-                        $allowance += $itemRoute->amount;
-                    }
-
-                    if ($itemRoute->percentage) {
-                        $route = Route::where('code', $itemRoute->routeCode)->first();
-
-                        $allowance += $route->price * ($itemRoute->percentage / 100);
-                    }
-                }
-            }
-
-            $basicAllowance += $allowance;
-        }
-        foreach ($data->maintenances as $item) {
-            foreach ($item->details as $details) {
-                $maintenance += $details->qty * ($details->item?->price ?? 0);
-            }
-        }
-
-        foreach ($data->orders as $item) {
-            $bonus = TonaseBonus::where('min', '<=', $item->qty)->where('max', '>=', $item->qty)->first();
-
-            if ($bonus) {
-                $tonase += $bonus->value;
-            }
-        }
-
-        $orderCost = $basicAllowance + $additionalCost + $tonase;
-
-        $totalMargin = $basicSales;
-        $totalMargin -= $basicAllowance;
-        $totalMargin -= $additionalCost;
-        $totalMargin -= $maintenance;
-        $totalMargin -= $tonase;
+        $summary = $this->service->calculateFleetSummary($data);
 
         return view($this->view.'show')
             ->with('view', $this->view)
             ->with('data', $data)
-            ->with('totalMargin', $totalMargin)
-            ->with('maintenance', $maintenance)
-            ->with('basicSales', $basicSales)
-            ->with('orderCost', $orderCost)
+            ->with('basicSales', $summary['basicSales'])
+            ->with('orderCost', $summary['orderCost'])
+            ->with('maintenance', $summary['maintenance'])
+            ->with('tax', $summary['tax'])
+            ->with('netProfit', $summary['netProfit'])
+            ->with('totalMargin', $summary['netProfit'])
             ->with('title', $this->title);
     }
 
     public function datatableMaintenance(Request $request)
     {
-        // dd($request->all());
         if ($request->ajax()) {
             $data = $this->service->datatableMaintenance($request->fleetCode);
 
-            // Definisikan kolom filter dengan alias
             $filters = [
                 'fleet_plateNumber' => $request->plateNumber,
                 'item_code' => $request->itemCode,
             ];
 
-            // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
                 'fleet_plateNumber' => 'fleet.plateNumber',
                 'item_code' => 'details.itemCode',
@@ -192,57 +103,32 @@ class ProfitLossController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('maintenanceDate', function ($row) {
-                    $date = Carbon::parse($row->date)->format('d-M-Y');
-                    $time = Carbon::parse($row->time)->format('H:i');
+                    $date = $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '';
+                    $time = $row->time ? Carbon::parse($row->time)->format('H:i') : '';
 
-                    return $date.' '.$time;
+                    return trim($date.' '.$time);
                 })
                 ->editColumn('fleet.name', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->fleet?->plateNumber ?? '';
                 })
-
                 ->addColumn('items', function ($row) {
                     $items = '';
-                    foreach ($row->details as $item) {
-                        $items .= $item->itemCode.': '.($item->item?->name ?? '(item dihapus)').' Qty : '.$item->qty.'<br>';
+                    foreach ($row->details ?? [] as $item) {
+                        $items .= ($item->itemCode ?? '').': '.($item->item?->name ?? '(item dihapus)').' Qty : '.($item->qty ?? 0).'<br>';
                     }
 
                     return $items;
                 })
                 ->addColumn('price', function ($row) {
-                    $price = 0;
+                    $price = 0.0;
 
-                    foreach ($row->details as $item) {
-
-                        $price += intval($item->item?->price ?? 0) * $item->qty;
+                    foreach ($row->details ?? [] as $item) {
+                        $price += (float) ($item->item?->price ?? 0) * (float) ($item->qty ?? 0);
                     }
 
-                    return ''.number_format($price, 0, ',', '.');
+                    return number_format($price, 0, ',', '.');
                 })
-                ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="'.route($this->view.'edit', $row->id).'"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
-
-        <a href="javascript:deleteData(\''.$row->id.'\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
-
-                    return $btn;
-                })
-                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'items', 'price', 'action'])
+                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'items', 'price'])
                 ->toJson();
         }
     }
@@ -260,22 +146,17 @@ class ProfitLossController extends Controller
                 $data = $data->whereDriverNameLike($request->driverName);
             }
 
-            // Definisikan kolom filter dengan alias
             $filters = [
                 'customer_name' => $request->customerName,
                 'fleetType_name' => $request->fleetTypeName,
                 'shipmentNumber' => $request->shipmentNumber,
-                // 'origin' => $request->origin,
                 'destination' => $request->destination,
                 'orderTypeCode' => $request->orderTypeCode,
-
             ];
 
-            // Hubungkan alias ke relasi dan kolom yang sesuai
             $relations = [
                 'customer_name' => 'customer.name',
                 'fleetType_name' => 'fleet.type.name',
-                // 'origin' => 'route.originLocation.name',
                 'destination' => 'route.destinationLocation.name',
             ];
 
@@ -288,119 +169,76 @@ class ProfitLossController extends Controller
 
             $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
 
+            $tonaseBonuses = TonaseBonus::all();
+            $rowBreakdown = [];
+            $getBreakdown = function ($row) use (&$rowBreakdown, $tonaseBonuses): array {
+                $key = (string) ($row->id ?? $row->code);
+                if (! isset($rowBreakdown[$key])) {
+                    $allowance = $this->service->calculateOrderAllowance($row);
+
+                    $orderQty = (float) ($row->qty ?? 0);
+                    $matchedBonus = $tonaseBonuses->first(
+                        fn ($item) => (float) $item->min <= $orderQty && (float) $item->max >= $orderQty
+                    );
+                    $bonus = (float) ($matchedBonus->value ?? 0);
+
+                    $addCost = 0.0;
+                    foreach ($row->cost ?? [] as $item) {
+                        $addCost += (float) ($item->nominal ?? 0);
+                    }
+
+                    $rowBreakdown[$key] = [
+                        'allowance' => $allowance,
+                        'bonus' => $bonus,
+                        'addCost' => $addCost,
+                        'totalPrice' => $allowance + $bonus + $addCost,
+                    ];
+                }
+
+                return $rowBreakdown[$key];
+            };
+
             return DataTables::of($data)
                 ->addIndexColumn()
-
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    return $row->plateNumber ?: ($row->fleet->plateNumber ?? '');
+                    return $row->plateNumber ?: ($row->fleet?->plateNumber ?? '');
                 })
-
                 ->editColumn('customer.name', function ($row) {
-                    $customer = '';
-
-                    if (isset($row->customer->name)) {
-                        $customer = $row->customer->name;
-                    }
-
-                    return $customer;
+                    return $row->customer?->name ?? '';
                 })
-
                 ->editColumn('driver.name', function ($row) {
-                    return $row->driverName ?: ($row->driver->name ?? '');
+                    return $row->driverName ?: ($row->driver?->name ?? '');
                 })
-
                 ->editColumn('fleet.type.name', function ($row) {
-                    $fleetType = '';
-
-                    if (isset($row->fleet->type->name)) {
-                        $fleetType = $row->fleet->type->name;
-                    }
-
-                    return $fleetType;
+                    return $row->fleet?->type?->name ?? '';
                 })
-
                 ->editColumn('material.name', function ($row) {
-                    $material = '';
-
-                    if (isset($row->material->name)) {
-                        $material = $row->material->name;
-                    }
-
-                    return $material;
+                    return $row->material?->name ?? '';
                 })
-
                 ->editColumn('route.destinationLocation.name', function ($row) {
-                    $destination = '';
-
-                    if (isset($row->route->destinationLocation->name)) {
-                        $destination = $row->route->destinationLocation->name;
-                    }
-
-                    return $destination;
+                    return $row->route?->destinationLocation?->name ?? '';
                 })
-
-                ->addColumn('cost', function ($row) {
-                    $allowance = 0;
-
-                    if (isset($row->route->routeDetail)) {
-                        $data = $row->route->routeDetail;
-
-                        foreach ($data as $item) {
-                            if ($item->costComponent->type == 'Allowance') {
-                                if ($item->amount != 0) {
-                                    $allowance = $item->amount;
-                                }
-
-                                if ($item->percentage) {
-                                    $route = Route::where('code', $item->routeCode)->first();
-
-                                    $allowance = $route->price * ($item->percentage / 100);
-                                }
-                            }
-                        }
-                        $this->totalPrice = $allowance;
-                    }
-
-                    return ''.number_format($allowance, 0, ',', '.');
+                ->addColumn('cost', function ($row) use ($getBreakdown) {
+                    return number_format($getBreakdown($row)['allowance'], 0, ',', '.');
                 })
                 ->addColumn('tonase', function ($row) {
-                    if (isset($row->route->routeTypeCode)) {
-                        if ($row->route->routeTypeCode == 'TONASE') {
-                            return ''.number_format($row->route->price, 0, ',', '.');
-                        }
+                    if ($row->route?->routeTypeCode === 'TONASE') {
+                        return number_format((float) ($row->route?->price ?? 0), 0, ',', '.');
                     }
 
-                    return ''. 0;
+                    return '0';
                 })
-
-                ->addColumn('bonus', function ($row) {
-                    $bonus = TonaseBonus::where('min', '<=', $row->qty)->where('max', '>=', $row->qty)->first();
-
-                    if ($bonus) {
-                        $this->totalPrice += $bonus->value;
-
-                        return ''.number_format($bonus->value, 0, ',', '.');
-                    }
-
-                    return ''. 0;
+                ->addColumn('bonus', function ($row) use ($getBreakdown) {
+                    return number_format($getBreakdown($row)['bonus'], 0, ',', '.');
                 })
-                ->addColumn('addCost', function ($row) {
-                    $cost = 0;
-                    if (isset($row->cost)) {
-                        foreach ($row->cost as $item) {
-                            $cost += $item->nominal;
-                        }
-                    }
-                    $this->totalPrice += $cost;
-
-                    return ''.number_format($cost, 0, ',', '.');
+                ->addColumn('addCost', function ($row) use ($getBreakdown) {
+                    return number_format($getBreakdown($row)['addCost'], 0, ',', '.');
                 })
-                ->addColumn('totalPrice', function () {
-                    return ''.number_format($this->totalPrice, 0, ',', '.');
+                ->addColumn('totalPrice', function ($row) use ($getBreakdown) {
+                    return number_format($getBreakdown($row)['totalPrice'], 0, ',', '.');
                 })
-
                 ->editColumn('orderDate', function ($row) {
-                    return Carbon::parse($row->orderDate)->format('d-m-Y');
+                    return $row->orderDate ? Carbon::parse($row->orderDate)->format('d-m-Y') : '-';
                 })
                 ->rawColumns(['fleet.type.name', 'fleet.plateNumber', 'customer.name', 'route.destinationLocation.name', 'material.name', 'driver.name', 'cost', 'bonus', 'tonase', 'addCost', 'totalPrice'])
                 ->toJson();
@@ -410,158 +248,119 @@ class ProfitLossController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Fleet::with(['type', 'orders' => function ($query) use ($request) {
-                if ($request->startDate && $request->endDate) {
-                    $query->whereDate('orderDate', '>=', $request->startDate)
-                        ->whereDate('orderDate', '<=', $request->endDate);
-                }
-            }, 'maintenances' => function ($query) use ($request) {
-                if ($request->startDate && $request->endDate) {
-                    $query->whereDate('date', '>=', $request->startDate)
-                        ->whereDate('date', '<=', $request->endDate);
-                }
-            }, 'orders.route.routeDetail', 'maintenances.details', 'orders.cost']);
+            $baseQuery = Fleet::query()
+                ->select(['id', 'code', 'plateNumber', 'fleetCompanyCode'])
+                ->when($request->filled('plateNumber'), function ($query) use ($request) {
+                    $query->where('plateNumber', $request->plateNumber);
+                })
+                ->when($request->filled('fleetCompanyCode'), function ($query) use ($request) {
+                    $query->where('fleetCompanyCode', $request->fleetCompanyCode);
+                });
 
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'plateNumber' => $request->plateNumber,
-                'fleetTypeCode' => $request->fleetTypeCode,
+            $searchKeyword = trim((string) $request->input('search.value', ''));
+            $summaryQuery = clone $baseQuery;
+            if ($searchKeyword !== '') {
+                $summaryQuery->where(function ($query) use ($searchKeyword) {
+                    $query->where('plateNumber', 'like', "%{$searchKeyword}%")
+                        ->orWhereHas('company', function ($companyQuery) use ($searchKeyword) {
+                            $companyQuery->where('name', 'like', "%{$searchKeyword}%");
+                        });
+                });
+            }
+
+            $reportData = $this->service->calculatePerFleetSummaries(
+                $summaryQuery,
+                $request->startDate,
+                $request->endDate
+            );
+            $perFleetSummaries = $reportData['perFleet'];
+            $summaryTotals = $reportData['totals'];
+
+            $emptySummary = [
+                'basicSales' => 0.0,
+                'basicAllowance' => 0.0,
+                'additionalCost' => 0.0,
+                'tonase' => 0.0,
+                'orderCost' => 0.0,
+                'maintenance' => 0.0,
+                'tax' => 0.0,
+                'netProfit' => 0.0,
             ];
 
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
+            $getSummary = fn (Fleet $row): array => $perFleetSummaries[$row->code] ?? $emptySummary;
 
-            $dateFilters = [];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = (clone $baseQuery)->with('company:id,code,name');
 
             return DataTables::of($data)
                 ->addIndexColumn()
-                ->editColumn('type.name', function ($row) {
-                    $type = '';
-
-                    if (isset($row->type->name)) {
-                        $type = $row->type->name;
-                    }
-
-                    return $type;
+                ->addColumn('company_name', function ($row) {
+                    return $row->company?->name ?? '-';
                 })
-                ->addColumn('basic_sales', function ($row) {
-                    $basicSales = 0;
-
-                    foreach ($row->orders as $item) {
-                        $basicSales += $item->qty * ($item->route?->price ?? 0);
-                    }
-                    $this->totalMargin = $basicSales;
-
-                    return number_format($basicSales, 0, ',', '.');
+                ->filterColumn('company_name', function ($query, $keyword) {
+                    $query->whereHas('company', function ($companyQuery) use ($keyword) {
+                        $companyQuery->where('name', 'like', "%{$keyword}%");
+                    });
                 })
-
-                ->addColumn('basic_allowance', function ($row) {
-                    $basicAllowance = 0;
-
-                    // foreach ($row->orders as $order) {
-                    //     $data = $order->route->routeDetail;
-                    //     $allowance = 0;
-
-                    //     foreach ($data as $item) {
-                    //         if ($item->costComponent->type == 'Allowance') {
-                    //             if ($item->amount != 0) {
-                    //                 $allowance += $item->amount;
-                    //             }
-
-                    //             if ($item->percentage) {
-                    //                 $route = Route::where('code', $item->routeCode)->first();
-
-                    //                 $allowance += $route->price * ($item->percentage / 100);
-                    //             }
-                    //         }
-
-                    //         if ($item->costComponent->type == 'Allowance Office') {
-                    //             if ($item->amount != 0) {
-                    //                 $allowance += $item->amount;
-                    //             }
-
-                    //             if ($item->percentage) {
-                    //                 $route = Route::where('code', $item->routeCode)->first();
-
-                    //                 $allowance += $route->price * ($item->percentage / 100);
-                    //             }
-                    //         }
-                    //     }
-
-                    //     $basicAllowance += $allowance;
-                    // }
-                    // $this->totalMargin -= $basicAllowance;
-
-                    return number_format($basicAllowance, 0, ',', '.');
+                ->addColumn('basic_sales', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['basicSales'], 0, ',', '.');
                 })
-                ->addColumn('additional_cost', function ($row) {
-                    $additionalCost = 0;
-
-                    foreach ($row->orders as $item) {
-                        if (isset($item->cost)) {
-                            foreach ($item->cost as $cost) {
-                                $additionalCost += $cost->nominal;
-                            }
-                        }
-                    }
-
-                    $this->totalMargin -= $additionalCost;
-
-                    return number_format($additionalCost, 0, ',', '.');
+                ->addColumn('basic_allowance', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['basicAllowance'], 0, ',', '.');
                 })
-                ->addColumn('maintenance', function ($row) {
-                    $maintenance = 0;
-
-                    foreach ($row->maintenances as $item) {
-                        foreach ($item->details as $details) {
-                            $maintenance += $details->qty * ($details->item?->price ?? 0);
-                        }
-                    }
-
-                    $this->totalMargin -= $maintenance;
-
-                    return number_format($maintenance, 0, ',', '.');
+                ->addColumn('additional_cost', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['additionalCost'], 0, ',', '.');
                 })
-                ->addColumn('tonase', function ($row) {
-                    $tonase = 0;
-
-                    foreach ($row->orders as $item) {
-                        $bonus = TonaseBonus::where('min', '<=', $item->qty)->where('max', '>=', $item->qty)->first();
-
-                        if ($bonus) {
-                            $tonase += $bonus->value;
-                        }
-                    }
-
-                    $this->totalMargin -= $tonase;
-
-                    return number_format($tonase, 0, ',', '.');
+                ->addColumn('tonase', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['tonase'], 0, ',', '.');
                 })
-                ->addColumn('total_margin', function ($row) {
-
-                    return number_format($this->totalMargin, 0, ',', '.');
+                ->addColumn('order_cost', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['orderCost'], 0, ',', '.');
+                })
+                ->addColumn('maintenance', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['maintenance'], 0, ',', '.');
+                })
+                ->addColumn('tax', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['tax'], 0, ',', '.');
+                })
+                ->addColumn('net_profit', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['netProfit'], 0, ',', '.');
+                })
+                ->addColumn('total_margin', function ($row) use ($getSummary) {
+                    return number_format($getSummary($row)['netProfit'], 0, ',', '.');
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
+                    return '<td>
                                     <a href="'.route($this->view.'show', $row->id).'"
                                     class="btn btn-icon btn-sm bg-primary-subtle me-1"
-                                    data-bs-toggle="tooltip" title="Show">
+                                    data-bs-toggle="tooltip" title="Lihat Detail">
                                         <i class="mdi mdi-eye fs-14 text-primary"></i>
                                     </a>
                                 </td>';
-
-                    return $btn;
                 })
-                ->rawColumns(['type.name', 'basic_sales', 'basic_allowance', 'additional_cost', 'maintenance', 'tonase', 'total_margin', 'action'])
+                ->only([
+                    'DT_RowIndex',
+                    'plateNumber',
+                    'company_name',
+                    'basic_sales',
+                    'basic_allowance',
+                    'additional_cost',
+                    'tonase',
+                    'order_cost',
+                    'maintenance',
+                    'tax',
+                    'net_profit',
+                    'total_margin',
+                    'action',
+                ])
+                ->with(['summary' => $summaryTotals])
+                ->rawColumns(['action'])
                 ->toJson();
         }
     }
 
     public function excelProfitLoss(Request $request)
     {
-        return Excel::download(new ProfitLossReport($request), 'Profit-Loss-Report.xlsx');
+        return Excel::download(new ProfitLossReport($request), 'Laporan-Laba-Rugi.xlsx');
     }
 
     public function getProfitLossSummary(Request $request)
@@ -570,74 +369,19 @@ class ProfitLossController extends Controller
         $startDate = $request->startDate;
         $endDate = $request->endDate;
 
-        $data = Fleet::with(['orders' => function ($query) use ($startDate, $endDate) {
-            if ($startDate && $endDate) {
-                $query->whereDate('orderDate', '>=', $startDate)
-                    ->whereDate('orderDate', '<=', $endDate);
-            }
-        }, 'maintenances' => function ($query) use ($startDate, $endDate) {
-            if ($startDate && $endDate) {
-                $query->whereDate('date', '>=', $startDate)
-                    ->whereDate('date', '<=', $endDate);
-            }
-        }, 'orders.route.routeDetail', 'maintenances.details', 'orders.cost'])->where('code', $fleetCode)->first();
+        $data = Fleet::with($this->service->fleetReportRelations($startDate, $endDate))
+            ->where('code', $fleetCode)
+            ->firstOrFail();
 
-        $basicSales = 0;
-        $basicAllowance = 0;
-        $additionalCost = 0;
-        $maintenance = 0;
-        $tonase = 0;
-        $orderCost = 0;
-
-        foreach ($data->orders as $item) {
-            $basicSales += $item->qty * $item->route->price;
-
-            $allowance = 0;
-            $dataRoute = $item->route->routeDetail;
-
-            if (isset($item->cost)) {
-                foreach ($item->cost as $cost) {
-                    $additionalCost += $cost->nominal;
-                }
-            }
-
-            foreach ($dataRoute as $itemRoute) {
-                if (in_array($itemRoute->costComponent->type, ['Allowance', 'Allowance Office'])) {
-                    if ($itemRoute->amount != 0) {
-                        $allowance += $itemRoute->amount;
-                    }
-                    if ($itemRoute->percentage) {
-                        $route = Route::where('code', $itemRoute->routeCode)->first();
-                        $allowance += $route->price * ($itemRoute->percentage / 100);
-                    }
-                }
-            }
-
-            $basicAllowance += $allowance;
-        }
-
-        foreach ($data->maintenances as $item) {
-            foreach ($item->details as $details) {
-                $maintenance += $details->qty * ($details->item?->price ?? 0);
-            }
-        }
-
-        foreach ($data->orders as $item) {
-            $bonus = TonaseBonus::where('min', '<=', $item->qty)->where('max', '>=', $item->qty)->first();
-            if ($bonus) {
-                $tonase += $bonus->value;
-            }
-        }
-
-        $orderCost = $basicAllowance + $additionalCost + $tonase;
-
-        $totalMargin = $basicSales - $basicAllowance - $additionalCost - $maintenance - $tonase;
+        $summary = $this->service->calculateFleetSummary($data);
 
         return response()->json([
-            'basicSales' => $basicSales,
-            'orderCost' => $orderCost,
-            'maintenance' => $maintenance,
-            'totalMargin' => $totalMargin,
+            'basicSales' => $summary['basicSales'],
+            'orderCost' => $summary['orderCost'],
+            'maintenance' => $summary['maintenance'],
+            'tax' => $summary['tax'],
+            'netProfit' => $summary['netProfit'],
+            'totalMargin' => $summary['netProfit'],
         ]);
     }
 }

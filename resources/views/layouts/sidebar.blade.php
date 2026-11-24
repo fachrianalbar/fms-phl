@@ -84,6 +84,8 @@
         'report/order-detail' => 'mdi-chart-bar',
         'report/profit-loss' => 'mdi-finance',
         'report/driver-salary' => 'mdi-cash',
+        'report/commission' => 'mdi-cash-multiple',
+        'report/omset' => 'mdi-trending-up',
         'report/maintenance-fleet' => 'mdi-wrench-clock',
         'report/maintenance-company-internal' => 'mdi-domain',
         'report/receivable-aging' => 'mdi-account-cash-outline',

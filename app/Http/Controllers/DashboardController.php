@@ -5,12 +5,8 @@ namespace App\Http\Controllers;
 use App\Exports\FleetMaintenanceReport;
 use App\Helpers\FilterHelper;
 use App\Models\Operational\Order;
-use App\Models\Operational\OrderStatus;
-use App\Models\Purchasing\Purchase;
-use App\Models\Purchasing\PurchaseStatus;
 use App\Services\DashboardService;
 use App\Services\Master\FleetService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
@@ -34,155 +30,41 @@ class DashboardController extends Controller
         $this->view = 'dashboard.';
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $currentYear = request('year', now()->year);
-        $currentMonth = request('month', now()->month);
-        $currentMonthName = Carbon::create()->month($currentMonth)->translatedFormat('F');
+        $period = $this->service->resolvePeriod(
+            $request->input('preset'),
+            $request->input('startDate'),
+            $request->input('endDate')
+        );
 
-        // Total order bulan ini
-        $monthlyOrderNow = Order::whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $currentMonth)
-            ->count();
-
-        // Statistik order per bulan untuk tahun ini
-        $orders = Order::whereYear('created_at', $currentYear)
-            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw('MONTH(created_at)'))
-            ->pluck('total', 'month');
-
-        $monthlyOrders = [];
-        $monthlyOrderData = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $count = $orders[$i] ?? 0;
-            $monthlyOrders[] = $count;
-            $monthlyOrderData[$i] = $count;
-        }
-
-        // Customer dengan order terbanyak
-        $topCustomers = Order::join('customer', 'order.customerCode', '=', 'customer.code')
-            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
-            ->when($currentYear, function ($query) use ($currentYear) {
-                return $query->whereYear('order.created_at', $currentYear);
-            })
-            ->when($currentMonth, function ($query) use ($currentMonth) {
-                return $query->whereMonth('order.created_at', $currentMonth);
-            })
-            ->groupBy('customer.code', 'customer.name')
-            ->orderBy('orders_count', 'desc')
-            ->limit(10)
-            ->get();
-
-        // Fleet dengan order terbanyak
-        $topFleets = Order::join('fleet', 'order.fleetCode', '=', 'fleet.code')
-            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
-            ->when($currentYear, function ($query) use ($currentYear) {
-                return $query->whereYear('order.created_at', $currentYear);
-            })
-            ->when($currentMonth, function ($query) use ($currentMonth) {
-                return $query->whereMonth('order.created_at', $currentMonth);
-            })
-            ->groupBy('fleet.code', 'fleet.plateNumber')
-            ->orderBy('orders_count', 'desc')
-            ->limit(10)
-            ->get();
-
-        // Invoice jatuh tempo
-        $overdueInvoices = DB::table('invoice')
-            ->select(
-                'invoice.id',
-                'invoice.invoiceNumber',
-                'invoice.invoiceDate',
-                'invoice.overdueDate',
-                'customer.name as customer_name',
-                DB::raw('DATEDIFF(invoice.overdueDate, CURDATE()) as days_remaining'),
-            )
-            ->join('customer', 'invoice.customerCode', '=', 'customer.code')
-            ->orderBy('invoice.overdueDate', 'asc')
-            ->where('invoice.deleted_at', null)
-            ->limit(20)
-            ->get()
-            ->map(function ($invoice) {
-                if ($invoice->days_remaining > 7) {
-                    $invoice->status_color = 'success';
-                    $invoice->status_text = 'Aman';
-                } elseif ($invoice->days_remaining >= 0 && $invoice->days_remaining <= 7) {
-                    $invoice->status_color = 'warning';
-                    $invoice->status_text = 'Perhatian';
-                } else {
-                    $invoice->status_color = 'danger';
-                    $invoice->status_text = 'Terlambat';
-                }
-
-                return $invoice;
-            });
-
-        // Order yang belum dibuat invoice (status bukan 5 dan kurang dari 5)
-        $pendingInvoiceOrders = Order::where('status', '<', 5)
-            ->where('status', '!=', 5)
-            ->whereYear('created_at', $currentYear)
-            ->when($currentMonth, function ($query) use ($currentMonth) {
-                return $query->whereMonth('created_at', $currentMonth);
-            })
-            ->count();
-
-        $totalOrders = Order::whereYear('created_at', $currentYear)->count();
-
-        $ordersByStatus = OrderStatus::leftJoin('order', function ($join) use ($currentYear) {
-            $join->on('order_status.code', '=', 'order.code')
-                ->whereYear('order.created_at', $currentYear);
-        })
-            ->select('order_status.name', 'order_status.code', DB::raw('COUNT(order.status) as total'))
-            ->groupBy('order_status.name', 'order_status.code')
-            ->orderBy('order_status.code')
-            ->get();
-
-        $totalPurchases = Purchase::whereYear('created_at', $currentYear)->count();
-
-        $monthlyPurchaseNow = Purchase::whereYear('created_at', $currentYear)
-            ->whereMonth('created_at', $currentMonth)
-            ->count();
-
-        // $purchaseByStatus = PurchaseStatus::leftJoin('purchase', function ($join) use ($currentYear) {
-        //     $join->on('purchase_status.code', '=', 'purchase.status')
-        //         ->whereYear('purchase.created_at', $currentYear);
-        // })
-        //     ->select('purchase_status.name', 'purchase_status.code', DB::raw('COUNT(purchase.status) as total'))
-        //     ->groupBy('purchase_status.name', 'purchase_status.code')
-        //     ->orderBy('purchase_status.code', 'asc')
-        //     ->get();
-
-        // $purchases = Purchase::whereYear('created_at', $currentYear)
-        //     ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
-        //     ->groupBy(DB::raw('MONTH(created_at)'))
-        //     ->pluck('total', 'month');
-
-        $monthlyPurchases = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $monthlyPurchases[] = $purchases[$i] ?? 0;
-        }
-
-        $fleet = $this->fleetSvc->findAll();
+        $periodic = $this->service->getPeriodicSummary($period['startDate'], $period['endDate']);
+        $live = $this->service->getLiveSnapshot();
 
         return view($this->view.'home', [
-            'monthlyOrders' => $monthlyOrders,
-            'monthlyOrderData' => $monthlyOrderData,
-            'monthlyPurchases' => $monthlyPurchases,
-            'monthlyOrderNow' => $monthlyOrderNow,
-            'monthlyPurchaseNow' => $monthlyPurchaseNow,
-            'currentMonthName' => $currentMonthName,
-            'totalOrders' => $totalOrders,
-            'ordersByStatus' => $ordersByStatus,
-            'totalPurchases' => $totalPurchases,
-            // 'purchaseByStatus' => $purchaseByStatus,
-            'currentYear' => $currentYear,
-            'currentMonth' => $currentMonth,
-            'topCustomers' => $topCustomers,
-            'topFleets' => $topFleets,
-            'overdueInvoices' => $overdueInvoices,
-            'pendingInvoiceOrders' => $pendingInvoiceOrders,
-            'fleet' => $fleet,
+            'period' => $period,
+            'periodic' => $periodic,
+            'live' => $live,
             'view' => $this->view,
+        ]);
+    }
+
+    /**
+     * Endpoint JSON untuk memperbarui metrik periodik & grafik saat filter periode berubah.
+     */
+    public function summary(Request $request)
+    {
+        $period = $this->service->resolvePeriod(
+            $request->input('preset'),
+            $request->input('startDate'),
+            $request->input('endDate')
+        );
+
+        $periodic = $this->service->getPeriodicSummary($period['startDate'], $period['endDate']);
+
+        return response()->json([
+            'period' => $period,
+            'periodic' => $periodic,
         ]);
     }
 
@@ -209,7 +91,6 @@ class DashboardController extends Controller
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('price', function ($row) {
-
                     if (isset($row->price)) {
                         return number_format($row->price, 0, ',', '.');
                     }
@@ -225,32 +106,14 @@ class DashboardController extends Controller
         if ($request->ajax()) {
             $data = $this->service->dashboardTruckOrder();
 
-            // $filters = [
-            //     'fleet.code' => $request->plateNumber,
-            // ];
-
-            // $relations = [];
-
-            // $dateFilters = [
-            //     'maintenance.date' => [
-            //         'start' => $request->startDate,
-            //         'end' => $request->endDate,
-            //     ],
-            // ];
-
-            // $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->editColumn('status', function ($row) {
-                    $status = '';
                     if (in_array($row->status, [0, 1, 2]) && $row->status !== null) {
-                        $status = 'On the road';
-                    } else {
-                        $status = 'Order finish - Stand by';
+                        return 'On the road';
                     }
 
-                    return $status;
+                    return 'Order finish - Stand by';
                 })
                 ->rawColumns(['status'])
                 ->toJson();
@@ -259,13 +122,11 @@ class DashboardController extends Controller
 
     public function pdfFleetMaintenance(Request $request)
     {
-        $mpdf = new Mpdf(
-            [
-                'orientation' => 'P',
-                'format' => [215, 330],
-                'tempDir' => storage_path('app/mpdf-temp'),
-            ]
-        );
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format' => [215, 330],
+            'tempDir' => storage_path('app/mpdf-temp'),
+        ]);
 
         $data = $this->service->dashboardMaintenance();
 
@@ -297,18 +158,17 @@ class DashboardController extends Controller
         return Excel::download(new FleetMaintenanceReport($request), 'Fleet-Maintenance-Report.xlsx');
     }
 
-    // API untuk filter customer berdasarkan tahun dan bulan
     public function getCustomerStats(Request $request)
     {
         $year = $request->input('year', now()->year);
         $month = $request->input('month');
 
         $query = Order::join('customer', 'order.customerCode', '=', 'customer.code')
-            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
-            ->whereYear('order.created_at', $year);
+            ->select('customer.name', 'customer.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.orderDate) as latest_order'))
+            ->whereYear('order.orderDate', $year);
 
         if ($month) {
-            $query->whereMonth('order.created_at', $month);
+            $query->whereMonth('order.orderDate', $month);
         }
 
         $customers = $query->groupBy('customer.code', 'customer.name')
@@ -319,18 +179,17 @@ class DashboardController extends Controller
         return response()->json($customers);
     }
 
-    // API untuk filter fleet berdasarkan tahun dan bulan
     public function getFleetStats(Request $request)
     {
         $year = $request->input('year', now()->year);
         $month = $request->input('month');
 
         $query = Order::join('fleet', 'order.fleetCode', '=', 'fleet.code')
-            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.created_at) as latest_order'))
-            ->whereYear('order.created_at', $year);
+            ->select('fleet.plateNumber as name', 'fleet.code', DB::raw('COUNT(*) as orders_count'), DB::raw('MAX(order.orderDate) as latest_order'))
+            ->whereYear('order.orderDate', $year);
 
         if ($month) {
-            $query->whereMonth('order.created_at', $month);
+            $query->whereMonth('order.orderDate', $month);
         }
 
         $fleets = $query->groupBy('fleet.code', 'fleet.plateNumber')
@@ -341,14 +200,13 @@ class DashboardController extends Controller
         return response()->json($fleets);
     }
 
-    // API untuk mendapatkan statistik order berdasarkan tahun
     public function getOrderStatsByYear(Request $request)
     {
         $year = $request->input('year', now()->year);
 
-        $orders = Order::whereYear('created_at', $year)
-            ->select(DB::raw('MONTH(created_at) as month'), DB::raw('COUNT(*) as total'))
-            ->groupBy(DB::raw('MONTH(created_at)'))
+        $orders = Order::whereYear('orderDate', $year)
+            ->select(DB::raw('MONTH(orderDate) as month'), DB::raw('COUNT(*) as total'))
+            ->groupBy(DB::raw('MONTH(orderDate)'))
             ->pluck('total', 'month');
 
         $monthlyOrderData = [];
@@ -359,45 +217,38 @@ class DashboardController extends Controller
         return response()->json($monthlyOrderData);
     }
 
-    // API untuk mendapatkan jumlah order berdasarkan tahun dan bulan
     public function getOrderCount(Request $request)
     {
         $year = $request->input('year', now()->year);
         $month = $request->input('month');
 
-        $query = Order::whereYear('created_at', $year);
+        $query = Order::whereYear('orderDate', $year);
 
         if ($month) {
-            $query->whereMonth('created_at', $month);
+            $query->whereMonth('orderDate', $month);
         }
 
-        $count = $query->count();
-
         return response()->json([
-            'count' => $count,
+            'count' => $query->count(),
             'year' => $year,
             'month' => $month,
         ]);
     }
 
-    // API untuk mendapatkan jumlah order yang belum dibuat invoice
     public function getPendingInvoiceOrders(Request $request)
     {
         $year = $request->input('year', now()->year);
         $month = $request->input('month');
 
         $query = Order::where('status', '<', 5)
-            ->where('status', '!=', 5)
-            ->whereYear('created_at', $year);
+            ->whereYear('orderDate', $year);
 
         if ($month) {
-            $query->whereMonth('created_at', $month);
+            $query->whereMonth('orderDate', $month);
         }
 
-        $count = $query->count();
-
         return response()->json([
-            'count' => $count,
+            'count' => $query->count(),
             'year' => $year,
             'month' => $month,
         ]);

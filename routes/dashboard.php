@@ -10,6 +10,7 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('excel-fleet-maintenance', [DashboardController::class, 'excelFleetMaintenance'])->name('excel-fleet-maintenance');
 
     // API routes untuk dashboard
+    Route::get('summary', [DashboardController::class, 'summary'])->name('summary');
     Route::get('customer-stats', [DashboardController::class, 'getCustomerStats'])->name('customer-stats');
     Route::get('fleet-stats', [DashboardController::class, 'getFleetStats'])->name('fleet-stats');
     Route::get('order-stats-year', [DashboardController::class, 'getOrderStatsByYear'])->name('order-stats-year');

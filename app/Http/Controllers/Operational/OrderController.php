@@ -16,6 +16,7 @@ use App\Models\Master\Fleet;
 use App\Models\Master\Location;
 use App\Models\Operational\Order;
 use App\Models\Operational\OrderCost;
+use App\Services\Operational\OrderCommissionService;
 use App\Services\Operational\OrderDriverSalaryService;
 use App\Services\CompanySettingService;
 use App\Services\Master\CostComponentService;
@@ -945,8 +946,9 @@ class OrderController extends Controller
             $orderCost->is_route = 0; // Custom/tambahan user, bukan dari route
             $orderCost->save();
 
-            // Auto upsert salary cost components to order_driver_salary
+            // Auto upsert salary & commission cost components
             OrderDriverSalaryService::syncForOrder($request->orderCode);
+            OrderCommissionService::syncForOrder($request->orderCode);
 
             // Biaya On Charge ikut menentukan tagihan → sinkronkan nominal nota.
             $this->syncOrderNotaAmounts($request->orderCode);
@@ -990,8 +992,9 @@ class OrderController extends Controller
             $orderCode = $cost->orderCode;
             $cost->delete();
 
-            // Auto sync salary cost components
+            // Auto sync salary & commission cost components
             OrderDriverSalaryService::syncForOrder($orderCode);
+            OrderCommissionService::syncForOrder($orderCode);
 
             // Biaya On Charge ikut menentukan tagihan → sinkronkan nominal nota.
             $this->syncOrderNotaAmounts($orderCode);
