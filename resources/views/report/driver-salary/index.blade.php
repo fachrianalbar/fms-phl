@@ -1293,26 +1293,25 @@
                     <small class="text-muted">Kelola dan lihat seluruh riwayat proses gaji supir</small>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
-                    <div class="d-flex flex-wrap align-items-center gap-2">
-                        <a href="{{ route('report.driver-salary.excel-driver-salary') }}" target="_blank" id="export-excel"
-                            class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
-                            <i class="mdi mdi-file-excel fs-14 text-success"></i>
-                        </a>
-                        @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
-                            <button type="button" class="btn btn-outline-success" id="btn-sync-existing-status"
-                                style="border-radius: 10px; font-weight: 600; padding: 9px 16px;">
-                                <i class="mdi mdi-sync me-1"></i> Sinkron Status Gaji (Selesai)
-                            </button>
-                        @endif
-                        <button type="button" class="btn btn-process" data-bs-toggle="modal"
-                            data-bs-target="#processSalaryModal">
-                            <i class="mdi mdi-cash-plus me-1"></i> Proses Gaji Driver
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="{{ route('report.driver-salary.excel-driver-salary') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
+                        <button type="button" class="btn btn-outline-success" id="btn-sync-existing-status"
+                            style="border-radius: 10px; font-weight: 600; padding: 9px 16px;">
+                            <i class="mdi mdi-sync me-1"></i> Sinkron Status Gaji (Selesai)
                         </button>
-                    </div>
+                    @endif
+                    <button type="button" class="btn btn-process" data-bs-toggle="modal"
+                        data-bs-target="#processSalaryModal">
+                        <i class="mdi mdi-cash-plus me-1"></i> Proses Gaji Driver
+                    </button>
                 </div>
+            </div>
 
-                <div class="card-body p-4">
+            <div class="card-body p-4">
                     @include('partials.alert')
 
                     {{-- Filter Bar (Standard Collapsible Panel) --}}

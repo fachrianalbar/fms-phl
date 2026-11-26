@@ -46,7 +46,7 @@ flowchart LR
 
 | Step | Judul | Target File Utama | Status | Action File |
 | :---: | :--- | :--- | :---: | :--- |
-| 01 | Auto-Fill Harga Master Komponen Biaya DO | `not-return-do/components/cost-edit.blade.php`, `return-do/components/cost-edit.blade.php` | `pending` | [step-01-autofill-harga-master-komponen-biaya-do.md](./implementasi-catatan-operasional-vendor-filter-export/step-01-autofill-harga-master-komponen-biaya-do.md) |
+| 01 | Auto-Fill Harga Master Komponen Biaya DO | `not-return-do/components/cost-edit.blade.php`, `return-do/components/cost-edit.blade.php` | `done` | [step-01-autofill-harga-master-komponen-biaya-do.md](./implementasi-catatan-operasional-vendor-filter-export/step-01-autofill-harga-master-komponen-biaya-do.md) |
 | 02 | Hutang Vendor: Faktur Antar PT Internal | `VendorPaymentService.php`, `VendorInvoiceController.php` | `done` | [step-02-hutang-vendor-antar-pt-internal.md](./implementasi-catatan-operasional-vendor-filter-export/step-02-hutang-vendor-antar-pt-internal.md) |
 | 03 | Hutang Vendor: Rename Menu & Kolom Perusahaan | Migration `menu`, `MenuSeeder.php`, `VendorInvoiceController.php`, `waiting.blade.php`, `modals.blade.php` | `done` | [step-03-hutang-vendor-rename-menu-dan-kolom-perusahaan.md](./implementasi-catatan-operasional-vendor-filter-export/step-03-hutang-vendor-rename-menu-dan-kolom-perusahaan.md) |
 | 04 | Filter & Export Excel/PDF: Hutang Vendor (5 Submenu) | `routes/vendor.php`, `VendorInvoiceController`, `VendorPaymentListController`, `VendorPaymentService`, views & exports vendor | `done` | [step-04-filter-export-hutang-vendor.md](./implementasi-catatan-operasional-vendor-filter-export/step-04-filter-export-hutang-vendor.md) |

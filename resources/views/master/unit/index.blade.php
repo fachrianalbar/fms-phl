@@ -25,7 +25,7 @@
     <div class="col-sm-12">
         <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
             {{-- Card Header --}}
-                class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"
+            <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"
                 style="border-color: #e2e8f0;">
                 <div>
                     <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">

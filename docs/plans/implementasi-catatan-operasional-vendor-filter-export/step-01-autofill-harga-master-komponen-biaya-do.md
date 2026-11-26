@@ -2,7 +2,7 @@
 
 - **Plan Utama:** [implementasi-catatan-operasional-vendor-filter-export.md](../implementasi-catatan-operasional-vendor-filter-export.md)
 - **Prasyarat:** Tidak ada
-- **Status:** `in_progress` (implementasi kode & kompilasi Blade selesai; menunggu verifikasi manual di browser)
+- **Status:** `done`
 
 ---
 
@@ -68,7 +68,7 @@ Memastikan saat user memilih komponen biaya pada form edit order di **DO Belum K
   ```bash
   php artisan tinker --execute="app('blade.compiler')->compileString(file_get_contents('resources/views/operational/not-return-do/components/cost-edit.blade.php')); app('blade.compiler')->compileString(file_get_contents('resources/views/operational/return-do/components/cost-edit.blade.php')); echo 'OK';"
   ```
-- [ ] Verifikasi manual di browser:
-  1. Buka *DO Belum Kembali* -> Edit Order -> klik **Tambah Data** di kartu Biaya Komponen -> pilih komponen yang memiliki harga di master -> nominal terisi otomatis & total ikut berubah.
-  2. Ulangi langkah yang sama di *DO Kembali* -> Edit Order.
-  3. Ubah nominal secara manual (override) -> simpan -> pastikan nominal override tersimpan.
+- [x] Verifikasi di browser (Brave -> `http://phl.test/`):
+  1. Buka *DO Belum Kembali* (`not-return-do-edit/ORD-26100100012/edit`) -> klik **Tambah Data** -> pilih `Gaji Lampung - Duri` (`data-price="800000.00"`) -> nominal terisi `800.000` & total berubah `Rp 5.580.200` -> `Rp 6.380.200`.
+  2. Buka *DO Kembali* (`return-do-edit/ORD-26103100006/edit`) -> klik **Tambah Data** -> pilih `Gaji Lampung - Duri` -> nominal terisi `800.000` & total berubah `Rp 2.867.700` -> `Rp 3.667.700`.
+  3. Ubah nominal manual (`999.999` / `555.000`) -> total ikut berubah di UI (simpan ke DB tidak dieksekusi di browser agar tidak mengubah data produksi lokal; persistensi simpan override terverifikasi oleh `OrderCostSnapshotTest`).

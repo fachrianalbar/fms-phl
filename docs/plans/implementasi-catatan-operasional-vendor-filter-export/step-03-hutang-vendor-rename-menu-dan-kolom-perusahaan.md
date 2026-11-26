@@ -68,4 +68,4 @@
   ```bash
   php -l app/Http/Controllers/Finance/VendorInvoiceController.php && php -l app/Services/Finance/VendorPaymentService.php
   ```
-- [ ] Cek visual di halaman `vendor/order/waiting`: sidebar menampilkan **Faktur yg Belum Dibayar**, tabel menampilkan kolom **Perusahaan** berisi nama perusahaan customer, dan modal Generate Nota menampilkan tile **Perusahaan**.
+- [x] Cek visual di halaman `vendor/order/waiting` (Brave -> `http://phl.test/vendor/order/waiting`): sidebar menampilkan **Faktur yg Belum Dibayar**, tabel menampilkan kolom **Perusahaan** berisi nama perusahaan customer (mis. `PT WIJAYA TRANS MAKMUR SEJAHTERA`), dan modal Generate Nota menampilkan tile **Perusahaan**.
