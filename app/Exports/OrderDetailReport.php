@@ -2,9 +2,10 @@
 
 namespace App\Exports;
 
-use App\Helpers\FilterHelper;
 use App\Models\Operational\Order;
+use App\Services\Report\OrderDetailReportService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -14,68 +15,55 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
 {
     use Exportable;
 
-    protected $orders;
+    /**
+     * @var array<int, array<string, mixed>>
+     */
+    protected array $rows = [];
 
-    public function __construct($ordersOrRequest)
+    /**
+     * @var array<string, float>
+     */
+    protected array $totals = [];
+
+    public function __construct($ordersOrRequest, ?OrderDetailReportService $reportService = null)
     {
-        if ($ordersOrRequest instanceof \Illuminate\Http\Request) {
-            $query = Order::whereIn('status', [4, 5])->with([
-                'fleet',
-                'fleet.type',
-                'driver',
-                'customer',
-                'route.destinationLocation',
-                'route.originLocation',
-                'material',
-                'cost.costComponent',
-            ])->orderBy('orderDate', 'desc');
+        $reportService ??= app(OrderDetailReportService::class);
 
-            if (! empty($ordersOrRequest->plateNumber)) {
-                $query = $query->wherePlateNumberLike($ordersOrRequest->plateNumber);
+        if ($ordersOrRequest instanceof Request) {
+            $orders = $reportService->buildFilteredQuery($ordersOrRequest)->get();
+            $this->rows = $reportService->prepareExportRows($orders);
+        } elseif (is_iterable($ordersOrRequest)) {
+            $items = is_array($ordersOrRequest)
+                ? array_values($ordersOrRequest)
+                : collect($ordersOrRequest)->values()->all();
+
+            if (! empty($items) && $items[0] instanceof Order) {
+                $this->rows = $reportService->prepareExportRows($items);
+            } else {
+                $this->rows = $items;
             }
-
-            if (! empty($ordersOrRequest->driverName)) {
-                $query = $query->whereDriverNameLike($ordersOrRequest->driverName);
-            }
-
-            $filters = [
-                'customer_name' => $ordersOrRequest->customerName,
-                'fleetType_name' => $ordersOrRequest->fleetTypeName,
-                'shipmentNumber' => $ordersOrRequest->shipmentNumber,
-                'origin' => $ordersOrRequest->origin,
-                'destination' => $ordersOrRequest->destination,
-                'orderTypeCode' => $ordersOrRequest->orderTypeCode,
-            ];
-
-            $relations = [
-                'customer_name' => 'customer.name',
-                'fleetType_name' => 'fleet.type.name',
-                'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name',
-            ];
-
-            $dateFilters = [
-                'orderDate' => [
-                    'start' => $ordersOrRequest->startDate,
-                    'end' => $ordersOrRequest->endDate,
-                ],
-            ];
-
-            $this->orders = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters)->get();
-        } else {
-            $this->orders = $ordersOrRequest;
         }
+
+        $this->totals = $reportService->computeGrandTotals($this->rows);
     }
 
     public function columnFormats(): array
     {
         return [
-            'I' => '#,##0',   // Sales
-            'K' => '#,##0',   // Nominal Pendapatan
-            'L' => '#,##0',   // Total Pendapatan
-            'N' => '#,##0',   // Nominal Biaya
-            'O' => '#,##0',   // Total Biaya
-            'P' => '#,##0',   // Profit
+            'I' => '#,##0.##', // Qty
+            'J' => '#,##0',    // Harga Satuan
+            'K' => '#,##0',    // Total Omset
+            'M' => '#,##0',    // Nominal Biaya Ditagihkan
+            'N' => '#,##0',    // Total Biaya Ditagihkan
+            'P' => '#,##0',    // Nominal Komisi
+            'Q' => '#,##0',    // Total Komisi
+            'S' => '#,##0',    // Nominal Gaji
+            'T' => '#,##0',    // Total Gaji
+            'V' => '#,##0',    // Nominal Biaya Lainnya
+            'W' => '#,##0',    // Total Biaya Tidak Ditagihkan
+            'X' => '#,##0',    // Laba Kotor
+            'Y' => '#,##0',    // Potongan Pajak PPh
+            'Z' => '#,##0',    // Laba Bersih
         ];
     }
 
@@ -86,7 +74,9 @@ class OrderDetailReport implements FromView, ShouldAutoSize, WithColumnFormattin
 
     public function view(): View
     {
-        return view('report.order-detail.report.order-detail-excel')
-            ->with('order', $this->orders);
+        return view('report.order-detail.report.order-detail-excel', [
+            'rows' => $this->rows,
+            'totals' => $this->totals,
+        ]);
     }
 }

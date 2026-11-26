@@ -9,7 +9,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 9px;
+            font-size: 7.5px;
         }
 
         table {
@@ -20,7 +20,8 @@
         th,
         td {
             border: 1px solid black;
-            padding: 4px;
+            padding: 3px;
+            vertical-align: top;
         }
 
         th {
@@ -30,10 +31,10 @@
         }
 
         .title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
             text-align: center;
-            padding: 10px;
+            padding: 8px;
         }
 
         .text-center {
@@ -64,11 +65,17 @@
                 <th>Destination</th>
                 <th>Plate Number</th>
                 <th>Driver</th>
-                <th>Sales</th>
+                <th>Qty</th>
+                <th>Harga Satuan</th>
+                <th>Total Omset</th>
                 <th>Biaya Ditagihkan</th>
+                <th>Komisi</th>
+                <th>Gaji</th>
                 <th>Detail Biaya (Tidak Ditagihkan)</th>
                 <th>Total Biaya (Tidak Ditagihkan)</th>
-                <th>Profit</th>
+                <th>Laba Kotor</th>
+                <th>Potongan Pajak (PPh)</th>
+                <th>Laba Bersih</th>
             </tr>
         </thead>
         <tbody>

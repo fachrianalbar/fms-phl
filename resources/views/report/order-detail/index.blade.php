@@ -175,11 +175,11 @@
         table.table-order tbody tr:hover {
             background-color: #f8fafc !important;
         }
-        table.table-order th:nth-child(9),
-        table.table-order td:nth-child(9) {
-            min-width: 160px !important;
-            width: 170px !important;
+        table.table-order th.col-money,
+        table.table-order td.col-money {
+            min-width: 145px;
             white-space: nowrap !important;
+            font-variant-numeric: tabular-nums;
         }
         table.table-order td .cost-detail-list {
             display: block !important;
@@ -200,6 +200,9 @@
         html[data-bs-theme="dark"] .card-custom .card-header {
             background: var(--bs-card-bg);
             border-bottom-color: var(--bs-border-color);
+        }
+        html[data-bs-theme="dark"] .card-custom .card-header h5 {
+            color: var(--bs-body-color) !important;
         }
         html[data-bs-theme="dark"] .form-label-custom {
             color: var(--bs-body-color);
@@ -223,11 +226,19 @@
             color: var(--bs-body-color) !important;
             border-bottom-color: var(--bs-border-color) !important;
         }
+        html[data-bs-theme="dark"] table.table-order td.col-money {
+            color: var(--bs-body-color) !important;
+        }
         html[data-bs-theme="dark"] table.table-order tbody tr:hover {
             background-color: rgba(255, 255, 255, 0.05) !important;
         }
         html[data-bs-theme="dark"] table.table-order td .cost-detail-item {
             color: var(--bs-secondary-color);
+        }
+        html[data-bs-theme="dark"] table.table-order .badge.bg-light {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-body-color) !important;
+            border-color: var(--bs-border-color) !important;
         }
 
         /* Export loader overlay card (inline white background) */
@@ -408,7 +419,7 @@
 
         <div class="card-body">
             @include('partials.alert')
-            <div class="table-responsive">
+            <div class="table-responsive" tabindex="0" role="region" aria-label="{{ __('menu_order_detail.order_detail_report') }}">
                 <table class="table table-order table-hover align-middle nowrap" id="dt">
                     <thead>
                         <tr>
@@ -420,11 +431,17 @@
                             <th>{{ __('menu_order.destination') }}</th>
                             <th>{{ __('menu_order.plate_number') }}</th>
                             <th>{{ __('menu_order.driver') }}</th>
-                            <th>{{ __('menu_order_detail.sales') }}</th>
-                            <th>Biaya Ditagihkan</th>
-                            <th>Detail Biaya (Tidak Ditagihkan)</th>
-                            <th>Total Biaya (Tidak Ditagihkan)</th>
-                            <th>{{ __('menu_order_detail.profit') }}</th>
+                            <th class="text-center">{{ __('menu_order_detail.qty') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.unit_price') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.total_omset') }}</th>
+                            <th>{{ __('menu_order_detail.income') }}</th>
+                            <th>{{ __('menu_order_detail.commission') }}</th>
+                            <th>{{ __('menu_order_detail.salary') }}</th>
+                            <th>{{ __('menu_order_detail.cost_detail') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.total_cost') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.gross_profit') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.tax') }}</th>
+                            <th class="text-end col-money">{{ __('menu_order_detail.net_profit') }}</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -518,19 +535,44 @@
                     "data": 'driver_name'
                 },
                 {
-                    "data": 'sales'
+                    "data": 'qty',
+                    "className": 'text-center text-nowrap'
+                },
+                {
+                    "data": 'unit_price',
+                    "className": 'text-end text-nowrap col-money'
+                },
+                {
+                    "data": 'sales',
+                    "className": 'text-end text-nowrap col-money'
                 },
                 {
                     "data": 'income'
                 },
                 {
+                    "data": 'commission'
+                },
+                {
+                    "data": 'salary'
+                },
+                {
                     "data": 'cost_detail'
                 },
                 {
-                    "data": "total_cost"
+                    "data": "total_cost",
+                    "className": 'text-end text-nowrap col-money'
                 },
                 {
-                    "data": 'profit'
+                    "data": 'gross_profit',
+                    "className": 'text-end text-nowrap col-money'
+                },
+                {
+                    "data": 'tax',
+                    "className": 'text-end text-nowrap col-money'
+                },
+                {
+                    "data": 'profit',
+                    "className": 'text-end text-nowrap col-money'
                 }
             ],
             "columnDefs": [{
@@ -539,11 +581,7 @@
                 },
                 {
                     "orderable": false,
-                    "targets": [0]
-                },
-                {
-                    "width": "170px",
-                    "targets": 8
+                    "targets": [0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
                 }
             ],
             "order": [

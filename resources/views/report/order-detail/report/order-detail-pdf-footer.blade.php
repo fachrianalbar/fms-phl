@@ -1,40 +1,28 @@
             @php
-            $grandTotalSales = 0;
-            $grandTotalIncome = 0;
-            $grandTotalCost = 0;
-            $grandTotalProfit = 0;
-            foreach ($data as $item) {
-                $sales = $item->routeAmount;
-                $grandTotalSales += $sales;
-
-                $incomeTotal = 0;
-                $totalCost = 0;
-                if ($item->cost) {
-                    foreach ($item->cost as $cost) {
-                        if (strtolower($cost->type) === 'on charge') {
-                            $incomeTotal += $cost->nominal;
-                        } else {
-                            $totalCost += $cost->nominal;
-                        }
-                    }
+                $summaryTotals = $totals ?? [];
+                if (empty($summaryTotals) && isset($data) && is_iterable($data)) {
+                    $service = app(\App\Services\Report\OrderDetailReportService::class);
+                    $items = is_array($data) ? $data : collect($data)->all();
+                    $prepared = ! empty($items) && $items[0] instanceof \App\Models\Operational\Order
+                        ? $service->prepareExportRows($items)
+                        : $items;
+                    $summaryTotals = $service->computeGrandTotals($prepared);
                 }
-                $grandTotalIncome += $incomeTotal;
-                $grandTotalCost += $totalCost;
-
-                $profit = $sales + $incomeTotal - $totalCost;
-                $grandTotalProfit += $profit;
-            }
             @endphp
             <tr>
-                <th colspan="8" class="text-right">TOTAL</th>
-                <th class="text-right">{{ number_format($grandTotalSales, 0, ',', '.') }}</th>
-                <th class="text-right">{{ number_format($grandTotalIncome, 0, ',', '.') }}</th>
+                <th colspan="10" class="text-right">TOTAL</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['omset'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['income_total'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['commission_total'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['salary_total'] ?? 0), 0, ',', '.') }}</th>
                 <th></th>
-                <th class="text-right">{{ number_format($grandTotalCost, 0, ',', '.') }}</th>
-                <th class="text-right">{{ number_format($grandTotalProfit, 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['total_cost'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['gross_profit'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['tax'] ?? 0), 0, ',', '.') }}</th>
+                <th class="text-right">{{ number_format((float) ($summaryTotals['net_profit'] ?? 0), 0, ',', '.') }}</th>
             </tr>
-            </tbody>
-            </table>
-            </body>
+        </tbody>
+    </table>
+</body>
 
-            </html>
+</html>
