@@ -980,7 +980,7 @@ class DirectPaymentService
      * Berbeda dari vendor (pajak nota tersimpan sama di semua baris → MAX),
      * pajak & claim di sini DIDISTRIBUSIKAN per order → dijumlahkan (SUM).
      */
-    public function findNotaGroups()
+    public function findNotaGroups(array $filters = [])
     {
         $orderPayments = $this->service->with([
             'order.fleet',
@@ -1003,7 +1003,7 @@ class DirectPaymentService
             ->get()
             ->keyBy('code');
 
-        return $orderPayments->groupBy('nota_number')->map(function ($group, $notaNumber) use ($notaBankLookup) {
+        $groups = $orderPayments->groupBy('nota_number')->map(function ($group, $notaNumber) use ($notaBankLookup) {
             $orders = $group->pluck('order')->filter();
             $firstPayment = $group->first();
             $firstOrder = $orders->first();
@@ -1064,10 +1064,19 @@ class DirectPaymentService
                 $status = 'partial';
             }
 
+            $companyCodes = $orders
+                ->map(fn ($o) => trim((string) ($o?->customer?->companyCode ?? ($o?->customer?->company?->code ?? ''))))
+                ->filter()
+                ->unique()
+                ->values();
+
             return (object) [
                 'nota_number' => $notaNumber,
                 'customer_code' => $firstOrder?->customerCode ?? ($firstOrder?->customer?->code ?? ''),
                 'customer_name' => $firstOrder?->customer?->name,
+                'company_code' => $firstOrder?->customer?->companyCode ?? ($firstOrder?->customer?->company?->code ?? ''),
+                'company_name' => $firstOrder?->customer?->company?->name,
+                'company_codes' => $companyCodes,
                 'order_format' => strtoupper(trim((string) ($firstOrder?->customer?->company?->format ?? ''))),
                 'order_count' => $group->count(),
                 'orders' => $orders,
@@ -1100,22 +1109,83 @@ class DirectPaymentService
                 'latest_batch_code' => $latestBatchCode,
             ];
         })->values();
+
+        return $this->filterNotaGroups($groups, $filters);
+    }
+
+    private function filterNotaGroups($groups, array $filters)
+    {
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $notaNumber = trim((string) ($filters['notaNumber'] ?? ''));
+        $plateNumber = trim((string) ($filters['plateNumber'] ?? ''));
+        $statusFilter = trim((string) ($filters['status'] ?? ''));
+
+        if ($startDate === '' && $endDate === '' && $customerCode === '' && $companyCode === '' && $notaNumber === '' && $plateNumber === '' && ! in_array($statusFilter, ['pending', 'unpaid', 'partial'], true)) {
+            return $groups;
+        }
+
+        return $groups->filter(function ($nota) use ($startDate, $endDate, $customerCode, $companyCode, $notaNumber, $plateNumber, $statusFilter) {
+            $notaDate = substr((string) ($nota->date ?? $nota->nota_date ?? ''), 0, 10);
+
+            if ($startDate !== '' && ($notaDate === '' || $notaDate < $startDate)) {
+                return false;
+            }
+
+            if ($endDate !== '' && ($notaDate === '' || $notaDate > $endDate)) {
+                return false;
+            }
+
+            if ($customerCode !== '' && trim((string) ($nota->customer_code ?? '')) !== $customerCode) {
+                return false;
+            }
+
+            if ($companyCode !== '') {
+                $matchesCompany = $nota->company_codes->contains($companyCode)
+                    || trim((string) ($nota->company_code ?? '')) === $companyCode;
+                if (! $matchesCompany) {
+                    return false;
+                }
+            }
+
+            if ($notaNumber !== '' && ! str_contains(mb_strtolower((string) ($nota->nota_number ?? '')), mb_strtolower($notaNumber))) {
+                return false;
+            }
+
+            if ($plateNumber !== '') {
+                $plates = $nota->plate_numbers->implode(' ');
+                if (! str_contains(mb_strtolower($plates), mb_strtolower($plateNumber))) {
+                    return false;
+                }
+            }
+
+            if (in_array($statusFilter, ['pending', 'unpaid', 'partial'], true)) {
+                $statusMatch = $statusFilter === 'unpaid' ? 'pending' : $statusFilter;
+                if (($nota->payment_status ?? '') !== $statusMatch) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
     }
 
     /**
      * Nota yang belum lunas (pending / partial).
      */
-    public function findUnpaidNotas()
+    public function findUnpaidNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status !== 'paid')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status !== 'paid')->values();
     }
 
     /**
      * Nota yang sudah lunas (semua order di dalamnya paid).
      */
-    public function findPaidNotas()
+    public function findPaidNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'paid')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status === 'paid')->values();
     }
 
     /**
@@ -1157,6 +1227,9 @@ class DirectPaymentService
             'payment_date' => $latestPaymentDate,
             'customer_code' => $order->customerCode ?? ($order->customer->code ?? ''),
             'customer_name' => $customerName,
+            'company_code' => $order->customer?->companyCode ?? ($order->customer?->company?->code ?? ''),
+            'company_name' => $order->customer?->company?->name ?? '',
+            'company_codes' => collect([$order->customer?->companyCode ?? ($order->customer?->company?->code ?? '')])->filter()->values(),
             'plate' => $order->plateNumber ?: ($order->fleet?->plateNumber ?? ''),
             'driver' => $order->driverName ?: ($order->driver?->name ?? ''),
             'shipment' => $order->shipmentNumber ?? '',
@@ -1208,6 +1281,9 @@ class DirectPaymentService
             'payment_date' => $nota->payment_date ?? null,
             'customer_code' => $nota->customer_code,
             'customer_name' => $nota->customer_name ?? '',
+            'company_code' => $nota->company_code ?? '',
+            'company_name' => $nota->company_name ?? '',
+            'company_codes' => $nota->company_codes ?? collect(),
             'plate' => $plates->implode(', '),
             'driver' => '',
             'shipment' => '',
@@ -1280,24 +1356,26 @@ class DirectPaymentService
     /**
      * Unit yang sudah lunas: order standalone paid/overpaid + nota paid.
      */
-    public function findPaidUnits()
+    public function findPaidUnits(array $filters = [])
     {
-        return $this->findAllUnits()->filter(function ($unit) {
+        $units = $this->findAllUnits()->filter(function ($unit) {
             if ($unit->unit_type === 'nota') {
                 return $unit->payment_status === 'paid';
             }
 
             return in_array($unit->status_code, ['paid', 'overpaid'], true);
         })->values();
+
+        return $this->filterUnits($units, $filters, 'payment');
     }
 
     /**
      * Order non-DO yang belum dibuat nota (menunggu di-generate nota).
      * Hanya menyertakan order yang BELUM PERNAH DIBAYAR (payment == 0 dan belum berstatus lunas/partial).
      */
-    public function findWaitingOrders()
+    public function findWaitingOrders(array $filters = [])
     {
-        return $this->findAllUnits()
+        $units = $this->findAllUnits()
             ->where('unit_type', 'order')
             ->filter(function ($unit) {
                 $payment = (float) ($unit->payment ?? 0);
@@ -1306,6 +1384,62 @@ class DirectPaymentService
                 return $payment <= 0 && ! $isPaidOrPartial && ($unit->status_code ?? '') === 'unpaid';
             })
             ->values();
+
+        return $this->filterUnits($units, $filters, 'order');
+    }
+
+    private function filterUnits($units, array $filters, string $dateMode = 'order')
+    {
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $plateNumber = trim((string) ($filters['plateNumber'] ?? ''));
+        $notaNumber = trim((string) ($filters['notaNumber'] ?? ''));
+
+        if ($startDate === '' && $endDate === '' && $customerCode === '' && $companyCode === '' && $plateNumber === '' && $notaNumber === '') {
+            return $units;
+        }
+
+        return $units->filter(function ($unit) use ($startDate, $endDate, $customerCode, $companyCode, $plateNumber, $notaNumber, $dateMode) {
+            $rawDate = $dateMode === 'payment'
+                ? ($unit->payment_date ?: ($unit->order_date ?: $unit->date))
+                : ($unit->order_date ?: $unit->date);
+            $unitDate = substr((string) ($rawDate ?? ''), 0, 10);
+
+            if ($startDate !== '' && ($unitDate === '' || $unitDate < $startDate)) {
+                return false;
+            }
+
+            if ($endDate !== '' && ($unitDate === '' || $unitDate > $endDate)) {
+                return false;
+            }
+
+            if ($customerCode !== '' && trim((string) ($unit->customer_code ?? '')) !== $customerCode) {
+                return false;
+            }
+
+            if ($companyCode !== '') {
+                $matchesCompany = ($unit->company_codes ?? collect())->contains($companyCode)
+                    || trim((string) ($unit->company_code ?? '')) === $companyCode;
+                if (! $matchesCompany) {
+                    return false;
+                }
+            }
+
+            if ($plateNumber !== '' && ! str_contains(mb_strtolower((string) ($unit->plate ?? '')), mb_strtolower($plateNumber))) {
+                return false;
+            }
+
+            if ($notaNumber !== '') {
+                $codeHaystack = mb_strtolower(trim((string) ($unit->nota_number ?? '')).' '.trim((string) ($unit->code ?? '')));
+                if (! str_contains($codeHaystack, mb_strtolower($notaNumber))) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
     }
 
     /**
@@ -1919,14 +2053,69 @@ class DirectPaymentService
      * ke beberapa order dalam satu atau beberapa nota. Riwayat lama (pembayaran
      * tunggal) yang belum memiliki batch_code tetap ditampilkan per alokasi.
      */
-    public function findPayments()
+    public function findPayments(array $filters = [])
     {
         $histories = $this->orderPaymentHistory->with($this->paymentHistoryRelations())
             ->orderByDesc('date')
             ->orderByDesc('created_at')
             ->get();
 
-        return $this->mapPaymentTransactions($histories);
+        $transactions = $this->mapPaymentTransactions($histories);
+
+        return $this->filterPayments($transactions, $filters);
+    }
+
+    private function filterPayments($transactions, array $filters)
+    {
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $userBankCode = trim((string) ($filters['userBankCode'] ?? ''));
+        $notaNumber = trim((string) ($filters['notaNumber'] ?? ''));
+
+        if ($startDate === '' && $endDate === '' && $customerCode === '' && $companyCode === '' && $userBankCode === '' && $notaNumber === '') {
+            return $transactions;
+        }
+
+        return $transactions->filter(function ($tx) use ($startDate, $endDate, $customerCode, $companyCode, $userBankCode, $notaNumber) {
+            $payDate = substr((string) ($tx->payment_date ?? ''), 0, 10);
+
+            if ($startDate !== '' && ($payDate === '' || $payDate < $startDate)) {
+                return false;
+            }
+
+            if ($endDate !== '' && ($payDate === '' || $payDate > $endDate)) {
+                return false;
+            }
+
+            if ($customerCode !== '' && ! ($tx->customer_codes ?? collect())->contains($customerCode)) {
+                return false;
+            }
+
+            if ($companyCode !== '' && ! ($tx->company_codes ?? collect())->contains($companyCode)) {
+                return false;
+            }
+
+            if ($userBankCode !== '' && trim((string) ($tx->user_bank_code ?? '')) !== $userBankCode) {
+                return false;
+            }
+
+            if ($notaNumber !== '') {
+                $needle = mb_strtolower($notaNumber);
+                $haystack = mb_strtolower(implode(' ', array_filter([
+                    $tx->batch_code,
+                    $tx->legacy_code,
+                    $tx->notas->pluck('number')->implode(' '),
+                    $tx->notas->flatMap(fn ($n) => $n->orders->pluck('code'))->implode(' '),
+                ])));
+                if (! str_contains($haystack, $needle)) {
+                    return false;
+                }
+            }
+
+            return true;
+        })->values();
     }
 
     /** Ambil satu transaksi beserta rincian nota dan order-nya. */
@@ -1978,7 +2167,9 @@ class DirectPaymentService
                             return (object) [
                                 'code' => $order?->code ?: ($history->orderPayment?->orderCode ?: ($history->orderCode ?: '-')),
                                 'shipment_number' => $order?->shipmentNumber,
+                                'customer_code' => $order?->customerCode ?? ($order?->customer?->code ?? ''),
                                 'customer_name' => $order?->customer?->name,
+                                'company_code' => $order?->customer?->companyCode ?? ($order?->customer?->company?->code ?? ''),
                                 'amount' => (float) $history->total,
                             ];
                         })->sortBy('code')->values();
@@ -1999,6 +2190,7 @@ class DirectPaymentService
                     'legacy_code' => $firstHistory->orderPayment?->code,
                     'is_legacy' => $isLegacy,
                     'amount' => (float) $transaction->sum('total'),
+                    'user_bank_code' => $firstHistory->userBankCode,
                     'userBank' => $firstHistory->userBank,
                     'description' => $transaction->pluck('description')->filter()->first(),
                     'notas' => $notas,
@@ -2007,6 +2199,16 @@ class DirectPaymentService
                         ->filter()
                         ->unique()
                         ->sort()
+                        ->values(),
+                    'customer_codes' => $notas
+                        ->flatMap(fn ($nota) => $nota->orders->pluck('customer_code'))
+                        ->filter()
+                        ->unique()
+                        ->values(),
+                    'company_codes' => $notas
+                        ->flatMap(fn ($nota) => $nota->orders->pluck('company_code'))
+                        ->filter()
+                        ->unique()
                         ->values(),
                     'order_count' => (int) $notas->sum(fn ($nota) => $nota->orders->count()),
                 ];

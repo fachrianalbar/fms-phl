@@ -26,10 +26,12 @@
             border: 1px solid transparent;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .summary-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
+
         .summary-card h5 {
             font-size: 12px;
             margin-bottom: 6px;
@@ -38,22 +40,26 @@
             letter-spacing: 0.5px;
             font-weight: 600;
         }
+
         .summary-card h3 {
             font-size: 22px;
             font-weight: 800;
             margin: 0;
             letter-spacing: -0.5px;
         }
+
         .summary-primary {
             background: linear-gradient(135deg, #eef2ff, #e0e7ff);
             border-color: #c7d2fe;
             color: #3730a3;
         }
+
         .summary-success {
             background: linear-gradient(135deg, #ecfdf5, #d1fae5);
             border-color: #a7f3d0;
             color: #065f46;
         }
+
         .summary-warning {
             background: linear-gradient(135deg, #fefce8, #fef9c3);
             border-color: #fde68a;
@@ -68,6 +74,7 @@
             margin: 0 0 20px;
             overflow: hidden;
         }
+
         .filter-card-header {
             align-items: center;
             background: #f8fafc;
@@ -80,18 +87,61 @@
             width: 100%;
             cursor: pointer;
         }
-        .filter-card-header:hover { background: #f1f5f9; }
-        .filter-card-heading { align-items: center; display: flex; gap: 8px; }
-        .filter-card-heading i { color: #4f46e5; font-size: 17px; }
-        .filter-card-heading strong { font-size: 13px; font-weight: 700; }
-        .filter-card-heading small { color: #94a3b8; font-size: 11px; font-weight: 400; }
-        .filter-card-chevron { transition: transform .2s ease; }
-        .filter-card-header[aria-expanded="true"] .filter-card-chevron { transform: rotate(180deg); }
-        .filter-card .filter-collapse { border-top: 1px solid #e2e8f0; }
-        .filter-card .filter-collapse-body { padding: 16px; }
-        .filter-card .row { --bs-gutter-y: .75rem; }
 
-        .filter-label { color: #64748b; display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-card .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
+
+        .filter-label {
+            color: #64748b;
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
         .filter-control,
         .filter-card .form-control {
             background-color: #fff !important;
@@ -100,12 +150,19 @@
             color: #334155 !important;
             font-size: 13px !important;
             height: 38px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .filter-control {
             padding: 0 12px 0 36px !important;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
             background-repeat: no-repeat;
             background-position: 12px center;
             background-size: 15px 15px;
-            transition: all 0.2s ease !important;
+        }
+
+        .filter-card .form-control:not(.filter-control) {
+            padding: 0 12px !important;
         }
 
         .filter-control:hover {
@@ -136,12 +193,14 @@
             box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25) !important;
             transition: all 0.2s ease !important;
         }
+
         .btn-filter-primary:hover {
             background: linear-gradient(135deg, #4338ca, #4f46e5) !important;
             color: #fff !important;
             box-shadow: 0 4px 10px rgba(79, 70, 229, 0.35) !important;
             transform: translateY(-1px) !important;
         }
+
         .btn-filter-primary:active {
             transform: translateY(0) !important;
         }
@@ -160,6 +219,7 @@
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
             transition: all 0.2s ease !important;
         }
+
         .btn-filter-reset:hover {
             background: #fff1f2 !important;
             color: #e11d48 !important;
@@ -167,16 +227,21 @@
             box-shadow: 0 2px 6px rgba(225, 29, 72, 0.15) !important;
             transform: translateY(-1px) !important;
         }
+
         .btn-filter-reset:hover i {
             transform: rotate(-45deg);
             transition: transform 0.2s ease;
         }
+
         .btn-filter-reset:active {
             transform: translateY(0) !important;
         }
 
         /* ── Select2 Theme Matching Seragam 38px ── */
-        .select2-container { width: 100% !important; }
+        .select2-container {
+            width: 100% !important;
+        }
+
         .select2-container--default .select2-selection--single {
             border: 1px solid #cbd5e1 !important;
             border-radius: 8px !important;
@@ -186,24 +251,29 @@
             background-color: #ffffff !important;
             transition: all 0.2s ease !important;
         }
+
         .select2-container--default .select2-selection--single:hover {
             border-color: #94a3b8 !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #334155 !important;
             font-size: 13px !important;
             line-height: 36px !important;
             padding-left: 12px !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__placeholder {
             color: #94a3b8 !important;
             font-size: 13px !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__arrow {
             height: 36px !important;
             right: 10px !important;
             top: 1px !important;
         }
+
         .select2-container--default.select2-container--open .select2-selection--single,
         .select2-container--default.select2-container--focus .select2-selection--single {
             border-color: #818cf8 !important;
@@ -219,6 +289,7 @@
             border: 1px solid #e2e8f0;
             width: 100%;
         }
+
         #direct-purchase-table thead th {
             background-color: #f8fafc;
             color: #475569;
@@ -232,6 +303,7 @@
             white-space: nowrap;
             vertical-align: middle;
         }
+
         #direct-purchase-table tbody td {
             padding: 11px 12px;
             border-bottom: 1px solid #f1f5f9;
@@ -240,9 +312,11 @@
             white-space: nowrap;
             vertical-align: middle;
         }
+
         #direct-purchase-table tbody tr {
             transition: background-color 0.15s ease;
         }
+
         #direct-purchase-table tbody tr:hover {
             background-color: #f8fafc !important;
         }
@@ -254,6 +328,7 @@
             font-size: 13px;
             transition: all 0.2s ease;
         }
+
         .btn-icon:hover {
             transform: translateY(-1px);
         }
@@ -265,21 +340,25 @@
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
         }
+
         .modal-header {
             padding: 14px 20px;
             background: #ffffff;
             border-bottom: 1px solid #e2e8f0;
         }
+
         .modal-footer {
             padding: 12px 20px;
             background: #f8fafc;
             border-top: 1px solid #e2e8f0;
         }
+
         .modal-table {
             border-collapse: separate;
             border-spacing: 0;
             width: 100%;
         }
+
         .modal-table thead th {
             background-color: #f8fafc;
             color: #475569;
@@ -289,6 +368,7 @@
             padding: 10px 12px;
             white-space: nowrap;
         }
+
         .modal-table tbody td {
             padding: 9px 12px;
             border-bottom: 1px solid #f1f5f9;
@@ -296,9 +376,11 @@
             font-size: 12.5px;
             vertical-align: middle;
         }
+
         .modal-table tbody tr:last-child td {
             border-bottom: none;
         }
+
         .modal-table tfoot td {
             padding: 10px 12px;
             background: #f8fafc;
@@ -309,61 +391,75 @@
             background-color: var(--bs-card-bg) !important;
             border-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .summary-primary {
             background: rgba(99, 102, 241, 0.15);
             border-color: rgba(99, 102, 241, 0.3);
             color: #a5b4fc;
         }
+
         html[data-bs-theme="dark"] .summary-success {
             background: rgba(16, 185, 129, 0.15);
             border-color: rgba(16, 185, 129, 0.3);
             color: #6ee7b7;
         }
+
         html[data-bs-theme="dark"] .summary-warning {
             background: rgba(245, 158, 11, 0.15);
             border-color: rgba(245, 158, 11, 0.3);
             color: #fcd34d;
         }
+
         html[data-bs-theme="dark"] .filter-card {
             background: var(--bs-secondary-bg);
             border-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] .filter-card-header {
             background: var(--bs-secondary-bg);
             color: var(--bs-body-color);
         }
+
         html[data-bs-theme="dark"] .filter-card-header:hover {
             background: var(--bs-tertiary-bg);
         }
+
         html[data-bs-theme="dark"] .filter-card .filter-collapse {
             border-top-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] .filter-label {
             color: var(--bs-secondary-color);
         }
+
         html[data-bs-theme="dark"] .filter-control,
         html[data-bs-theme="dark"] .filter-card .form-control {
             background-color: var(--bs-tertiary-bg) !important;
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
         }
+
         html[data-bs-theme="dark"] .btn-filter-reset {
             background: var(--bs-tertiary-bg) !important;
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
         }
+
         html[data-bs-theme="dark"] #direct-purchase-table {
             border-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] #direct-purchase-table thead th {
             background-color: var(--bs-tertiary-bg);
             border-bottom-color: var(--bs-border-color);
             color: var(--bs-body-color);
         }
+
         html[data-bs-theme="dark"] #direct-purchase-table tbody td {
             border-bottom-color: var(--bs-border-color);
             color: var(--bs-body-color);
         }
+
         html[data-bs-theme="dark"] #direct-purchase-table tbody tr:hover {
             background-color: rgba(255, 255, 255, 0.04) !important;
         }
@@ -373,35 +469,43 @@
             background-color: var(--bs-card-bg) !important;
             border-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-header {
             background-color: var(--bs-card-bg) !important;
             border-bottom-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-footer {
             background-color: var(--bs-secondary-bg) !important;
             border-top-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-body {
             background-color: var(--bs-card-bg) !important;
             color: var(--bs-body-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-body .table-responsive {
             border-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-table thead th {
             background-color: var(--bs-tertiary-bg) !important;
             color: var(--bs-emphasis-color) !important;
             border-bottom-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-table tbody td {
             color: var(--bs-body-color) !important;
             border-bottom-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-table tfoot td {
             background-color: var(--bs-tertiary-bg) !important;
             color: var(--bs-body-color) !important;
             border-top-color: var(--bs-border-color) !important;
         }
+
         html[data-bs-theme="dark"] .modal-info-box {
             background-color: var(--bs-secondary-bg) !important;
             border-color: var(--bs-border-color) !important;
@@ -423,17 +527,28 @@
                     <div>
                         <h4 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                             {{ $title }}
-                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-12 px-2 py-1">
+                            <span
+                                class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-12 px-2 py-1">
                                 {{ number_format($stats['totalCount'] ?? 0) }} Transaksi
                             </span>
                         </h4>
-                        <small class="text-muted">Pengadaan suku cadang langsung digunakan/dipasang pada armada mobil dan tercatat sebagai pemeliharaan.</small>
+                        <small class="text-muted">Pengadaan suku cadang langsung digunakan/dipasang pada armada mobil dan
+                            tercatat sebagai pemeliharaan.</small>
                     </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route('warehouse.maintenance.index') }}" class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm"
-                        data-bs-toggle="tooltip" title="Lihat Data Pemeliharaan / Perawatan">
+                    <a href="{{ route('purchasing.direct-purchase.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route('purchasing.direct-purchase.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+                    <a href="{{ route('warehouse.maintenance.index') }}"
+                        class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="tooltip"
+                        title="Lihat Data Pemeliharaan / Perawatan">
                         <i class="mdi mdi-tools me-1"></i> Data Maintenance
                     </a>
                     <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm"
@@ -456,7 +571,8 @@
                         <div class="summary-card summary-primary">
                             <i class="mdi mdi-cart-check float-end fs-24 opacity-50"></i>
                             <h5>Total Pembelian Langsung</h5>
-                            <h3>{{ number_format($stats['totalCount'] ?? 0, 0, ',', '.') }} <span class="fs-14 fw-normal opacity-75">Transaksi</span></h3>
+                            <h3>{{ number_format($stats['totalCount'] ?? 0, 0, ',', '.') }} <span
+                                    class="fs-14 fw-normal opacity-75">Transaksi</span></h3>
                         </div>
                     </div>
 
@@ -472,7 +588,8 @@
                         <div class="summary-card summary-warning">
                             <i class="mdi mdi-truck-check-outline float-end fs-24 opacity-50"></i>
                             <h5>Total Armada Ditangani</h5>
-                            <h3>{{ number_format($stats['fleetCount'] ?? 0, 0, ',', '.') }} <span class="fs-14 fw-normal opacity-75">Armada</span></h3>
+                            <h3>{{ number_format($stats['fleetCount'] ?? 0, 0, ',', '.') }} <span
+                                    class="fs-14 fw-normal opacity-75">Armada</span></h3>
                         </div>
                     </div>
                 </div>
@@ -480,7 +597,8 @@
                 {{-- Filter Card Collapse Terstandarisasi (§3) --}}
                 <div class="filter-card">
                     <button type="button" class="filter-card-header" data-bs-toggle="collapse"
-                        data-bs-target="#directPurchaseFilterCollapse" aria-expanded="false" aria-controls="directPurchaseFilterCollapse">
+                        data-bs-target="#directPurchaseFilterCollapse" aria-expanded="false"
+                        aria-controls="directPurchaseFilterCollapse">
                         <span class="filter-card-heading">
                             <i class="mdi mdi-filter-variant"></i>
                             <strong>Filter Data</strong>
@@ -505,11 +623,23 @@
 
                                     <div class="col-xl-3 col-md-6">
                                         <label class="filter-label" for="filterSupplierCode">Supplier / Toko</label>
-                                        <select class="form-select select2-filter" name="supplierCode" id="filterSupplierCode">
+                                        <select class="form-select select2-filter" name="supplierCode"
+                                            id="filterSupplierCode">
                                             <option value="">Semua Supplier</option>
                                             @foreach ($supplier as $s)
                                                 <option value="{{ $s->code }}">{{ $s->name }}</option>
                                             @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterPaymentStatus">Status Pembayaran</label>
+                                        <select class="form-select select2-filter" name="paymentStatus"
+                                            id="filterPaymentStatus">
+                                            <option value="">Semua Status</option>
+                                            <option value="Paid">Lunas</option>
+                                            <option value="Partial">Dibayar Sebagian</option>
+                                            <option value="Unpaid">Belum Dibayar</option>
                                         </select>
                                     </div>
 
@@ -521,12 +651,13 @@
 
                                     <div class="col-xl-3 col-md-6">
                                         <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                                        <input class="form-control filter-control" name="endDate" id="endDate"
-                                            type="text" placeholder="Pilih tanggal akhir">
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
                                     </div>
 
-                                    <div class="col-12 d-flex align-items-center justify-content-end gap-2 mt-2">
-                                        <button class="btn btn-filter-primary" type="button" id="btnFilter">
+                                    <div class="col-xl-6 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
                                             <i class="mdi mdi-filter-outline"></i> Terapkan Filter
                                         </button>
                                         <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
@@ -564,19 +695,23 @@
         </div>
 
         {{-- Modal Detail Pembelian Langsung (§11 B2B Modal Standard - modal-xl) --}}
-        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel" aria-hidden="true">
+        <div class="modal fade" id="detailModal" tabindex="-1" role="dialog" aria-labelledby="detailModalLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-xl modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg" style="border-radius: 14px; overflow: hidden;">
                     {{-- Header Modal (§11) --}}
-                    <div class="modal-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
+                    <div
+                        class="modal-header bg-white py-3 px-4 border-bottom d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="avatar-sm d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle"
+                            <span
+                                class="avatar-sm d-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle"
                                 style="width: 36px; height: 36px;">
                                 <i class="mdi mdi-receipt-text-outline fs-18"></i>
                             </span>
                             <div>
                                 <h5 class="modal-title mb-0 fw-bold" id="detailModalLabel">Rincian Pembelian Langsung</h5>
-                                <small class="text-muted" id="modalSubtitle">Detail suku cadang & pemeliharaan armada</small>
+                                <small class="text-muted" id="modalSubtitle">Detail suku cadang & pemeliharaan
+                                    armada</small>
                             </div>
                         </div>
                         <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -593,34 +728,42 @@
                         {{-- Modal Content (Hidden saat loading) --}}
                         <div id="modalContentWrapper" style="display: none;">
                             {{-- Info Grid --}}
-                            <div class="modal-info-box p-3 rounded-3 mb-3 border" style="background: #f8fafc; border-color: #e2e8f0;">
+                            <div class="modal-info-box p-3 rounded-3 mb-3 border"
+                                style="background: #f8fafc; border-color: #e2e8f0;">
                                 <div class="row g-3">
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">No. Transaksi</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">No.
+                                            Transaksi</small>
                                         <div class="font-monospace fw-bold text-dark fs-13" id="modalCode">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Tanggal & Jam</small>
+                                        <small class="text-muted text-uppercase fw-semibold"
+                                            style="font-size: 11px;">Tanggal & Jam</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalDate">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Armada / Plat Nomor</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Armada
+                                            / Plat Nomor</small>
                                         <div id="modalFleet">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Supplier / Toko</small>
+                                        <small class="text-muted text-uppercase fw-semibold"
+                                            style="font-size: 11px;">Supplier / Toko</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalSupplier">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Servis Maintenance</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Servis
+                                            Maintenance</small>
                                         <div id="modalMnt">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jenis Pembayaran</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jenis
+                                            Pembayaran</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalPayment">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
-                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jatuh Tempo</small>
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Jatuh
+                                            Tempo</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalDueDate">-</div>
                                     </div>
                                 </div>
@@ -638,22 +781,39 @@
                                 <table class="table align-middle mb-0 modal-table">
                                     <thead class="bg-light">
                                         <tr>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 45px;" class="text-center">No</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 140px;">Kode Part</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase;">Nama Suku Cadang</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 90px; text-align: center;">Qty</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 150px; text-align: right;">Harga Satuan</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 160px; text-align: right;">Subtotal</th>
-                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 220px;">Keterangan</th>
+                                            <th style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 45px;"
+                                                class="text-center">No</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 140px;">
+                                                Kode Part</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase;">
+                                                Nama Suku Cadang</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 90px; text-align: center;">
+                                                Qty</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 150px; text-align: right;">
+                                                Harga Satuan</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 160px; text-align: right;">
+                                                Subtotal</th>
+                                            <th
+                                                style="padding: 10px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; width: 220px;">
+                                                Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody id="modalItemsBody"></tbody>
                                     <tfoot>
                                         <tr style="background: #f8fafc; font-weight: 700;">
-                                            <td colspan="3" class="text-end fw-bold text-uppercase" style="padding: 10px 12px; font-size: 12px;">Total Kuantitas:</td>
-                                            <td class="text-center font-monospace fw-bold" style="padding: 10px 12px;" id="modalTotalQty">0</td>
-                                            <td class="text-end fw-bold text-uppercase" style="padding: 10px 12px; font-size: 12px;">Grand Total:</td>
-                                            <td class="text-end font-monospace fw-bold text-success fs-14" style="padding: 10px 12px;" id="modalGrandTotal">Rp 0</td>
+                                            <td colspan="3" class="text-end fw-bold text-uppercase"
+                                                style="padding: 10px 12px; font-size: 12px;">Total Kuantitas:</td>
+                                            <td class="text-center font-monospace fw-bold" style="padding: 10px 12px;"
+                                                id="modalTotalQty">0</td>
+                                            <td class="text-end fw-bold text-uppercase"
+                                                style="padding: 10px 12px; font-size: 12px;">Grand Total:</td>
+                                            <td class="text-end font-monospace fw-bold text-success fs-14"
+                                                style="padding: 10px 12px;" id="modalGrandTotal">Rp 0</td>
                                             <td></td>
                                         </tr>
                                     </tfoot>
@@ -695,7 +855,7 @@
     <script>
         let startPicker, endPicker;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             // Select2 Filter
             $('.select2-filter').select2({
                 placeholder: 'Semua pilihan',
@@ -707,7 +867,7 @@
             startPicker = flatpickr('#startDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (endPicker) endPicker.set('minDate', dateStr || null);
                 }
             });
@@ -715,10 +875,30 @@
             endPicker = flatpickr('#endDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (startPicker) startPicker.set('maxDate', dateStr || null);
                 }
             });
+
+            function getFilters() {
+                return {
+                    fleetCode: $('#filterFleetCode').val() || '',
+                    supplierCode: $('#filterSupplierCode').val() || '',
+                    paymentStatus: $('#filterPaymentStatus').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('purchasing.direct-purchase.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('purchasing.direct-purchase.export-pdf') }}" + query);
+            }
 
             // Initialize DataTable (Aksi di Kiri sesuai Standar PHL §8)
             const table = $('#direct-purchase-table').DataTable({
@@ -727,11 +907,8 @@
                 pageLength: 25,
                 ajax: {
                     url: "{{ route('dt.direct-purchase') }}",
-                    data: function(d) {
-                        d.fleetCode = $('#filterFleetCode').val();
-                        d.supplierCode = $('#filterSupplierCode').val();
-                        d.startDate = $('#startDate').val();
-                        d.endDate = $('#endDate').val();
+                    data: function (d) {
+                        Object.assign(d, getFilters());
                     }
                 },
                 columns: [
@@ -761,22 +938,34 @@
                 }
             });
 
+            function reloadWithFilters() {
+                syncExportUrls();
+                table.ajax.reload(null, true);
+            }
+
             // Filter actions
-            $('#btnFilter').on('click', function() {
-                table.ajax.reload();
-            });
+            $('#btnFilter').on('click', reloadWithFilters);
 
-            $('#btnResetFilter').on('click', function() {
+            $('#btnResetFilter').on('click', function () {
+                $('#filterForm').find('input').val('');
                 $('.select2-filter').val('').trigger('change');
-                if (startPicker) startPicker.clear();
-                if (endPicker) endPicker.clear();
-                table.ajax.reload();
+                if (startPicker) {
+                    startPicker.clear();
+                    startPicker.set('maxDate', null);
+                }
+                if (endPicker) {
+                    endPicker.clear();
+                    endPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
 
-            $('#btn-refresh-table').on('click', function() {
+            syncExportUrls();
+
+            $('#btn-refresh-table').on('click', function () {
                 const icon = $('#refresh-icon');
                 icon.addClass('mdi-spin');
-                table.ajax.reload(function() {
+                table.ajax.reload(function () {
                     icon.removeClass('mdi-spin');
                 }, false);
             });
@@ -799,9 +988,9 @@
                     form.method = 'POST';
                     form.action = "{{ url('purchasing/direct-purchase') }}/" + id;
                     form.innerHTML = `
-                        @csrf
-                        @method('DELETE')
-                    `;
+                            @csrf
+                            @method('DELETE')
+                        `;
                     document.body.appendChild(form);
                     form.submit();
                 }
@@ -821,7 +1010,7 @@
                 url: "{{ url('purchasing/direct-purchase') }}/" + id,
                 type: 'GET',
                 dataType: 'json',
-                success: function(res) {
+                success: function (res) {
                     if (res && res.success && res.data) {
                         const d = res.data;
 
@@ -870,19 +1059,19 @@
                         let rowsHtml = '';
                         let totalQty = 0;
                         if (d.details && d.details.length > 0) {
-                            d.details.forEach(function(item, idx) {
+                            d.details.forEach(function (item, idx) {
                                 totalQty += parseFloat(item.qty) || 0;
                                 rowsHtml += `
-                                    <tr>
-                                        <td class="text-center text-muted fw-semibold">${idx + 1}</td>
-                                        <td><span class="font-monospace text-primary fw-semibold">${escapeHtml(item.itemCode)}</span></td>
-                                        <td><strong>${escapeHtml(item.itemName)}</strong></td>
-                                        <td class="text-center font-monospace">${(parseFloat(item.qty) || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}</td>
-                                        <td class="text-end font-monospace">${item.priceFormatted}</td>
-                                        <td class="text-end font-monospace fw-bold text-dark">${item.subtotalFormatted}</td>
-                                        <td>${escapeHtml(item.description)}</td>
-                                    </tr>
-                                `;
+                                        <tr>
+                                            <td class="text-center text-muted fw-semibold">${idx + 1}</td>
+                                            <td><span class="font-monospace text-primary fw-semibold">${escapeHtml(item.itemCode)}</span></td>
+                                            <td><strong>${escapeHtml(item.itemName)}</strong></td>
+                                            <td class="text-center font-monospace">${(parseFloat(item.qty) || 0).toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}</td>
+                                            <td class="text-end font-monospace">${item.priceFormatted}</td>
+                                            <td class="text-end font-monospace fw-bold text-dark">${item.subtotalFormatted}</td>
+                                            <td>${escapeHtml(item.description)}</td>
+                                        </tr>
+                                    `;
                             });
                         } else {
                             rowsHtml = '<tr><td colspan="7" class="text-center text-muted py-3">Tidak ada rincian suku cadang.</td></tr>';
@@ -898,7 +1087,7 @@
                         $('#modalLoading').html('<p class="text-danger py-3">Gagal memuat rincian data.</p>');
                     }
                 },
-                error: function() {
+                error: function () {
                     $('#modalLoading').html('<p class="text-danger py-3">Terjadi kesalahan saat memuat rincian.</p>');
                 }
             });

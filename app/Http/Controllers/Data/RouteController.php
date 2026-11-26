@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\Data;
 
 use App\Enums\CostComponentType;
+use App\Exports\RouteExport;
 use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
+use App\Models\Data\Route;
 use App\Models\Data\RoutePriceExternal;
 use App\Models\Master\FleetCompany;
-use App\Models\Data\Route;
 use App\Services\Data\RouteService;
 use App\Services\Master\CostComponentService;
 use App\Services\Master\CustomerService;
@@ -15,14 +16,17 @@ use App\Services\Master\FleetTypeService;
 use App\Services\Master\LocationService;
 use App\Services\Master\RouteTypeService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class RouteController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -291,27 +295,7 @@ class RouteController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'customer_name' => $request->customerName,
-                'origin' => $request->origin,
-                'destination' => $request->destination,
-                'fleetType_name' => $request->fleetTypeName,
-                'routeType_name' => $request->routeTypeName,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'customer_name' => 'customer.name',
-                'origin' => 'originLocation.name',
-                'destination' => 'destinationLocation.name',
-                'fleetType_name' => 'fleetType.name',
-                'routeType_name' => 'routeType.name',
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations);
+            $data = $this->buildFilteredQuery($request);
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -534,5 +518,66 @@ class RouteController extends Controller
             'success' => false,
             'price' => 0,
         ]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new RouteExport($this->buildFilteredQuery($request)),
+            'Data-Rute-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->buildFilteredQuery($request)->get();
+
+        $filterSummary = [];
+        foreach ([
+            'customerName' => 'Customer',
+            'origin' => 'Asal',
+            'destination' => 'Tujuan',
+            'fleetTypeName' => 'Tipe Armada',
+            'routeTypeName' => 'Tipe Muatan',
+        ] as $key => $label) {
+            if ($request->filled($key)) {
+                $filterSummary[] = $label.': '.$request->input($key);
+            }
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.route-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Rute',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Rute-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
+    }
+
+    private function buildFilteredQuery(Request $request)
+    {
+        $data = $this->service->datatable();
+
+        $filters = [
+            'customer_name' => $request->customerName,
+            'origin' => $request->origin,
+            'destination' => $request->destination,
+            'fleetType_name' => $request->fleetTypeName,
+            'routeType_name' => $request->routeTypeName,
+        ];
+
+        $relations = [
+            'customer_name' => 'customer.name',
+            'origin' => 'originLocation.name',
+            'destination' => 'destinationLocation.name',
+            'fleetType_name' => 'fleetType.name',
+            'routeType_name' => 'routeType.name',
+        ];
+
+        return FilterHelper::applyFilters($data, $filters, $relations);
     }
 }

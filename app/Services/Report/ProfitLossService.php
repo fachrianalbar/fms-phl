@@ -549,4 +549,51 @@ class ProfitLossService
             'details.item',
         ])->where('status', 0)->where('fleetCode', $fleetCode)->latest();
     }
+
+    /**
+     * Build per-fleet rows and grand totals for Excel and PDF exports.
+     */
+    public function buildFleetExportData(?string $plateNumber = null, ?string $fleetCompanyCode = null, ?string $startDate = null, ?string $endDate = null): array
+    {
+        $fleets = Fleet::with($this->fleetReportRelations($startDate, $endDate))
+            ->when(! empty($plateNumber), function ($query) use ($plateNumber) {
+                $query->where('plateNumber', $plateNumber);
+            })
+            ->when(! empty($fleetCompanyCode), function ($query) use ($fleetCompanyCode) {
+                $query->where('fleetCompanyCode', $fleetCompanyCode);
+            })
+            ->orderBy('plateNumber')
+            ->get();
+
+        $tonaseBonuses = TonaseBonus::all();
+
+        $grandTotals = [
+            'basicSales' => 0.0,
+            'orderCost' => 0.0,
+            'maintenance' => 0.0,
+            'tax' => 0.0,
+            'netProfit' => 0.0,
+        ];
+
+        $rows = $fleets->map(function (Fleet $fleet) use ($tonaseBonuses, &$grandTotals) {
+            $summary = $this->calculateFleetSummary($fleet, $tonaseBonuses);
+
+            $grandTotals['basicSales'] += $summary['basicSales'];
+            $grandTotals['orderCost'] += $summary['orderCost'];
+            $grandTotals['maintenance'] += $summary['maintenance'];
+            $grandTotals['tax'] += $summary['tax'];
+            $grandTotals['netProfit'] += $summary['netProfit'];
+
+            return [
+                'fleet' => $fleet,
+                'summary' => $summary,
+            ];
+        });
+
+        return [
+            'fleets' => $fleets,
+            'rows' => $rows,
+            'grandTotals' => $grandTotals,
+        ];
+    }
 }

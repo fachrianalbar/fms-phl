@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Master;
 
 use App\Enums\Citizenship;
 use App\Enums\Gender;
+use App\Exports\EmployeeExport;
 use App\Http\Controllers\Controller;
 use App\Models\Master\Employee;
+use App\Models\Master\Position;
 use App\Services\Bank\BankAccountService;
 use App\Services\Master\CityService;
 use App\Services\Master\DistrictService;
@@ -13,13 +15,16 @@ use App\Services\Master\EmployeeService;
 use App\Services\Master\PositionService;
 use App\Services\Master\ProvinceService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class EmployeeController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -306,5 +311,42 @@ class EmployeeController extends Controller
                 'message' => 'Gagal mengubah status: '.$th->getMessage(),
             ], 500);
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $filters = $request->only(['positionCode', 'status']);
+
+        return Excel::download(
+            new EmployeeExport($filters, $this->service),
+            'Data-Karyawan-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $filters = $request->only(['positionCode', 'status']);
+        $rows = $this->service->findAll($filters);
+
+        $filterSummary = [];
+        if ($request->filled('positionCode')) {
+            $posName = Position::where('code', $request->positionCode)->value('name');
+            $filterSummary[] = 'Jabatan: '.($posName ?: $request->positionCode);
+        }
+        if ($request->filled('status')) {
+            $filterSummary[] = 'Status: '.((string) $request->status === '1' ? 'Aktif' : 'Nonaktif');
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.employee-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Karyawan',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Karyawan-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
     }
 }

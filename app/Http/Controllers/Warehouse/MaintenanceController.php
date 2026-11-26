@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Warehouse;
 
+use App\Exports\MaintenanceExport;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
@@ -26,6 +27,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -242,28 +244,7 @@ class MaintenanceController extends Controller
     {
         // dd($request->all());
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'fleet_plateNumber' => $request->plateNumber,
-                'item_code' => $request->itemCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'fleet_plateNumber' => 'fleet.plateNumber',
-                'item_code' => 'details.itemCode',
-            ];
-
-            $dateFilters = [
-                'date' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->filteredQuery($request);
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -329,16 +310,76 @@ class MaintenanceController extends Controller
         }
     }
 
+    public function exportExcel(Request $request)
+    {
+        $maintenances = $this->filteredQuery($request)->get();
+
+        return Excel::download(
+            new MaintenanceExport($maintenances),
+            'Perawatan-Armada-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
     public function pdfMaintenance(Request $request)
     {
-        // Definisikan kolom filter dengan alias
+        $query = $this->filteredQuery($request, true);
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf(
+            [
+                'orientation' => 'P',
+                'format' => [215, 330],
+                'tempDir' => $tempDir,
+            ]
+        );
+
+        $startDate = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+        $endDate = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+        $itemLabel = null;
+        if ($request->filled('itemCode')) {
+            $itemName = Item::query()->where('code', $request->itemCode)->value('name');
+            $itemLabel = $request->itemCode.($itemName ? ' - '.$itemName : '');
+        }
+
+        $mpdf->WriteHTML(
+            view($this->view . 'report.maintenance-pdf')
+                ->with('data', $query->get())
+                ->with('plateNumber', $request->plateNumber)
+                ->with('itemLabel', $itemLabel)
+                ->with('startDate', $startDate)
+                ->with('endDate', $endDate)
+                ->render()
+        );
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Laporan-Maintenance-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function filteredQuery(Request $request, bool $forPdf = false)
+    {
+        $query = $forPdf
+            ? Maintenance::with([
+                'fleet',
+                'details',
+                'details.item',
+                'details.item.supplier',
+                'details.item.category',
+            ])->where('status', 0)->orderBy('created_at', 'desc')
+            : $this->service->datatable();
+
         $filters = [
             'fleet_plateNumber' => $request->plateNumber,
+            'item_code' => $request->itemCode,
         ];
 
-        // Hubungkan alias ke relasi dan kolom yang sesuai
         $relations = [
             'fleet_plateNumber' => 'fleet.plateNumber',
+            'item_code' => 'details.itemCode',
         ];
 
         $dateFilters = [
@@ -348,36 +389,7 @@ class MaintenanceController extends Controller
             ],
         ];
 
-        $query = Maintenance::with([
-            'fleet',
-            'details',
-            'details.item',
-            'details.item.supplier',
-            'details.item.category',
-
-        ])->orderBy('created_at', 'desc');
-
-        $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
-
-        $mpdf = new Mpdf(
-            [
-                'orientation' => 'P',
-                'format' => [215, 330],
-            ]
-        );
-
-        $startDate = Carbon::parse($request->startDate)->format('d-m-Y');
-        $endDate = Carbon::parse($request->endDate)->format('d-m-Y');
-
-        $mpdf->WriteHTML(
-            view($this->view . 'report.maintenance-pdf')
-                ->with('data', $data->get())
-                ->with('plateNumber', $request->plateNumber)
-                ->with('startDate', $startDate)
-                ->with('endDate', $endDate)
-        );
-
-        return $mpdf->Output('Laporan Maintenance.pdf', 'I');
+        return FilterHelper::applyFilters($query, $filters, $relations, $dateFilters);
     }
 
     public function generateCode(Request $request)

@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Purchasing;
 
-use App\Helpers\FilterHelper;
+use App\Exports\PurchasePaymentExport;
+use App\Exports\PurchaseUnpaidSummaryExport;
 use App\Http\Controllers\Controller;
+use App\Models\Inventory\Supplier;
 use App\Services\Bank\UserBankService;
 use App\Services\Inventory\SupplierService;
 use App\Services\MenuService;
@@ -13,6 +15,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Throwable;
 use Yajra\DataTables\DataTables;
 
@@ -69,9 +73,11 @@ class PurchasePaymentController extends Controller
     public function index()
     {
         $stats = $this->service->statsUnpaid();
+        $suppliers = $this->supplierSvc->findAll();
 
         return view($this->view.'supplier-summary')
             ->with('view', $this->view)
+            ->with('suppliers', $suppliers)
             ->with('stats', $stats)
             ->with('title', $this->pageTitle('PURCHASE_PAYMENT', 'Hutang Supplier Belum Lunas'));
     }
@@ -252,7 +258,7 @@ class PurchasePaymentController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $data = $this->service->unpaidBySupplier();
+        $data = $this->service->filteredUnpaidBySupplier($request->all());
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -290,25 +296,7 @@ class PurchasePaymentController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $data = $this->service->datatableUnpaid();
-
-        if (in_array($request->paymentStatus, ['Unpaid', 'Partial'], true)) {
-            $data->where('paymentStatus', $request->paymentStatus);
-        }
-
-        $filters = [
-            'code' => $request->code,
-            'supplierCode' => $request->supplierCode,
-        ];
-
-        $dateFilters = [
-            'date' => [
-                'start' => $request->startDate,
-                'end' => $request->endDate,
-            ],
-        ];
-
-        $data = FilterHelper::applyFilters($data, $filters, [], $dateFilters);
+        $data = $this->service->filteredUnpaid($request->all());
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -463,21 +451,7 @@ class PurchasePaymentController extends Controller
             return response()->json(['data' => []]);
         }
 
-        $data = $this->service->datatablePaid();
-
-        $filters = [
-            'code' => $request->code,
-            'supplierCode' => $request->supplierCode,
-        ];
-
-        $dateFilters = [
-            'date' => [
-                'start' => $request->startDate,
-                'end' => $request->endDate,
-            ],
-        ];
-
-        $data = FilterHelper::applyFilters($data, $filters, [], $dateFilters);
+        $data = $this->service->filteredPaid($request->all());
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -526,5 +500,127 @@ class PurchasePaymentController extends Controller
         }
 
         return response()->json($data);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Export Excel & PDF                                                 */
+    /* ------------------------------------------------------------------ */
+
+    public function exportSummaryExcel(Request $request)
+    {
+        return Excel::download(
+            new PurchaseUnpaidSummaryExport($request->all(), $this->service),
+            'Rekap-Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportSummaryPdf(Request $request)
+    {
+        $suppliers = $this->service->filteredUnpaidBySupplier($request->all())->get();
+        $filterSummary = $this->buildPaymentFilterSummary($request);
+
+        return $this->renderPdf(
+            view($this->view.'report.purchase-unpaid-summary-pdf', [
+                'suppliers' => $suppliers,
+                'title' => 'Rekap Hutang Supplier Belum Lunas',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ])->render(),
+            'Rekap-Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    public function exportUnpaidExcel(Request $request)
+    {
+        return Excel::download(
+            new PurchasePaymentExport($request->all(), 'unpaid', $this->service),
+            'Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportUnpaidPdf(Request $request)
+    {
+        $purchases = $this->service->filteredUnpaid($request->all())->get();
+        $filterSummary = $this->buildPaymentFilterSummary($request);
+
+        return $this->renderPdf(
+            view($this->view.'report.purchase-unpaid-pdf', [
+                'purchases' => $purchases,
+                'service' => $this->service,
+                'title' => 'Daftar Hutang Supplier Belum Lunas',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ])->render(),
+            'Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    public function exportPaidExcel(Request $request)
+    {
+        return Excel::download(
+            new PurchasePaymentExport($request->all(), 'paid', $this->service),
+            'Hutang-Supplier-Lunas-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPaidPdf(Request $request)
+    {
+        $purchases = $this->service->filteredPaid($request->all())->get();
+        $filterSummary = $this->buildPaymentFilterSummary($request);
+
+        return $this->renderPdf(
+            view($this->view.'report.purchase-paid-pdf', [
+                'purchases' => $purchases,
+                'service' => $this->service,
+                'title' => 'Daftar Hutang Supplier Lunas',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ])->render(),
+            'Hutang-Supplier-Lunas-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    private function buildPaymentFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('code')) {
+            $summary[] = 'Kode PO: '.$request->code;
+        }
+        if ($request->filled('supplierCode')) {
+            $supplierName = Supplier::query()->where('code', $request->supplierCode)->value('name');
+            $summary[] = 'Supplier: '.($supplierName ?: $request->supplierCode);
+        }
+        if (in_array($request->paymentStatus, ['Unpaid', 'Partial'], true)) {
+            $summary[] = 'Status: '.($request->paymentStatus === 'Partial' ? 'Belum Lunas (DP)' : 'Belum Bayar');
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode: '.$start.' s/d '.$end;
+        }
+
+        return $summary;
+    }
+
+    private function renderPdf(string $html, string $filename)
+    {
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 }

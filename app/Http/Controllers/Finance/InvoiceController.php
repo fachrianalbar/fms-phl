@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Exports\InvoiceListExport;
 use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
 use App\Models\Finance\Invoice as InvoiceModel;
+use App\Models\Master\Company;
+use App\Models\Master\Customer;
 use App\Services\Finance\InvoiceService;
 use App\Services\Master\CustomerService;
 use App\Services\MenuService;
@@ -14,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -82,16 +86,28 @@ class InvoiceController extends Controller
         ];
     }
 
+    private function filterDropdownOptions(): array
+    {
+        return [
+            'customers' => Customer::query()->orderBy('name')->get(['code', 'name']),
+            'companies' => Company::query()->orderBy('name')->get(['code', 'name', 'format']),
+        ];
+    }
+
     /**
      * Faktur yang benar-benar belum memiliki pembayaran maupun claim.
      */
     public function indexUnpaid()
     {
+        $options = $this->filterDropdownOptions();
+
         return view('invoice.unpaid')
             ->with('view', 'invoice.')
             ->with('title', 'Faktur Belum Lunas')
             ->with('listType', 'unpaid')
-            ->with('stats', $this->paymentStateStats('unpaid'));
+            ->with('stats', $this->paymentStateStats('unpaid'))
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -99,11 +115,15 @@ class InvoiceController extends Controller
      */
     public function indexPartial()
     {
+        $options = $this->filterDropdownOptions();
+
         return view('invoice.unpaid')
             ->with('view', 'invoice.')
             ->with('title', 'Faktur Pembayaran Sebagian')
             ->with('listType', 'partial')
-            ->with('stats', $this->paymentStateStats('partial'));
+            ->with('stats', $this->paymentStateStats('partial'))
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -112,11 +132,14 @@ class InvoiceController extends Controller
     public function indexPaid()
     {
         $stats = $this->paymentStateStats('paid');
+        $options = $this->filterDropdownOptions();
 
         return view('invoice.paid')
             ->with('view', 'invoice.')
             ->with('title', 'Faktur Lunas')
-            ->with('stats', $stats);
+            ->with('stats', $stats)
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -291,7 +314,7 @@ class InvoiceController extends Controller
     public function datatableUnpaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findUnpaid();
+            $data = $this->service->findUnpaid($request->all());
 
             return $this->formatInvoiceDatatable($data, false);
         }
@@ -300,7 +323,7 @@ class InvoiceController extends Controller
     public function datatablePartial(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPartial();
+            $data = $this->service->findPartial($request->all());
 
             return $this->formatInvoiceDatatable($data, false);
         }
@@ -309,10 +332,107 @@ class InvoiceController extends Controller
     public function datatablePaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPaid();
+            $data = $this->service->findPaid($request->all());
 
             return $this->formatInvoiceDatatable($data, true);
         }
+    }
+
+    public function exportUnpaidExcel(Request $request)
+    {
+        return $this->exportListExcel($request, 'unpaid', 'Faktur-Belum-Lunas');
+    }
+
+    public function exportUnpaidPdf(Request $request)
+    {
+        return $this->exportListPdf($request, 'unpaid', 'Faktur Belum Lunas');
+    }
+
+    public function exportPartialExcel(Request $request)
+    {
+        return $this->exportListExcel($request, 'partial', 'Faktur-Pembayaran-Sebagian');
+    }
+
+    public function exportPartialPdf(Request $request)
+    {
+        return $this->exportListPdf($request, 'partial', 'Faktur Pembayaran Sebagian');
+    }
+
+    public function exportPaidExcel(Request $request)
+    {
+        return $this->exportListExcel($request, 'paid', 'Faktur-Lunas');
+    }
+
+    public function exportPaidPdf(Request $request)
+    {
+        return $this->exportListPdf($request, 'paid', 'Faktur Lunas');
+    }
+
+    private function exportListExcel(Request $request, string $type, string $filenamePrefix)
+    {
+        return Excel::download(
+            new InvoiceListExport($request->all(), $type, $this->service),
+            $filenamePrefix.'-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    private function exportListPdf(Request $request, string $type, string $title)
+    {
+        $invoices = match ($type) {
+            'partial' => $this->service->findPartial($request->all()),
+            'paid' => $this->service->findPaid($request->all()),
+            default => $this->service->findUnpaid($request->all()),
+        };
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('invoice.report.invoice-list-pdf', [
+            'invoices' => $invoices,
+            'type' => $type,
+            'title' => $title,
+            'filterSummary' => $this->buildListFilterSummary($request),
+            'printedAt' => now(),
+        ])->render());
+
+        $safeFile = str_replace(' ', '-', $title).'-'.now()->format('YmdHis').'.pdf';
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$safeFile.'"');
+    }
+
+    private function buildListFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Faktur: '.$start.' s/d '.$end;
+        }
+        if ($request->filled('customerCode')) {
+            $name = Customer::where('code', $request->customerCode)->value('name') ?: $request->customerCode;
+            $summary[] = 'Pelanggan: '.$name;
+        }
+        if ($request->filled('companyCode')) {
+            $name = Company::where('code', $request->companyCode)->value('name') ?: $request->companyCode;
+            $summary[] = 'Perusahaan: '.$name;
+        }
+        if ($request->filled('invoiceNumber')) {
+            $summary[] = 'No. Faktur: '.$request->invoiceNumber;
+        }
+
+        return $summary;
     }
 
     public function datatable(Request $request)

@@ -7,6 +7,8 @@ use App\Http\Controllers\Operational\ReturnDoController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('operational')->name('operational.')->group(function () {
+    Route::get('return-do/export/excel', [ReturnDoController::class, 'exportExcel'])->name('return-do.export-excel');
+    Route::get('return-do/export/pdf', [ReturnDoController::class, 'exportPdf'])->name('return-do.export-pdf');
     Route::resource('return-do', ReturnDoController::class)->only(['index']);
     Route::post('return-do/sync-driver-salary', [ReturnDoController::class, 'syncDriverSalary'])->name('return-do.sync-driver-salary');
     Route::get('return-do/{orderId}/files', [ReturnDoController::class, 'getOrderFiles'])->name('return-do.get-files');
@@ -36,6 +38,7 @@ Route::prefix('operational')->name('operational.')->group(function () {
     Route::put('bon-ujt-detail/{id}', [BonUjtController::class, 'storeBonUjtDetail'])->name('bon-ujt-detail.store');
     Route::delete('bon-ujt-detail/{id}', [BonUjtController::class, 'destroyBonUjtDetail'])->name('bon-ujt-detail.destroy');
     Route::post('order/recalculate-vendor-prices', [OrderController::class, 'recalculateVendorPrices'])->name('order.recalculate-vendor-prices');
+    Route::get('order/export/pdf', [OrderController::class, 'pdfOrder'])->name('order.export-pdf');
     Route::resource('order', OrderController::class);
     Route::get('/order/{id}/detail', [OrderController::class, 'showOrder'])->name('order.show-order');
     Route::get('excel-order', [OrderController::class, 'excelOrder'])->name('order.excel-order');

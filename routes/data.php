@@ -11,6 +11,8 @@ Route::prefix('data')->name('data.')->group(function () {
     Route::resource('drop-location', DropLocationController::class);
     Route::resource('pickup-location', PickupLocationController::class);
     Route::resource('route', RouteController::class);
+    Route::get('route-export/excel', [RouteController::class, 'exportExcel'])->name('route.export-excel');
+    Route::get('route-export/pdf', [RouteController::class, 'exportPdf'])->name('route.export-pdf');
     Route::resource('tonase-bonus', TonaseBonusController::class);
     Route::resource('route-detail', RouteDetailController::class)->only(['store', 'destroy']);
 });

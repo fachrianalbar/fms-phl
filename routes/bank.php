@@ -12,13 +12,19 @@ Route::prefix('bank')->name('bank.')->group(function () {
     Route::middleware(['access:SPRADMIN,SPRUSER'])->group(function () {
         Route::resource('transfer-fund', TransferFundController::class);
         Route::resource('expense', ExpenseController::class);
+        Route::get('bank-book/export/excel', [BankBookController::class, 'exportExcel'])->name('bank-book.export-excel');
+        Route::get('bank-book/export/pdf', [BankBookController::class, 'exportPdf'])->name('bank-book.export-pdf');
         Route::resource('bank-book', BankBookController::class)->only(['index', 'show']);
         Route::resource('config-bank', ConfigBankController::class);
         Route::delete('config-bank/delete-by-user/{code}', [ConfigBankController::class, 'destroyByUser'])->name('config-bank.destroy-by-user');
     });
 
     Route::middleware(['access:SPRADMIN,SPRUSER,DO,TRL250604212202,TRL250604212231,TRL250604212242'])->group(function () {
+        Route::get('bank-account/export/excel', [BankAccountController::class, 'exportExcel'])->name('bank-account.export-excel');
+        Route::get('bank-account/export/pdf', [BankAccountController::class, 'exportPdf'])->name('bank-account.export-pdf');
         Route::resource('bank-account', BankAccountController::class);
+        Route::get('user-bank/export/excel', [UserBankController::class, 'exportExcel'])->name('user-bank.export-excel');
+        Route::get('user-bank/export/pdf', [UserBankController::class, 'exportPdf'])->name('user-bank.export-pdf');
         Route::resource('user-bank', UserBankController::class)->only(['index', 'store', 'update', 'destroy']);
     });
 });

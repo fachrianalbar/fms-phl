@@ -46,6 +46,14 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('purchasing.purchase-payment.paid.export-excel') }}" target="_blank" id="export-excel"
+                    class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                </a>
+                <a href="{{ route('purchasing.purchase-payment.paid.export-pdf') }}" target="_blank" id="export-pdf"
+                    class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                    <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                </a>
                 <a href="{{ route('purchasing.purchase-payment.index') }}"
                     class="btn btn-outline-warning btn-sm rounded-pill px-3 shadow-sm">
                     <i class="mdi mdi-cash-remove me-1"></i>Hutang Belum Lunas
@@ -102,41 +110,63 @@
 
         {{-- Main Table --}}
         <div class="table-container-card mb-4">
-            <div class="table-top-bar">
-                <form id="filterForm" class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label mb-1 fs-12" for="code">Kode Pembelian</label>
-                        <input class="form-control form-control-sm" name="code" type="text" placeholder="Kode pembelian">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1 fs-12" for="supplierCode">Supplier</label>
-                        <select class="form-select form-select-sm" name="supplierCode" id="supplierCode">
-                            <option value="">Semua Supplier</option>
-                            @foreach ($supplier as $item)
-                                <option value="{{ $item->code }}">{{ $item->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 fs-12" for="startDate">Dari Tanggal</label>
-                        <input class="form-control form-control-sm" name="startDate" type="date">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 fs-12" for="endDate">Sampai Tanggal</label>
-                        <input class="form-control form-control-sm" name="endDate" type="date">
-                    </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button class="btn btn-primary btn-sm flex-fill" type="submit">
-                            <i class="mdi mdi-magnify me-1"></i>Filter
-                        </button>
-                        <button class="btn btn-light btn-sm" type="button" id="btn-reset-filter" title="Reset filter">
-                            <i class="mdi mdi-refresh"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <div class="card-body p-4">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#purchasePaidFilterCollapse" aria-expanded="false"
+                        aria-controls="purchasePaidFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar hutang lunas</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-            <div class="card-body p-3">
+                    <div class="collapse filter-collapse" id="purchasePaidFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="code">Kode Pembelian</label>
+                                        <input class="form-control" name="code" id="code" type="text"
+                                            placeholder="Kode pembelian">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="supplierCode">Supplier</label>
+                                        <select class="form-select select2-filter" name="supplierCode" id="supplierCode">
+                                            <option value="">Semua Supplier</option>
+                                            @foreach ($supplier as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal PO</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal PO</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-muted fs-12 mb-3">
                     <i class="mdi mdi-information-outline me-1 text-success"></i>
                     Daftar pembelian yang sudah lunas. Klik <i class="mdi mdi-close-circle-outline text-danger"></i>
@@ -189,9 +219,52 @@
     @include('purchasing.purchase-payment.partials.detail-modal-script')
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             const cancelUrlTemplate = @json(route('purchasing.purchase-payment.batch.cancel', ['batchCode' => '__BATCH__']));
             const csrfToken = @json(csrf_token());
+            let filterStartPicker;
+            let filterEndPicker;
+
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                }
+            });
+
+            function getFilters() {
+                return {
+                    code: $('#code').val() || '',
+                    supplierCode: $('#supplierCode').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('purchasing.purchase-payment.paid.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('purchasing.purchase-payment.paid.export-pdf') }}" + query);
+            }
 
             function swalLoader(title, html) {
                 return Swal.fire({
@@ -200,7 +273,7 @@
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                     showConfirmButton: false,
-                    didOpen: function() {
+                    didOpen: function () {
                         Swal.showLoading();
                     },
                 });
@@ -215,83 +288,80 @@
                 "pageLength": 25,
                 "ajax": {
                     "url": "{{ route('dt.purchase-payment.paid') }}",
-                    "data": function(d) {
-                        d.code = $('input[name="code"]').val();
-                        d.supplierCode = $('select[name="supplierCode"]').val();
-                        d.startDate = $('input[name="startDate"]').val();
-                        d.endDate = $('input[name="endDate"]').val();
+                    "data": function (d) {
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [{
-                        "data": 'action',
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false
-                    },
-                    {
-                        "data": 'DT_RowIndex',
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false
-                    },
-                    {
-                        "data": 'code',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'purchaseDate',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'paymentDateHtml',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'fleetPlate',
-                        "name": 'fleetPlate',
-                        "className": 'align-middle',
-                        "orderable": false,
-                        "searchable": true,
-                        "render": function(data) {
-                            if (!data || data === '-') {
-                                return '<span class="text-muted">-</span>';
-                            }
-                            const plates = String(data).split(',').map(function(p) {
-                                return p.trim();
-                            }).filter(Boolean);
-                            if (plates.length === 0) {
-                                return '<span class="text-muted">-</span>';
-                            }
-                            return plates.map(function(plate) {
-                                return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
-                            }).join(' ');
+                    "data": 'action',
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": 'DT_RowIndex',
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": 'code',
+                    "className": 'align-middle'
+                },
+                {
+                    "data": 'purchaseDate',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'paymentDateHtml',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'fleetPlate',
+                    "name": 'fleetPlate',
+                    "className": 'align-middle',
+                    "orderable": false,
+                    "searchable": true,
+                    "render": function (data) {
+                        if (!data || data === '-') {
+                            return '<span class="text-muted">-</span>';
                         }
-                    },
-                    {
-                        "data": 'supplier.name',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'totalPrice',
-                        "className": 'text-end align-middle payment-money'
-                    },
-                    {
-                        "data": 'paidAmount',
-                        "className": 'text-end align-middle payment-money fw-semibold text-success'
-                    },
-                    {
-                        "data": 'paymentStatusHtml',
-                        "className": 'text-center align-middle'
+                        const plates = String(data).split(',').map(function (p) {
+                            return p.trim();
+                        }).filter(Boolean);
+                        if (plates.length === 0) {
+                            return '<span class="text-muted">-</span>';
+                        }
+                        return plates.map(function (plate) {
+                            return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
+                        }).join(' ');
                     }
+                },
+                {
+                    "data": 'supplier.name',
+                    "className": 'align-middle'
+                },
+                {
+                    "data": 'totalPrice',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
+                    "data": 'paidAmount',
+                    "className": 'text-end align-middle payment-money fw-semibold text-success'
+                },
+                {
+                    "data": 'paymentStatusHtml',
+                    "className": 'text-center align-middle'
+                }
                 ],
                 "order": [
                     [4, 'desc']
                 ],
-                "drawCallback": function() {
+                "drawCallback": function () {
                     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
                         let tooltipTriggerList = [].slice.call(document.querySelectorAll(
                             '[data-bs-toggle="tooltip"]'));
-                        tooltipTriggerList.map(function(el) {
+                        tooltipTriggerList.map(function (el) {
                             return new bootstrap.Tooltip(el);
                         });
                     }
@@ -311,31 +381,47 @@
                 }
             });
 
+            function reloadWithFilters() {
+                syncExportUrls();
+                dt.ajax.reload(null, true);
+            }
+
             // Filter
-            $('#filterForm').on('submit', function(event) {
-                event.preventDefault();
-                dt.ajax.reload();
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#code').on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
             });
 
-            $('#btn-reset-filter').on('click', function() {
-                $('#filterForm')[0].reset();
-                $('#supplierCode').val('').trigger('change');
-                dt.ajax.reload();
+            $('#btnResetFilter').on('click', function () {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
 
             // Refresh
-            $('#btn-refresh-table').on('click', function() {
+            $('#btn-refresh-table').on('click', function () {
                 const icon = $('#refresh-icon');
                 icon.addClass('mdi-spin');
-                dt.ajax.reload(function() {
-                    setTimeout(function() {
+                dt.ajax.reload(function () {
+                    setTimeout(function () {
                         icon.removeClass('mdi-spin');
                     }, 400);
                 });
             });
 
             // Batal pembayaran batch
-            $(document).on('click', '.btn-cancel-row', function() {
+            $(document).on('click', '.btn-cancel-row', function () {
                 const batchCode = String($(this).attr('data-batch') || '');
                 const code = String($(this).attr('data-code') || '');
 
@@ -358,7 +444,7 @@
                     confirmButtonText: 'Ya, Batalkan',
                     cancelButtonText: 'Kembali',
                     confirmButtonColor: '#dc3545',
-                }).then(function(result) {
+                }).then(function (result) {
                     if (!result.isConfirmed) {
                         return;
                     }
@@ -375,7 +461,7 @@
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': csrfToken,
                         },
-                        success: function(response) {
+                        success: function (response) {
                             Swal.close();
                             Swal.fire({
                                 title: 'Pembayaran dibatalkan',
@@ -384,11 +470,11 @@
                                 icon: 'success',
                                 confirmButtonText: 'Lihat Daftar Terbaru',
                                 confirmButtonColor: '#198754',
-                            }).then(function() {
+                            }).then(function () {
                                 window.location.reload();
                             });
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             Swal.close();
                             const message = (xhr.responseJSON && xhr.responseJSON.message) ?
                                 xhr.responseJSON.message :
@@ -405,15 +491,14 @@
                 });
             });
 
-            // Select2 supplier + length menu
-            $('#supplierCode').select2({
-                width: '100%',
-            });
+            // Select2 length menu
             $('#dt_wrapper .dataTables_length select').select2({
                 minimumResultsForSearch: Infinity,
                 width: '88px',
                 dropdownAutoWidth: true,
             });
+
+            syncExportUrls();
         });
     </script>
 @endpush

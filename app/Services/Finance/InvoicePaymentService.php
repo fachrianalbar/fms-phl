@@ -15,11 +15,50 @@ class InvoicePaymentService
 
     /**
      * Daftar seluruh pembayaran faktur (1 baris = 1 pembayaran), terbaru dulu.
-     * Digunakan oleh datatable menu Invoice Payment.
+     * Digunakan oleh datatable menu Invoice Payment & export Excel/PDF.
      */
-    public function datatable()
+    public function datatable(array $filters = [])
     {
-        return $this->service->with(['invoice.customer', 'invoice.claims', 'userBank.bank', 'transaction'])
+        $query = $this->service->with(['invoice.customer', 'invoice.claims', 'userBank.bank', 'transaction']);
+
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $customerName = trim((string) ($filters['customerName'] ?? ''));
+        $userBankCode = trim((string) ($filters['userBankCode'] ?? ''));
+        $invoiceNumber = trim((string) ($filters['invoiceNumber'] ?? ''));
+
+        if ($startDate !== '') {
+            $query->whereDate('paymentDate', '>=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $query->whereDate('paymentDate', '<=', $endDate);
+        }
+
+        if ($customerCode !== '') {
+            $query->whereHas('invoice', function ($q) use ($customerCode) {
+                $q->where('customerCode', $customerCode);
+            });
+        }
+
+        if ($customerName !== '') {
+            $query->whereHas('invoice.customer', function ($q) use ($customerName) {
+                $q->where('name', 'like', "%{$customerName}%");
+            });
+        }
+
+        if ($userBankCode !== '') {
+            $query->where('userBankCode', $userBankCode);
+        }
+
+        if ($invoiceNumber !== '') {
+            $query->whereHas('invoice', function ($q) use ($invoiceNumber) {
+                $q->where('invoiceNumber', 'like', "%{$invoiceNumber}%");
+            });
+        }
+
+        return $query
             ->orderBy('paymentDate', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();

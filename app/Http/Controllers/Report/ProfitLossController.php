@@ -10,6 +10,7 @@ use App\Models\Master\Fleet;
 use App\Models\Master\FleetCompany;
 use App\Services\Master\FleetService;
 use App\Services\Report\ProfitLossService;
+use App\Traits\RendersPdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -17,6 +18,7 @@ use Yajra\DataTables\DataTables;
 
 class ProfitLossController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $fleetSvc;
@@ -361,6 +363,43 @@ class ProfitLossController extends Controller
     public function excelProfitLoss(Request $request)
     {
         return Excel::download(new ProfitLossReport($request), 'Laporan-Laba-Rugi.xlsx');
+    }
+
+    public function pdfProfitLoss(Request $request)
+    {
+        $startDate = $request->startDate ?: null;
+        $endDate = $request->endDate ?: null;
+        $plateNumber = $request->plateNumber ?: null;
+        $fleetCompanyCode = $request->fleetCompanyCode ?: null;
+
+        $exportData = $this->service->buildFleetExportData($plateNumber, $fleetCompanyCode, $startDate, $endDate);
+
+        $filterSummary = [];
+        if ($plateNumber) {
+            $filterSummary[] = 'Plat Nomor: '.$plateNumber;
+        }
+        if ($fleetCompanyCode) {
+            $companyName = FleetCompany::where('code', $fleetCompanyCode)->value('name');
+            $filterSummary[] = 'Perusahaan: '.($companyName ?: $fleetCompanyCode);
+        }
+        if ($startDate || $endDate) {
+            $start = $startDate ? Carbon::parse($startDate)->format('d-m-Y') : 'Awal';
+            $end = $endDate ? Carbon::parse($endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.profit-loss-pdf',
+            [
+                'rows' => $exportData['rows'],
+                'grandTotals' => $exportData['grandTotals'],
+                'title' => 'Laporan Laba Rugi Per Armada',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Laporan-Laba-Rugi-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
     }
 
     public function getProfitLossSummary(Request $request)

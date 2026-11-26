@@ -105,6 +105,59 @@ class StockSyncService
         ];
     }
 
+    public function filterAudit(array $audit, array $filters): array
+    {
+        $warehouseCode = trim((string) ($filters['warehouseCode'] ?? ''));
+        $itemCode = trim((string) ($filters['itemCode'] ?? ''));
+        $issueType = trim((string) ($filters['issueType'] ?? ''));
+        $source = trim((string) ($filters['source'] ?? ''));
+
+        $filterRows = function (Collection $rows) use ($warehouseCode, $itemCode, $source): Collection {
+            return $rows->filter(function (array $row) use ($warehouseCode, $itemCode, $source) {
+                if ($warehouseCode !== '') {
+                    $matchesWh = ($row['warehouseCode'] ?? '') === $warehouseCode
+                        || ($row['currentWarehouseCode'] ?? '') === $warehouseCode;
+                    if (! $matchesWh) {
+                        return false;
+                    }
+                }
+
+                if ($itemCode !== '' && ($row['itemCode'] ?? '') !== $itemCode) {
+                    return false;
+                }
+
+                if ($source !== '' && ($row['source'] ?? '') !== $source) {
+                    return false;
+                }
+
+                return true;
+            })->values();
+        };
+
+        $missing = ($issueType === '' || $issueType === 'missing')
+            ? $filterRows(collect($audit['missing'] ?? []))
+            : collect();
+
+        $mismatched = ($issueType === '' || $issueType === 'mismatched')
+            ? $filterRows(collect($audit['mismatched'] ?? []))
+            : collect();
+
+        $orphans = ($issueType === '' || $issueType === 'orphans')
+            ? $filterRows(collect($audit['orphans'] ?? []))
+            : collect();
+
+        return [
+            'missing' => $missing,
+            'mismatched' => $mismatched,
+            'orphans' => $orphans,
+            'summary' => [
+                'missing' => $missing->count(),
+                'mismatched' => $mismatched->count(),
+                'orphans' => $orphans->count(),
+            ],
+        ];
+    }
+
     public function sync(): array
     {
         return DB::transaction(function () {
@@ -290,6 +343,7 @@ class StockSyncService
                     ->where('warehouseCode', '!=', '');
             })
             ->get()
+            ->toBase()
             ->map(function (PurchaseDetail $detail) {
                 $qty = $this->purchaseStockQty($detail);
 
@@ -319,6 +373,7 @@ class StockSyncService
                     ->where('warehouseCode', '!=', '');
             })
             ->get()
+            ->toBase()
             ->reject(fn (MaintenanceDetail $detail) => $detail->item?->type === Item::TYPE_JASA)
             ->map(function (MaintenanceDetail $detail) {
                 return [

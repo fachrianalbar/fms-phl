@@ -17,15 +17,23 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('vendor')->name('vendor.')->group(function () {
     // 1. Order Menunggu Nota (order belum dibuat invoice — nota digenerate di sini)
     Route::get('order/waiting', [VendorInvoiceController::class, 'indexWaiting'])->name('order.waiting');
+    Route::get('order/waiting/export/excel', [VendorInvoiceController::class, 'exportWaitingExcel'])->name('order.waiting.export-excel');
+    Route::get('order/waiting/export/pdf', [VendorInvoiceController::class, 'exportWaitingPdf'])->name('order.waiting.export-pdf');
 
     // 2. Invoice Belum Lunas
     Route::get('invoice/unpaid', [VendorInvoiceController::class, 'indexUnpaid'])->name('invoice.unpaid');
+    Route::get('invoice/unpaid/export/excel', [VendorInvoiceController::class, 'exportUnpaidExcel'])->name('invoice.unpaid.export-excel');
+    Route::get('invoice/unpaid/export/pdf', [VendorInvoiceController::class, 'exportUnpaidPdf'])->name('invoice.unpaid.export-pdf');
 
     // 3. Invoice Dibayar Sebagian
     Route::get('invoice/partial', [VendorInvoiceController::class, 'indexPartial'])->name('invoice.partial');
+    Route::get('invoice/partial/export/excel', [VendorInvoiceController::class, 'exportPartialExcel'])->name('invoice.partial.export-excel');
+    Route::get('invoice/partial/export/pdf', [VendorInvoiceController::class, 'exportPartialPdf'])->name('invoice.partial.export-pdf');
 
     // 4. Invoice Lunas
     Route::get('invoice/paid', [VendorInvoiceController::class, 'indexPaid'])->name('invoice.paid');
+    Route::get('invoice/paid/export/excel', [VendorInvoiceController::class, 'exportPaidExcel'])->name('invoice.paid.export-excel');
+    Route::get('invoice/paid/export/pdf', [VendorInvoiceController::class, 'exportPaidPdf'])->name('invoice.paid.export-pdf');
 
     // Operasi invoice vendor (dipanggil dari halaman unpaid/paid)
     Route::post('invoice/payment', [VendorInvoiceController::class, 'store'])->name('invoice.payment.store');
@@ -40,6 +48,8 @@ Route::prefix('vendor')->name('vendor.')->group(function () {
     // 3. Daftar Pembayaran
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', [VendorPaymentListController::class, 'index'])->name('index');
+        Route::get('export/excel', [VendorPaymentListController::class, 'exportExcel'])->name('export-excel');
+        Route::get('export/pdf', [VendorPaymentListController::class, 'exportPdf'])->name('export-pdf');
         Route::get('detail/{transactionKey}', [VendorPaymentListController::class, 'detail'])->name('detail');
     });
 });

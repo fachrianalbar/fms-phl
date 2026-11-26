@@ -766,7 +766,7 @@
                         </div>
                         <div class="flex-grow-1">
                             <h4 class="modal-title fw-bold mb-0" id="notaModalLabel">Generate Nota Pembayaran</h4>
-                            <div class="nota-modal-header-sub">Nota / invoice resmi pembayaran ke vendor armada eksternal</div>
+                            <div class="nota-modal-header-sub">Nota / invoice resmi pembayaran ke vendor</div>
                         </div>
                         <button class="btn-close" type="button" data-bs-theme="dark"
                             data-bs-dismiss="modal" aria-label="Close"></button>
@@ -791,8 +791,8 @@
                             </div>
                             <div class="col-4">
                                 <div class="nota-info-tile">
-                                    <div class="nota-info-tile-label"><i class="mdi mdi-tag-outline me-1"></i>Format</div>
-                                    <div class="nota-info-tile-value" id="notaOrderFormat">-</div>
+                                    <div class="nota-info-tile-label"><i class="mdi mdi-domain me-1"></i>Perusahaan</div>
+                                    <div class="nota-info-tile-value text-truncate" id="notaOrderFormat" title="">-</div>
                                 </div>
                             </div>
                             <div class="col-4">

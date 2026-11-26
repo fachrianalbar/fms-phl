@@ -29,16 +29,26 @@ class CostComponentPriceLogExport implements FromQuery, ShouldAutoSize, WithHead
         $query = CostComponentPriceLog::query()->orderBy('created_at', 'desc');
 
         // Filter by cost component code if provided
-        if ($this->request->has('costComponentCode') && $this->request->costComponentCode) {
+        if ($this->request->filled('costComponentCode')) {
             $query->where('costComponentCode', $this->request->costComponentCode);
         }
 
+        if ($this->request->filled('keyword')) {
+            $term = strtolower(trim((string) $this->request->keyword));
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(costComponentCode) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(costComponentName) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(changedBy, \'\')) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(notes, \'\')) LIKE ?', ['%'.$term.'%']);
+            });
+        }
+
         // Filter by date range if provided
-        if ($this->request->has('startDate') && $this->request->startDate) {
+        if ($this->request->filled('startDate')) {
             $query->whereDate('created_at', '>=', $this->request->startDate);
         }
 
-        if ($this->request->has('endDate') && $this->request->endDate) {
+        if ($this->request->filled('endDate')) {
             $query->whereDate('created_at', '<=', $this->request->endDate);
         }
 

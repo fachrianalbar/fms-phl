@@ -105,13 +105,25 @@
         <tbody>
             @php
                 $qty = (float) ($order->qty ?? 0);
-                $unitPrice = (float) ($order->vendorPriceSingle ?? ($qty > 0 ? ($order->vendorPrice ?? 0) / $qty : ($order->vendorPrice ?? 0)));
-                if ($unitPrice <= 0) {
-                    $unitPrice = (float) ($order->route->vendorPrice ?? $order->route->personalVendorPrice ?? 0);
-                }
-                $subtotal = (float) ($order->vendorPrice ?? ($qty * $unitPrice));
-                if ($subtotal <= 0 && $qty > 0) {
-                    $subtotal = $qty * $unitPrice;
+                $vendorPrice = (float) ($order->vendorPrice ?? 0);
+                if ($vendorPrice > 0) {
+                    $unitPrice = (float) ($order->vendorPriceSingle ?? 0);
+                    if ($unitPrice <= 0) {
+                        $unitPrice = $qty > 0 ? $vendorPrice / $qty : $vendorPrice;
+                    }
+                    $subtotal = $vendorPrice;
+                } else {
+                    $personalVendorPrice = (float) ($order->personalVendorPrice ?? 0);
+                    $unitPrice = (float) ($order->personalVendorPriceSingle ?? 0);
+                    if ($unitPrice <= 0 && $personalVendorPrice > 0) {
+                        $unitPrice = $qty > 0 ? $personalVendorPrice / $qty : $personalVendorPrice;
+                    }
+                    if ($unitPrice <= 0) {
+                        $routeVendorPrice = (float) ($order->route->vendorPrice ?? 0);
+                        $routePersonalVendorPrice = (float) ($order->route->personalVendorPrice ?? 0);
+                        $unitPrice = $routeVendorPrice > 0 ? $routeVendorPrice : $routePersonalVendorPrice;
+                    }
+                    $subtotal = $personalVendorPrice > 0 ? $personalVendorPrice : ($qty > 0 ? $qty * $unitPrice : 0);
                 }
             @endphp
             <tr>

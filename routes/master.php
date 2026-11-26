@@ -29,6 +29,8 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::resource('position', PositionController::class);
     Route::resource('employee', EmployeeController::class);
     Route::post('employee/{id}/toggle-status', [EmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
+    Route::get('employee-export/excel', [EmployeeController::class, 'exportExcel'])->name('employee.export-excel');
+    Route::get('employee-export/pdf', [EmployeeController::class, 'exportPdf'])->name('employee.export-pdf');
     Route::resource('fleet-type', FleetTypeController::class);
     Route::get('fleet-type-export/excel', [FleetTypeController::class, 'exportExcel'])->name('fleet-type.export-excel');
     Route::get('fleet-type-export/pdf', [FleetTypeController::class, 'exportPdf'])->name('fleet-type.export-pdf');
@@ -40,7 +42,11 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::get('fleet-brand/{id}/export/excel', [FleetBrandController::class, 'exportDetailExcel'])->name('fleet-brand.detail-export-excel');
     Route::get('fleet-brand/{id}/export/pdf', [FleetBrandController::class, 'exportDetailPdf'])->name('fleet-brand.detail-export-pdf');
     Route::resource('unit', UnitController::class);
+    Route::get('unit-export/excel', [UnitController::class, 'exportExcel'])->name('unit.export-excel');
+    Route::get('unit-export/pdf', [UnitController::class, 'exportPdf'])->name('unit.export-pdf');
     Route::resource('company', CompanyController::class);
+    Route::get('company-export/excel', [CompanyController::class, 'exportExcel'])->name('company.export-excel');
+    Route::get('company-export/pdf', [CompanyController::class, 'exportPdf'])->name('company.export-pdf');
     Route::resource('customer', CustomerController::class);
     Route::get('customer-export/excel', [CustomerController::class, 'exportExcel'])->name('customer.export-excel');
     Route::get('customer-export/pdf', [CustomerController::class, 'exportPdf'])->name('customer.export-pdf');
@@ -48,10 +54,16 @@ Route::prefix('master')->name('master.')->group(function () {
     Route::delete('customer-pic/{id}', [CustomerController::class, 'deleteCustomerPic'])->name('customer-pic.destroy');
     Route::resource('cost-component', CostComponentController::class);
     Route::get('cost-component-export/excel', [CostComponentController::class, 'exportExcel'])->name('cost-component.export-excel');
+    Route::get('cost-component-export/pdf', [CostComponentController::class, 'exportPdf'])->name('cost-component.export-pdf');
     Route::get('cost-component-price-log', [CostComponentPriceLogController::class, 'index'])->name('cost-component-price-log.index');
     Route::get('cost-component-price-log-export/excel', [CostComponentPriceLogController::class, 'exportExcel'])->name('cost-component-price-log.export-excel');
+    Route::get('cost-component-price-log-export/pdf', [CostComponentPriceLogController::class, 'exportPdf'])->name('cost-component-price-log.export-pdf');
     Route::resource('location', LocationController::class);
+    Route::get('location-export/excel', [LocationController::class, 'exportExcel'])->name('location.export-excel');
+    Route::get('location-export/pdf', [LocationController::class, 'exportPdf'])->name('location.export-pdf');
     Route::resource('material', MaterialController::class);
+    Route::get('material-export/excel', [MaterialController::class, 'exportExcel'])->name('material.export-excel');
+    Route::get('material-export/pdf', [MaterialController::class, 'exportPdf'])->name('material.export-pdf');
     Route::resource('transaction-type', TransactionTypeController::class);
     Route::resource('fleet-company', FleetCompanyController::class);
     Route::get('fleet-company-export/excel', [FleetCompanyController::class, 'exportExcel'])->name('fleet-company.export-excel');
@@ -61,6 +73,8 @@ Route::prefix('master')->name('master.')->group(function () {
 
     // Menu routes
     Route::resource('menu', MenuController::class)->except(['show']);
+    Route::get('menu-export/excel', [MenuController::class, 'exportExcel'])->name('menu.export-excel');
+    Route::get('menu-export/pdf', [MenuController::class, 'exportPdf'])->name('menu.export-pdf');
     Route::get('menu/sub-menu/{parentCode}', [MenuController::class, 'subMenu'])->name('menu.sub-menu');
     Route::get('menu/create-sub-menu/{parentCode}', [MenuController::class, 'createSubMenu'])->name('menu.create-sub-menu');
 });

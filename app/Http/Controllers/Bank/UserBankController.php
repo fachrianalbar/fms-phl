@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Bank;
 
+use App\Exports\UserBankExport;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\BankAccount;
 use App\Services\Bank\BankAccountService;
 use App\Services\Bank\UserBankService;
 use App\Services\MenuService;
@@ -11,6 +13,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class UserBankController extends Controller
@@ -141,7 +145,7 @@ class UserBankController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAllFiltered($request->input('status', 'all'));
+            $data = $this->service->findAllFiltered($request->input('status', 'all'), $request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -197,6 +201,61 @@ class UserBankController extends Controller
                 ->rawColumns(['action', 'bank_name', 'accountNumber', 'accountName', 'type', 'rekening_type', 'balance'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new UserBankExport($request->all(), $this->service),
+            'Bank-Pengguna-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $status = (string) $request->input('status', 'all');
+        $userBanks = $this->service->findAllFiltered($status, $request->all());
+
+        $filterSummary = [];
+        if ($status !== '' && $status !== 'all') {
+            $filterSummary[] = 'Filter Tab: '.ucfirst($status);
+        }
+        if ($request->filled('bankCode')) {
+            $bankName = BankAccount::where('code', $request->bankCode)->value('name') ?: $request->bankCode;
+            $filterSummary[] = 'Bank: '.$bankName;
+        }
+        if ($request->filled('type')) {
+            $filterSummary[] = 'Tipe Pemilik: '.((int) $request->type === 1 ? 'Pribadi (Person)' : 'Perusahaan (Company)');
+        }
+        if ($request->filled('rekeningType')) {
+            $filterSummary[] = 'Tipe Rekening: '.ucfirst($request->rekeningType);
+        }
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Pemilik / No. Rek: '.$request->keyword;
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('bank.user-bank.report.user-bank-pdf', [
+            'userBanks' => $userBanks,
+            'title' => 'Daftar Bank Pengguna',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Bank-Pengguna-'.now()->format('YmdHis').'.pdf"');
     }
 
     /**

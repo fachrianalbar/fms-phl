@@ -2,19 +2,26 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Exports\VendorInvoiceExport;
+use App\Exports\VendorWaitingOrderExport;
 use App\Http\Controllers\Controller;
 use App\Models\Bank\UserBank;
 use App\Models\CompanySetting;
 use App\Models\Finance\VendorPayment;
+use App\Models\Master\Company;
+use App\Models\Master\Customer;
+use App\Models\Master\FleetCompany;
 use App\Models\Mutation;
 use App\Models\Operational\Order;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
+use Carbon\Carbon;
 use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Throwable;
 use Yajra\DataTables\DataTables;
@@ -62,16 +69,37 @@ class VendorInvoiceController extends Controller
     }
 
     /**
-     * Halaman Order Menunggu Nota (Vendor) — order belum dibuat invoice.
+     * Ambil opsi dropdown filter perusahaan armada, perusahaan customer, dan customer.
+     */
+    private function filterDropdownOptions(bool $includeCustomers = false): array
+    {
+        $options = [
+            'fleetCompanies' => FleetCompany::query()->orderBy('name')->get(['code', 'name', 'type']),
+            'companies' => Company::query()->orderBy('name')->get(['code', 'name', 'format']),
+        ];
+
+        if ($includeCustomers) {
+            $options['customers'] = Customer::query()->orderBy('name')->get(['code', 'name']);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Halaman Faktur yg Belum Dibayar (Vendor) — order belum dibuat invoice.
      */
     public function indexWaiting()
     {
         $stats = $this->service->statsWaiting();
+        $options = $this->filterDropdownOptions(true);
 
         return view('vendor.order.waiting')
             ->with('view', $this->view)
-            ->with('title', $this->pageTitle('VENDOR_ORDER_WAITING', 'Order Menunggu Nota'))
-            ->with('stats', $stats);
+            ->with('title', $this->pageTitle('VENDOR_ORDER_WAITING', 'Faktur yg Belum Dibayar'))
+            ->with('stats', $stats)
+            ->with('fleetCompanies', $options['fleetCompanies'])
+            ->with('companies', $options['companies'])
+            ->with('customers', $options['customers']);
     }
 
     /**
@@ -81,12 +109,15 @@ class VendorInvoiceController extends Controller
     {
         // Nominal nota yang belum dibayar selalu mengikuti harga order terkini.
         $this->service->syncPendingNotas($this->title);
+        $options = $this->filterDropdownOptions();
 
         return view($this->view.'unpaid')
             ->with('view', $this->view)
             ->with('title', $this->pageTitle('VENDOR_INV_UNPAID', 'Invoice Belum Dibayar'))
             ->with('listType', 'pending')
-            ->with('stats', $this->service->statsUnpaid());
+            ->with('stats', $this->service->statsUnpaid())
+            ->with('fleetCompanies', $options['fleetCompanies'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -94,11 +125,15 @@ class VendorInvoiceController extends Controller
      */
     public function indexPartial()
     {
+        $options = $this->filterDropdownOptions();
+
         return view($this->view.'unpaid')
             ->with('view', $this->view)
             ->with('title', $this->pageTitle('VENDOR_INV_PARTIAL', 'Invoice Dibayar Sebagian'))
             ->with('listType', 'partial')
-            ->with('stats', $this->service->statsPartial());
+            ->with('stats', $this->service->statsPartial())
+            ->with('fleetCompanies', $options['fleetCompanies'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -107,11 +142,14 @@ class VendorInvoiceController extends Controller
     public function indexPaid()
     {
         $stats = $this->service->statsPaid();
+        $options = $this->filterDropdownOptions();
 
         return view($this->view.'paid')
             ->with('view', $this->view)
             ->with('title', $this->pageTitle('VENDOR_INV_PAID', 'Invoice Lunas'))
-            ->with('stats', $stats);
+            ->with('stats', $stats)
+            ->with('fleetCompanies', $options['fleetCompanies'])
+            ->with('companies', $options['companies']);
     }
 
     /**
@@ -120,7 +158,7 @@ class VendorInvoiceController extends Controller
     public function datatableWaiting(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findWaitingOrders();
+            $data = $this->service->findWaitingOrders($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -152,6 +190,8 @@ class VendorInvoiceController extends Controller
                             data_get($row, 'fleet.company.name'),
                             data_get($row, 'driverName') ?: data_get($row, 'driver.name'),
                             data_get($row, 'customer.name'),
+                            data_get($row, 'companyName'),
+                            data_get($row, 'customer.company.name'),
                             data_get($row, 'companyFormat'),
                             data_get($row, 'route.originLocation.name'),
                             data_get($row, 'route.destinationLocation.name'),
@@ -212,6 +252,11 @@ class VendorInvoiceController extends Controller
                 })
                 ->editColumn('route.destinationLocation.name', function ($row) {
                     return $row->route->destinationLocation->name ?? '';
+                })
+                ->addColumn('companyName', function ($row) {
+                    $companyName = trim((string) ($row->customer->company->name ?? ''));
+
+                    return $companyName !== '' ? $companyName : '-';
                 })
                 ->addColumn('companyFormat', function ($row) {
                     $format = strtoupper(trim((string) ($row->customer->company->format ?? '')));
@@ -306,7 +351,7 @@ class VendorInvoiceController extends Controller
             // Jaga nominal nota tetap sama dengan harga order (nota belum dibayar).
             $this->service->syncPendingNotas($this->title);
 
-            $data = $this->service->findPendingNotas();
+            $data = $this->service->findPendingNotas($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -407,7 +452,7 @@ class VendorInvoiceController extends Controller
     public function datatablePartial(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPartialNotas();
+            $data = $this->service->findPartialNotas($request->all());
 
             return $this->datatableNotaRows($data)->toJson();
         }
@@ -463,7 +508,7 @@ class VendorInvoiceController extends Controller
     public function datatablePaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPaidNotas();
+            $data = $this->service->findPaidNotas($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -834,17 +879,12 @@ class VendorInvoiceController extends Controller
         $totalPphRate = 0;
         $totalClaim = 0;
         $totalGrandTotal = 0;
+        $orderLineAmounts = [];
 
         foreach ($orders as $order) {
-            $qty = (float) ($order->qty ?? 0);
-            $unitPrice = (float) ($order->vendorPriceSingle ?? ($qty > 0 ? ($order->vendorPrice ?? 0) / $qty : ($order->vendorPrice ?? 0)));
-            if ($unitPrice <= 0) {
-                $unitPrice = (float) ($order->route->vendorPrice ?? $order->route->personalVendorPrice ?? 0);
-            }
-            $subtotal = (float) ($order->vendorPrice ?? ($qty * $unitPrice));
-            if ($subtotal <= 0 && $qty > 0) {
-                $subtotal = $qty * $unitPrice;
-            }
+            $lineAmounts = $this->service->resolveOrderVendorLineAmounts($order);
+            $orderLineAmounts[$order->code] = $lineAmounts;
+            $subtotal = $lineAmounts['subtotal'];
             $additionalCost = $order->cost
                 ? $order->cost
                     ->filter(fn ($cost) => strtolower(trim((string) ($cost->type ?? ''))) === 'on charge')
@@ -939,6 +979,7 @@ class VendorInvoiceController extends Controller
                 ->with('totalGrandTotal', $totalGrandTotal)
                 ->with('notaNumber', $notaNumber)
                 ->with('userBank', $userBank)
+                ->with('orderLineAmounts', $orderLineAmounts)
                 ->with('paymentHistories', $groupedHistories)
                 ->with('paymentHistoryTotal', $paymentHistoryTotal)
         );
@@ -1219,5 +1260,215 @@ class VendorInvoiceController extends Controller
             return redirect()->route('vendor.invoice.unpaid')
                 ->with('fail', 'Pembatalan nota gagal diproses. Silakan coba lagi.');
         }
+    }
+
+    /**
+     * Export Excel Faktur yg Belum Dibayar (Vendor).
+     */
+    public function exportWaitingExcel(Request $request)
+    {
+        return Excel::download(
+            new VendorWaitingOrderExport($request->all(), $this->service),
+            'Faktur-Vendor-Belum-Dibayar-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    /**
+     * Export PDF Faktur yg Belum Dibayar (Vendor).
+     */
+    public function exportWaitingPdf(Request $request)
+    {
+        $orders = $this->service->findWaitingOrders($request->all());
+        $title = $this->pageTitle('VENDOR_ORDER_WAITING', 'Faktur yg Belum Dibayar');
+        $filterSummary = $this->buildWaitingFilterSummary($request);
+
+        return $this->renderLandscapePdf(
+            'vendor.order.report.waiting-pdf',
+            [
+                'orders' => $orders,
+                'service' => $this->service,
+                'title' => $title,
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Faktur-Vendor-Belum-Dibayar-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    /**
+     * Export Excel Invoice Vendor Belum Lunas.
+     */
+    public function exportUnpaidExcel(Request $request)
+    {
+        $this->service->syncPendingNotas($this->title);
+
+        return Excel::download(
+            new VendorInvoiceExport($request->all(), 'pending', $this->service),
+            'Faktur-Vendor-Belum-Lunas-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    /**
+     * Export PDF Invoice Vendor Belum Lunas.
+     */
+    public function exportUnpaidPdf(Request $request)
+    {
+        $this->service->syncPendingNotas($this->title);
+
+        return $this->exportNotaListPdf(
+            $request,
+            'pending',
+            $this->pageTitle('VENDOR_INV_UNPAID', 'Faktur Vendor Belum Lunas'),
+            'Faktur-Vendor-Belum-Lunas-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    /**
+     * Export Excel Invoice Vendor Dibayar Sebagian.
+     */
+    public function exportPartialExcel(Request $request)
+    {
+        return Excel::download(
+            new VendorInvoiceExport($request->all(), 'partial', $this->service),
+            'Invoice-Vendor-Dibayar-Sebagian-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    /**
+     * Export PDF Invoice Vendor Dibayar Sebagian.
+     */
+    public function exportPartialPdf(Request $request)
+    {
+        return $this->exportNotaListPdf(
+            $request,
+            'partial',
+            $this->pageTitle('VENDOR_INV_PARTIAL', 'Invoice Dibayar Sebagian'),
+            'Invoice-Vendor-Dibayar-Sebagian-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    /**
+     * Export Excel Invoice Vendor Lunas.
+     */
+    public function exportPaidExcel(Request $request)
+    {
+        return Excel::download(
+            new VendorInvoiceExport($request->all(), 'paid', $this->service),
+            'Faktur-Vendor-Lunas-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    /**
+     * Export PDF Invoice Vendor Lunas.
+     */
+    public function exportPaidPdf(Request $request)
+    {
+        return $this->exportNotaListPdf(
+            $request,
+            'paid',
+            $this->pageTitle('VENDOR_INV_PAID', 'Faktur Vendor Lunas'),
+            'Faktur-Vendor-Lunas-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    private function exportNotaListPdf(Request $request, string $type, string $title, string $filename)
+    {
+        $notas = match ($type) {
+            'partial' => $this->service->findPartialNotas($request->all()),
+            'paid' => $this->service->findPaidNotas($request->all()),
+            default => $this->service->findPendingNotas($request->all()),
+        };
+
+        return $this->renderLandscapePdf(
+            'vendor.invoice.report.invoice-list-pdf',
+            [
+                'notas' => $notas,
+                'type' => $type,
+                'title' => $title,
+                'filterSummary' => $this->buildNotaFilterSummary($request),
+                'printedAt' => now(),
+            ],
+            $filename
+        );
+    }
+
+    private function renderLandscapePdf(string $viewName, array $data, string $filename)
+    {
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($viewName, $data)->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
+    }
+
+    private function buildWaitingFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Order: '.$start.' s/d '.$end;
+        }
+
+        if ($request->filled('fleetCompanyCode')) {
+            $name = FleetCompany::where('code', $request->fleetCompanyCode)->value('name') ?: $request->fleetCompanyCode;
+            $summary[] = 'Vendor: '.$name;
+        }
+
+        if ($request->filled('companyCode')) {
+            $name = Company::where('code', $request->companyCode)->value('name') ?: $request->companyCode;
+            $summary[] = 'Perusahaan: '.$name;
+        }
+
+        if ($request->filled('customerCode')) {
+            $name = Customer::where('code', $request->customerCode)->value('name') ?: $request->customerCode;
+            $summary[] = 'Customer: '.$name;
+        }
+
+        if ($request->filled('plateNumber')) {
+            $summary[] = 'Nopol: '.trim((string) $request->plateNumber);
+        }
+
+        return $summary;
+    }
+
+    private function buildNotaFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Nota: '.$start.' s/d '.$end;
+        }
+
+        if ($request->filled('fleetCompanyCode')) {
+            $name = FleetCompany::where('code', $request->fleetCompanyCode)->value('name') ?: $request->fleetCompanyCode;
+            $summary[] = 'Vendor: '.$name;
+        }
+
+        if ($request->filled('companyCode')) {
+            $name = Company::where('code', $request->companyCode)->value('name') ?: $request->companyCode;
+            $summary[] = 'Perusahaan: '.$name;
+        }
+
+        if ($request->filled('notaNumber')) {
+            $summary[] = 'No. Nota: '.trim((string) $request->notaNumber);
+        }
+
+        return $summary;
     }
 }

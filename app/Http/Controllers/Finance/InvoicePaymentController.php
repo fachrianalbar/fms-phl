@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Finance;
 
-use App\Helpers\FilterHelper;
 use App\Http\Controllers\Controller;
-use App\Models\Finance\InvoicePayment;
+use App\Models\Bank\UserBank;
+use App\Models\Master\Customer;
 use App\Services\Finance\InvoicePaymentService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -47,10 +47,15 @@ class InvoicePaymentController extends Controller
             'paidInvoiceCount' => $paidInvoiceCount,
         ];
 
+        $customers = Customer::query()->orderBy('name')->get(['code', 'name']);
+        $userBanks = UserBank::with('bank')->where('type', 2)->orderBy('accountName')->get();
+
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
-            ->with('stats', $stats);
+            ->with('stats', $stats)
+            ->with('customers', $customers)
+            ->with('userBanks', $userBanks);
     }
 
     /**
@@ -59,8 +64,8 @@ class InvoicePaymentController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-            $labels = $this->service->paymentLabels($data);
+            $data = $this->service->datatable($request->all());
+            $labels = $this->service->paymentLabels($this->service->datatable());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -180,28 +185,7 @@ class InvoicePaymentController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $filters = [
-            'invoiceNumber' => $request->invoiceNumber,
-            'customer_name' => $request->customerName,
-        ];
-
-        $relations = [
-            'invoiceNumber' => 'invoice.invoiceNumber',
-            'customer_name' => 'invoice.customer.name',
-        ];
-
-        $dateFilters = [
-            'paymentDate' => [
-                'start' => $request->startDate,
-                'end' => $request->endDate,
-            ],
-        ];
-
-        $query = InvoicePayment::with(['invoice.customer', 'userBank.bank'])
-            ->orderBy('paymentDate', 'desc')
-            ->orderBy('created_at', 'desc');
-
-        $data = FilterHelper::applyFilters($query, $filters, $relations, $dateFilters)->get();
+        $data = $this->service->datatable($request->all());
 
         // Label dihitung dari seluruh pembayaran agar urutan DP/cicilan tetap benar
         $labels = $this->service->paymentLabels($this->service->datatable());
@@ -247,7 +231,9 @@ class InvoicePaymentController extends Controller
             ->render();
         $mpdf->WriteHTML($footerHtml);
 
-        return $mpdf->Output('Invoice-Payment-Report.pdf', 'I');
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Invoice-Payment-Report.pdf"');
     }
 
     public function exportExcel(Request $request)

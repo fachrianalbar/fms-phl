@@ -48,9 +48,17 @@
             white-space: nowrap;
         }
 
-        #dt tbody tr { transition: background-color .15s ease; }
-        #dt tbody tr:hover { background-color: #f8fafc !important; }
-        #dt tbody tr:last-child td { border-bottom: 0; }
+        #dt tbody tr {
+            transition: background-color .15s ease;
+        }
+
+        #dt tbody tr:hover {
+            background-color: #f8fafc !important;
+        }
+
+        #dt tbody tr:last-child td {
+            border-bottom: 0;
+        }
 
         .maintenance-card-header {
             background: #fff;
@@ -63,7 +71,9 @@
             transition: all .2s ease;
         }
 
-        .btn-icon:hover { transform: translateY(-1px); }
+        .btn-icon:hover {
+            transform: translateY(-1px);
+        }
 
         /* ── Standard filter card ── */
         .filter-card {
@@ -86,16 +96,51 @@
             width: 100%;
         }
 
-        .filter-card-header:hover { background: #f1f5f9; }
-        .filter-card-heading { align-items: center; display: flex; gap: 8px; }
-        .filter-card-heading i { color: #4f46e5; font-size: 17px; }
-        .filter-card-heading strong { font-size: 13px; font-weight: 700; }
-        .filter-card-heading small { color: #94a3b8; font-size: 11px; font-weight: 400; }
-        .filter-card-chevron { transition: transform .2s ease; }
-        .filter-card-header[aria-expanded="true"] .filter-card-chevron { transform: rotate(180deg); }
-        .filter-card .filter-collapse { border-top: 1px solid #e2e8f0; }
-        .filter-card .filter-collapse-body { padding: 16px; }
-        .filter-card .row { --bs-gutter-y: .75rem; }
+        .filter-card-header:hover {
+            background: #f1f5f9;
+        }
+
+        .filter-card-heading {
+            align-items: center;
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-card-heading i {
+            color: #4f46e5;
+            font-size: 17px;
+        }
+
+        .filter-card-heading strong {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .filter-card-heading small {
+            color: #94a3b8;
+            font-size: 11px;
+            font-weight: 400;
+        }
+
+        .filter-card-chevron {
+            transition: transform .2s ease;
+        }
+
+        .filter-card-header[aria-expanded="true"] .filter-card-chevron {
+            transform: rotate(180deg);
+        }
+
+        .filter-card .filter-collapse {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .filter-card .filter-collapse-body {
+            padding: 16px;
+        }
+
+        .filter-card .row {
+            --bs-gutter-y: .75rem;
+        }
 
         .filter-label {
             color: #64748b;
@@ -124,8 +169,15 @@
             padding: 0 12px 0 36px !important;
         }
 
-        .filter-control::placeholder { color: #94a3b8 !important; font-size: 13px !important; }
-        .filter-control:hover { border-color: #94a3b8 !important; }
+        .filter-control::placeholder {
+            color: #94a3b8 !important;
+            font-size: 13px !important;
+        }
+
+        .filter-control:hover {
+            border-color: #94a3b8 !important;
+        }
+
         .filter-control:focus {
             background-color: #fff !important;
             border-color: #818cf8 !important;
@@ -167,8 +219,15 @@
             padding: 0 !important;
         }
 
-        .btn-filter-reset:hover { background: #fff1f2 !important; color: #e11d48 !important; }
-        .select2-container { width: 100% !important; }
+        .btn-filter-reset:hover {
+            background: #fff1f2 !important;
+            color: #e11d48 !important;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
         .select2-container--default .select2-selection--single {
             align-items: center;
             border: 1px solid #cbd5e1 !important;
@@ -176,40 +235,64 @@
             display: flex;
             height: 38px !important;
         }
+
         .select2-container--default .select2-selection--single .select2-selection__rendered {
             color: #334155 !important;
             font-size: 13px;
             line-height: 36px;
             padding-left: 12px;
         }
-        .select2-container--default .select2-selection--single .select2-selection__arrow { height: 36px; }
-        .select2-dropdown { border-radius: 8px !important; }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+
+        .select2-dropdown {
+            border-radius: 8px !important;
+        }
 
         #dt_wrapper .dataTables_filter input,
-        #dt_wrapper .dataTables_length select { border-radius: 8px; font-size: 12px; }
+        #dt_wrapper .dataTables_length select {
+            border-radius: 8px;
+            font-size: 12px;
+        }
+
         #dt_wrapper .dataTables_info,
         #dt_wrapper .dataTables_length,
-        #dt_wrapper .dataTables_filter { color: #64748b; font-size: 12px; }
+        #dt_wrapper .dataTables_filter {
+            color: #64748b;
+            font-size: 12px;
+        }
 
         /* ── Detail modal ── */
-        #detailModal .modal-dialog { max-width: 1000px; }
+        #detailModal .modal-dialog {
+            max-width: 1000px;
+        }
+
         #detailModal .modal-content {
             border: 1px solid #e2e8f0;
             border-radius: 14px;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(15, 23, 42, .12);
         }
+
         #detailModal .modal-header {
             background: #fff;
             border-bottom: 1px solid #e2e8f0;
             padding: 14px 20px;
         }
-        #detailModal .modal-body { background: #fff; padding: 24px; }
+
+        #detailModal .modal-body {
+            background: #fff;
+            padding: 24px;
+        }
+
         #detailModal .modal-footer {
             background: #f8fafc;
             border-top: 1px solid #e2e8f0;
             padding: 12px 20px;
         }
+
         .detail-icon {
             align-items: center;
             background: #eef2ff;
@@ -220,6 +303,7 @@
             justify-content: center;
             width: 36px;
         }
+
         .detail-meta-item {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -227,6 +311,7 @@
             min-height: 68px;
             padding: 11px 14px;
         }
+
         .detail-meta-label {
             color: #64748b;
             display: block;
@@ -236,13 +321,25 @@
             margin-bottom: 4px;
             text-transform: uppercase;
         }
-        .detail-meta-value { color: #334155; font-size: 13px; font-weight: 600; }
+
+        .detail-meta-value {
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
         .modal-table-wrap {
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             overflow: hidden;
         }
-        .modal-table { border-collapse: separate; border-spacing: 0; width: 100%; }
+
+        .modal-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+        }
+
         .modal-table thead th {
             background: #f8fafc;
             border-bottom: 1px solid #e2e8f0;
@@ -253,6 +350,7 @@
             text-transform: uppercase;
             white-space: nowrap;
         }
+
         .modal-table tbody td {
             border-bottom: 1px solid #f1f5f9;
             color: #334155;
@@ -260,18 +358,44 @@
             padding: 9px 12px;
             vertical-align: middle;
         }
-        .modal-table tbody tr:last-child td { border-bottom: 0; }
+
+        .modal-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
 
         /* ── Dark mode ── */
         html[data-bs-theme="dark"] .maintenance-card-header,
         html[data-bs-theme="dark"] #detailModal .modal-header,
-        html[data-bs-theme="dark"] #detailModal .modal-body { background-color: var(--bs-card-bg) !important; }
-        html[data-bs-theme="dark"] .maintenance-card-header { border-bottom-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .filter-card { background: var(--bs-secondary-bg); border-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .filter-card-header { background: var(--bs-secondary-bg); color: var(--bs-body-color); }
-        html[data-bs-theme="dark"] .filter-card-header:hover { background: var(--bs-tertiary-bg); }
-        html[data-bs-theme="dark"] .filter-card .filter-collapse { border-top-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .filter-label { color: var(--bs-secondary-color); }
+        html[data-bs-theme="dark"] #detailModal .modal-body {
+            background-color: var(--bs-card-bg) !important;
+        }
+
+        html[data-bs-theme="dark"] .maintenance-card-header {
+            border-bottom-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card {
+            background: var(--bs-secondary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header {
+            background: var(--bs-secondary-bg);
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-card-header:hover {
+            background: var(--bs-tertiary-bg);
+        }
+
+        html[data-bs-theme="dark"] .filter-card .filter-collapse {
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .filter-label {
+            color: var(--bs-secondary-color);
+        }
+
         html[data-bs-theme="dark"] .filter-control,
         html[data-bs-theme="dark"] .filter-card .form-control,
         html[data-bs-theme="dark"] .filter-card .form-select {
@@ -279,35 +403,88 @@
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
         }
+
         html[data-bs-theme="dark"] .btn-filter-reset {
             background: var(--bs-tertiary-bg) !important;
             border-color: var(--bs-border-color) !important;
             color: var(--bs-body-color) !important;
         }
+
         html[data-bs-theme="dark"] #dt,
         html[data-bs-theme="dark"] #dt thead th,
-        html[data-bs-theme="dark"] #dt tbody td { border-color: var(--bs-border-color) !important; }
+        html[data-bs-theme="dark"] #dt tbody td {
+            border-color: var(--bs-border-color) !important;
+        }
+
         html[data-bs-theme="dark"] #dt thead th,
-        html[data-bs-theme="dark"] .modal-table thead th { background-color: var(--bs-tertiary-bg) !important; color: var(--bs-emphasis-color) !important; }
+        html[data-bs-theme="dark"] .modal-table thead th {
+            background-color: var(--bs-tertiary-bg) !important;
+            color: var(--bs-emphasis-color) !important;
+        }
+
         html[data-bs-theme="dark"] #dt tbody td,
-        html[data-bs-theme="dark"] .modal-table tbody td { color: var(--bs-body-color) !important; }
-        html[data-bs-theme="dark"] #dt tbody tr:hover { background-color: rgba(255, 255, 255, .05) !important; }
+        html[data-bs-theme="dark"] .modal-table tbody td {
+            color: var(--bs-body-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #dt tbody tr:hover {
+            background-color: rgba(255, 255, 255, .05) !important;
+        }
+
         html[data-bs-theme="dark"] #dt_wrapper .dataTables_info,
         html[data-bs-theme="dark"] #dt_wrapper .dataTables_length,
-        html[data-bs-theme="dark"] #dt_wrapper .dataTables_filter { color: var(--bs-secondary-color); }
-        html[data-bs-theme="dark"] #detailModal .modal-content { background-color: var(--bs-card-bg) !important; border-color: var(--bs-border-color) !important; }
-        html[data-bs-theme="dark"] #detailModal .modal-header { border-bottom-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] #detailModal .modal-footer { background-color: var(--bs-secondary-bg) !important; border-top-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .detail-icon { background: rgba(99, 102, 241, .2); color: #a5b4fc; }
-        html[data-bs-theme="dark"] .detail-meta-item { background: var(--bs-tertiary-bg); border-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .detail-meta-label { color: var(--bs-secondary-color); }
-        html[data-bs-theme="dark"] .detail-meta-value { color: var(--bs-body-color); }
-        html[data-bs-theme="dark"] .modal-table-wrap { border-color: var(--bs-border-color); }
-        html[data-bs-theme="dark"] .modal-table tbody td { border-bottom-color: var(--bs-border-color) !important; }
+        html[data-bs-theme="dark"] #dt_wrapper .dataTables_filter {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] #detailModal .modal-content {
+            background-color: var(--bs-card-bg) !important;
+            border-color: var(--bs-border-color) !important;
+        }
+
+        html[data-bs-theme="dark"] #detailModal .modal-header {
+            border-bottom-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] #detailModal .modal-footer {
+            background-color: var(--bs-secondary-bg) !important;
+            border-top-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .detail-icon {
+            background: rgba(99, 102, 241, .2);
+            color: #a5b4fc;
+        }
+
+        html[data-bs-theme="dark"] .detail-meta-item {
+            background: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .detail-meta-label {
+            color: var(--bs-secondary-color);
+        }
+
+        html[data-bs-theme="dark"] .detail-meta-value {
+            color: var(--bs-body-color);
+        }
+
+        html[data-bs-theme="dark"] .modal-table-wrap {
+            border-color: var(--bs-border-color);
+        }
+
+        html[data-bs-theme="dark"] .modal-table tbody td {
+            border-bottom-color: var(--bs-border-color) !important;
+        }
 
         @media (max-width: 575.98px) {
-            #detailModal .modal-body { padding: 16px; }
-            .filter-card .filter-collapse-body { padding: 12px; }
+            #detailModal .modal-body {
+                padding: 16px;
+            }
+
+            .filter-card .filter-collapse-body {
+                padding: 12px;
+            }
         }
     </style>
 @endpush
@@ -315,7 +492,8 @@
 @section('content')
     <div class="col-sm-12">
         <div class="card border-0 shadow-sm maintenance-page-card" style="border-radius: 16px; overflow: hidden;">
-            <div class="card-header maintenance-card-header py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div
+                class="card-header maintenance-card-header py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div>
                     <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
                         <i class="mdi mdi-wrench-clock-outline text-primary fs-20"></i>
@@ -324,7 +502,11 @@
                     <small class="text-muted">Kelola riwayat pemeliharaan kendaraan dan biaya item maintenance</small>
                 </div>
                 <div class="d-flex align-items-center gap-2">
-                    <a href="{{ route($view . 'pdf-maintenance') }}" target="_blank" id="print-pdf"
+                    <a href="{{ route('warehouse.maintenance.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route($view . 'pdf-maintenance') }}" target="_blank" id="export-pdf"
                         class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
                         <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
                     </a>
@@ -355,7 +537,8 @@
                             <div id="filterForm">
                                 <div class="row g-3">
                                     <div class="col-xl-3 col-md-6">
-                                        <label class="filter-label" for="plateNumber">{{ __('menu_maintenance.plate_no') }}</label>
+                                        <label class="filter-label"
+                                            for="plateNumber">{{ __('menu_maintenance.plate_no') }}</label>
                                         <select class="form-select select2-filter" name="plateNumber" id="plateNumber">
                                             <option value="">Semua Armada</option>
                                             @foreach ($fleet as $item)
@@ -384,8 +567,8 @@
 
                                     <div class="col-xl-2 col-md-6">
                                         <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                                        <input class="form-control filter-control" name="endDate" id="endDate"
-                                            type="text" placeholder="Pilih tanggal akhir">
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
                                     </div>
 
                                     <div class="col-xl-2 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
@@ -532,7 +715,7 @@
         let filterStartPicker;
         let filterEndPicker;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             $('.select2-filter').select2({
                 placeholder: 'Semua pilihan',
                 allowClear: true,
@@ -542,7 +725,7 @@
             filterStartPicker = flatpickr('#startDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
                 }
             });
@@ -550,7 +733,7 @@
             filterEndPicker = flatpickr('#endDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
                 }
             });
@@ -566,12 +749,13 @@
 
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                Object.entries(getFilters()).forEach(function(entry) {
+                Object.entries(getFilters()).forEach(function (entry) {
                     if (entry[1]) params.set(entry[0], entry[1]);
                 });
 
                 const query = params.toString() ? '?' + params.toString() : '';
-                $('#print-pdf').attr('href', "{{ route($view . 'pdf-maintenance') }}" + query);
+                $('#export-excel').attr('href', "{{ route('warehouse.maintenance.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route($view . 'pdf-maintenance') }}" + query);
             }
 
             function reloadWithFilters() {
@@ -588,7 +772,7 @@
                 pageLength: 25,
                 ajax: {
                     url: "{{ route('dt.maintenance') }}",
-                    data: function(d) {
+                    data: function (d) {
                         Object.assign(d, getFilters());
                     }
                 },
@@ -602,7 +786,7 @@
                     {
                         data: 'grand_total',
                         className: 'text-end align-middle font-monospace fw-bold',
-                        render: function(data) {
+                        render: function (data) {
                             return 'Rp ' + new Intl.NumberFormat('id-ID').format(data || 0);
                         }
                     }
@@ -623,25 +807,14 @@
             });
 
             $('#btnFilter').on('click', reloadWithFilters);
-            $('#print-pdf').on('click', function(e) {
-                const filters = getFilters();
-                if (!filters.plateNumber || !filters.startDate || !filters.endDate) {
-                    e.preventDefault();
-                    swal({
-                        title: 'Filter belum lengkap',
-                        text: 'Pilih nomor polisi, tanggal mulai, dan tanggal akhir sebelum export PDF.',
-                        icon: 'warning'
-                    });
-                }
-            });
-            $('#filterForm input').on('keydown', function(e) {
+            $('#filterForm input').on('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     reloadWithFilters();
                 }
             });
 
-            $('#btnResetFilter').on('click', function() {
+            $('#btnResetFilter').on('click', function () {
                 $('#filterForm').find('input').val('');
                 $('.select2-filter').val('').trigger('change');
                 if (filterStartPicker) filterStartPicker.clear();
@@ -664,7 +837,7 @@
             $.ajax({
                 url: '{{ route('warehouse.maintenance.show', ':id') }}'.replace(':id', id),
                 method: 'GET',
-                success: function(response) {
+                success: function (response) {
                     $('#detail-code').text(response.code || '-');
                     $('#detail-date').text((response.date || '-') + ' ' + (response.time || ''));
                     $('#detail-fleet').text(response.fleet ? response.fleet.plateNumber : '-');
@@ -672,7 +845,7 @@
 
                     let poHtml = '<span class="text-muted">-</span>';
                     if (response.purchases && response.purchases.length > 0) {
-                        poHtml = response.purchases.map(function(purchase) {
+                        poHtml = response.purchases.map(function (purchase) {
                             let text = purchase.code || '-';
                             if (purchase.supplier && purchase.supplier.name) {
                                 text += ' (' + purchase.supplier.name + ')';
@@ -684,7 +857,7 @@
 
                     let itemsHtml = '';
                     if (response.details && response.details.length > 0) {
-                        response.details.forEach(function(item, index) {
+                        response.details.forEach(function (item, index) {
                             itemsHtml += '<tr>';
                             itemsHtml += '<td class="text-center">' + (index + 1) + '</td>';
                             itemsHtml += '<td class="font-monospace">' + escapeHtml(item.itemCode) + '</td>';
@@ -702,7 +875,7 @@
 
                     $('#detailModal').modal('show');
                 },
-                error: function() {
+                error: function () {
                     swal({
                         title: 'Error',
                         text: 'Failed to load maintenance details',

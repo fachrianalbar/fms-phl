@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Purchasing;
 
-use App\Helpers\FilterHelper;
+use App\Exports\PurchaseExport;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
+use App\Models\Inventory\Supplier;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
@@ -19,6 +20,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class PurchaseController extends Controller
@@ -263,31 +266,7 @@ class PurchaseController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'code' => $request->code,
-                'supplierCode' => $request->supplierCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
-
-            $dateFilters = [
-                'date' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
-
-            if ($request->paymentStatus === 'Paid') {
-                $data->where('paymentStatus', 'Paid');
-            } elseif ($request->paymentStatus === 'unpaid') {
-                $data->where('paymentStatus', '!=', 'Paid');
-            }
+            $data = $this->service->filteredDatatable($request->all());
 
             // Pencarian global DataTables (kotak pencarian) — kode, supplier, gudang.
             $search = $request->input('search.value');
@@ -415,5 +394,65 @@ class PurchaseController extends Controller
         );
 
         return response()->json(['code' => $code]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new PurchaseExport($request->all(), $this->service),
+            'Pembelian-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $purchases = $this->service->filteredDatatable($request->all())->get();
+
+        $filterSummary = [];
+        if ($request->filled('code')) {
+            $filterSummary[] = 'Kode PO: '.$request->code;
+        }
+        if ($request->filled('supplierCode')) {
+            $supplierName = Supplier::query()->where('code', $request->supplierCode)->value('name');
+            $filterSummary[] = 'Supplier: '.($supplierName ?: $request->supplierCode);
+        }
+        if ($request->filled('paymentStatus')) {
+            $statusLabel = match ($request->paymentStatus) {
+                'Paid' => 'Sudah Lunas',
+                'unpaid' => 'Belum Lunas',
+                'Partial' => 'Sebagian',
+                'Unpaid' => 'Belum Bayar',
+                default => $request->paymentStatus,
+            };
+            $filterSummary[] = 'Status: '.$statusLabel;
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode: '.$start.' s/d '.$end;
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($this->view.'report.purchase-pdf', [
+            'purchases' => $purchases,
+            'title' => 'Laporan Pembelian (PO)',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Pembelian-'.now()->format('YmdHis').'.pdf"');
     }
 }

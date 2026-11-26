@@ -2,21 +2,28 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\LocationExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Location;
+use App\Models\Master\Province;
 use App\Services\Master\CityService;
 use App\Services\Master\CustomerService;
 use App\Services\Master\DistrictService;
 use App\Services\Master\LocationService;
 use App\Services\Master\ProvinceService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class LocationController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -52,8 +59,11 @@ class LocationController extends Controller
      */
     public function index()
     {
+        $provinces = $this->provinceSvc->findAll();
+
         return view($this->view.'index')
             ->with('view', $this->view)
+            ->with('provinces', $provinces)
             ->with('title', $this->title);
     }
 
@@ -186,10 +196,13 @@ class LocationController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('province', function ($row) {
                     $province = '';
                     if (isset($row->province->name)) {
@@ -245,5 +258,72 @@ class LocationController extends Controller
     public function districtByCity($id)
     {
         return $this->districtSvc->getByCity($id);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new LocationExport($this->filteredQuery($request)),
+            'Data-Lokasi-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Kata Kunci: '.$request->keyword;
+        }
+        if ($request->filled('provinceId')) {
+            $provinceName = Province::where('id', $request->provinceId)->value('name');
+            $filterSummary[] = 'Provinsi: '.($provinceName ?: $request->provinceId);
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Dibuat: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.location-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Lokasi',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Lokasi-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = Location::query()->with(['province', 'city', 'district'])->orderBy('name');
+
+        if ($request->filled('keyword')) {
+            $keyword = strtolower(trim((string) $request->keyword));
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(address, \'\')) LIKE ?', ['%'.$keyword.'%']);
+            });
+        }
+
+        if ($request->filled('provinceId')) {
+            $query->where('provinceId', $request->provinceId);
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
     }
 }

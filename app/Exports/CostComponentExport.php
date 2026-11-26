@@ -28,9 +28,25 @@ class CostComponentExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
     {
         $query = CostComponent::query()->orderBy('name', 'asc');
 
-        // Filter by name if provided
-        if ($this->request->has('name') && $this->request->name) {
-            $query->where('name', 'like', '%'.$this->request->name.'%');
+        $keyword = $this->request->input('keyword') ?: $this->request->input('name');
+        if (! empty($keyword)) {
+            $term = strtolower(trim((string) $keyword));
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
+            });
+        }
+
+        if ($this->request->filled('type')) {
+            $query->where('type', $this->request->input('type'));
+        }
+
+        if ($this->request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $this->request->input('startDate'));
+        }
+
+        if ($this->request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $this->request->input('endDate'));
         }
 
         return $query;
@@ -42,6 +58,7 @@ class CostComponentExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
             'No',
             'Code',
             'Name',
+            'Type',
             'Price',
         ];
     }
@@ -54,6 +71,7 @@ class CostComponentExport implements FromQuery, ShouldAutoSize, WithHeadings, Wi
             $this->rowNumber,
             $costComponent->code,
             $costComponent->name,
+            $costComponent->type ? ucfirst((string) $costComponent->type) : '-',
             $costComponent->price ?: '-',
         ];
     }

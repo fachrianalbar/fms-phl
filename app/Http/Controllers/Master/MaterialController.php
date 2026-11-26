@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\MaterialExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Material;
 use App\Services\Master\MaterialService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class MaterialController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -137,10 +143,13 @@ class MaterialController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="'.route($this->view.'edit', $row->id).'"
@@ -161,5 +170,62 @@ class MaterialController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new MaterialExport($this->filteredQuery($request)),
+            'Data-Material-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Kata Kunci: '.$request->keyword;
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Dibuat: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.material-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Material',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Material-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = Material::query()->orderBy('name');
+
+        if ($request->filled('keyword')) {
+            $keyword = strtolower(trim((string) $request->keyword));
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$keyword.'%']);
+            });
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
     }
 }

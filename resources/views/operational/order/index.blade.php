@@ -491,6 +491,13 @@
                         <i class="mdi mdi-file-excel fs-14 text-success"></i>
                     </a>
 
+                    {{-- Tombol Export PDF --}}
+                    <a href="{{ route('operational.order.export-pdf') }}" target="_blank"
+                        class="btn btn-icon btn-sm bg-danger-subtle" id="export-pdf"
+                        data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+
                     {{-- Tombol Tambah --}}
                     <a href="{{ route($view . 'create') }}"
                         class="btn btn-sm btn-primary d-flex align-items-center gap-1"
@@ -923,6 +930,7 @@
                 });
                 const query = '?' + params.toString();
                 $('#export-data').attr('href', "{{ route($view . 'excel-order') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('operational.order.export-pdf') }}" + query);
             }
 
             const table = $('#dt').DataTable({

@@ -17,6 +17,8 @@
 <link rel="stylesheet" type="text/css"
     href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 
 @include('invoice.partials.table-style')
 @endpush
@@ -40,6 +42,14 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('invoice.payment-transaction.export-excel') }}" target="_blank" id="export-excel"
+                class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip" title="Export Excel">
+                <i class="mdi mdi-file-excel fs-14 text-success"></i>
+            </a>
+            <a href="{{ route('invoice.payment-transaction.export-pdf') }}" target="_blank" id="export-pdf"
+                class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+            </a>
             <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" id="btn-refresh-table" title="Muat Ulang Data Tabel">
                 <i class="mdi mdi-refresh me-1"></i> Refresh
             </button>
@@ -121,6 +131,71 @@
 
         <div class="card-body p-3">
             @include('partials.alert')
+
+            <div class="filter-card">
+                <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                    data-bs-target="#paymentTransactionFilterCollapse" aria-expanded="false"
+                    aria-controls="paymentTransactionFilterCollapse">
+                    <span class="filter-card-heading">
+                        <i class="mdi mdi-filter-variant"></i>
+                        <strong>Filter Data</strong>
+                        <small>Gunakan filter untuk mempersempit transaksi pembayaran faktur</small>
+                    </span>
+                    <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                </button>
+
+                <div class="collapse filter-collapse" id="paymentTransactionFilterCollapse">
+                    <div class="filter-collapse-body">
+                        <div id="filterForm">
+                            <div class="row g-3">
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="startDate">Dari Tanggal Bayar</label>
+                                    <input class="form-control filter-control" name="startDate" id="startDate"
+                                        type="text" placeholder="Pilih tanggal mulai">
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="endDate">Sampai Tanggal Bayar</label>
+                                    <input class="form-control filter-control" name="endDate" id="endDate"
+                                        type="text" placeholder="Pilih tanggal akhir">
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="customerCode">Pelanggan</label>
+                                    <select class="form-select select2-filter" name="customerCode" id="customerCode">
+                                        <option value="">Semua Pelanggan</option>
+                                        @foreach ($customers ?? [] as $cust)
+                                            <option value="{{ $cust->code }}">{{ $cust->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="userBankCode">Bank Penerima</label>
+                                    <select class="form-select select2-filter" name="userBankCode" id="userBankCode">
+                                        <option value="">Semua Bank</option>
+                                        @foreach ($userBanks ?? [] as $ub)
+                                            @php
+                                                $bankName = $ub->bank->name ?? 'Bank';
+                                                $accNumber = $ub->accountNumber ?? '-';
+                                                $accName = $ub->accountName ?? '-';
+                                            @endphp
+                                            <option value="{{ $ub->code }}">{{ $bankName }} - {{ $accNumber }} ({{ $accName }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-12 d-flex align-items-end justify-content-md-end gap-2">
+                                    <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                        <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                    </button>
+                                    <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                        data-bs-toggle="tooltip" title="Reset Filter">
+                                        <i class="mdi mdi-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-responsive custom-scrollbar">
                 <table class="table w-100 nowrap invoice-table" id="dt">
                     <thead>
@@ -156,9 +231,54 @@
 <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
 <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
 <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
 <script>
     $(document).ready(function() {
+        let filterStartPicker;
+        let filterEndPicker;
+
+        $('.select2-filter').select2({
+            placeholder: 'Semua pilihan',
+            allowClear: true,
+            width: '100%'
+        });
+
+        filterStartPicker = flatpickr('#startDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+            }
+        });
+
+        filterEndPicker = flatpickr('#endDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+            }
+        });
+
+        function getFilters() {
+            return {
+                startDate: $('#startDate').val() || '',
+                endDate: $('#endDate').val() || '',
+                customerCode: $('#customerCode').val() || '',
+                userBankCode: $('#userBankCode').val() || ''
+            };
+        }
+
+        function syncExportUrls() {
+            const params = new URLSearchParams();
+            Object.entries(getFilters()).forEach(function([key, value]) {
+                if (value) params.set(key, value);
+            });
+            const query = params.toString() ? '?' + params.toString() : '';
+            $('#export-excel').attr('href', "{{ route('invoice.payment-transaction.export-excel') }}" + query);
+            $('#export-pdf').attr('href', "{{ route('invoice.payment-transaction.export-pdf') }}" + query);
+        }
+
         var table = $('#dt').DataTable({
             "processing": true,
             "serverSide": true,
@@ -166,6 +286,9 @@
             "pageLength": 25,
             "ajax": {
                 "url": "{{ route('dt.invoice.payment-transaction') }}",
+                "data": function(d) {
+                    Object.assign(d, getFilters());
+                }
             },
             "columns": [
                 {
@@ -222,6 +345,29 @@
                 }
             }
         });
+
+        function reloadWithFilters() {
+            syncExportUrls();
+            table.ajax.reload(null, true);
+        }
+
+        $('#btnFilter').on('click', reloadWithFilters);
+
+        $('#btnResetFilter').on('click', function() {
+            $('#filterForm').find('input').val('');
+            $('.select2-filter').val('').trigger('change');
+            if (filterStartPicker) {
+                filterStartPicker.clear();
+                filterStartPicker.set('maxDate', null);
+            }
+            if (filterEndPicker) {
+                filterEndPicker.clear();
+                filterEndPicker.set('minDate', null);
+            }
+            reloadWithFilters();
+        });
+
+        syncExportUrls();
 
         // Refresh table button
         $('#btn-refresh-table').on('click', function() {

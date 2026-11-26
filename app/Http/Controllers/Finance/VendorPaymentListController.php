@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Exports\VendorPaymentListExport;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
+use App\Models\Master\FleetCompany;
 use App\Services\Finance\VendorPaymentService;
 use App\Services\Master\MenuService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 /**
@@ -46,10 +51,15 @@ class VendorPaymentListController extends Controller
             ? ((Auth::user()?->languange ?? 'id') === 'id' ? $menu->nama : $menu->name)
             : 'Daftar Pembayaran';
 
+        $fleetCompanies = FleetCompany::query()->orderBy('name')->get(['code', 'name', 'type']);
+        $userBanks = UserBank::with('bank')->where('type', 2)->orderBy('accountName')->get();
+
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $title)
-            ->with('stats', $stats);
+            ->with('stats', $stats)
+            ->with('fleetCompanies', $fleetCompanies)
+            ->with('userBanks', $userBanks);
     }
 
     /**
@@ -58,7 +68,7 @@ class VendorPaymentListController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPayments();
+            $data = $this->service->findPayments($request->all());
 
             return DataTables::of($data)
                 ->editColumn('payment_date', function ($row) {
@@ -176,5 +186,77 @@ class VendorPaymentListController extends Controller
                 ])->values(),
             ])->values(),
         ]);
+    }
+
+    /**
+     * Export Excel Daftar Pembayaran Vendor.
+     */
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new VendorPaymentListExport($request->all(), $this->service),
+            'Daftar-Pembayaran-Vendor-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    /**
+     * Export PDF Daftar Pembayaran Vendor.
+     */
+    public function exportPdf(Request $request)
+    {
+        $payments = $this->service->findPayments($request->all());
+        $menu = $this->menuSvc->getByCode('VENDOR_PAY_LIST');
+        $title = $menu
+            ? ((Auth::user()?->languange ?? 'id') === 'id' ? $menu->nama : $menu->name)
+            : 'Daftar Pembayaran Vendor';
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('vendor.payment.report.payment-list-pdf', [
+            'payments' => $payments,
+            'title' => $title,
+            'filterSummary' => $this->buildFilterSummary($request),
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Daftar-Pembayaran-Vendor-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function buildFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Bayar: '.$start.' s/d '.$end;
+        }
+
+        if ($request->filled('fleetCompanyCode')) {
+            $name = FleetCompany::where('code', $request->fleetCompanyCode)->value('name') ?: $request->fleetCompanyCode;
+            $summary[] = 'Vendor: '.$name;
+        }
+
+        if ($request->filled('userBankCode')) {
+            $bank = UserBank::with('bank')->where('code', $request->userBankCode)->first();
+            $bankLabel = $bank
+                ? trim(($bank->bank->name ?? 'Bank').($bank->accountNumber ? ' - '.$bank->accountNumber : ''))
+                : $request->userBankCode;
+            $summary[] = 'Bank Sumber Dana: '.$bankLabel;
+        }
+
+        return $summary;
     }
 }

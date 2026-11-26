@@ -1,371 +1,521 @@
 @extends('layouts.main', [
-'title' => $title,
-'pageTitle' => $title,
-'firstSegment' => 'Vendor',
-'secondSegment' => 'Order Menunggu Nota',
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => 'Hutang (Vendor)',
+    'secondSegment' => 'Faktur yg Belum Dibayar',
 ])
 
 @push('style')
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
-@include('vendor.invoice.partials.table-style')
-<style>
-    .vendor-on-charge-cell {
-        min-width: 150px;
-        text-align: right;
-        line-height: 1.25;
-    }
+    @include('vendor.invoice.partials.table-style')
+    <style>
+        .vendor-on-charge-cell {
+            min-width: 150px;
+            text-align: right;
+            line-height: 1.25;
+        }
 
-    .vendor-on-charge-cell strong,
-    .vendor-on-charge-cell small {
-        display: block;
-    }
+        .vendor-on-charge-cell strong,
+        .vendor-on-charge-cell small {
+            display: block;
+        }
 
-    .vendor-on-charge-cell strong {
-        color: #b45309;
-        font-size: 12px;
-    }
+        .vendor-on-charge-cell strong {
+            color: #b45309;
+            font-size: 12px;
+        }
 
-    .vendor-on-charge-cell small {
-        max-width: 190px;
-        margin-top: 3px;
-        color: #64748b;
-        font-size: 10px;
-        white-space: normal;
-    }
-</style>
+        .vendor-on-charge-cell small {
+            max-width: 190px;
+            margin-top: 3px;
+            color: #64748b;
+            font-size: 10px;
+            white-space: normal;
+        }
+    </style>
 @endpush
 
 @section('content')
-<div class="col-sm-12">
-    <!-- Page Header & Action Bar -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;">
-                <i class="mdi mdi-tray-full fs-24"></i>
+    <div class="col-sm-12">
+        <!-- Page Header & Action Bar -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center shadow-sm"
+                    style="width: 48px; height: 48px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;">
+                    <i class="mdi mdi-tray-full fs-24"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                        {{ $title }}
+                        <span
+                            class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fs-12 px-2 py-1">
+                            {{ number_format($stats['waitingCount'] ?? 0) }} Order
+                        </span>
+                    </h4>
+                    <p class="text-muted mb-0 fs-12">Order vendor eksternal maupun antar PT internal yang belum dibuat nota.
+                        Centang order lalu generate nota untuk membuat invoice pembayaran ke vendor.</p>
+                </div>
             </div>
-            <div>
-                <h4 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                    {{ $title }}
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill fs-12 px-2 py-1">
-                        {{ number_format($stats['waitingCount'] ?? 0) }} Order
-                    </span>
-                </h4>
-                <p class="text-muted mb-0 fs-12">Order armada eksternal yang belum dibuat nota. Centang order lalu generate nota untuk membuat invoice pembayaran ke vendor.</p>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a href="{{ route('vendor.order.waiting.export-excel') }}" target="_blank" id="export-excel"
+                    class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip"
+                    title="Export Excel">
+                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                </a>
+                <a href="{{ route('vendor.order.waiting.export-pdf') }}" target="_blank" id="export-pdf"
+                    class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                    <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                </a>
+                <a href="{{ route('vendor.invoice.unpaid') }}"
+                    class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold">
+                    <i class="mdi mdi-receipt-text-clock me-1"></i> Lihat Invoice Belum Lunas
+                </a>
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-white fw-semibold"
+                    id="generateNotaBtn" disabled>
+                    <i class="mdi mdi-file-document-outline me-1"></i> Generate Nota
+                </button>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <a href="{{ route('vendor.invoice.unpaid') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold">
-                <i class="mdi mdi-receipt-text-clock me-1"></i> Lihat Invoice Belum Lunas
-            </a>
-            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm text-white fw-semibold" id="generateNotaBtn" disabled>
-                <i class="mdi mdi-file-document-outline me-1"></i> Generate Nota
-            </button>
+
+        <!-- Selection Summary & Notifications -->
+        <p class="text-muted mb-3" id="selectionSummary">Belum ada order dipilih.</p>
+        @include('partials.alert')
+
+        <!-- 3 KPI Metrics Strip -->
+        <div class="row g-3 mb-4">
+            <!-- Card 1: Faktur yg Belum Dibayar -->
+            <div class="col-12 col-sm-4">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Faktur yg Belum Dibayar</div>
+                            <div class="stat-value">{{ number_format($stats['waitingCount'] ?? 0) }} <span
+                                    class="fs-13 text-muted fw-normal">Order</span></div>
+                        </div>
+                        <div class="stat-icon-wrapper bg-primary-subtle text-primary">
+                            <i class="mdi mdi-tray-full"></i>
+                        </div>
+                    </div>
+                    <div class="stat-desc mt-2 text-truncate">
+                        <i class="mdi mdi-information-outline me-1"></i>Belum dijadikan nota
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Total Nilai Tagihan -->
+            <div class="col-12 col-sm-4">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Total Nilai Tagihan</div>
+                            <div class="stat-value text-info">Rp
+                                {{ number_format($stats['totalBilling'] ?? 0, 0, ',', '.') }}</div>
+                        </div>
+                        <div class="stat-icon-wrapper bg-info-subtle text-info">
+                            <i class="mdi mdi-cash-multiple"></i>
+                        </div>
+                    </div>
+                    <div class="stat-desc mt-2 text-truncate">
+                        <i class="mdi mdi-cash-clock me-1"></i>Akumulasi tagihan faktur yg belum dibayar
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Vendor Terlibat -->
+            <div class="col-12 col-sm-4">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="stat-label">Vendor Terlibat</div>
+                            <div class="stat-value text-warning">{{ number_format($stats['vendorCount'] ?? 0) }} <span
+                                    class="fs-13 text-muted fw-normal">Vendor</span></div>
+                        </div>
+                        <div class="stat-icon-wrapper bg-warning-subtle text-warning">
+                            <i class="mdi mdi-truck-outline"></i>
+                        </div>
+                    </div>
+                    <div class="stat-desc mt-2 text-truncate">
+                        <i class="mdi mdi-truck-fast-outline me-1"></i>Perusahaan armada vendor berbeda
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Table Card -->
+        <div class="table-container-card">
+            <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Faktur yg Belum Dibayar (Belum Dibuat Invoice)</h6>
+                    <div class="text-muted fs-12">
+                        <i class="mdi mdi-information-outline me-1 text-primary"></i>Centang order lalu klik
+                        <strong>Generate Nota</strong> untuk membuat nota pembayaran ke vendor
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#waitingFilterCollapse" aria-expanded="false" aria-controls="waitingFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar faktur yang belum dibayar</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="waitingFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal Order</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal Order</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="fleetCompanyCode">Perusahaan Kendaraan /
+                                            Vendor</label>
+                                        <select class="form-select select2-filter" name="fleetCompanyCode"
+                                            id="fleetCompanyCode">
+                                            <option value="">Semua Vendor</option>
+                                            @foreach ($fleetCompanies ?? [] as $fc)
+                                                <option value="{{ $fc->code }}">{{ $fc->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="companyCode">Perusahaan</label>
+                                        <select class="form-select select2-filter" name="companyCode" id="companyCode">
+                                            <option value="">Semua Perusahaan</option>
+                                            @foreach ($companies ?? [] as $comp)
+                                                <option value="{{ $comp->code }}">{{ $comp->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="customerCode">Customer</label>
+                                        <select class="form-select select2-filter" name="customerCode" id="customerCode">
+                                            <option value="">Semua Customer</option>
+                                            @foreach ($customers ?? [] as $cust)
+                                                <option value="{{ $cust->code }}">{{ $cust->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="plateNumber">No. Polisi</label>
+                                        <input class="form-control" name="plateNumber" id="plateNumber" type="text"
+                                            placeholder="Cari no. polisi..." autocorrect="off" autocapitalize="none"
+                                            spellcheck="false">
+                                    </div>
+                                    <div class="col-xl-6 col-md-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive custom-scrollbar">
+                    <table class="table table-striped w-100 nowrap invoice-table" id="dtWaiting">
+                        <thead>
+                            <tr>
+                                <th class="text-center"><input class="form-check-input" type="checkbox"
+                                        id="selectAllWaiting"></th>
+                                <th class="text-center" style="width: 45px;">No</th>
+                                <th>{{ __('menu_vendor_payment.order_date') }}</th>
+                                <th>Order Code</th>
+                                <th>{{ __('menu_vendor_payment.shipment_no') }}</th>
+                                <th>{{ __('menu_vendor_payment.plate_number') }}</th>
+                                <th>Perusahaan Kendaraan</th>
+                                <th>{{ __('menu_vendor_payment.driver') }}</th>
+                                <th>{{ __('menu_vendor_payment.customer') }}</th>
+                                <th class="text-center">Perusahaan</th>
+                                <th>{{ __('menu_vendor_payment.origin') }}</th>
+                                <th>{{ __('menu_vendor_payment.destination') }}</th>
+                                <th class="text-end">Harga Vendor</th>
+                                <th class="text-end">Cost Component</th>
+                                <th class="text-end">Total Tagihan</th>
+                                <th class="text-end">Terbayar</th>
+                                <th class="text-end">Sisa</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Selection Summary & Notifications -->
-    <p class="text-muted mb-3" id="selectionSummary">Belum ada order dipilih.</p>
-    @include('partials.alert')
-
-    <!-- 3 KPI Metrics Strip -->
-    <div class="row g-3 mb-4">
-        <!-- Card 1: Order Menunggu Nota -->
-        <div class="col-12 col-sm-4">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Order Menunggu Nota</div>
-                        <div class="stat-value">{{ number_format($stats['waitingCount'] ?? 0) }} <span class="fs-13 text-muted fw-normal">Order</span></div>
-                    </div>
-                    <div class="stat-icon-wrapper bg-primary-subtle text-primary">
-                        <i class="mdi mdi-tray-full"></i>
-                    </div>
-                </div>
-                <div class="stat-desc mt-2 text-truncate">
-                    <i class="mdi mdi-information-outline me-1"></i>Belum dijadikan nota
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 2: Total Nilai Tagihan -->
-        <div class="col-12 col-sm-4">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Total Nilai Tagihan</div>
-                        <div class="stat-value text-info">Rp {{ number_format($stats['totalBilling'] ?? 0, 0, ',', '.') }}</div>
-                    </div>
-                    <div class="stat-icon-wrapper bg-info-subtle text-info">
-                        <i class="mdi mdi-cash-multiple"></i>
-                    </div>
-                </div>
-                <div class="stat-desc mt-2 text-truncate">
-                    <i class="mdi mdi-cash-clock me-1"></i>Akumulasi tagihan order menunggu nota
-                </div>
-            </div>
-        </div>
-
-        <!-- Card 3: Vendor Terlibat -->
-        <div class="col-12 col-sm-4">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Vendor Terlibat</div>
-                        <div class="stat-value text-warning">{{ number_format($stats['vendorCount'] ?? 0) }} <span class="fs-13 text-muted fw-normal">Vendor</span></div>
-                    </div>
-                    <div class="stat-icon-wrapper bg-warning-subtle text-warning">
-                        <i class="mdi mdi-truck-outline"></i>
-                    </div>
-                </div>
-                <div class="stat-desc mt-2 text-truncate">
-                    <i class="mdi mdi-truck-fast-outline me-1"></i>Perusahaan armada eksternal berbeda
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Table Card -->
-    <div class="table-container-card">
-        <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-                <h6 class="fw-bold text-dark mb-1">Order Menunggu Nota (Belum Dibuat Invoice)</h6>
-                <div class="text-muted fs-12">
-                    <i class="mdi mdi-information-outline me-1 text-primary"></i>Centang order lalu klik <strong>Generate Nota</strong> untuk membuat nota pembayaran ke vendor
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-3">
-            <div class="table-responsive custom-scrollbar">
-                <table class="table table-striped w-100 nowrap invoice-table" id="dtWaiting">
-                    <thead>
-                        <tr>
-                            <th class="text-center"><input class="form-check-input" type="checkbox" id="selectAllWaiting"></th>
-                            <th class="text-center" style="width: 45px;">No</th>
-                            <th>{{ __('menu_vendor_payment.order_date') }}</th>
-                            <th>Order Code</th>
-                            <th>{{ __('menu_vendor_payment.shipment_no') }}</th>
-                            <th>{{ __('menu_vendor_payment.plate_number') }}</th>
-                            <th>Perusahaan Kendaraan</th>
-                            <th>{{ __('menu_vendor_payment.driver') }}</th>
-                            <th>{{ __('menu_vendor_payment.customer') }}</th>
-                            <th class="text-center">Format</th>
-                            <th>{{ __('menu_vendor_payment.origin') }}</th>
-                            <th>{{ __('menu_vendor_payment.destination') }}</th>
-                            <th class="text-end">Harga Vendor</th>
-                            <th class="text-end">Cost Component</th>
-                            <th class="text-end">Total Tagihan</th>
-                            <th class="text-end">Terbayar</th>
-                            <th class="text-end">Sisa</th>
-                            <th class="text-center">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-@include('vendor.invoice.partials.modals')
+    @include('vendor.invoice.partials.modals')
 @endsection
 
 @push('script')
-<script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}?v=20260923-2"></script>
-<script>
-    // SweetAlert legacy mengatur warna judul/isi sendiri; sinkronkan dengan dark mode aplikasi.
-    (function syncVendorSweetAlertTheme() {
-        if (window.swal && typeof window.swal.setDefaults === 'function') {
-            window.swal.setDefaults({ className: 'swal-dark-mode' });
-        }
-
-        const style = document.createElement('style');
-        style.textContent = `
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode,
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-title,
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-text,
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-content,
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-footer {
-                color: #f8fafc !important;
-                -webkit-text-fill-color: #f8fafc !important;
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}?v=20260923-2"></script>
+    <script>
+        // SweetAlert legacy mengatur warna judul/isi sendiri; sinkronkan dengan dark mode aplikasi.
+        (function syncVendorSweetAlertTheme() {
+            if (window.swal && typeof window.swal.setDefaults === 'function') {
+                window.swal.setDefaults({ className: 'swal-dark-mode' });
             }
-            html[data-bs-theme="dark"] .swal-modal.swal-dark-mode {
-                background-color: #1f2028 !important;
-            }
-        `;
-        document.head.appendChild(style);
 
-        const sync = function() {
-            const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+            const style = document.createElement('style');
+            style.textContent = `
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode,
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-title,
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-text,
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-content,
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode .swal-footer {
+                    color: #f8fafc !important;
+                    -webkit-text-fill-color: #f8fafc !important;
+                }
+                html[data-bs-theme="dark"] .swal-modal.swal-dark-mode {
+                    background-color: #1f2028 !important;
+                }
+            `;
+            document.head.appendChild(style);
 
-            document.querySelectorAll('.swal-modal').forEach(function(modal) {
-                const textColor = isDark ? '#f8fafc' : '';
-                const bodyColor = isDark ? '#e4e9f0' : '';
+            const sync = function () {
+                const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
 
-                modal.style.setProperty('color', bodyColor, 'important');
-                modal.querySelectorAll('.swal-title, .swal-text, .swal-content, .swal-footer').forEach(function(element) {
-                    element.style.setProperty('color', textColor, 'important');
-                    element.style.setProperty('-webkit-text-fill-color', textColor, 'important');
+                document.querySelectorAll('.swal-modal').forEach(function (modal) {
+                    const textColor = isDark ? '#f8fafc' : '';
+                    const bodyColor = isDark ? '#e4e9f0' : '';
+
+                    modal.style.setProperty('color', bodyColor, 'important');
+                    modal.querySelectorAll('.swal-title, .swal-text, .swal-content, .swal-footer').forEach(function (element) {
+                        element.style.setProperty('color', textColor, 'important');
+                        element.style.setProperty('-webkit-text-fill-color', textColor, 'important');
+                    });
                 });
+            };
+
+            new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
+            new MutationObserver(sync).observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-bs-theme']
             });
+            window.setInterval(sync, 100);
+            sync();
+        }());
+    </script>
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+
+    <script>
+        let waitingTable;
+        const selectedOrders = {};
+        const notaModalState = {
+            subtotal: 0,
+            pphRate: 0,
         };
 
-        new MutationObserver(sync).observe(document.body, { childList: true, subtree: true });
-        new MutationObserver(sync).observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['data-bs-theme']
-        });
-        window.setInterval(sync, 100);
-        sync();
-    }());
-</script>
-<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
-
-<script>
-    let waitingTable;
-    const selectedOrders = {};
-    const notaModalState = {
-        subtotal: 0,
-        pphRate: 0,
-    };
-
-    function vendorSwalTheme() {
-        return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
-    }
-
-    function vendorSwalOptions(options) {
-        const isDark = vendorSwalTheme() === 'dark';
-
-        return Object.assign({
-            theme: vendorSwalTheme(),
-            background: isDark ? '#1f2028' : undefined,
-            color: isDark ? '#f8fafc' : undefined,
-            customClass: isDark ? {
-                popup: 'swal-dark-popup',
-                title: 'swal-dark-title',
-                htmlContainer: 'swal-dark-html',
-            } : undefined,
-            didOpen: isDark ? function(popup) {
-                const dialog = popup || Swal.getPopup();
-                if (!dialog) {
-                    return;
-                }
-
-                dialog.style.setProperty('background-color', '#1f2028', 'important');
-                dialog.style.setProperty('color', '#f8fafc', 'important');
-                dialog.querySelectorAll('h2.swal2-title, .swal2-html-container').forEach(function(element) {
-                    element.style.setProperty('color', '#f8fafc', 'important');
-                    element.style.setProperty('-webkit-text-fill-color', '#f8fafc', 'important');
-                });
-            } : undefined,
-        }, options);
-    }
-
-    function formatCurrency(value) {
-        return 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
-    }
-
-    function calculateSelectedTotals() {
-        const selectedList = Object.values(selectedOrders);
-
-        return selectedList.reduce((totals, item) => {
-            totals.billing += Number(item.billingAmount || 0);
-            totals.paid += Number(item.paidAmount || 0);
-            totals.remaining += Number(item.remainingAmount || 0);
-
-            return totals;
-        }, {
-            billing: 0,
-            paid: 0,
-            remaining: 0,
-        });
-    }
-
-    // Setelah tabel digambar ulang, cek ulang checkbox yang masih terpilih.
-    function restoreSelectedCheckboxes() {
-        $('.row-payment-checkbox').each(function() {
-            const checkbox = $(this);
-            const orderCode = String(checkbox.attr('data-order-code') || '');
-
-            checkbox.prop('checked', !!selectedOrders[orderCode]);
-        });
-    }
-
-    function updateSelectionSummary() {
-        const selectedCount = Object.keys(selectedOrders).length;
-        const summaryEl = $('#selectionSummary');
-        const generateNotaBtn = $('#generateNotaBtn');
-
-        if (selectedCount === 0) {
-            summaryEl.text('Belum ada order dipilih.');
-            generateNotaBtn.prop('disabled', true);
-
-            return;
+        function vendorSwalTheme() {
+            return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
         }
 
-        const totals = calculateSelectedTotals();
-        summaryEl.text(selectedCount + ' order dipilih (total tagihan: ' + formatCurrency(totals.billing) + ').');
-        generateNotaBtn.prop('disabled', false);
-    }
+        function vendorSwalOptions(options) {
+            const isDark = vendorSwalTheme() === 'dark';
 
-    function loadBankData() {
-        $.ajax({
-            url: "{{ route('api.user-bank.company') }}",
-            type: "GET",
-            success: function(response) {
-                const bankSelect = $('#notaUserBankCode').empty();
-                bankSelect.append(new Option('Pilih Bank', ''));
+            return Object.assign({
+                theme: vendorSwalTheme(),
+                background: isDark ? '#1f2028' : undefined,
+                color: isDark ? '#f8fafc' : undefined,
+                customClass: isDark ? {
+                    popup: 'swal-dark-popup',
+                    title: 'swal-dark-title',
+                    htmlContainer: 'swal-dark-html',
+                } : undefined,
+                didOpen: isDark ? function (popup) {
+                    const dialog = popup || Swal.getPopup();
+                    if (!dialog) {
+                        return;
+                    }
 
-                if (Array.isArray(response) && response.length > 0) {
-                    response.forEach(function(bank) {
-                        const bankLabel = (bank.bank_name || 'Unknown Bank') + ' - ' + (bank.account_number || '-') + ' (' + (bank.account_name || '-') + ')';
-                        bankSelect.append(new Option(bankLabel, bank.code || ''));
+                    dialog.style.setProperty('background-color', '#1f2028', 'important');
+                    dialog.style.setProperty('color', '#f8fafc', 'important');
+                    dialog.querySelectorAll('h2.swal2-title, .swal2-html-container').forEach(function (element) {
+                        element.style.setProperty('color', '#f8fafc', 'important');
+                        element.style.setProperty('-webkit-text-fill-color', '#f8fafc', 'important');
                     });
-                } else {
-                    bankSelect.append(new Option('Tidak ada data bank', '', false, false));
-                    bankSelect.find('option:last').prop('disabled', true);
-                }
+                } : undefined,
+            }, options);
+        }
 
-                bankSelect.trigger('change');
-            },
-            error: function() {
-                const bankSelect = $('#notaUserBankCode').empty();
-                bankSelect.append(new Option('Pilih Bank', ''));
-                bankSelect.append(new Option('Error memuat data', '', false, false));
-                bankSelect.find('option:last').prop('disabled', true).end().trigger('change');
+        function formatCurrency(value) {
+            return 'Rp ' + new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
+        }
+
+        function calculateSelectedTotals() {
+            const selectedList = Object.values(selectedOrders);
+
+            return selectedList.reduce((totals, item) => {
+                totals.billing += Number(item.billingAmount || 0);
+                totals.paid += Number(item.paidAmount || 0);
+                totals.remaining += Number(item.remainingAmount || 0);
+
+                return totals;
+            }, {
+                billing: 0,
+                paid: 0,
+                remaining: 0,
+            });
+        }
+
+        // Setelah tabel digambar ulang, cek ulang checkbox yang masih terpilih.
+        function restoreSelectedCheckboxes() {
+            $('.row-payment-checkbox').each(function () {
+                const checkbox = $(this);
+                const orderCode = String(checkbox.attr('data-order-code') || '');
+
+                checkbox.prop('checked', !!selectedOrders[orderCode]);
+            });
+        }
+
+        function updateSelectionSummary() {
+            const selectedCount = Object.keys(selectedOrders).length;
+            const summaryEl = $('#selectionSummary');
+            const generateNotaBtn = $('#generateNotaBtn');
+
+            if (selectedCount === 0) {
+                summaryEl.text('Belum ada order dipilih.');
+                generateNotaBtn.prop('disabled', true);
+
+                return;
             }
-        });
-    }
 
-    $(document).ready(function() {
-        waitingTable = $('#dtWaiting').DataTable({
-            "processing": true,
-            "serverSide": true,
-            "destroy": true,
-            "pageLength": 25,
-            "ajax": {
-                "url": "{{ route('dt.vendor-invoice.waiting') }}",
-                "error": function(xhr, error, thrown) {
-                    console.error('DataTables waiting error: ', xhr.responseText || thrown);
-                    $('#dtWaiting_processing').hide();
+            const totals = calculateSelectedTotals();
+            summaryEl.text(selectedCount + ' order dipilih (total tagihan: ' + formatCurrency(totals.billing) + ').');
+            generateNotaBtn.prop('disabled', false);
+        }
+
+        function loadBankData() {
+            $.ajax({
+                url: "{{ route('api.user-bank.company') }}",
+                type: "GET",
+                success: function (response) {
+                    const bankSelect = $('#notaUserBankCode').empty();
+                    bankSelect.append(new Option('Pilih Bank', ''));
+
+                    if (Array.isArray(response) && response.length > 0) {
+                        response.forEach(function (bank) {
+                            const bankLabel = (bank.bank_name || 'Unknown Bank') + ' - ' + (bank.account_number || '-') + ' (' + (bank.account_name || '-') + ')';
+                            bankSelect.append(new Option(bankLabel, bank.code || ''));
+                        });
+                    } else {
+                        bankSelect.append(new Option('Tidak ada data bank', '', false, false));
+                        bankSelect.find('option:last').prop('disabled', true);
+                    }
+
+                    bankSelect.trigger('change');
+                },
+                error: function () {
+                    const bankSelect = $('#notaUserBankCode').empty();
+                    bankSelect.append(new Option('Pilih Bank', ''));
+                    bankSelect.append(new Option('Error memuat data', '', false, false));
+                    bankSelect.find('option:last').prop('disabled', true).end().trigger('change');
                 }
-            },
-            "columns": [{
+            });
+        }
+
+        $(document).ready(function () {
+            let filterStartPicker;
+            let filterEndPicker;
+
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterEndPicker) {
+                        filterEndPicker.set('minDate', dateStr || null);
+                    }
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterStartPicker) {
+                        filterStartPicker.set('maxDate', dateStr || null);
+                    }
+                }
+            });
+
+            function getFilters() {
+                return {
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || '',
+                    fleetCompanyCode: $('#fleetCompanyCode').val() || '',
+                    companyCode: $('#companyCode').val() || '',
+                    customerCode: $('#customerCode').val() || '',
+                    plateNumber: ($('#plateNumber').val() || '').trim(),
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) {
+                        params.set(entry[0], entry[1]);
+                    }
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('vendor.order.waiting.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('vendor.order.waiting.export-pdf') }}" + query);
+            }
+
+            waitingTable = $('#dtWaiting').DataTable({
+                "processing": true,
+                "serverSide": true,
+                "destroy": true,
+                "pageLength": 25,
+                "ajax": {
+                    "url": "{{ route('dt.vendor-invoice.waiting') }}",
+                    "data": function (d) {
+                        Object.assign(d, getFilters());
+                    },
+                    "error": function (xhr, error, thrown) {
+                        console.error('DataTables waiting error: ', xhr.responseText || thrown);
+                        $('#dtWaiting_processing').hide();
+                    }
+                },
+                "columns": [{
                     "data": 'select'
                 }, {
                     "data": 'DT_RowIndex'
@@ -373,7 +523,7 @@
                 {
                     "data": 'orderDate',
                     "searchable": true,
-                    "render": function(data, type) {
+                    "render": function (data, type) {
                         if (!data) {
                             return type === 'sort' || type === 'type' ? 0 : '-';
                         }
@@ -417,27 +567,30 @@
                     "searchable": true
                 },
                 {
-                    "data": 'companyFormat',
+                    "data": 'companyName',
                     "searchable": true,
                     "className": 'text-center',
-                    "render": function(data, type) {
+                    "render": function (data, type, row) {
+                        const label = String(data || '').trim() || '-';
+
                         if (type !== 'display') {
-                            return data;
+                            return label;
                         }
 
-                        if (data === 'Pribadi (P)') {
-                            return '<span class="badge rounded-pill text-bg-warning">Pribadi</span>';
+                        const format = String((row && row.companyFormat) || '').toUpperCase().trim();
+                        let badgeClass = 'text-bg-secondary';
+
+                        if (format === 'PRIBADI (P)' || format === 'P') {
+                            badgeClass = 'text-bg-warning';
+                        } else if (format === 'WTMS' || format === 'WT') {
+                            badgeClass = 'text-bg-info';
+                        } else if (format === 'PHL') {
+                            badgeClass = 'text-bg-primary';
                         }
 
-                        if (data === 'WTMS') {
-                            return '<span class="badge rounded-pill text-bg-info">WTMS</span>';
-                        }
+                        const escapedLabel = $('<div>').text(label).html();
 
-                        if (data === 'PHL') {
-                            return '<span class="badge rounded-pill text-bg-primary">PHL</span>';
-                        }
-
-                        return '<span class="badge rounded-pill text-bg-secondary">?</span>';
+                        return '<span class="badge rounded-pill ' + badgeClass + '">' + escapedLabel + '</span>';
                     }
                 },
                 {
@@ -478,8 +631,8 @@
                     "searchable": true,
                     "className": 'text-center'
                 }
-            ],
-            "columnDefs": [{
+                ],
+                "columnDefs": [{
                     "searchable": false,
                     "targets": [0, 1]
                 },
@@ -487,406 +640,428 @@
                     "orderable": false,
                     "targets": [0, 1, 9]
                 }
-            ],
-            "order": [
-                [2, 'asc']
-            ],
-            "drawCallback": function() {
-                restoreSelectedCheckboxes();
+                ],
+                "order": [
+                    [2, 'asc']
+                ],
+                "drawCallback": function () {
+                    restoreSelectedCheckboxes();
+                    updateSelectionSummary();
+                },
+                "language": {
+                    "search": "",
+                    "searchPlaceholder": "Cari order code, shipment, nopol, vendor, customer, perusahaan, rute...",
+                    "lengthMenu": "Tampilkan _MENU_ data",
+                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
+                    "infoEmpty": "Tidak ada faktur yg belum dibayar",
+                    "zeroRecords": "Tidak ditemukan data yang sesuai",
+                    "paginate": {
+                        "next": "<i class='mdi mdi-chevron-right'></i>",
+                        "previous": "<i class='mdi mdi-chevron-left'></i>"
+                    }
+                }
+            });
+
+            // Select2 untuk pilihan bank di modal nota (serasi dengan halaman Pembayaran)
+            $('#notaUserBankCode').select2({
+                dropdownParent: $('#nota-modal'),
+                width: '100%',
+            });
+
+            // Load bank data saat halaman dimuat
+            loadBankData();
+
+            function reloadWithFilters() {
+                syncExportUrls();
+                waitingTable.ajax.reload(null, true);
+            }
+
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#plateNumber').on('keydown', function (event) {
+                if (event.key === 'Enter' && !event.isComposing) {
+                    event.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+            $('#btnResetFilter').on('click', function () {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
+            });
+
+            syncExportUrls();
+
+            // Selection per baris (order menunggu nota)
+            $(document).on('change', '.row-payment-checkbox', function () {
+                const checkbox = $(this);
+                const isChecked = checkbox.is(':checked');
+                const orderCode = String(checkbox.attr('data-order-code') || '');
+
+                if (orderCode === '') {
+                    return;
+                }
+
+                if (isChecked) {
+                    selectedOrders[orderCode] = {
+                        orderCode: orderCode,
+                        orderFormat: String(checkbox.attr('data-order-format') || '').toUpperCase().trim(),
+                        customerCompanyName: String(checkbox.attr('data-customer-company-name') || '').trim(),
+                        fleetCompanyCode: String(checkbox.attr('data-fleet-company-code') || ''),
+                        fleetCompanyName: String(checkbox.attr('data-fleet-company-name') || ''),
+                        fleetCompanyPph: Number(checkbox.attr('data-fleet-company-pph') || 0),
+                        checkboxType: 'nota',
+                        billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
+                        paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
+                        remainingAmount: Number(checkbox.attr('data-remaining-amount') || 0),
+                    };
+                } else {
+                    delete selectedOrders[orderCode];
+                }
+
                 updateSelectionSummary();
-            },
-            "language": {
-                "search": "",
-                "searchPlaceholder": "Cari order code, shipment, nopol, perusahaan, customer, format, rute...", 
-                "lengthMenu": "Tampilkan _MENU_ data",
-                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ order",
-                "infoEmpty": "Tidak ada order menunggu nota",
-                "zeroRecords": "Tidak ditemukan data yang sesuai",
-                "paginate": {
-                    "next": "<i class='mdi mdi-chevron-right'></i>",
-                    "previous": "<i class='mdi mdi-chevron-left'></i>"
-                }
-            }
-        });
-
-        // Select2 untuk pilihan bank di modal nota (serasi dengan halaman Pembayaran)
-        $('#notaUserBankCode').select2({
-            dropdownParent: $('#nota-modal'),
-            width: '100%',
-        });
-
-        // Load bank data saat halaman dimuat
-        loadBankData();
-
-        // Selection per baris (order menunggu nota)
-        $(document).on('change', '.row-payment-checkbox', function() {
-            const checkbox = $(this);
-            const isChecked = checkbox.is(':checked');
-            const orderCode = String(checkbox.attr('data-order-code') || '');
-
-            if (orderCode === '') {
-                return;
-            }
-
-            if (isChecked) {
-                selectedOrders[orderCode] = {
-                    orderCode: orderCode,
-                    orderFormat: String(checkbox.attr('data-order-format') || '').toUpperCase().trim(),
-                    customerCompanyName: String(checkbox.attr('data-customer-company-name') || '').trim(),
-                    fleetCompanyCode: String(checkbox.attr('data-fleet-company-code') || ''),
-                    fleetCompanyName: String(checkbox.attr('data-fleet-company-name') || ''),
-                    fleetCompanyPph: Number(checkbox.attr('data-fleet-company-pph') || 0),
-                    checkboxType: 'nota',
-                    billingAmount: Number(checkbox.attr('data-billing-amount') || 0),
-                    paidAmount: Number(checkbox.attr('data-paid-amount') || 0),
-                    remainingAmount: Number(checkbox.attr('data-remaining-amount') || 0),
-                };
-            } else {
-                delete selectedOrders[orderCode];
-            }
-
-            updateSelectionSummary();
-        });
-
-        // Pilih semua order menunggu nota pada halaman saat ini
-        $('#selectAllWaiting').on('change', function() {
-            const isChecked = $(this).is(':checked');
-
-            $('.row-payment-checkbox:not(:disabled)').each(function() {
-                if ($(this).is(':checked') !== isChecked) {
-                    $(this).prop('checked', isChecked).trigger('change');
-                }
-            });
-        });
-
-        // Handler untuk tombol Generate Nota
-        $('#generateNotaBtn').on('click', function() {
-            const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
-            const selectedCodes = notaOrders.map(item => item.orderCode);
-
-            if (selectedCodes.length === 0) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Pilih minimal satu order yang belum memiliki nota.',
-                    icon: 'warning',
-                }));
-
-                return;
-            }
-
-            // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh digabung dalam satu nota
-            const uniqueFleetCompanies = [...new Set(notaOrders.map(item => item.fleetCompanyCode).filter(f => f !== ''))];
-            if (uniqueFleetCompanies.length > 1) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.',
-                    icon: 'warning',
-                }));
-
-                return;
-            }
-
-            // Validasi 2: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh digabung dalam satu nota
-            const uniqueFormats = [...new Set(notaOrders.map(item => item.orderFormat).filter(f => f !== ''))];
-            if (uniqueFormats.length > 1) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Gagal: Order yang dipilih memiliki format perusahaan yang berbeda (' + uniqueFormats.join(', ') + '). Semua order dalam satu nota harus memiliki format perusahaan yang sama.',
-                    icon: 'warning',
-                }));
-
-                return;
-            }
-
-            const totals = calculateSelectedTotals();
-
-            // Label format perusahaan yang lebih ramah
-            const formatLabels = {
-                'P': 'Pribadi (P)',
-                'PHL': 'PHL',
-                'WTMS': 'WTMS',
-                'WT': 'WTMS',
-            };
-
-            // Populate ringkasan modal
-            $('#notaOrderCount').text(selectedCodes.length + ' order');
-            $('#notaOrderFormat').text(formatLabels[notaOrders[0].orderFormat] || notaOrders[0].orderFormat || '-');
-
-            const fleetCompanyName = String(notaOrders[0].fleetCompanyName || '').trim();
-            $('#notaFleetCompanyName').text(fleetCompanyName || '-').attr('title', fleetCompanyName);
-
-            // Render chip kode order
-            const orderListEl = $('#notaOrderList').empty();
-            selectedCodes.forEach(function(orderCode) {
-                orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(orderCode));
             });
 
-            // Reset PPN/claim dan tentukan PPh otomatis. Perusahaan customer
-            // bernama PRIBADI bebas PPh; selain itu gunakan tarif master vendor.
-            const customerCompanyName = String(notaOrders[0].customerCompanyName || '').toUpperCase().trim();
-            const isPersonalCompany = customerCompanyName === 'PRIBADI';
-            $('#notaPpnRate').val('0');
-            $('#notaClaimAmount').val('0');
-            notaModalState.pphRate = isPersonalCompany ? 0 : Math.min(100, Math.max(0, Number(notaOrders[0].fleetCompanyPph) || 0));
-            $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
-            $('#notaPphSource').html(isPersonalCompany
-                ? 'Perusahaan customer <strong>PRIBADI</strong>: tidak dipotong PPh. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>'
-                : 'Tarif otomatis dari master perusahaan armada <strong>' + $('<div>').text(fleetCompanyName || '-').html() + '</strong>. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>');
-            notaModalState.subtotal = totals.billing;
-            updateNotaTaxCalculation();
+            // Pilih semua order menunggu nota pada halaman saat ini
+            $('#selectAllWaiting').on('change', function () {
+                const isChecked = $(this).is(':checked');
 
-            $('#notaUserBankCode').val('').trigger('change'); // Reset bank selection
-
-            // Populate hidden inputs
-            const container = $('#notaOrderCodesContainer').empty();
-            selectedCodes.forEach(function(orderCode) {
-                container.append($('<input>', {
-                    type: 'hidden',
-                    name: 'orderCodes[]',
-                    value: orderCode,
-                }));
+                $('.row-payment-checkbox:not(:disabled)').each(function () {
+                    if ($(this).is(':checked') !== isChecked) {
+                        $(this).prop('checked', isChecked).trigger('change');
+                    }
+                });
             });
 
-            // Tampilkan modal generate nota
-            $('#nota-modal').modal('show');
-        });
+            // Handler untuk tombol Generate Nota
+            $('#generateNotaBtn').on('click', function () {
+                const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
+                const selectedCodes = notaOrders.map(item => item.orderCode);
 
-        // Ambil rate desimal dari input (koma diterima sebagai pemisah desimal).
-        function parseNotaRateInput(el) {
-            let value = String($(el).val() || '').replace(',', '.').replace(/[^0-9.]/g, '');
-            const parts = value.split('.');
-            value = parts.shift() + (parts.length ? '.' + parts.join('') : '');
-            const rate = parseFloat(value);
-
-            return Number.isFinite(rate) ? Math.min(100, Math.max(0, rate)) : 0;
-        }
-
-        function parseNotaClaimInput(el) {
-            // Hapus pemisah ribuan (titik) lalu normalisasi koma jadi desimal.
-            let value = String($(el).val() || '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '');
-            const amount = parseFloat(value);
-
-            return Number.isFinite(amount) ? Math.max(0, Math.round(amount)) : 0;
-        }
-
-        function formatNotaRate(value) {
-            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(Number(value) || 0);
-        }
-
-        // Format angka rupiah gaya Indonesia.
-        function formatNotaNumber(value) {
-            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
-        }
-
-        // Auto-format pemisah ribuan saat mengetik nominal (mis. 500000 → 500.000).
-        // Titik/koma di akhir dibiarkan agar desimal masih bisa diketik.
-        function formatNotaClaimInput(el) {
-            let value = String($(el).val() || '');
-            if (value.endsWith('.') || value.endsWith(',')) {
-                return;
-            }
-
-            let digits = value.replace(/\./g, '').replace(/,/g, '').replace(/[^0-9]/g, '');
-            if (digits === '') {
-                return;
-            }
-
-            let formatted = formatNotaNumber(Number(digits));
-            if (value !== formatted) {
-                $(el).val(formatted);
-            }
-        }
-
-        // Hitung nominal dari DPP x rate / 100 dan total bayar.
-        function updateNotaTaxCalculation() {
-            const ppnRate = parseNotaRateInput($('#notaPpnRate'));
-            const pphRate = notaModalState.pphRate;
-            const claim = parseNotaClaimInput($('#notaClaimAmount'));
-            const ppn = Math.round(notaModalState.subtotal * ppnRate / 100);
-            const pph = Math.round(notaModalState.subtotal * pphRate / 100);
-            const grandTotal = notaModalState.subtotal + ppn - pph - claim;
-
-            $('#notaPpnPreview, #notaPpnAmountPreview').text('Rp ' + formatNotaNumber(ppn));
-            $('#notaPphPreview, #notaPphAmountPreview').text('Rp ' + formatNotaNumber(pph));
-            $('#notaSubtotal').text('Rp ' + formatNotaNumber(notaModalState.subtotal));
-
-            const grandTotalEl = $('#notaGrandTotal');
-            grandTotalEl.text('Rp ' + formatNotaNumber(Math.max(0, grandTotal)));
-            grandTotalEl.toggleClass('nota-grand-total-negative', grandTotal < 0);
-
-            return {
-                ppnRate: ppnRate,
-                pphRate: pphRate,
-                ppn: ppn,
-                pph: pph,
-                claim: claim,
-                grandTotal: grandTotal,
-            };
-        }
-
-        // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
-        // keystroke. Memformat langsung akan menghapus tanda desimal sementara
-        // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
-        $('#notaPpnRate').on('input', function() {
-            updateNotaTaxCalculation();
-        });
-
-        $('#notaClaimAmount').on('input', function() {
-            formatNotaClaimInput(this);
-            updateNotaTaxCalculation();
-        });
-
-        $('#notaPpnRate').on('blur', function() {
-            $(this).val(formatNotaRate(parseNotaRateInput(this)));
-            updateNotaTaxCalculation();
-        });
-
-        $('#notaClaimAmount').on('blur', function() {
-            $(this).val(formatNotaNumber(parseNotaClaimInput(this)));
-            updateNotaTaxCalculation();
-        });
-
-        $('#notaPpnRate').on('focus', function() {
-            $(this).select();
-        });
-
-        $('#notaClaimAmount').on('focus', function() {
-            $(this).select();
-        });
-
-        // Handler untuk submit form generate nota
-        $('#generate-nota-form').on('submit', function(e) {
-            e.preventDefault();
-
-            const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
-            const selectedCodes = notaOrders.map(item => item.orderCode);
-            const selectedBank = $('#notaUserBankCode').val();
-
-            if (!selectedBank) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Pilih bank pembayaran terlebih dahulu.',
-                    icon: 'warning',
-                }));
-
-                return false;
-            }
-
-            // Validasi rate PPN dan tampilkan PPh otomatis beserta nominalnya.
-            const tax = updateNotaTaxCalculation();
-            if (tax.ppnRate < 0 || tax.pphRate < 0 || tax.ppnRate > 100 || tax.pphRate > 100) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Persentase PPN dan PPh harus antara 0% sampai 100%. Periksa master perusahaan armada.',
-                    icon: 'warning',
-                }));
-
-                return false;
-            }
-
-            if (tax.grandTotal < 0) {
-                Swal.fire(vendorSwalOptions({
-                    title: 'Peringatan',
-                    text: 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.',
-                    icon: 'warning',
-                }));
-
-                return false;
-            }
-
-            // Kirim PPN dan claim sebagai angka bersih. PPh sengaja tidak
-            // dikirim karena backend menghitung ulang dari master perusahaan.
-            $('#notaPpnRate').val(String(tax.ppnRate).replace(',', '.'));
-            $('#notaClaimAmount').val(String(tax.claim));
-
-            const hasClaim = tax.claim > 0;
-            const hasTax = tax.ppnRate > 0 || tax.pphRate > 0 || hasClaim;
-            let taxText = '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
-
-            if (hasTax) {
-                taxText = '\nSubtotal (DPP): ' + formatCurrency(notaModalState.subtotal) +
-                    (tax.ppnRate > 0 ? '\nPPN (' + formatNotaRate(tax.ppnRate) + '%): ' + formatCurrency(tax.ppn) : '') +
-                    (tax.pphRate > 0 ? '\nPPh (' + formatNotaRate(tax.pphRate) + '%): ' + formatCurrency(tax.pph) : '') +
-                    (hasClaim ? '\nBiaya Claim: ' + formatCurrency(tax.claim) : '') +
-                    '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
-            }
-
-            Swal.fire(vendorSwalOptions({
-                title: 'Generate Nota Pembayaran?',
-                text: selectedCodes.length + ' order akan dikelompokkan ke dalam satu nota resmi dan ditargetkan ke akun bank yang dipilih.' + taxText + '\n\nOrder yang sudah di-nota tidak bisa dipindahkan ke nota lain.',
-                icon: 'info',
-                showCancelButton: true,
-                cancelButtonText: 'Batal',
-                confirmButtonText: 'Ya, Generate Nota!',
-                reverseButtons: true,
-            })).then((result) => {
-                if (result.isConfirmed) {
+                if (selectedCodes.length === 0) {
                     Swal.fire(vendorSwalOptions({
-                        title: 'Memproses Generate Nota...',
-                        text: 'Sedang membuat nota pembayaran, mohon tunggu.',
-                        icon: 'info',
-                        showConfirmButton: false,
-                        allowOutsideClick: false,
-                        allowEscapeKey: false,
-                        didOpen: function() {
-                            Swal.showLoading();
-                        },
+                        title: 'Peringatan',
+                        text: 'Pilih minimal satu order yang belum memiliki nota.',
+                        icon: 'warning',
                     }));
 
-                    // Nonaktifkan tombol submit agar tidak ada klik ganda
-                    $('#generate-nota-form button[type="submit"]').prop('disabled', true);
+                    return;
+                }
 
-                    $.ajax({
-                        url: $('#generate-nota-form').attr('action'),
-                        type: 'POST',
-                        data: new FormData($('#generate-nota-form')[0]),
-                        processData: false,
-                        contentType: false,
-                        dataType: 'json',
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                        success: function(res) {
-                            $('#generate-nota-form button[type="submit"]').prop('disabled', false);
+                // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh digabung dalam satu nota
+                const uniqueFleetCompanies = [...new Set(notaOrders.map(item => item.fleetCompanyCode).filter(f => f !== ''))];
+                if (uniqueFleetCompanies.length > 1) {
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Peringatan',
+                        text: 'Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.',
+                        icon: 'warning',
+                    }));
 
-                            if (res.success) {
-                                $('#nota-modal').modal('hide');
-                                Swal.fire(vendorSwalOptions({
-                                    title: 'Berhasil!',
-                                    text: res.message || ('Nota pembayaran berhasil di-generate: ' + (res.nota_number || '')),
-                                    icon: 'success',
-                                })).then(() => {
-                                    window.location.reload();
-                                });
-                            } else {
+                    return;
+                }
+
+                // Validasi 2: Perusahaan (PT PUTRI HOKI LOGISTIK, PT WIJAYA TRANS MAKMUR SEJAHTERA, PRIBADI) yang berbeda tidak boleh digabung dalam satu nota
+                const uniqueFormats = [...new Set(notaOrders.map(item => item.orderFormat).filter(f => f !== ''))];
+                if (uniqueFormats.length > 1) {
+                    const uniqueCompanies = [...new Set(notaOrders.map(item => item.customerCompanyName || item.orderFormat).filter(c => c !== ''))];
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Peringatan',
+                        text: 'Gagal: Order yang dipilih memiliki perusahaan yang berbeda (' + uniqueCompanies.join(', ') + '). Semua order dalam satu nota harus memiliki perusahaan yang sama.',
+                        icon: 'warning',
+                    }));
+
+                    return;
+                }
+
+                const totals = calculateSelectedTotals();
+
+                // Populate ringkasan modal
+                const customerCompanyNameDisplay = String(notaOrders[0].customerCompanyName || '').trim();
+                $('#notaOrderCount').text(selectedCodes.length + ' order');
+                $('#notaOrderFormat').text(customerCompanyNameDisplay || '-').attr('title', customerCompanyNameDisplay);
+
+                const fleetCompanyName = String(notaOrders[0].fleetCompanyName || '').trim();
+                $('#notaFleetCompanyName').text(fleetCompanyName || '-').attr('title', fleetCompanyName);
+
+                // Render chip kode order
+                const orderListEl = $('#notaOrderList').empty();
+                selectedCodes.forEach(function (orderCode) {
+                    orderListEl.append($('<span>', { class: 'nota-order-chip' }).text(orderCode));
+                });
+
+                // Reset PPN/claim dan tentukan PPh otomatis. Perusahaan customer
+                // bernama PRIBADI bebas PPh; selain itu gunakan tarif master vendor.
+                const customerCompanyName = String(notaOrders[0].customerCompanyName || '').toUpperCase().trim();
+                const isPersonalCompany = customerCompanyName === 'PRIBADI';
+                $('#notaPpnRate').val('0');
+                $('#notaClaimAmount').val('0');
+                notaModalState.pphRate = isPersonalCompany ? 0 : Math.min(100, Math.max(0, Number(notaOrders[0].fleetCompanyPph) || 0));
+                $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
+                $('#notaPphSource').html(isPersonalCompany
+                    ? 'Perusahaan customer <strong>PRIBADI</strong>: tidak dipotong PPh. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>'
+                    : 'Tarif otomatis dari master perusahaan armada <strong>' + $('<div>').text(fleetCompanyName || '-').html() + '</strong>. Nominal: <strong id="notaPphAmountPreview">Rp 0</strong>');
+                notaModalState.subtotal = totals.billing;
+                updateNotaTaxCalculation();
+
+                $('#notaUserBankCode').val('').trigger('change'); // Reset bank selection
+
+                // Populate hidden inputs
+                const container = $('#notaOrderCodesContainer').empty();
+                selectedCodes.forEach(function (orderCode) {
+                    container.append($('<input>', {
+                        type: 'hidden',
+                        name: 'orderCodes[]',
+                        value: orderCode,
+                    }));
+                });
+
+                // Tampilkan modal generate nota
+                $('#nota-modal').modal('show');
+            });
+
+            // Ambil rate desimal dari input (koma diterima sebagai pemisah desimal).
+            function parseNotaRateInput(el) {
+                let value = String($(el).val() || '').replace(',', '.').replace(/[^0-9.]/g, '');
+                const parts = value.split('.');
+                value = parts.shift() + (parts.length ? '.' + parts.join('') : '');
+                const rate = parseFloat(value);
+
+                return Number.isFinite(rate) ? Math.min(100, Math.max(0, rate)) : 0;
+            }
+
+            function parseNotaClaimInput(el) {
+                // Hapus pemisah ribuan (titik) lalu normalisasi koma jadi desimal.
+                let value = String($(el).val() || '').replace(/\./g, '').replace(',', '.').replace(/[^0-9.]/g, '');
+                const amount = parseFloat(value);
+
+                return Number.isFinite(amount) ? Math.max(0, Math.round(amount)) : 0;
+            }
+
+            function formatNotaRate(value) {
+                return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 4 }).format(Number(value) || 0);
+            }
+
+            // Format angka rupiah gaya Indonesia.
+            function formatNotaNumber(value) {
+                return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(Number(value) || 0));
+            }
+
+            // Auto-format pemisah ribuan saat mengetik nominal (mis. 500000 → 500.000).
+            // Titik/koma di akhir dibiarkan agar desimal masih bisa diketik.
+            function formatNotaClaimInput(el) {
+                let value = String($(el).val() || '');
+                if (value.endsWith('.') || value.endsWith(',')) {
+                    return;
+                }
+
+                let digits = value.replace(/\./g, '').replace(/,/g, '').replace(/[^0-9]/g, '');
+                if (digits === '') {
+                    return;
+                }
+
+                let formatted = formatNotaNumber(Number(digits));
+                if (value !== formatted) {
+                    $(el).val(formatted);
+                }
+            }
+
+            // Hitung nominal dari DPP x rate / 100 dan total bayar.
+            function updateNotaTaxCalculation() {
+                const ppnRate = parseNotaRateInput($('#notaPpnRate'));
+                const pphRate = notaModalState.pphRate;
+                const claim = parseNotaClaimInput($('#notaClaimAmount'));
+                const ppn = Math.round(notaModalState.subtotal * ppnRate / 100);
+                const pph = Math.round(notaModalState.subtotal * pphRate / 100);
+                const grandTotal = notaModalState.subtotal + ppn - pph - claim;
+
+                $('#notaPpnPreview, #notaPpnAmountPreview').text('Rp ' + formatNotaNumber(ppn));
+                $('#notaPphPreview, #notaPphAmountPreview').text('Rp ' + formatNotaNumber(pph));
+                $('#notaSubtotal').text('Rp ' + formatNotaNumber(notaModalState.subtotal));
+
+                const grandTotalEl = $('#notaGrandTotal');
+                grandTotalEl.text('Rp ' + formatNotaNumber(Math.max(0, grandTotal)));
+                grandTotalEl.toggleClass('nota-grand-total-negative', grandTotal < 0);
+
+                return {
+                    ppnRate: ppnRate,
+                    pphRate: pphRate,
+                    ppn: ppn,
+                    pph: pph,
+                    claim: claim,
+                    grandTotal: grandTotal,
+                };
+            }
+
+            // Hitung saat mengetik, tetapi jangan memformat ulang input di setiap
+            // keystroke. Memformat langsung akan menghapus tanda desimal sementara
+            // (misalnya `1.`), sehingga angka seperti 1.1 tidak bisa diketik.
+            $('#notaPpnRate').on('input', function () {
+                updateNotaTaxCalculation();
+            });
+
+            $('#notaClaimAmount').on('input', function () {
+                formatNotaClaimInput(this);
+                updateNotaTaxCalculation();
+            });
+
+            $('#notaPpnRate').on('blur', function () {
+                $(this).val(formatNotaRate(parseNotaRateInput(this)));
+                updateNotaTaxCalculation();
+            });
+
+            $('#notaClaimAmount').on('blur', function () {
+                $(this).val(formatNotaNumber(parseNotaClaimInput(this)));
+                updateNotaTaxCalculation();
+            });
+
+            $('#notaPpnRate').on('focus', function () {
+                $(this).select();
+            });
+
+            $('#notaClaimAmount').on('focus', function () {
+                $(this).select();
+            });
+
+            // Handler untuk submit form generate nota
+            $('#generate-nota-form').on('submit', function (e) {
+                e.preventDefault();
+
+                const notaOrders = Object.values(selectedOrders).filter(item => item.checkboxType === 'nota');
+                const selectedCodes = notaOrders.map(item => item.orderCode);
+                const selectedBank = $('#notaUserBankCode').val();
+
+                if (!selectedBank) {
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Peringatan',
+                        text: 'Pilih bank pembayaran terlebih dahulu.',
+                        icon: 'warning',
+                    }));
+
+                    return false;
+                }
+
+                // Validasi rate PPN dan tampilkan PPh otomatis beserta nominalnya.
+                const tax = updateNotaTaxCalculation();
+                if (tax.ppnRate < 0 || tax.pphRate < 0 || tax.ppnRate > 100 || tax.pphRate > 100) {
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Peringatan',
+                        text: 'Persentase PPN dan PPh harus antara 0% sampai 100%. Periksa master perusahaan armada.',
+                        icon: 'warning',
+                    }));
+
+                    return false;
+                }
+
+                if (tax.grandTotal < 0) {
+                    Swal.fire(vendorSwalOptions({
+                        title: 'Peringatan',
+                        text: 'Total bayar (Subtotal + PPN − PPh − Claim) tidak boleh minus. Periksa kembali persentase PPh dan nominal Biaya Claim yang diinput.',
+                        icon: 'warning',
+                    }));
+
+                    return false;
+                }
+
+                // Kirim PPN dan claim sebagai angka bersih. PPh sengaja tidak
+                // dikirim karena backend menghitung ulang dari master perusahaan.
+                $('#notaPpnRate').val(String(tax.ppnRate).replace(',', '.'));
+                $('#notaClaimAmount').val(String(tax.claim));
+
+                const hasClaim = tax.claim > 0;
+                const hasTax = tax.ppnRate > 0 || tax.pphRate > 0 || hasClaim;
+                let taxText = '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
+
+                if (hasTax) {
+                    taxText = '\nSubtotal (DPP): ' + formatCurrency(notaModalState.subtotal) +
+                        (tax.ppnRate > 0 ? '\nPPN (' + formatNotaRate(tax.ppnRate) + '%): ' + formatCurrency(tax.ppn) : '') +
+                        (tax.pphRate > 0 ? '\nPPh (' + formatNotaRate(tax.pphRate) + '%): ' + formatCurrency(tax.pph) : '') +
+                        (hasClaim ? '\nBiaya Claim: ' + formatCurrency(tax.claim) : '') +
+                        '\nTotal Bayar: ' + formatCurrency(tax.grandTotal);
+                }
+
+                Swal.fire(vendorSwalOptions({
+                    title: 'Generate Nota Pembayaran?',
+                    text: selectedCodes.length + ' order akan dikelompokkan ke dalam satu nota resmi dan ditargetkan ke akun bank yang dipilih.' + taxText + '\n\nOrder yang sudah di-nota tidak bisa dipindahkan ke nota lain.',
+                    icon: 'info',
+                    showCancelButton: true,
+                    cancelButtonText: 'Batal',
+                    confirmButtonText: 'Ya, Generate Nota!',
+                    reverseButtons: true,
+                })).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire(vendorSwalOptions({
+                            title: 'Memproses Generate Nota...',
+                            text: 'Sedang membuat nota pembayaran, mohon tunggu.',
+                            icon: 'info',
+                            showConfirmButton: false,
+                            allowOutsideClick: false,
+                            allowEscapeKey: false,
+                            didOpen: function () {
+                                Swal.showLoading();
+                            },
+                        }));
+
+                        // Nonaktifkan tombol submit agar tidak ada klik ganda
+                        $('#generate-nota-form button[type="submit"]').prop('disabled', true);
+
+                        $.ajax({
+                            url: $('#generate-nota-form').attr('action'),
+                            type: 'POST',
+                            data: new FormData($('#generate-nota-form')[0]),
+                            processData: false,
+                            contentType: false,
+                            dataType: 'json',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            success: function (res) {
+                                $('#generate-nota-form button[type="submit"]').prop('disabled', false);
+
+                                if (res.success) {
+                                    $('#nota-modal').modal('hide');
+                                    Swal.fire(vendorSwalOptions({
+                                        title: 'Berhasil!',
+                                        text: res.message || ('Nota pembayaran berhasil di-generate: ' + (res.nota_number || '')),
+                                        icon: 'success',
+                                    })).then(() => {
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire(vendorSwalOptions({
+                                        title: 'Gagal!',
+                                        text: res.message || 'Terjadi kesalahan saat membuat nota.',
+                                        icon: 'error',
+                                    }));
+                                }
+                            },
+                            error: function (xhr) {
+                                $('#generate-nota-form button[type="submit"]').prop('disabled', false);
+
+                                let msg = 'Terjadi kesalahan saat membuat nota. Silakan coba lagi.';
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    msg = xhr.responseJSON.message;
+                                }
                                 Swal.fire(vendorSwalOptions({
                                     title: 'Gagal!',
-                                    text: res.message || 'Terjadi kesalahan saat membuat nota.',
+                                    text: msg,
                                     icon: 'error',
                                 }));
                             }
-                        },
-                        error: function(xhr) {
-                            $('#generate-nota-form button[type="submit"]').prop('disabled', false);
-
-                            let msg = 'Terjadi kesalahan saat membuat nota. Silakan coba lagi.';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            }
-                            Swal.fire(vendorSwalOptions({
-                                title: 'Gagal!',
-                                text: msg,
-                                icon: 'error',
-                            }));
-                        }
-                    });
-                } else {
-                    // Kembalikan format rate & claim setelah konfirmasi dibatalkan.
-                    $('#notaPpnRate').val(formatNotaRate(tax.ppnRate));
-                    $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
-                    $('#notaClaimAmount').val(formatNotaNumber(tax.claim));
-                    updateNotaTaxCalculation();
-                }
+                        });
+                    } else {
+                        // Kembalikan format rate & claim setelah konfirmasi dibatalkan.
+                        $('#notaPpnRate').val(formatNotaRate(tax.ppnRate));
+                        $('#notaPphRate').val(formatNotaRate(notaModalState.pphRate));
+                        $('#notaClaimAmount').val(formatNotaNumber(tax.claim));
+                        updateNotaTaxCalculation();
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
 @endpush

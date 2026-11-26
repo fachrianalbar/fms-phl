@@ -3,373 +3,735 @@
 @endphp
 
 @extends('layouts.main', [
-'title' => $title,
-'pageTitle' => $title,
-'firstSegment' => 'Hutang (Vendor)',
-'secondSegment' => $isPartial ? 'Invoice Dibayar Sebagian' : 'Invoice Belum Dibayar',
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => 'Hutang (Vendor)',
+    'secondSegment' => $isPartial ? 'Invoice Dibayar Sebagian' : 'Invoice Belum Dibayar',
 ])
 
 @push('style')
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css"
+        href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
+    <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
 
-@include('vendor.invoice.partials.table-style')
-<style>
-    /* Hallmark · genre: modern-minimal · macrostructure: Workbench · tone: utilitarian · designed-as-app */
-    .vendor-payment-workbench {
-        --vp-paper: oklch(100% 0 0);
-        --vp-paper-soft: oklch(97% 0.008 250);
-        --vp-ink: oklch(25% 0.025 255);
-        --vp-muted: oklch(52% 0.025 255);
-        --vp-rule: oklch(90% 0.018 250);
-        --vp-accent: oklch(55% 0.18 255);
-        --vp-accent-soft: oklch(95% 0.025 255);
-        --vp-success: oklch(55% 0.14 155);
-        --vp-success-soft: oklch(96% 0.03 155);
-        --vp-danger: oklch(54% 0.2 25);
-        --vp-warning-soft: oklch(96% 0.05 90);
-        --vp-focus: oklch(64% 0.18 250);
-        color: var(--vp-ink);
-    }
+    @include('vendor.invoice.partials.table-style')
+    <style>
+        /* Hallmark · genre: modern-minimal · macrostructure: Workbench · tone: utilitarian · designed-as-app */
+        .vendor-payment-workbench {
+            --vp-paper: oklch(100% 0 0);
+            --vp-paper-soft: oklch(97% 0.008 250);
+            --vp-ink: oklch(25% 0.025 255);
+            --vp-muted: oklch(52% 0.025 255);
+            --vp-rule: oklch(90% 0.018 250);
+            --vp-accent: oklch(55% 0.18 255);
+            --vp-accent-soft: oklch(95% 0.025 255);
+            --vp-success: oklch(55% 0.14 155);
+            --vp-success-soft: oklch(96% 0.03 155);
+            --vp-danger: oklch(54% 0.2 25);
+            --vp-warning-soft: oklch(96% 0.05 90);
+            --vp-focus: oklch(64% 0.18 250);
+            color: var(--vp-ink);
+        }
 
-    .vendor-payment-workbench .workbench-intro {
-        display: grid;
-        grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
-        gap: 24px;
-        padding: 22px 24px;
-        margin-bottom: 18px;
-        background: var(--vp-paper);
-        border: 1px solid var(--vp-rule);
-        border-radius: 14px;
-    }
+        .vendor-payment-workbench .workbench-intro {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+            gap: 24px;
+            padding: 22px 24px;
+            margin-bottom: 18px;
+            background: var(--vp-paper);
+            border: 1px solid var(--vp-rule);
+            border-radius: 14px;
+        }
 
-    .vendor-payment-workbench .workbench-eyebrow {
-        color: var(--vp-accent);
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: .08em;
-        text-transform: uppercase;
-    }
+        .vendor-payment-workbench .workbench-eyebrow {
+            color: var(--vp-accent);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
 
-    .vendor-payment-workbench .payment-steps {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-        align-self: center;
-    }
+        .vendor-payment-workbench .payment-steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            align-self: center;
+        }
 
-    .vendor-payment-workbench .payment-step {
-        min-width: 0;
-        padding: 12px;
-        background: var(--vp-paper-soft);
-        border-left: 3px solid var(--vp-rule);
-        border-radius: 0 10px 10px 0;
-    }
+        .vendor-payment-workbench .payment-step {
+            min-width: 0;
+            padding: 12px;
+            background: var(--vp-paper-soft);
+            border-left: 3px solid var(--vp-rule);
+            border-radius: 0 10px 10px 0;
+        }
 
-    .vendor-payment-workbench .payment-step strong,
-    .vendor-payment-workbench .payment-step span {
-        display: block;
-    }
+        .vendor-payment-workbench .payment-step strong,
+        .vendor-payment-workbench .payment-step span {
+            display: block;
+        }
 
-    .vendor-payment-workbench .payment-step strong {
-        font-size: 12px;
-        margin-bottom: 3px;
-    }
+        .vendor-payment-workbench .payment-step strong {
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
 
-    .vendor-payment-workbench .payment-step span {
-        color: var(--vp-muted);
-        font-size: 11px;
-        line-height: 1.35;
-    }
+        .vendor-payment-workbench .payment-step span {
+            color: var(--vp-muted);
+            font-size: 11px;
+            line-height: 1.35;
+        }
 
-    .vendor-payment-workbench .overview-strip {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        margin-bottom: 18px;
-        background: var(--vp-paper);
-        border: 1px solid var(--vp-rule);
-        border-radius: 14px;
-        overflow: hidden;
-    }
+        .vendor-payment-workbench .overview-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 18px;
+            background: var(--vp-paper);
+            border: 1px solid var(--vp-rule);
+            border-radius: 14px;
+            overflow: hidden;
+        }
 
-    .vendor-payment-workbench .overview-item {
-        min-width: 0;
-        padding: 17px 20px;
-        border-right: 1px solid var(--vp-rule);
-    }
+        .vendor-payment-workbench .overview-item {
+            min-width: 0;
+            padding: 17px 20px;
+            border-right: 1px solid var(--vp-rule);
+        }
 
-    .vendor-payment-workbench .overview-item:last-child { border-right: 0; }
-    .vendor-payment-workbench .overview-item span,
-    .vendor-payment-workbench .overview-item small { display: block; }
-    .vendor-payment-workbench .overview-item span { color: var(--vp-muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
-    .vendor-payment-workbench .overview-item strong { display: block; margin: 5px 0 2px; font-size: 19px; font-variant-numeric: tabular-nums; }
-    .vendor-payment-workbench .overview-item small { color: var(--vp-muted); font-size: 11px; }
-    .vendor-payment-workbench .overview-item.is-emphasis { background: var(--vp-warning-soft); }
-    .vendor-payment-workbench .overview-item.is-emphasis strong { color: var(--vp-danger); }
+        .vendor-payment-workbench .overview-item:last-child {
+            border-right: 0;
+        }
 
-    .vendor-payment-workbench .selection-empty-help,
-    .vendor-payment-workbench .selection-command-bar {
-        margin-bottom: 18px;
-        border-radius: 12px;
-    }
+        .vendor-payment-workbench .overview-item span,
+        .vendor-payment-workbench .overview-item small {
+            display: block;
+        }
 
-    .vendor-payment-workbench .selection-empty-help {
-        padding: 12px 16px;
-        background: var(--vp-accent-soft);
-        border: 1px dashed var(--vp-accent);
-        color: var(--vp-muted);
-    }
+        .vendor-payment-workbench .overview-item span {
+            color: var(--vp-muted);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
 
-    .vendor-payment-workbench .selection-command-bar {
-        position: sticky;
-        top: 74px;
-        z-index: 1010;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        padding: 13px 16px;
-        background: var(--vp-ink);
-        color: var(--vp-paper);
-        box-shadow: 0 10px 28px oklch(20% 0.025 255 / .16);
-    }
+        .vendor-payment-workbench .overview-item strong {
+            display: block;
+            margin: 5px 0 2px;
+            font-size: 19px;
+            font-variant-numeric: tabular-nums;
+        }
 
-    .vendor-payment-workbench .selection-command-bar .selection-facts {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px 18px;
-        font-size: 12px;
-    }
+        .vendor-payment-workbench .overview-item small {
+            color: var(--vp-muted);
+            font-size: 11px;
+        }
 
-    .vendor-payment-workbench .selection-command-bar .selection-facts strong { font-size: 14px; }
-    .vendor-payment-workbench .selection-command-bar .selection-facts span { color: var(--vp-rule); }
-    .vendor-payment-workbench .selection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-    .vendor-payment-workbench .selection-command-bar .btn-light { color: var(--vp-ink); }
+        .vendor-payment-workbench .overview-item.is-emphasis {
+            background: var(--vp-warning-soft);
+        }
 
-    .payment-review-modal .payment-step-label { color: var(--vp-accent, oklch(55% 0.18 255)); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
-    .payment-review-modal .payment-guidance { display: flex; gap: 12px; padding: 13px 20px; background: var(--vp-success-soft, oklch(96% 0.03 155)); border-bottom: 1px solid var(--vp-rule, oklch(90% 0.018 250)); font-size: 12px; }
-    .payment-review-modal .payment-guidance i { color: var(--vp-success, oklch(55% 0.14 155)); font-size: 22px; }
-    .payment-review-modal .payment-guidance strong,
-    .payment-review-modal .payment-guidance span { display: block; }
-    .payment-review-modal .payment-guidance span { color: var(--vp-muted, oklch(52% 0.025 255)); }
-    .payment-review-main, .payment-review-sidebar { padding: 22px; }
-    .payment-review-sidebar { background: var(--vp-paper-soft, oklch(97% 0.008 250)); border-left: 1px solid var(--vp-rule, oklch(90% 0.018 250)); }
+        .vendor-payment-workbench .overview-item.is-emphasis strong {
+            color: var(--vp-danger);
+        }
 
-    .payment-mode-switch { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .payment-mode-switch label { display: flex; align-items: center; gap: 10px; min-width: 0; min-height: 64px; padding: 12px 14px; border: 1px solid var(--vp-rule, oklch(90% 0.018 250)); border-radius: 10px; cursor: pointer; background: var(--vp-paper, oklch(100% 0 0)); }
-    .payment-mode-switch label i { font-size: 23px; color: var(--vp-muted, oklch(52% 0.025 255)); }
-    .payment-mode-switch label span,
-    .payment-mode-switch label small { display: block; min-width: 0; }
-    .payment-mode-switch label small { margin-top: 2px; color: var(--vp-muted, oklch(52% 0.025 255)); font-size: 11px; }
-    .payment-mode-switch .btn-check:checked + label { border-color: var(--vp-accent, oklch(55% 0.18 255)); background: var(--vp-accent-soft, oklch(95% 0.025 255)); box-shadow: inset 0 0 0 1px var(--vp-accent, oklch(55% 0.18 255)); }
-    .payment-mode-switch .btn-check:focus-visible + label { outline: 3px solid var(--vp-focus, oklch(64% 0.18 250)); outline-offset: 2px; }
+        .vendor-payment-workbench .selection-empty-help,
+        .vendor-payment-workbench .selection-command-bar {
+            margin-bottom: 18px;
+            border-radius: 12px;
+        }
 
-    .payment-allocation-table-wrap { border: 1px solid var(--vp-rule, oklch(90% 0.018 250)); border-radius: 10px; }
-    .payment-allocation-table th { padding: 10px 12px; background: var(--vp-paper-soft, oklch(97% 0.008 250)); color: var(--vp-muted, oklch(52% 0.025 255)); font-size: 10px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
-    .payment-allocation-table td { padding: 12px; border-color: var(--vp-rule, oklch(90% 0.018 250)); font-size: 12px; }
-    .payment-allocation-table .allocation-vendor { display: block; margin-top: 2px; color: var(--vp-muted, oklch(52% 0.025 255)); font-size: 11px; }
-    .payment-allocation-table .allocation-amount-input { min-width: 155px; font-variant-numeric: tabular-nums; }
-    .payment-allocation-table .allocation-message { display: block; min-height: 15px; margin-top: 3px; font-size: 10px; }
-    .payment-money { font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .vendor-payment-workbench .selection-empty-help {
+            padding: 12px 16px;
+            background: var(--vp-accent-soft);
+            border: 1px dashed var(--vp-accent);
+            color: var(--vp-muted);
+        }
 
-    .payment-total-block { padding: 16px; background: var(--vp-ink, oklch(25% 0.025 255)); color: var(--vp-paper, oklch(100% 0 0)); border-radius: 12px; }
-    .payment-total-block span, .payment-total-block small { display: block; color: var(--vp-rule, oklch(90% 0.018 250)); }
-    .payment-total-block strong { display: block; margin: 5px 0; font-size: 24px; font-variant-numeric: tabular-nums; }
-    .payment-facts { display: grid; gap: 8px; }
-    .payment-facts div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--vp-rule, oklch(90% 0.018 250)); }
-    .payment-facts dt { color: var(--vp-muted, oklch(52% 0.025 255)); font-weight: 400; }
-    .payment-facts dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
-    .payment-bank-status { min-height: 18px; margin-top: 5px; color: var(--vp-muted, oklch(52% 0.025 255)); font-size: 11px; }
-    .payment-review-footer { position: sticky; bottom: 0; background: var(--vp-paper, oklch(100% 0 0)); border-top: 1px solid var(--vp-rule, oklch(90% 0.018 250)); }
+        .vendor-payment-workbench .selection-command-bar {
+            position: sticky;
+            top: 74px;
+            z-index: 1010;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 13px 16px;
+            background: var(--vp-ink);
+            color: var(--vp-paper);
+            box-shadow: 0 10px 28px oklch(20% 0.025 255 / .16);
+        }
 
-    .vendor-payment-workbench .invoice-table-scroll {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    .vendor-payment-workbench .invoice-table tbody td:nth-child(n+10):nth-child(-n+14) { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
-    .vendor-payment-workbench .form-check-input:focus-visible,
-    .vendor-payment-workbench .btn:focus-visible,
-    .payment-review-modal .form-control:focus-visible,
-    .payment-review-modal .form-select:focus-visible { outline: 3px solid var(--vp-focus, oklch(64% 0.18 250)); outline-offset: 2px; box-shadow: none; }
+        .vendor-payment-workbench .selection-command-bar .selection-facts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 18px;
+            font-size: 12px;
+        }
 
-    /* Select2 untuk dropdown "Tampilkan _MENU_ data" milik DataTables */
-    .vendor-payment-workbench .dataTables_length .select2-container { width: 88px !important; }
-    .vendor-payment-workbench .dataTables_length .select2-container .select2-selection--single {
-        height: 34px !important;
-        padding: 4px 10px !important;
-        border-radius: 8px !important;
-    }
-    .vendor-payment-workbench .dataTables_length .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 24px !important;
-        font-size: 13px !important;
-    }
-    .vendor-payment-workbench .dataTables_length .select2-container--default .select2-selection--single .select2-selection__arrow { height: 32px !important; }
+        .vendor-payment-workbench .selection-command-bar .selection-facts strong {
+            font-size: 14px;
+        }
 
-    @media (max-width: 991.98px) {
-        .vendor-payment-workbench .workbench-intro { grid-template-columns: minmax(0, 1fr); }
-        .vendor-payment-workbench .overview-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .vendor-payment-workbench .overview-item:nth-child(2) { border-right: 0; }
-        .vendor-payment-workbench .overview-item:nth-child(-n+2) { border-bottom: 1px solid var(--vp-rule); }
-        .payment-review-sidebar { border-left: 0; border-top: 1px solid var(--vp-rule, oklch(90% 0.018 250)); }
-    }
+        .vendor-payment-workbench .selection-command-bar .selection-facts span {
+            color: var(--vp-rule);
+        }
 
-    @media (max-width: 575.98px) {
-        .vendor-payment-workbench .workbench-intro { padding: 18px; }
-        .vendor-payment-workbench .payment-steps,
-        .vendor-payment-workbench .overview-strip,
-        .payment-mode-switch { grid-template-columns: minmax(0, 1fr); }
-        .vendor-payment-workbench .overview-item { border-right: 0; border-bottom: 1px solid var(--vp-rule); }
-        .vendor-payment-workbench .overview-item:last-child { border-bottom: 0; }
-        .vendor-payment-workbench .selection-command-bar { top: 8px; align-items: stretch; flex-direction: column; }
-        .vendor-payment-workbench .selection-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        .vendor-payment-workbench .selection-actions .btn:last-child { grid-column: 1 / -1; }
-        .payment-review-main, .payment-review-sidebar { padding: 16px; }
-        .payment-review-footer { align-items: stretch; }
-        .payment-review-footer #paymentSubmitHint { width: 100%; }
-    }
+        .vendor-payment-workbench .selection-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-    @media (prefers-reduced-motion: reduce) {
-        .vendor-payment-workbench *, .payment-review-modal * { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
-    }
-</style>
+        .vendor-payment-workbench .selection-command-bar .btn-light {
+            color: var(--vp-ink);
+        }
+
+        .payment-review-modal .payment-step-label {
+            color: var(--vp-accent, oklch(55% 0.18 255));
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+        }
+
+        .payment-review-modal .payment-guidance {
+            display: flex;
+            gap: 12px;
+            padding: 13px 20px;
+            background: var(--vp-success-soft, oklch(96% 0.03 155));
+            border-bottom: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+            font-size: 12px;
+        }
+
+        .payment-review-modal .payment-guidance i {
+            color: var(--vp-success, oklch(55% 0.14 155));
+            font-size: 22px;
+        }
+
+        .payment-review-modal .payment-guidance strong,
+        .payment-review-modal .payment-guidance span {
+            display: block;
+        }
+
+        .payment-review-modal .payment-guidance span {
+            color: var(--vp-muted, oklch(52% 0.025 255));
+        }
+
+        .payment-review-main,
+        .payment-review-sidebar {
+            padding: 22px;
+        }
+
+        .payment-review-sidebar {
+            background: var(--vp-paper-soft, oklch(97% 0.008 250));
+            border-left: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+        }
+
+        .payment-mode-switch {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .payment-mode-switch label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            min-height: 64px;
+            padding: 12px 14px;
+            border: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+            border-radius: 10px;
+            cursor: pointer;
+            background: var(--vp-paper, oklch(100% 0 0));
+        }
+
+        .payment-mode-switch label i {
+            font-size: 23px;
+            color: var(--vp-muted, oklch(52% 0.025 255));
+        }
+
+        .payment-mode-switch label span,
+        .payment-mode-switch label small {
+            display: block;
+            min-width: 0;
+        }
+
+        .payment-mode-switch label small {
+            margin-top: 2px;
+            color: var(--vp-muted, oklch(52% 0.025 255));
+            font-size: 11px;
+        }
+
+        .payment-mode-switch .btn-check:checked+label {
+            border-color: var(--vp-accent, oklch(55% 0.18 255));
+            background: var(--vp-accent-soft, oklch(95% 0.025 255));
+            box-shadow: inset 0 0 0 1px var(--vp-accent, oklch(55% 0.18 255));
+        }
+
+        .payment-mode-switch .btn-check:focus-visible+label {
+            outline: 3px solid var(--vp-focus, oklch(64% 0.18 250));
+            outline-offset: 2px;
+        }
+
+        .payment-allocation-table-wrap {
+            border: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+            border-radius: 10px;
+        }
+
+        .payment-allocation-table th {
+            padding: 10px 12px;
+            background: var(--vp-paper-soft, oklch(97% 0.008 250));
+            color: var(--vp-muted, oklch(52% 0.025 255));
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            white-space: nowrap;
+        }
+
+        .payment-allocation-table td {
+            padding: 12px;
+            border-color: var(--vp-rule, oklch(90% 0.018 250));
+            font-size: 12px;
+        }
+
+        .payment-allocation-table .allocation-vendor {
+            display: block;
+            margin-top: 2px;
+            color: var(--vp-muted, oklch(52% 0.025 255));
+            font-size: 11px;
+        }
+
+        .payment-allocation-table .allocation-amount-input {
+            min-width: 155px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .payment-allocation-table .allocation-message {
+            display: block;
+            min-height: 15px;
+            margin-top: 3px;
+            font-size: 10px;
+        }
+
+        .payment-money {
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .payment-total-block {
+            padding: 16px;
+            background: var(--vp-ink, oklch(25% 0.025 255));
+            color: var(--vp-paper, oklch(100% 0 0));
+            border-radius: 12px;
+        }
+
+        .payment-total-block span,
+        .payment-total-block small {
+            display: block;
+            color: var(--vp-rule, oklch(90% 0.018 250));
+        }
+
+        .payment-total-block strong {
+            display: block;
+            margin: 5px 0;
+            font-size: 24px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .payment-facts {
+            display: grid;
+            gap: 8px;
+        }
+
+        .payment-facts div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+        }
+
+        .payment-facts dt {
+            color: var(--vp-muted, oklch(52% 0.025 255));
+            font-weight: 400;
+        }
+
+        .payment-facts dd {
+            margin: 0;
+            font-weight: 600;
+            text-align: right;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .payment-bank-status {
+            min-height: 18px;
+            margin-top: 5px;
+            color: var(--vp-muted, oklch(52% 0.025 255));
+            font-size: 11px;
+        }
+
+        .payment-review-footer {
+            position: sticky;
+            bottom: 0;
+            background: var(--vp-paper, oklch(100% 0 0));
+            border-top: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+        }
+
+        .vendor-payment-workbench .invoice-table-scroll {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .vendor-payment-workbench .invoice-table tbody td:nth-child(n+10):nth-child(-n+14) {
+            font-variant-numeric: tabular-nums;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .vendor-payment-workbench .form-check-input:focus-visible,
+        .vendor-payment-workbench .btn:focus-visible,
+        .payment-review-modal .form-control:focus-visible,
+        .payment-review-modal .form-select:focus-visible {
+            outline: 3px solid var(--vp-focus, oklch(64% 0.18 250));
+            outline-offset: 2px;
+            box-shadow: none;
+        }
+
+        /* Select2 untuk dropdown "Tampilkan _MENU_ data" milik DataTables */
+        .vendor-payment-workbench .dataTables_length .select2-container {
+            width: 88px !important;
+        }
+
+        .vendor-payment-workbench .dataTables_length .select2-container .select2-selection--single {
+            height: 34px !important;
+            padding: 4px 10px !important;
+            border-radius: 8px !important;
+        }
+
+        .vendor-payment-workbench .dataTables_length .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 24px !important;
+            font-size: 13px !important;
+        }
+
+        .vendor-payment-workbench .dataTables_length .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 32px !important;
+        }
+
+        @media (max-width: 991.98px) {
+            .vendor-payment-workbench .workbench-intro {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .vendor-payment-workbench .overview-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .vendor-payment-workbench .overview-item:nth-child(2) {
+                border-right: 0;
+            }
+
+            .vendor-payment-workbench .overview-item:nth-child(-n+2) {
+                border-bottom: 1px solid var(--vp-rule);
+            }
+
+            .payment-review-sidebar {
+                border-left: 0;
+                border-top: 1px solid var(--vp-rule, oklch(90% 0.018 250));
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .vendor-payment-workbench .workbench-intro {
+                padding: 18px;
+            }
+
+            .vendor-payment-workbench .payment-steps,
+            .vendor-payment-workbench .overview-strip,
+            .payment-mode-switch {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .vendor-payment-workbench .overview-item {
+                border-right: 0;
+                border-bottom: 1px solid var(--vp-rule);
+            }
+
+            .vendor-payment-workbench .overview-item:last-child {
+                border-bottom: 0;
+            }
+
+            .vendor-payment-workbench .selection-command-bar {
+                top: 8px;
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .vendor-payment-workbench .selection-actions {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .vendor-payment-workbench .selection-actions .btn:last-child {
+                grid-column: 1 / -1;
+            }
+
+            .payment-review-main,
+            .payment-review-sidebar {
+                padding: 16px;
+            }
+
+            .payment-review-footer {
+                align-items: stretch;
+            }
+
+            .payment-review-footer #paymentSubmitHint {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            .vendor-payment-workbench *,
+            .payment-review-modal * {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
 @endpush
 
 @section('content')
-<div class="col-sm-12 vendor-payment-workbench">
-    <section class="workbench-intro" aria-labelledby="paymentWorkflowTitle">
-        <div>
-            <span class="workbench-eyebrow">Pembayaran vendor · {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }}</span>
-            <h4 class="fw-bold mt-1 mb-2" id="paymentWorkflowTitle">{{ $isPartial ? 'Review Invoice Dibayar Sebagian' : 'Pilih Invoice Belum Dibayar' }}</h4>
-            <p class="text-muted mb-3">{{ $isPartial ? 'Kelola nota vendor yang sudah menerima pembayaran tetapi masih memiliki sisa tagihan.' : 'Pilih nota vendor yang benar-benar belum menerima pembayaran untuk diproses.' }}</p>
-            <a href="{{ $isPartial ? route('vendor.invoice.unpaid') : route('vendor.invoice.partial') }}" class="btn btn-outline-primary btn-sm fw-semibold">
-                <i class="mdi {{ $isPartial ? 'mdi-cash-remove' : 'mdi-cash-clock' }} me-1" aria-hidden="true"></i>
-                {{ $isPartial ? 'Lihat Invoice Belum Dibayar' : 'Lihat Invoice Dibayar Sebagian' }}
-            </a>
-        </div>
-        <div class="payment-steps" aria-label="Tiga langkah pembayaran">
-            <div class="payment-step"><strong>1 · Pilih nota</strong><span>{{ $isPartial ? 'Pilih nota yang sudah memiliki pembayaran sebelumnya.' : 'Pilih nota yang belum memiliki pembayaran.' }}</span></div>
-            <div class="payment-step"><strong>2 · Review nominal</strong><span>Periksa alokasi, sisa, tanggal, dan sumber dana.</span></div>
-            <div class="payment-step"><strong>3 · Konfirmasi</strong><span>Sistem membuat satu kode pembayaran untuk seluruh pilihan.</span></div>
-        </div>
-    </section>
+    <div class="col-sm-12 vendor-payment-workbench">
+        <section class="workbench-intro" aria-labelledby="paymentWorkflowTitle">
+            <div>
+                <span class="workbench-eyebrow">Pembayaran vendor ·
+                    {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }}</span>
+                <h4 class="fw-bold mt-1 mb-2" id="paymentWorkflowTitle">
+                    {{ $isPartial ? 'Review Invoice Dibayar Sebagian' : 'Pilih Invoice Belum Dibayar' }}</h4>
+                <p class="text-muted mb-3">
+                    {{ $isPartial ? 'Kelola nota vendor yang sudah menerima pembayaran tetapi masih memiliki sisa tagihan.' : 'Pilih nota vendor yang benar-benar belum menerima pembayaran untuk diproses.' }}
+                </p>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="{{ $isPartial ? route('vendor.invoice.unpaid') : route('vendor.invoice.partial') }}"
+                        class="btn btn-outline-primary btn-sm fw-semibold">
+                        <i class="mdi {{ $isPartial ? 'mdi-cash-remove' : 'mdi-cash-clock' }} me-1" aria-hidden="true"></i>
+                        {{ $isPartial ? 'Lihat Invoice Belum Dibayar' : 'Lihat Invoice Dibayar Sebagian' }}
+                    </a>
+                    <a href="{{ $isPartial ? route('vendor.invoice.partial.export-excel') : route('vendor.invoice.unpaid.export-excel') }}"
+                        target="_blank" id="export-excel" class="btn btn-icon btn-sm bg-success-subtle text-success"
+                        data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ $isPartial ? route('vendor.invoice.partial.export-pdf') : route('vendor.invoice.unpaid.export-pdf') }}"
+                        target="_blank" id="export-pdf" class="btn btn-icon btn-sm bg-danger-subtle text-danger"
+                        data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="payment-steps" aria-label="Tiga langkah pembayaran">
+                <div class="payment-step"><strong>1 · Pilih
+                        nota</strong><span>{{ $isPartial ? 'Pilih nota yang sudah memiliki pembayaran sebelumnya.' : 'Pilih nota yang belum memiliki pembayaran.' }}</span>
+                </div>
+                <div class="payment-step"><strong>2 · Review nominal</strong><span>Periksa alokasi, sisa, tanggal, dan
+                        sumber dana.</span></div>
+                <div class="payment-step"><strong>3 · Konfirmasi</strong><span>Sistem membuat satu kode pembayaran untuk
+                        seluruh pilihan.</span></div>
+            </div>
+        </section>
 
-    {{-- Flash message (success/fail/error) kini ditampilkan sebagai dialog SweetAlert2
+        {{-- Flash message (success/fail/error) kini ditampilkan sebagai dialog SweetAlert2
         lewat partial flash-swal (di-include pada @push('script') di bawah). --}}
 
-    <section class="overview-strip" aria-label="Ringkasan invoice vendor">
-        <div class="overview-item">
-            <span>Nota belum lunas</span>
-            <strong>{{ number_format($stats['notaCount'] ?? 0) }} Nota</strong>
-            <span>{{ $isPartial ? 'Nota yang sudah dibayar sebagian' : 'Nota tanpa pembayaran sebelumnya' }}</span>
-        </div>
-        <div class="overview-item">
-            <span>Order dalam nota</span>
-            <strong>{{ number_format($stats['orderCount'] ?? 0) }} Order</strong>
-            <small>Vendor armada eksternal</small>
-        </div>
-        <div class="overview-item">
-            <span>{{ $isPartial ? 'Sudah dibayar' : 'Belum dibayar' }}</span>
-            <strong>Rp {{ number_format($stats['totalPaid'] ?? 0, 0, ',', '.') }}</strong>
-            <small>{{ $isPartial ? 'Akumulasi pembayaran sebelumnya' : 'Belum ada dana keluar' }}</small>
-        </div>
-        <div class="overview-item is-emphasis">
-            <span>{{ $isPartial ? 'Sisa hutang berjalan' : 'Total yang harus dibayar' }}</span>
-            <strong>Rp {{ number_format($stats['totalRemaining'] ?? 0, 0, ',', '.') }}</strong>
-            <small>Total tagihan Rp {{ number_format($stats['totalBilling'] ?? 0, 0, ',', '.') }}</small>
-        </div>
-    </section>
+        <section class="overview-strip" aria-label="Ringkasan invoice vendor">
+            <div class="overview-item">
+                <span>Nota belum lunas</span>
+                <strong>{{ number_format($stats['notaCount'] ?? 0) }} Nota</strong>
+                <span>{{ $isPartial ? 'Nota yang sudah dibayar sebagian' : 'Nota tanpa pembayaran sebelumnya' }}</span>
+            </div>
+            <div class="overview-item">
+                <span>Order dalam nota</span>
+                <strong>{{ number_format($stats['orderCount'] ?? 0) }} Order</strong>
+                <small>Vendor armada eksternal</small>
+            </div>
+            <div class="overview-item">
+                <span>{{ $isPartial ? 'Sudah dibayar' : 'Belum dibayar' }}</span>
+                <strong>Rp {{ number_format($stats['totalPaid'] ?? 0, 0, ',', '.') }}</strong>
+                <small>{{ $isPartial ? 'Akumulasi pembayaran sebelumnya' : 'Belum ada dana keluar' }}</small>
+            </div>
+            <div class="overview-item is-emphasis">
+                <span>{{ $isPartial ? 'Sisa hutang berjalan' : 'Total yang harus dibayar' }}</span>
+                <strong>Rp {{ number_format($stats['totalRemaining'] ?? 0, 0, ',', '.') }}</strong>
+                <small>Total tagihan Rp {{ number_format($stats['totalBilling'] ?? 0, 0, ',', '.') }}</small>
+            </div>
+        </section>
 
-    <div class="selection-empty-help" id="selectionEmptyHelp">
+        <div class="selection-empty-help" id="selectionEmptyHelp">
             <i class="mdi mdi-{{ $isPartial ? 'cash-clock' : 'cash-remove' }} me-1" aria-hidden="true"></i>
-        Centang nota {{ $isPartial ? 'yang sudah dibayar sebagian' : 'yang belum dibayar' }} untuk pembayaran lanjutan (bisa banyak nota). Cetak nota dilakukan lewat tombol aksi pada tiap baris.
-    </div>
+            Centang nota {{ $isPartial ? 'yang sudah dibayar sebagian' : 'yang belum dibayar' }} untuk pembayaran lanjutan
+            (bisa banyak nota). Cetak nota dilakukan lewat tombol aksi pada tiap baris.
+        </div>
 
-    <div class="selection-command-bar d-none" id="selectionCommandBar" aria-live="polite">
-        <div>
-            <strong id="selectionHeadline">0 nota dipilih</strong>
-            <div class="selection-facts mt-1">
-                <span id="selectionVendorFact">0 vendor</span>
-                <span id="selectionOrderFact">0 order</span>
-                <span id="selectionRemainingFact">Sisa Rp 0</span>
+        <div class="selection-command-bar d-none" id="selectionCommandBar" aria-live="polite">
+            <div>
+                <strong id="selectionHeadline">0 nota dipilih</strong>
+                <div class="selection-facts mt-1">
+                    <span id="selectionVendorFact">0 vendor</span>
+                    <span id="selectionOrderFact">0 order</span>
+                    <span id="selectionRemainingFact">Sisa Rp 0</span>
+                </div>
+            </div>
+            <div class="selection-actions">
+                <button type="button" class="btn btn-outline-light btn-sm" id="clearSelectionBtn">
+                    <i class="mdi mdi-close me-1" aria-hidden="true"></i>Bersihkan
+                </button>
+                <button type="button" class="btn btn-success btn-sm fw-semibold" id="openPaymentModalBtn">
+                    <i class="mdi mdi-bank-transfer-out me-1" aria-hidden="true"></i>Review Pembayaran
+                </button>
             </div>
         </div>
-        <div class="selection-actions">
-            <button type="button" class="btn btn-outline-light btn-sm" id="clearSelectionBtn">
-                <i class="mdi mdi-close me-1" aria-hidden="true"></i>Bersihkan
-            </button>
-            <button type="button" class="btn btn-success btn-sm fw-semibold" id="openPaymentModalBtn">
-                <i class="mdi mdi-bank-transfer-out me-1" aria-hidden="true"></i>Review Pembayaran
-            </button>
-        </div>
-    </div>
 
-    <!-- Nota {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }} -->
-    <div class="table-container-card">
-        <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
-            <div>
-                <h6 class="fw-bold text-dark mb-1">Nota {{ $isPartial ? 'Dibayar Sebagian' : 'Belum Dibayar' }}</h6>
-                <div class="text-muted fs-12">
-                    <i class="mdi mdi-information-outline me-1 text-primary"></i>{{ $isPartial ? 'Nota sudah memiliki pembayaran sebelumnya dan masih dapat dibayar hingga lunas.' : 'Nota ini belum memiliki pembayaran sebelumnya. Pembayaran dapat diproses sebagai DP, cicilan, atau pelunasan.' }}
+        <!-- Nota {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }} -->
+        <div class="table-container-card">
+            <div class="table-top-bar d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Nota {{ $isPartial ? 'Dibayar Sebagian' : 'Belum Dibayar' }}</h6>
+                    <div class="text-muted fs-12">
+                        <i
+                            class="mdi mdi-information-outline me-1 text-primary"></i>{{ $isPartial ? 'Nota sudah memiliki pembayaran sebelumnya dan masih dapat dibayar hingga lunas.' : 'Nota ini belum memiliki pembayaran sebelumnya. Pembayaran dapat diproses sebagai DP, cicilan, atau pelunasan.' }}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#unpaidInvoiceFilterCollapse" aria-expanded="false"
+                        aria-controls="unpaidInvoiceFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar nota
+                                {{ $isPartial ? 'dibayar sebagian' : 'belum dibayar' }}</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="unpaidInvoiceFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal Nota</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal Nota</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="fleetCompanyCode">Vendor (Perusahaan
+                                            Kendaraan)</label>
+                                        <select class="form-select select2-filter" name="fleetCompanyCode"
+                                            id="fleetCompanyCode">
+                                            <option value="">Semua Vendor</option>
+                                            @foreach ($fleetCompanies ?? [] as $fc)
+                                                <option value="{{ $fc->code }}">{{ $fc->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="companyCode">Perusahaan</label>
+                                        <select class="form-select select2-filter" name="companyCode" id="companyCode">
+                                            <option value="">Semua Perusahaan</option>
+                                            @foreach ($companies ?? [] as $comp)
+                                                <option value="{{ $comp->code }}">{{ $comp->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="notaNumber">No. Nota</label>
+                                        <input class="form-control" name="notaNumber" id="notaNumber" type="text"
+                                            placeholder="Cari no. nota..." autocorrect="off" autocapitalize="none"
+                                            spellcheck="false">
+                                    </div>
+                                    <div class="col-xl-9 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="invoice-table-scroll custom-scrollbar">
+                    <table class="table table-striped nowrap invoice-table" id="dtUnpaid">
+                        <thead>
+                            <tr>
+                                <th class="text-center"><input class="form-check-input" type="checkbox" id="selectAllNotas"
+                                        aria-label="Pilih semua nota pada halaman tabel ini"
+                                        title="Pilih semua nota pada halaman ini"></th>
+                                <th class="text-center" style="width: 170px;">Aksi</th>
+                                <th class="text-center" style="width: 45px;">No</th>
+                                <th class="text-center">Status Bayar</th>
+                                <th>No Nota</th>
+                                <th>Tanggal Nota</th>
+                                <th>Vendor (Perusahaan Kendaraan)</th>
+                                <th class="text-center">Order dalam Nota</th>
+                                <th>Nopol</th>
+                                <th class="text-end">Tagihan</th>
+                                <th class="text-end">PPN</th>
+                                <th class="text-end">PPh</th>
+                                <th class="text-end">Claim</th>
+                                <th class="text-end">Terbayar</th>
+                                <th class="text-end">Sisa</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <div class="card-body p-3">
-            <div class="invoice-table-scroll custom-scrollbar">
-                <table class="table table-striped nowrap invoice-table" id="dtUnpaid">
-                    <thead>
-                        <tr>
-                            <th class="text-center"><input class="form-check-input" type="checkbox" id="selectAllNotas" aria-label="Pilih semua nota pada halaman tabel ini" title="Pilih semua nota pada halaman ini"></th>
-                            <th class="text-center" style="width: 170px;">Aksi</th>
-                            <th class="text-center" style="width: 45px;">No</th>
-                            <th class="text-center">Status Bayar</th>
-                            <th>No Nota</th>
-                            <th>Tanggal Nota</th>
-                            <th>Vendor (Perusahaan Kendaraan)</th>
-                            <th class="text-center">Order dalam Nota</th>
-                            <th>Nopol</th>
-                            <th class="text-end">Tagihan</th>
-                            <th class="text-end">PPN</th>
-                            <th class="text-end">PPh</th>
-                            <th class="text-end">Claim</th>
-                            <th class="text-end">Terbayar</th>
-                            <th class="text-end">Sisa</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
     </div>
-</div>
 
-@include('vendor.invoice.partials.modals')
-@include('vendor.invoice.partials.nota-orders-modal')
-@include('vendor.invoice.partials.nota-sync-modal')
+    @include('vendor.invoice.partials.modals')
+    @include('vendor.invoice.partials.nota-orders-modal')
+    @include('vendor.invoice.partials.nota-sync-modal')
 @endsection
 
 @push('script')
-<script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
-<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+    <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
+    <script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
+    <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
 
-{{-- Flash message server → SweetAlert2 (harus setelah sweetalert2.min.js) --}}
-@include('vendor.invoice.partials.flash-swal')
+    {{-- Flash message server → SweetAlert2 (harus setelah sweetalert2.min.js) --}}
+    @include('vendor.invoice.partials.flash-swal')
 
-@include('vendor.invoice.partials.unpaid-payment-script')
-@include('vendor.invoice.partials.nota-sync-script')
+    @include('vendor.invoice.partials.unpaid-payment-script')
+    @include('vendor.invoice.partials.nota-sync-script')
 @endpush

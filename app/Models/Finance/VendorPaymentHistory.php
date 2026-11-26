@@ -15,6 +15,8 @@ class VendorPaymentHistory extends Model
 
     public $incrementing = false;
 
+    protected $keyType = 'string';
+
     protected $fillable = [
         'vendor_payment_id',
         'batch_code',

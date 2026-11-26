@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Operational;
 
+use App\Exports\ReturnDoReport;
 use App\Http\Controllers\Controller;
 use App\Models\Data\Route;
 use App\Models\Master\CostComponent;
@@ -26,6 +27,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class ReturnDoController extends Controller
@@ -38,14 +41,28 @@ class ReturnDoController extends Controller
 
     protected $menuSvc;
 
-    public function __construct(ReturnDoService $returnDoService, MenuService $menuSvc)
-    {
+    protected $customerSvc;
+
+    protected $driverSvc;
+
+    protected $fleetSvc;
+
+    public function __construct(
+        ReturnDoService $returnDoService,
+        MenuService $menuSvc,
+        CustomerService $customerSvc,
+        EmployeeService $driverSvc,
+        FleetService $fleetSvc
+    ) {
         $this->service = $returnDoService;
         $this->menuSvc = $menuSvc->getByName('Return Do');
         $this->title = (Auth::user()?->languange ?? 'id') === 'en'
             ? ($this->menuSvc?->name ?? 'Return Do')
             : ($this->menuSvc?->nama ?? 'Return Do');
         $this->view = 'operational.return-do.';
+        $this->customerSvc = $customerSvc;
+        $this->driverSvc = $driverSvc;
+        $this->fleetSvc = $fleetSvc;
     }
 
     /**
@@ -53,9 +70,95 @@ class ReturnDoController extends Controller
      */
     public function index()
     {
+        $customer = $this->customerSvc->findAll();
+        $driver = $this->driverSvc->findAll();
+        $fleet = $this->fleetSvc->findAll();
+
+        $existingPlates = Order::whereIn('status', [4, 5])
+            ->whereNotNull('plateNumber')
+            ->where('plateNumber', '!=', '')
+            ->distinct()
+            ->pluck('plateNumber')
+            ->toArray();
+        $fleetPlates = $fleet->pluck('plateNumber')->toArray();
+        $missingPlates = array_diff($existingPlates, $fleetPlates);
+        foreach ($missingPlates as $missingPlate) {
+            $fleet->push((object) ['plateNumber' => $missingPlate, 'code' => null]);
+        }
+
         return view($this->view.'index')
             ->with('view', $this->view)
-            ->with('title', $this->title);
+            ->with('title', $this->title)
+            ->with('customer', $customer)
+            ->with('driver', $driver)
+            ->with('fleet', $fleet);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new ReturnDoReport($request, $this->service),
+            'Return-DO-Report-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $orders = $this->service->datatable($request)->get();
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('operational.return-do.report.return-do-pdf', [
+            'orders' => $orders,
+            'title' => $this->title,
+            'filterSummary' => $this->buildFilterSummary($request),
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Return-DO-Report-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function buildFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Order: '.$start.' s/d '.$end;
+        }
+        if ($request->filled('customerName')) {
+            $summary[] = 'Customer: '.$request->customerName;
+        }
+        if ($request->filled('plateNumber')) {
+            $summary[] = 'No. Polisi: '.$request->plateNumber;
+        }
+        if ($request->filled('driverName')) {
+            $summary[] = 'Supir: '.$request->driverName;
+        }
+        if ($request->filled('invoiceStatus')) {
+            $statusLabel = match ($request->invoiceStatus) {
+                'uninvoiced' => 'Belum Ada Faktur',
+                'invoiced' => 'Sudah Ada Faktur',
+                'no_invoice' => 'Tanpa Faktur (Non-DO)',
+                default => $request->invoiceStatus,
+            };
+            $summary[] = 'Status Faktur: '.$statusLabel;
+        }
+
+        return $summary;
     }
 
     public function cancelDo(Request $request)

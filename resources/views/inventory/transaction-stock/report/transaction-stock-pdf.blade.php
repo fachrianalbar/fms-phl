@@ -141,6 +141,11 @@
     <div class="container">
         <h1>LAPORAN TRANSAKSI STOCK PER WAREHOUSE</h1>
         <p class="print-date">Dicetak pada: {{ $printDate }}</p>
+        @if (! empty($filterSummary))
+            <p class="print-date" style="margin-top: -12px; color: #333;">
+                <strong>Filter Aktif:</strong> {{ implode(' | ', $filterSummary) }}
+            </p>
+        @endif
 
         @php
             $fmtQty = function ($value) {

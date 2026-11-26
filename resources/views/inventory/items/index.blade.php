@@ -20,59 +20,107 @@
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/select2.css') }}">
 
     <link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/custom-select2.css') }}">
+    @include('inventory.partials.table-style')
 @endpush
 
 @section('content')
     <div class="col-sm-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Data</h4>
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h4 class="mb-0">{{ $title }} Data</h4>
 
-                <div class="d-flex align-items-center gap-3">
-                    <div class="accordion-item ">
-
-                        <a href="#" class="btn btn-icon btn-sm bg-dark-subtle" data-bs-toggle="collapse"
-                            data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-                            <i class="mdi mdi-magnify fs-14 text-dark"></i>
-                        </a>
-
-                    </div>
-
-                    <button type="button" class="btn btn-success" onclick="syncLatestPurchasePrice()">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="{{ route('inventory.items.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route('inventory.items.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+                    <button type="button" class="btn btn-success btn-sm" onclick="syncLatestPurchasePrice()">
                         <i class="mdi mdi-sync me-1"></i> Sinkron Harga
                     </button>
 
-                    <a href="{{ route('inventory.items.create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+                    <a href="{{ route('inventory.items.create') }}"
+                        class="btn btn-primary btn-sm">{{ __('general.add_data') }}</a>
                 </div>
             </div>
 
-            <div class="card-header">
-                <div class="accordion-collapse collapse" id="collapseTwo" aria-labelledby="headingTwo"
-                    data-bs-parent="#simpleaccordion">
-                    <div class="accordion-body col-md-12">
-                        <form id="filterForm" class=" g-3">
-                            <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <label class="form-label" for="name">Item</label>
-                                    <select class="js-example-basic-single" name="itemCode" id="itemCode">
-                                        <option selected="" value="">{{ __('general.choose') }}...</option>
-                                        @foreach ($items as $item)
-                                            <option value="{{ $item->code }}">
-                                                {{ $item->code . ' - ' . $item->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary mt-3" type="submit">Filter</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
             <div class="card-body">
                 @include('partials.alert')
+
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#itemsFilterCollapse" aria-expanded="false" aria-controls="itemsFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter barang, kategori, satuan, atau tipe</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="itemsFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="itemCode">Barang</label>
+                                        <select class="form-select select2-filter" name="itemCode" id="itemCode">
+                                            <option value="">Semua Barang</option>
+                                            @foreach ($items as $item)
+                                                <option value="{{ $item->code }}">
+                                                    {{ $item->code . ' - ' . $item->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="categoryCode">Kategori</label>
+                                        <select class="form-select select2-filter" name="categoryCode" id="categoryCode">
+                                            <option value="">Semua Kategori</option>
+                                            @foreach ($categories ?? [] as $cat)
+                                                <option value="{{ $cat->code }}">{{ $cat->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="unitCode">Satuan</label>
+                                        <select class="form-select select2-filter" name="unitCode" id="unitCode">
+                                            <option value="">Semua Satuan</option>
+                                            @foreach ($units ?? [] as $u)
+                                                <option value="{{ $u->code }}">{{ $u->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="type">Tipe</label>
+                                        <select class="form-select select2-filter" name="type" id="type">
+                                            <option value="">Semua Tipe</option>
+                                            @foreach ($types ?? [] as $key => $label)
+                                                <option value="{{ $key }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive custom-scrollbar">
-                    <table class="table table-striped w-100 nowrap" id="dt">
+                    <table class="table align-middle w-100 nowrap" id="dt">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -182,7 +230,32 @@
         let historyModal = null;
         let purchaseHistoryTable = null;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            function getFilters() {
+                return {
+                    itemCode: $('#itemCode').val() || '',
+                    categoryCode: $('#categoryCode').val() || '',
+                    unitCode: $('#unitCode').val() || '',
+                    type: $('#type').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('inventory.items.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('inventory.items.export-pdf') }}" + query);
+            }
+
             loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'), {
                 backdrop: 'static',
                 keyboard: false
@@ -197,60 +270,66 @@
                 deferRender: false,
                 "ajax": {
                     "url": "{{ route('dt.items') }}",
-                    "data": function(d) {
-                        d.itemCode = $('select[name="itemCode"]').val();
+                    "data": function (d) {
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [{
-                        "data": 'action'
-                    }, {
-                        "data": 'DT_RowIndex'
-                    },
-                    {
-                        "data": 'code'
-                    },
-                    {
-                        "data": 'name'
-                    },
-                    {
-                        "data": 'type'
-                    },
-                    {
-                        "data": 'unit.name'
-                    },
-                    {
-                        "data": 'price',
-                        "render": function(data, type) {
-                            const nominal = Number(data || 0);
-                            if (type === 'display' || type === 'filter') {
-                                return 'Rp ' + new Intl.NumberFormat('id-ID').format(nominal);
-                            }
-                            return nominal;
+                    "data": 'action'
+                }, {
+                    "data": 'DT_RowIndex'
+                },
+                {
+                    "data": 'code'
+                },
+                {
+                    "data": 'name'
+                },
+                {
+                    "data": 'type'
+                },
+                {
+                    "data": 'unit.name'
+                },
+                {
+                    "data": 'price',
+                    "render": function (data, type) {
+                        const nominal = Number(data || 0);
+                        if (type === 'display' || type === 'filter') {
+                            return 'Rp ' + new Intl.NumberFormat('id-ID').format(nominal);
                         }
+                        return nominal;
                     }
+                }
                 ],
                 "columnDefs": [{
-                        "searchable": false,
-                        "targets": [0, 1]
-                    },
-                    {
-                        "orderable": false,
-                        "targets": [0, 1]
-                    }
+                    "searchable": false,
+                    "targets": [0, 1]
+                },
+                {
+                    "orderable": false,
+                    "targets": [0, 1]
+                }
                 ],
                 "order": [
                     [2, 'asc']
                 ]
             })
 
-            // Event untuk form filter
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
+            function reloadWithFilters() {
+                syncExportUrls();
+                table.ajax.reload(null, true);
+            }
 
-                table.ajax.reload(); // Reload DataTable dengan filter baru
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#btnResetFilter').on('click', function () {
+                $('.select2-filter').val('').trigger('change');
+                reloadWithFilters();
             });
 
-            $(document).on('click', '.btn-purchase-history', function() {
+            syncExportUrls();
+
+            $(document).on('click', '.btn-purchase-history', function () {
                 const url = $(this).data('url');
                 const itemCode = $(this).data('item-code');
                 const itemName = $(this).data('item-name');
@@ -274,34 +353,34 @@
                         type: 'GET',
                     },
                     columns: [{
-                            data: 'DT_RowIndex',
-                            searchable: false,
-                            orderable: false,
-                        },
-                        {
-                            data: 'date'
-                        },
-                        {
-                            data: 'purchaseCode'
-                        },
-                        {
-                            data: 'qty',
-                            className: 'text-end'
-                        },
-                        {
-                            data: 'price',
-                            className: 'text-end',
-                            render: function(data) {
-                                return 'Rp ' + data;
-                            }
-                        },
-                        {
-                            data: 'total',
-                            className: 'text-end',
-                            render: function(data) {
-                                return 'Rp ' + data;
-                            }
+                        data: 'DT_RowIndex',
+                        searchable: false,
+                        orderable: false,
+                    },
+                    {
+                        data: 'date'
+                    },
+                    {
+                        data: 'purchaseCode'
+                    },
+                    {
+                        data: 'qty',
+                        className: 'text-end'
+                    },
+                    {
+                        data: 'price',
+                        className: 'text-end',
+                        render: function (data) {
+                            return 'Rp ' + data;
                         }
+                    },
+                    {
+                        data: 'total',
+                        className: 'text-end',
+                        render: function (data) {
+                            return 'Rp ' + data;
+                        }
+                    }
                     ],
                     language: {
                         emptyTable: 'Belum ada history pembelian',

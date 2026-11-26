@@ -96,6 +96,11 @@
     <div class="container">
         <h1>LAPORAN STOCK</h1>
         <p class="report-date">Tanggal Cetak: {{ date('d/m/Y H:i') }}</p>
+        @if (! empty($reportData['filterSummary']))
+            <p class="report-date" style="margin-top: -12px; color: #333;">
+                <strong>Filter Aktif:</strong> {{ implode(' | ', $reportData['filterSummary']) }}
+            </p>
+        @endif
 
         @if(count($reportData['stocks']) > 0)
             <table>

@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers\Bank;
 
+use App\Exports\BankBookExport;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
 use App\Services\Bank\BankBookService;
 use App\Services\MenuService;
 use App\Services\MutationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class BankBookController extends Controller
@@ -34,8 +39,11 @@ class BankBookController extends Controller
      */
     public function index()
     {
+        $userBanks = UserBank::with('bank')->orderBy('accountName')->get();
+
         return view($this->view.'index')
             ->with('view', $this->view)
+            ->with('userBanks', $userBanks)
             ->with('title', $this->title);
     }
 
@@ -62,7 +70,7 @@ class BankBookController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->service->findAll($request->all());
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -123,5 +131,58 @@ class BankBookController extends Controller
                 ->rawColumns(['action', 'debit', 'credit', 'balance', 'userBank.accountNumber', 'userBank.accountName', 'userBank.type'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new BankBookExport($request->all(), $this->service),
+            'Buku-Bank-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $books = $this->service->findAll($request->all());
+
+        $filterSummary = [];
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Mutasi: '.$start.' s/d '.$end;
+        }
+        if ($request->filled('userBankCode')) {
+            $bank = UserBank::with('bank')->where('code', $request->userBankCode)->first();
+            $bankLabel = $bank
+                ? trim(($bank->bank->name ?? 'Bank').($bank->accountNumber ? ' - '.$bank->accountNumber : '').($bank->accountName ? ' ('.$bank->accountName.')' : ''))
+                : $request->userBankCode;
+            $filterSummary[] = 'Rekening Bank: '.$bankLabel;
+        }
+        if ($request->filled('mutationType')) {
+            $filterSummary[] = 'Tipe Mutasi: '.($request->mutationType === 'In' ? 'Masuk (In)' : 'Keluar (Out)');
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('bank.bank-book.report.bank-book-pdf', [
+            'books' => $books,
+            'title' => 'Laporan Buku Bank',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Buku-Bank-'.now()->format('YmdHis').'.pdf"');
     }
 }

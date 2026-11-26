@@ -351,6 +351,16 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                    <a href="{{ route('data.route.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+
+                    <a href="{{ route('data.route.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+
                     <a href="{{ route($view . 'create') }}"
                         class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
                         style="border-radius: 8px; font-weight: 600; padding: 7px 14px;"

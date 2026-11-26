@@ -67,6 +67,37 @@ class DirectPurchaseService
             ->orderBy('time', 'desc');
     }
 
+    public function filteredDatatable(array $filters)
+    {
+        $query = $this->datatable();
+
+        if (! empty($filters['code'])) {
+            $query->where('purchase.code', 'like', '%'.$filters['code'].'%');
+        }
+
+        if (! empty($filters['fleetCode'])) {
+            $query->where('purchase.fleetCode', $filters['fleetCode']);
+        }
+
+        if (! empty($filters['supplierCode'])) {
+            $query->where('purchase.supplierCode', $filters['supplierCode']);
+        }
+
+        if (! empty($filters['paymentStatus'])) {
+            $query->where('purchase.paymentStatus', $filters['paymentStatus']);
+        }
+
+        if (! empty($filters['startDate'])) {
+            $query->whereDate('purchase.date', '>=', $filters['startDate']);
+        }
+
+        if (! empty($filters['endDate'])) {
+            $query->whereDate('purchase.date', '<=', $filters['endDate']);
+        }
+
+        return $query;
+    }
+
     public function stats(): array
     {
         $query = $this->service->newQuery()->where('is_direct', true);

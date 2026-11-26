@@ -433,20 +433,25 @@
 @section('content')
     <div class="col-sm-12">
         <div class="card border-0 shadow-sm profit-loss-card">
-            <div class="card-header bg-white py-3 profit-loss-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div
+                class="card-header bg-white py-3 profit-loss-card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div>
                     <h4 class="mb-1 fw-bold d-flex align-items-center gap-2">
                         <i class="mdi mdi-chart-line text-primary fs-20"></i>
                         {{ $title }}
                     </h4>
-                    <small class="text-muted">Ringkasan penjualan dasar, biaya order, biaya perawatan, pajak (PPh), dan laba bersih per armada.</small>
+                    <small class="text-muted">Ringkasan penjualan dasar, biaya order, biaya perawatan, pajak (PPh), dan laba
+                        bersih per armada.</small>
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
                     <a href="{{ route($view . 'excel-profit-loss') }}" target="_blank" id="export-excel"
-                        class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm"
-                        data-bs-toggle="tooltip" title="Export Excel">
-                        <i class="mdi mdi-file-excel me-1"></i> Export Excel
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route($view . 'pdf-profit-loss') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
                     </a>
                 </div>
             </div>
@@ -522,7 +527,8 @@
 
                                     <div class="col-xl-3 col-md-6">
                                         <label class="filter-label" for="fleetCompanyCode">Perusahaan Kendaraan</label>
-                                        <select class="form-select select2-filter" name="fleetCompanyCode" id="fleetCompanyCode">
+                                        <select class="form-select select2-filter" name="fleetCompanyCode"
+                                            id="fleetCompanyCode">
                                             <option value="">Semua Perusahaan</option>
                                             @foreach ($fleetCompanies as $item)
                                                 <option value="{{ $item->code }}">{{ $item->name }}</option>
@@ -538,8 +544,8 @@
 
                                     <div class="col-xl-3 col-md-6">
                                         <label class="filter-label" for="endDate">Sampai Tanggal</label>
-                                        <input class="form-control filter-control" name="endDate" id="endDate"
-                                            type="text" placeholder="Pilih tanggal akhir">
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
                                     </div>
 
                                     <div class="col-12 d-flex align-items-end justify-content-end gap-2">
@@ -616,7 +622,7 @@
     <script src="{{ asset('assets/js/flat-pickr/custom-flatpickr.js') }}"></script>
 
     <script>
-        $(document).ready(function() {
+        $(document).ready(function () {
             const numberFormat = new Intl.NumberFormat('id-ID', {
                 maximumFractionDigits: 0
             });
@@ -635,7 +641,7 @@
             startPicker = flatpickr('#startDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (endPicker) endPicker.set('minDate', dateStr || null);
                 }
             });
@@ -643,7 +649,7 @@
             endPicker = flatpickr('#endDate', {
                 dateFormat: 'Y-m-d',
                 allowInput: true,
-                onChange: function(selectedDates, dateStr) {
+                onChange: function (selectedDates, dateStr) {
                     if (startPicker) startPicker.set('maxDate', dateStr || null);
                 }
             });
@@ -659,11 +665,12 @@
 
             function syncExportUrls() {
                 const params = new URLSearchParams();
-                Object.entries(getFilters()).forEach(function(entry) {
+                Object.entries(getFilters()).forEach(function (entry) {
                     if (entry[1]) params.set(entry[0], entry[1]);
                 });
                 const query = params.toString() ? '?' + params.toString() : '';
                 $('#export-excel').attr('href', "{{ route($view . 'excel-profit-loss') }}" + query);
+                $('#export-pdf').attr('href', "{{ route($view . 'pdf-profit-loss') }}" + query);
             }
 
             function updateSummaryTotals(summary) {
@@ -694,10 +701,10 @@
                 pageLength: 25,
                 ajax: {
                     url: "{{ route('dt.profit-loss') }}",
-                    data: function(d) {
+                    data: function (d) {
                         Object.assign(d, getFilters());
                     },
-                    dataSrc: function(json) {
+                    dataSrc: function (json) {
                         updateSummaryTotals(json.summary);
                         return json.data;
                     }
@@ -710,35 +717,35 @@
                     {
                         data: 'basic_sales',
                         className: 'text-end align-middle font-monospace',
-                        render: function(data, type) {
+                        render: function (data, type) {
                             return type === 'display' ? formatServerNominal(data) : data;
                         }
                     },
                     {
                         data: 'order_cost',
                         className: 'text-end align-middle font-monospace',
-                        render: function(data, type) {
+                        render: function (data, type) {
                             return type === 'display' ? formatServerNominal(data) : data;
                         }
                     },
                     {
                         data: 'maintenance',
                         className: 'text-end align-middle font-monospace',
-                        render: function(data, type) {
+                        render: function (data, type) {
                             return type === 'display' ? formatServerNominal(data) : data;
                         }
                     },
                     {
                         data: 'tax',
                         className: 'text-end align-middle font-monospace',
-                        render: function(data, type) {
+                        render: function (data, type) {
                             return type === 'display' ? formatServerNominal(data) : data;
                         }
                     },
                     {
                         data: 'net_profit',
                         className: 'text-end align-middle font-monospace fw-bold',
-                        render: function(data, type) {
+                        render: function (data, type) {
                             return type === 'display' ? formatServerNominal(data) : data;
                         }
                     }
@@ -756,9 +763,9 @@
                     zeroRecords: 'Data tidak ditemukan',
                     processing: '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat data...'
                 },
-                drawCallback: function() {
+                drawCallback: function () {
                     if (window.bootstrap && bootstrap.Tooltip) {
-                        document.querySelectorAll('#dt [data-bs-toggle="tooltip"]').forEach(function(el) {
+                        document.querySelectorAll('#dt [data-bs-toggle="tooltip"]').forEach(function (el) {
                             bootstrap.Tooltip.getOrCreateInstance(el);
                         });
                     }
@@ -772,14 +779,14 @@
 
             $('#btnFilter').on('click', reloadWithFilters);
 
-            $('#filterForm input').on('keydown', function(e) {
+            $('#filterForm input').on('keydown', function (e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     reloadWithFilters();
                 }
             });
 
-            $('#btnResetFilter').on('click', function() {
+            $('#btnResetFilter').on('click', function () {
                 $('#filterForm').find('input').val('');
                 $('.select2-filter').val('').trigger('change');
                 if (startPicker) {

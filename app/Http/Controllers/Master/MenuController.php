@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\MenuExport;
 use App\Http\Controllers\Controller;
+use App\Models\Menu;
 use App\Services\Master\MenuService;
+use App\Traits\RendersPdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class MenuController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -29,8 +34,11 @@ class MenuController extends Controller
      */
     public function index()
     {
+        $mainMenus = $this->service->findAllMainMenu();
+
         return view($this->view.'index')
             ->with('view', $this->view)
+            ->with('mainMenus', $mainMenus)
             ->with('title', $this->title);
     }
 
@@ -220,19 +228,22 @@ class MenuController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAllMainMenu();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('has_submenu', function ($row) {
-                    if ($row->hasChildren()) {
+                    if ((int) ($row->children_count ?? 0) > 0) {
                         return '<span class="badge bg-success">Yes</span>';
                     }
 
                     return '<span class="badge bg-secondary">No</span>';
                 })
                 ->addColumn('submenu_count', function ($row) {
-                    return $row->children()->count();
+                    return (int) ($row->children_count ?? 0);
                 })
                 ->addColumn('action', function ($row) {
                     $subMenuBtn = '<a href="'.route('master.menu.sub-menu', $row->code).'"
@@ -294,5 +305,80 @@ class MenuController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new MenuExport($this->filteredQuery($request)),
+            'Data-Menu-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        $parentCode = $request->input('parentCode');
+        if ($parentCode === 'ALL') {
+            $filterSummary[] = 'Parent Menu: Semua Menu & Sub Menu';
+        } elseif (! empty($parentCode)) {
+            $parentName = Menu::where('code', $parentCode)->value('name');
+            $filterSummary[] = 'Parent Menu: '.($parentName ?: $parentCode);
+        } else {
+            $filterSummary[] = 'Parent Menu: Menu Utama';
+        }
+
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Kata Kunci: '.$request->keyword;
+        }
+        if ($request->filled('hasSubMenu')) {
+            $filterSummary[] = 'Sub Menu: '.($request->hasSubMenu === 'yes' ? 'Punya Sub Menu' : 'Tanpa Sub Menu');
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.menu-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Menu',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Menu-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = Menu::query()->withCount('children')->orderBy('sort');
+
+        $parentCode = $request->input('parentCode');
+        if ($parentCode === 'ALL') {
+            // Show all menus (main + sub)
+        } elseif (! empty($parentCode)) {
+            $query->where('parentCode', $parentCode);
+        } else {
+            $query->mainMenu();
+        }
+
+        if ($request->filled('keyword')) {
+            $keyword = strtolower(trim((string) $request->keyword));
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(nama, \'\')) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(url, \'\')) LIKE ?', ['%'.$keyword.'%']);
+            });
+        }
+
+        if ($request->input('hasSubMenu') === 'yes') {
+            $query->whereHas('children');
+        } elseif ($request->input('hasSubMenu') === 'no') {
+            $query->whereDoesntHave('children');
+        }
+
+        return $query;
     }
 }

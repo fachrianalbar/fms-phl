@@ -26,11 +26,11 @@ class UserBankService
     }
 
     /**
-     * Data untuk datatable user-bank: eager load relasi + filter status pill,
+     * Data untuk datatable user-bank: eager load relasi + filter status pill & filter card,
      * dipetakan menjadi array bersih (hanya kolom yang dipakai tabel).
      * Status: all | person | company | internal | external.
      */
-    public function findAllFiltered(string $status = 'all')
+    public function findAllFiltered(string $status = 'all', array $filters = [])
     {
         $query = $this->service->with(['bank', 'liveMutation']);
 
@@ -44,9 +44,34 @@ class UserBankService
             $query->where('rekening_type', 'external');
         }
 
+        $bankCode = trim((string) ($filters['bankCode'] ?? ''));
+        $type = trim((string) ($filters['type'] ?? ''));
+        $rekeningType = trim((string) ($filters['rekeningType'] ?? ''));
+        $keyword = trim((string) ($filters['keyword'] ?? ''));
+
+        if ($bankCode !== '') {
+            $query->where('bankCode', $bankCode);
+        }
+
+        if ($type !== '' && in_array((int) $type, [1, 2], true)) {
+            $query->where('type', (int) $type);
+        }
+
+        if ($rekeningType !== '' && in_array(strtolower($rekeningType), ['internal', 'external'], true)) {
+            $query->where('rekening_type', strtolower($rekeningType));
+        }
+
+        if ($keyword !== '') {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('accountName', 'like', "%{$keyword}%")
+                    ->orWhere('accountNumber', 'like', "%{$keyword}%");
+            });
+        }
+
         return $query->get()->map(function ($row) {
             return [
                 'id' => $row->id,
+                'code' => $row->code,
                 'bank_name' => $row->bank->name ?? '',
                 'accountNumber' => $row->accountNumber,
                 'accountName' => $row->accountName,

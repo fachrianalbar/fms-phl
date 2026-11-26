@@ -97,7 +97,7 @@ class MenuSeeder extends Seeder
         ['code' => 'FAKTUR_TRANSAKSI_PEMBAYARAN', 'name' => 'Payment Transaction', 'nama' => 'Transaksi Pembayaran', 'parentCode' => 'FAKTUR', 'url' => 'invoice/payment-transaction', 'sort' => 6],
 
         // ── VENDOR (Hutang / AP) ──────────────────────────────────────────
-        ['code' => 'VENDOR_ORDER_WAITING', 'name' => 'Order Awaiting Invoice', 'nama' => 'Order Menunggu Faktur', 'parentCode' => 'VENDOR', 'url' => 'vendor/order/waiting', 'sort' => 1],
+        ['code' => 'VENDOR_ORDER_WAITING', 'name' => 'Unpaid Invoice', 'nama' => 'Faktur yg Belum Dibayar', 'parentCode' => 'VENDOR', 'url' => 'vendor/order/waiting', 'sort' => 1],
         ['code' => 'VENDOR_INV_UNPAID', 'name' => 'Unpaid Vendor Invoice', 'nama' => 'Faktur Vendor Belum Lunas', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/unpaid', 'sort' => 2],
         ['code' => 'VENDOR_INV_PARTIAL', 'name' => 'Partially Paid Vendor Invoice', 'nama' => 'Invoice Dibayar Sebagian', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/partial', 'sort' => 3],
         ['code' => 'VENDOR_INV_PAID', 'name' => 'Paid Vendor Invoice', 'nama' => 'Faktur Vendor Lunas', 'parentCode' => 'VENDOR', 'url' => 'vendor/invoice/paid', 'sort' => 4],

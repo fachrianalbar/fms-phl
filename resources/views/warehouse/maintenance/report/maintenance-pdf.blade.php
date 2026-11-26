@@ -72,7 +72,10 @@
     <div class="container">
         <h1>TRANSAKSI PEMAKAIAN PER TRUK</h1>
         <div class="info">
-            <p><strong>NO.TRUK: {{ $plateNumber }} </strong></p>
+            <p><strong>NO.TRUK: {{ $plateNumber ?: 'Semua Armada' }}</strong></p>
+            @if (! empty($itemLabel))
+                <p><strong>BARANG: {{ $itemLabel }}</strong></p>
+            @endif
             <p><strong>TANGGAL: {{ $startDate }} s/d {{ $endDate }}</strong></p>
         </div>
         <table>

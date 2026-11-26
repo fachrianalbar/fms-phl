@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\CompanyExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Company;
 use App\Services\Master\CompanyService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class CompanyController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -138,10 +144,13 @@ class CompanyController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('action', function ($row) {
                     $btn = ' <td>
         <a href="'.route($this->view.'edit', $row->id).'"
@@ -162,5 +171,63 @@ class CompanyController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new CompanyExport($this->filteredQuery($request)),
+            'Data-Perusahaan-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Kata Kunci: '.$request->keyword;
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Dibuat: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.company-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Perusahaan',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Data-Perusahaan-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = Company::query()->orderBy('name');
+
+        if ($request->filled('keyword')) {
+            $keyword = strtolower(trim((string) $request->keyword));
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(COALESCE(format, \'\')) LIKE ?', ['%'.$keyword.'%']);
+            });
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
     }
 }

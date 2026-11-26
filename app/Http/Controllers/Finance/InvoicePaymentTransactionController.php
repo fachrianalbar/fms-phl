@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Exports\InvoicePaymentTransactionExport;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
 use App\Models\Finance\Invoice as InvoiceModel;
+use App\Models\Master\Customer;
 use App\Services\Bank\UserBankService;
 use App\Services\Finance\InvoicePaymentTransactionService;
 use App\Services\Master\CustomerService;
@@ -12,6 +15,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class InvoicePaymentTransactionController extends Controller
@@ -53,10 +58,75 @@ class InvoicePaymentTransactionController extends Controller
             'totalClaim' => $totalClaim,
         ];
 
+        $customers = Customer::query()->orderBy('name')->get(['code', 'name']);
+        $userBanks = $this->userBankSvc->findCompany();
+
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
-            ->with('stats', $stats);
+            ->with('stats', $stats)
+            ->with('customers', $customers)
+            ->with('userBanks', $userBanks);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new InvoicePaymentTransactionExport($request->all(), $this->service),
+            'Transaksi-Pembayaran-Faktur-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $transactions = $this->service->datatable($request->all());
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('invoice.payment-transaction.report.payment-transaction-pdf', [
+            'transactions' => $transactions,
+            'title' => 'Transaksi Pembayaran Faktur',
+            'filterSummary' => $this->buildFilterSummary($request),
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Transaksi-Pembayaran-Faktur-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function buildFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Bayar: '.$start.' s/d '.$end;
+        }
+        if ($request->filled('customerCode')) {
+            $name = Customer::where('code', $request->customerCode)->value('name') ?: $request->customerCode;
+            $summary[] = 'Pelanggan: '.$name;
+        }
+        if ($request->filled('userBankCode')) {
+            $bank = UserBank::with('bank')->where('code', $request->userBankCode)->first();
+            $bankLabel = $bank
+                ? trim(($bank->bank->name ?? 'Bank').($bank->accountNumber ? ' - '.$bank->accountNumber : ''))
+                : $request->userBankCode;
+            $summary[] = 'Bank Penerima: '.$bankLabel;
+        }
+
+        return $summary;
     }
 
     /**
@@ -264,7 +334,7 @@ class InvoicePaymentTransactionController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
+            $data = $this->service->datatable($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()

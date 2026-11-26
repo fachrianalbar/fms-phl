@@ -17,6 +17,7 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
 
@@ -164,6 +165,25 @@
             color: #334155 !important;
             font-size: 13px !important;
             height: 38px !important;
+        }
+
+        .filter-control {
+            padding: 0 12px 0 36px !important;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'%3E%3C/rect%3E%3Cline x1='16' y1='2' x2='16' y2='6'%3E%3C/line%3E%3Cline x1='8' y1='2' x2='8' y2='6'%3E%3C/line%3E%3Cline x1='3' y1='10' x2='21' y2='10'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            background-size: 15px 15px;
+            transition: all 0.2s ease !important;
+        }
+
+        .filter-control::placeholder {
+            color: #94a3b8 !important;
+            font-size: 13px !important;
+        }
+
+        .filter-control:focus {
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15) !important;
         }
 
         .btn-filter-primary {
@@ -436,6 +456,18 @@
                 </div>
 
                 <div class="d-flex align-items-center gap-2">
+                    {{-- Tombol Export Excel --}}
+                    <a href="{{ route('operational.return-do.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+
+                    {{-- Tombol Export PDF --}}
+                    <a href="{{ route('operational.return-do.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+
                     @if (in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']))
                         <button type="button" class="btn btn-sm btn-success d-flex align-items-center gap-1" id="btn-sync-driver-salary"
                             style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
@@ -465,7 +497,46 @@
                         <div class="filter-collapse-body">
                             <div id="filterForm">
                                 <div class="row g-3">
-                                    <div class="col-xl-4 col-md-6">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="plateNumber">No. Polisi</label>
+                                        <select class="form-select select2-filter" name="plateNumber" id="plateNumber">
+                                            <option value="">Semua No. Polisi</option>
+                                            @foreach ($fleet ?? [] as $item)
+                                                @php $plateVal = is_array($item) ? ($item['plateNumber'] ?? '') : ($item->plateNumber ?? ''); @endphp
+                                                @if ($plateVal !== '')
+                                                    <option value="{{ $plateVal }}">{{ $plateVal }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="driverName">Supir</label>
+                                        <select class="form-select select2-filter" name="driverName" id="driverName">
+                                            <option value="">Semua Supir</option>
+                                            @foreach ($driver ?? [] as $item)
+                                                @php $driverVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                @if ($driverVal !== '')
+                                                    <option value="{{ $driverVal }}">{{ $driverVal }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="customerName">Customer</label>
+                                        <select class="form-select select2-filter" name="customerName" id="customerName">
+                                            <option value="">Semua Customer</option>
+                                            @foreach ($customer ?? [] as $item)
+                                                @php $customerVal = is_array($item) ? ($item['name'] ?? '') : ($item->name ?? ''); @endphp
+                                                @if ($customerVal !== '')
+                                                    <option value="{{ $customerVal }}">{{ $customerVal }}</option>
+                                                @endif
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6">
                                         <label class="filter-label" for="filterInvoiceStatus">Status Faktur</label>
                                         <select class="form-select select2-filter" name="invoiceStatus" id="filterInvoiceStatus">
                                             <option value="">Semua Status Faktur</option>
@@ -475,7 +546,19 @@
                                         </select>
                                     </div>
 
-                                    <div class="col-xl-8 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Tanggal Order (Dari)</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Tanggal Order (Sampai)</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate"
+                                            type="text" placeholder="Pilih tanggal akhir">
+                                    </div>
+
+                                    <div class="col-xl-6 col-md-12 d-flex align-items-end justify-content-md-end gap-2">
                                         <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
                                             <i class="mdi mdi-filter-outline"></i> Terapkan Filter
                                         </button>
@@ -620,19 +703,54 @@
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
     <script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
+    <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
 
     <script>
         $(document).ready(function() {
+            let filterStartPicker;
+            let filterEndPicker;
+
             $('.select2-filter').select2({
-                placeholder: 'Semua Status Faktur',
+                placeholder: 'Semua pilihan',
                 allowClear: true,
                 width: '100%'
             });
 
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                }
+            });
+
             function getFilters() {
                 return {
-                    invoiceStatus: $('#filterInvoiceStatus').val() || ''
+                    plateNumber: $('#plateNumber').val() || '',
+                    driverName: $('#driverName').val() || '',
+                    customerName: $('#customerName').val() || '',
+                    invoiceStatus: $('#filterInvoiceStatus').val() || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
                 };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function([key, value]) {
+                    if (value) params.set(key, value);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('operational.return-do.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('operational.return-do.export-pdf') }}" + query);
             }
 
             const table = $('#dt').DataTable({
@@ -679,18 +797,27 @@
             });
 
             function reloadWithFilters() {
+                syncExportUrls();
                 table.ajax.reload(null, true);
             }
 
             $('#btnFilter').on('click', reloadWithFilters);
 
-            $('#filterInvoiceStatus').on('change', function() {
+            $('#btnResetFilter').on('click', function() {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
                 reloadWithFilters();
             });
 
-            $('#btnResetFilter').on('click', function() {
-                $('#filterInvoiceStatus').val('').trigger('change');
-            });
+            syncExportUrls();
 
             let selectedOrders = [];
 

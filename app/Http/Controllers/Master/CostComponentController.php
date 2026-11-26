@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Master;
 use App\Enums\CostComponentType;
 use App\Exports\CostComponentExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\CostComponent;
 use App\Services\Master\CostComponentService;
 use App\Services\MenuService;
+use App\Traits\RendersPdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +18,7 @@ use Yajra\DataTables\DataTables;
 
 class CostComponentController extends Controller
 {
+    use RendersPdf;
     protected $service;
 
     protected $title;
@@ -35,8 +39,11 @@ class CostComponentController extends Controller
      */
     public function index()
     {
+        $types = CostComponentType::cases();
+
         return view($this->view.'index')
             ->with('view', $this->view)
+            ->with('types', $types)
             ->with('title', $this->title);
     }
 
@@ -148,10 +155,13 @@ class CostComponentController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('checkbox', function ($row) {
                     return '<input type="checkbox" class="form-check-input component-checkbox" value="' . $row->id . '">';
                 })
@@ -190,6 +200,64 @@ class CostComponentController extends Controller
     public function exportExcel(Request $request)
     {
         return Excel::download(new CostComponentExport($request), 'Cost-Component-Report.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $rows = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        $keyword = $request->input('keyword') ?: $request->input('name');
+        if (! empty($keyword)) {
+            $filterSummary[] = 'Kata Kunci: '.$keyword;
+        }
+        if ($request->filled('type')) {
+            $filterSummary[] = 'Tipe: '.ucfirst((string) $request->type);
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Dibuat: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.cost-component-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Data Komponen Biaya',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Cost-Component-Report.pdf'
+        );
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = CostComponent::query()->orderBy('name', 'asc');
+
+        $keyword = $request->input('keyword') ?: $request->input('name');
+        if (! empty($keyword)) {
+            $term = strtolower(trim((string) $keyword));
+            $query->where(function ($q) use ($term) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$term.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
+            });
+        }
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->input('startDate'));
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->input('endDate'));
+        }
+
+        return $query;
     }
 
     public function bulkUpdatePrice(Request $request)

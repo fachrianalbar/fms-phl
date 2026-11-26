@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers\Finance;
 
+use App\Exports\DirectPaymentListExport;
+use App\Exports\DirectPaymentNotaExport;
+use App\Exports\DirectPaymentWaitingExport;
 use App\Http\Controllers\Controller;
+use App\Models\Bank\UserBank;
 use App\Models\CompanySetting;
 use App\Models\Data\Route;
 use App\Models\Finance\OrderPayment;
+use App\Models\Master\Company;
+use App\Models\Master\Customer;
 use App\Services\Bank\UserBankService;
 use App\Services\Finance\DirectPaymentService;
 use App\Services\Master\MenuService;
@@ -15,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Throwable;
 use Yajra\DataTables\DataTables;
@@ -77,17 +84,37 @@ class DirectPaymentController extends Controller
     }
 
     /**
+     * Ambil opsi dropdown filter untuk modul Pembayaran Langsung.
+     */
+    private function filterDropdownOptions(bool $includeUserBanks = false): array
+    {
+        $options = [
+            'customers' => Customer::query()->where('isDo', 0)->orderBy('name')->get(['code', 'name']),
+            'companies' => Company::query()->orderBy('name')->get(['code', 'name']),
+        ];
+
+        if ($includeUserBanks) {
+            $options['userBanks'] = $this->userBankSvc->findCompany();
+        }
+
+        return $options;
+    }
+
+    /**
      * Halaman Order Menunggu Nota — order standalone non-DO belum dibuat nota.
      */
     public function indexWaiting()
     {
         $userBank = $this->userBankSvc->findAll();
         $stats = $this->service->statsWaiting();
+        $options = $this->filterDropdownOptions();
 
         return view($this->view . 'order.waiting')
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('stats', $stats)
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies'])
             ->with('title', $this->pageTitle('DIRECT_PAYMENT_WAITING', 'Order Menunggu Nota'));
     }
 
@@ -98,11 +125,14 @@ class DirectPaymentController extends Controller
     {
         $userBank = $this->userBankSvc->findAll();
         $stats = $this->service->statsUnpaid();
+        $options = $this->filterDropdownOptions();
 
         return view($this->view . 'order.unpaid')
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('stats', $stats)
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies'])
             ->with('title', $this->pageTitle('DIRECT_PAYMENT_UNPAID', 'Nota Belum Lunas'));
     }
 
@@ -113,11 +143,14 @@ class DirectPaymentController extends Controller
     {
         $userBank = $this->userBankSvc->findAll();
         $stats = $this->service->statsPaid();
+        $options = $this->filterDropdownOptions();
 
         return view($this->view . 'order.paid')
             ->with('view', $this->view)
             ->with('userBank', $userBank)
             ->with('stats', $stats)
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies'])
             ->with('title', $this->pageTitle('DIRECT_PAYMENT_PAID', 'Order Lunas'));
     }
 
@@ -127,10 +160,14 @@ class DirectPaymentController extends Controller
     public function paymentIndex()
     {
         $stats = $this->service->statsPayments();
+        $options = $this->filterDropdownOptions(true);
 
         return view($this->view . 'payment.index')
             ->with('view', $this->view)
             ->with('stats', $stats)
+            ->with('customers', $options['customers'])
+            ->with('companies', $options['companies'])
+            ->with('userBanks', $options['userBanks'])
             ->with('title', $this->pageTitle('DIRECT_PAYMENT_LIST', 'Daftar Pembayaran'));
     }
 
@@ -563,7 +600,7 @@ class DirectPaymentController extends Controller
     public function datatableWaiting(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findWaitingOrders();
+            $data = $this->service->findWaitingOrders($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -709,13 +746,7 @@ class DirectPaymentController extends Controller
     public function datatableUnpaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findUnpaidNotas();
-
-            $statusFilter = $request->input('status');
-            if ($statusFilter && in_array($statusFilter, ['pending', 'unpaid', 'partial'])) {
-                $statusMatch = $statusFilter === 'unpaid' ? 'pending' : $statusFilter;
-                $data = $data->filter(fn ($row) => $row->payment_status === $statusMatch)->values();
-            }
+            $data = $this->service->findUnpaidNotas($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -870,7 +901,7 @@ class DirectPaymentController extends Controller
     public function datatablePaid(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPaidUnits();
+            $data = $this->service->findPaidUnits($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -1024,7 +1055,7 @@ class DirectPaymentController extends Controller
     public function paymentDatatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findPayments();
+            $data = $this->service->findPayments($request->all());
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -1470,5 +1501,176 @@ class DirectPaymentController extends Controller
             'content' => $mpdf->Output('', 'S'),
             'notaNumber' => $notaNumber,
         ];
+    }
+
+    // =====================================================================
+    // EXPORT EXCEL & PDF
+    // =====================================================================
+
+    public function exportWaitingExcel(Request $request)
+    {
+        return Excel::download(
+            new DirectPaymentWaitingExport($request->all(), $this->service),
+            'Order-Menunggu-Nota-Direct-Payment-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportWaitingPdf(Request $request)
+    {
+        $orders = $this->service->findWaitingOrders($request->all());
+
+        return $this->renderLandscapePdf(
+            'direct-payment.order.report.waiting-pdf',
+            [
+                'orders' => $orders,
+                'title' => $this->pageTitle('DIRECT_PAYMENT_WAITING', 'Order Menunggu Nota'),
+                'filterSummary' => $this->buildFilterSummary($request, 'Periode Order'),
+                'printedAt' => now(),
+            ],
+            'Order-Menunggu-Nota-Direct-Payment-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    public function exportUnpaidExcel(Request $request)
+    {
+        return Excel::download(
+            new DirectPaymentNotaExport($request->all(), 'unpaid', $this->service),
+            'Nota-Belum-Lunas-Direct-Payment-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportUnpaidPdf(Request $request)
+    {
+        $items = $this->service->findUnpaidNotas($request->all());
+
+        return $this->renderLandscapePdf(
+            'direct-payment.order.report.nota-pdf',
+            [
+                'items' => $items,
+                'type' => 'unpaid',
+                'title' => $this->pageTitle('DIRECT_PAYMENT_UNPAID', 'Nota Belum Lunas'),
+                'filterSummary' => $this->buildFilterSummary($request, 'Periode Nota'),
+                'printedAt' => now(),
+            ],
+            'Nota-Belum-Lunas-Direct-Payment-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    public function exportPaidExcel(Request $request)
+    {
+        return Excel::download(
+            new DirectPaymentNotaExport($request->all(), 'paid', $this->service),
+            'Pembayaran-Lunas-Direct-Payment-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPaidPdf(Request $request)
+    {
+        $items = $this->service->findPaidUnits($request->all());
+
+        return $this->renderLandscapePdf(
+            'direct-payment.order.report.nota-pdf',
+            [
+                'items' => $items,
+                'type' => 'paid',
+                'title' => $this->pageTitle('DIRECT_PAYMENT_PAID', 'Order Lunas'),
+                'filterSummary' => $this->buildFilterSummary($request, 'Periode Bayar'),
+                'printedAt' => now(),
+            ],
+            'Pembayaran-Lunas-Direct-Payment-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    public function exportPaymentExcel(Request $request)
+    {
+        return Excel::download(
+            new DirectPaymentListExport($request->all(), $this->service),
+            'Daftar-Pembayaran-Langsung-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPaymentPdf(Request $request)
+    {
+        $payments = $this->service->findPayments($request->all());
+
+        return $this->renderLandscapePdf(
+            'direct-payment.payment.report.payment-list-pdf',
+            [
+                'payments' => $payments,
+                'title' => $this->pageTitle('DIRECT_PAYMENT_LIST', 'Daftar Pembayaran'),
+                'filterSummary' => $this->buildFilterSummary($request, 'Periode Bayar'),
+                'printedAt' => now(),
+            ],
+            'Daftar-Pembayaran-Langsung-'.now()->format('YmdHis').'.pdf'
+        );
+    }
+
+    private function renderLandscapePdf(string $view, array $data, string $filename)
+    {
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($view, $data)->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
+    }
+
+    private function buildFilterSummary(Request $request, string $periodLabel = 'Periode'): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = $periodLabel.': '.$start.' s/d '.$end;
+        }
+
+        if ($request->filled('customerCode')) {
+            $name = Customer::where('code', $request->customerCode)->value('name') ?: $request->customerCode;
+            $summary[] = 'Customer: '.$name;
+        }
+
+        if ($request->filled('companyCode')) {
+            $name = Company::where('code', $request->companyCode)->value('name') ?: $request->companyCode;
+            $summary[] = 'Perusahaan: '.$name;
+        }
+
+        if ($request->filled('plateNumber')) {
+            $summary[] = 'Nopol: '.$request->plateNumber;
+        }
+
+        if ($request->filled('notaNumber')) {
+            $summary[] = 'No. Nota / Kode: '.$request->notaNumber;
+        }
+
+        if ($request->filled('userBankCode')) {
+            $bank = UserBank::with('bank')->where('code', $request->userBankCode)->first();
+            $bankLabel = $bank
+                ? trim(($bank->bank->name ?? 'Bank').($bank->accountNumber ? ' - '.$bank->accountNumber : ''))
+                : $request->userBankCode;
+            $summary[] = 'Bank Sumber Dana: '.$bankLabel;
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $statusLabel = match ($request->status) {
+                'partial' => 'Belum Lunas (DP)',
+                'unpaid', 'pending' => 'Belum Bayar',
+                default => $request->status,
+            };
+            $summary[] = 'Status: '.$statusLabel;
+        }
+
+        return $summary;
     }
 }

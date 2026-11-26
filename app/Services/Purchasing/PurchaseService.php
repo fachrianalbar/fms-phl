@@ -46,7 +46,40 @@ class PurchaseService
             'supplier',
             'warehouse',
             'purchaseStatus',
+            'details',
         ])->where('is_direct', false)->orderBy('date', 'desc')->orderBy('time', 'desc');
+    }
+
+    public function filteredDatatable(array $filters)
+    {
+        $query = $this->datatable();
+
+        if (! empty($filters['code'])) {
+            $query->where('purchase.code', 'like', '%'.$filters['code'].'%');
+        }
+
+        if (! empty($filters['supplierCode'])) {
+            $query->where('purchase.supplierCode', $filters['supplierCode']);
+        }
+
+        if (! empty($filters['startDate'])) {
+            $query->whereDate('purchase.date', '>=', $filters['startDate']);
+        }
+
+        if (! empty($filters['endDate'])) {
+            $query->whereDate('purchase.date', '<=', $filters['endDate']);
+        }
+
+        $paymentStatus = $filters['paymentStatus'] ?? '';
+        if ($paymentStatus === 'Paid') {
+            $query->where('purchase.paymentStatus', 'Paid');
+        } elseif ($paymentStatus === 'unpaid') {
+            $query->where('purchase.paymentStatus', '!=', 'Paid');
+        } elseif (in_array($paymentStatus, ['Unpaid', 'Partial'], true)) {
+            $query->where('purchase.paymentStatus', $paymentStatus);
+        }
+
+        return $query;
     }
 
     /**

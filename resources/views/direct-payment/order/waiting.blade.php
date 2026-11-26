@@ -105,7 +105,15 @@
                 </p>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <a href="{{ route('direct-payment.order.waiting.export-excel') }}" target="_blank" id="export-excel"
+                class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip" title="Export Excel">
+                <i class="mdi mdi-file-excel fs-14 text-success"></i>
+            </a>
+            <a href="{{ route('direct-payment.order.waiting.export-pdf') }}" target="_blank" id="export-pdf"
+                class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+            </a>
             <a href="{{ route('direct-payment.order.unpaid') }}" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold">
                 <i class="mdi mdi-receipt-text-clock me-1"></i> Lihat Nota Belum Lunas
             </a>
@@ -241,6 +249,70 @@
                     </div>
                 </div>
             </div>
+
+            <div class="filter-card">
+                <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                    data-bs-target="#dpWaitingFilterCollapse" aria-expanded="false" aria-controls="dpWaitingFilterCollapse">
+                    <span class="filter-card-heading">
+                        <i class="mdi mdi-filter-variant"></i>
+                        <strong>Filter Data</strong>
+                        <small>Gunakan filter untuk mempersempit daftar order menunggu nota</small>
+                    </span>
+                    <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                </button>
+
+                <div class="collapse filter-collapse" id="dpWaitingFilterCollapse">
+                    <div class="filter-collapse-body">
+                        <div id="filterForm">
+                            <div class="row g-3">
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="startDate">Dari Tanggal Order</label>
+                                    <input class="form-control filter-control" name="startDate" id="startDate" type="text"
+                                        placeholder="Pilih tanggal mulai">
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="endDate">Sampai Tanggal Order</label>
+                                    <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                        placeholder="Pilih tanggal akhir">
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="customerCode">Customer</label>
+                                    <select class="form-select select2-filter" name="customerCode" id="customerCode">
+                                        <option value="">Semua Customer</option>
+                                        @foreach ($customers ?? [] as $cust)
+                                            <option value="{{ $cust->code }}">{{ $cust->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="companyCode">Perusahaan</label>
+                                    <select class="form-select select2-filter" name="companyCode" id="companyCode">
+                                        <option value="">Semua Perusahaan</option>
+                                        @foreach ($companies ?? [] as $comp)
+                                            <option value="{{ $comp->code }}">{{ $comp->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-xl-3 col-md-6">
+                                    <label class="filter-label" for="plateNumber">No. Polisi</label>
+                                    <input class="form-control" name="plateNumber" id="plateNumber" type="text"
+                                        placeholder="Cari no. polisi..." autocorrect="off" autocapitalize="none" spellcheck="false">
+                                </div>
+                                <div class="col-xl-9 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                    <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                        <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                    </button>
+                                    <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                        data-bs-toggle="tooltip" title="Reset Filter">
+                                        <i class="mdi mdi-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-scroll-wrap custom-scrollbar">
                 <table class="table table-striped nowrap direct-payment-table" id="dtWaiting">
                     <thead>
@@ -1070,6 +1142,62 @@
     // INIT
     // =====================================================================
     $(document).ready(function() {
+        let filterStartPicker;
+        let filterEndPicker;
+
+        $('.select2-filter').select2({
+            placeholder: 'Semua pilihan',
+            allowClear: true,
+            width: '100%'
+        });
+
+        filterStartPicker = flatpickr('#startDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterEndPicker) {
+                    filterEndPicker.set('minDate', dateStr || null);
+                }
+            }
+        });
+
+        filterEndPicker = flatpickr('#endDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterStartPicker) {
+                    filterStartPicker.set('maxDate', dateStr || null);
+                }
+            }
+        });
+
+        function getFilters() {
+            return {
+                startDate: $('#startDate').val() || '',
+                endDate: $('#endDate').val() || '',
+                customerCode: $('#customerCode').val() || '',
+                companyCode: $('#companyCode').val() || '',
+                plateNumber: $('#plateNumber').val() || '',
+            };
+        }
+
+        function syncExportUrls() {
+            const params = new URLSearchParams();
+            Object.entries(getFilters()).forEach(function(entry) {
+                if (entry[1]) {
+                    params.set(entry[0], entry[1]);
+                }
+            });
+            const query = params.toString() ? '?' + params.toString() : '';
+            $('#export-excel').attr('href', "{{ route('direct-payment.order.waiting.export-excel') }}" + query);
+            $('#export-pdf').attr('href', "{{ route('direct-payment.order.waiting.export-pdf') }}" + query);
+        }
+
+        function reloadWithFilters() {
+            syncExportUrls();
+            dataTableInstance.ajax.reload(null, true);
+        }
+
         dataTableInstance = $('#dtWaiting').DataTable({
             "processing": true,
             "serverSide": true,
@@ -1079,6 +1207,9 @@
             "pageLength": 25,
             "ajax": {
                 "url": "{{ route('dt.direct-payment.waiting') }}",
+                "data": function(d) {
+                    Object.assign(d, getFilters());
+                }
             },
             "columns": [
                 { "data": 'select', "className": 'text-center align-middle', "orderable": false, "searchable": false },
@@ -1131,6 +1262,28 @@
         });
 
         // Refresh Button
+        $('#btnFilter').on('click', reloadWithFilters);
+        $('#plateNumber').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                reloadWithFilters();
+            }
+        });
+        $('#btnResetFilter').on('click', function() {
+            $('#filterForm').find('input').val('');
+            $('.select2-filter').val('').trigger('change');
+            if (filterStartPicker) {
+                filterStartPicker.clear();
+                filterStartPicker.set('maxDate', null);
+            }
+            if (filterEndPicker) {
+                filterEndPicker.clear();
+                filterEndPicker.set('minDate', null);
+            }
+            reloadWithFilters();
+        });
+        syncExportUrls();
+
         $('#btn-refresh-table').on('click', function() {
             let icon = $('#refresh-icon');
             icon.addClass('mdi-spin');

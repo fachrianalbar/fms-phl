@@ -17,19 +17,71 @@
     <link rel="stylesheet" type="text/css"
         href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+    @include('bank.partials.table-style')
 @endpush
 
 @section('content')
     <div class="col-sm-12">
         <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h4>{{ $title }} Data</h4>
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h4 class="mb-0">{{ $title }} Data</h4>
 
-                <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
-
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="{{ route('bank.bank-account.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route('bank.bank-account.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+                    <a href="{{ route($view . 'create') }}" class="btn btn-primary">{{ __('general.add_data') }}</a>
+                </div>
             </div>
             <div class="card-body">
                 @include('partials.alert')
+
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#bankAccountFilterCollapse" aria-expanded="false"
+                        aria-controls="bankAccountFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mencari kode atau nama bank</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="bankAccountFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="bankCode">Kode Bank</label>
+                                        <input class="form-control" name="bankCode" id="bankCode" type="text"
+                                            placeholder="Cari kode bank..." autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="name">Nama Bank</label>
+                                        <input class="form-control" name="name" id="name" type="text"
+                                            placeholder="Cari nama bank..." autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    </div>
+                                    <div class="col-xl-6 col-md-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-responsive custom-scrollbar">
                     <table class="table table-striped w-100 nowrap" id="dt">
                         <thead>
@@ -77,12 +129,34 @@
 
     <script>
         $(document).ready(function() {
-            $('#dt').DataTable({
+            function getFilters() {
+                return {
+                    bankCode: $('#bankCode').val() || '',
+                    name: $('#name').val() || '',
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) {
+                        params.set(entry[0], entry[1]);
+                    }
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('bank.bank-account.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('bank.bank-account.export-pdf') }}" + query);
+            }
+
+            const bankAccountTable = $('#dt').DataTable({
                 "processing": true,
                 "serverSide": true,
                 "destroy": true,
                 "ajax": {
                     "url": "{{ route('dt.bank-account') }}",
+                    "data": function(d) {
+                        Object.assign(d, getFilters());
+                    }
                 },
                 "columns": [{
                         "data": 'DT_RowIndex'
@@ -109,7 +183,26 @@
                 "order": [
                     [1, 'asc']
                 ]
-            })
+            });
+
+            function reloadWithFilters() {
+                syncExportUrls();
+                bankAccountTable.ajax.reload(null, true);
+            }
+
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#bankCode, #name').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+            $('#btnResetFilter').on('click', function() {
+                $('#filterForm').find('input').val('');
+                reloadWithFilters();
+            });
+
+            syncExportUrls();
         });
 
         function deleteData(uuid) {

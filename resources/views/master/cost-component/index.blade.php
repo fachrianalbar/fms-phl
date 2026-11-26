@@ -1,526 +1,412 @@
 @extends('layouts.main', [
-'title' => $title,
-'pageTitle' => $title,
-'firstSegment' => 'Master',
-'secondSegment' => $title,
+    'title' => $title,
+    'pageTitle' => $title,
+    'firstSegment' => 'Master',
+    'secondSegment' => $title,
 ])
 
 @push('style')
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css"
-    href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
-<link rel="stylesheet" type="text/css" href=" {{ asset('assets/css/vendors/sweetalert2.css') }} ">
-
-<!-- Select2 CSS -->
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
-<link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
-<style>
-    /* ── Scoped Table Styling ── */
-    #dt {
-        border-collapse: separate;
-        border-spacing: 0;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-    }
-
-    #dt thead th {
-        background-color: #f8fafc;
-        color: #475569;
-        font-size: 12px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 13px 12px;
-        border-bottom: 2px solid #e2e8f0;
-        border-top: none;
-        white-space: nowrap;
-        vertical-align: middle;
-    }
-
-    #dt tbody td {
-        padding: 11px 12px;
-        border-bottom: 1px solid #f1f5f9;
-        color: #334155;
-        font-size: 12.5px;
-        white-space: nowrap;
-        vertical-align: middle;
-    }
-
-    #dt tbody tr {
-        transition: background-color 0.15s ease;
-    }
-
-    #dt tbody tr:hover {
-        background-color: #f8fafc !important;
-    }
-
-    /* ── Tombol Icon Ramping Header / Aksi Tabel ── */
-    .btn-icon {
-        border-radius: 8px !important;
-        padding: 6px 10px;
-        font-size: 13px;
-        transition: all 0.2s ease;
-    }
-
-    .btn-icon:hover {
-        transform: translateY(-1px);
-    }
-
-    /* ── DataTables Inputs & Pagination ── */
-    #dt_wrapper .dataTables_filter input {
-        border-radius: 8px;
-        font-size: 12px;
-    }
-
-    #dt_wrapper .dataTables_length select {
-        border-radius: 8px;
-        font-size: 12px;
-    }
-
-    #dt_wrapper .dataTables_info,
-    #dt_wrapper .dataTables_length,
-    #dt_wrapper .dataTables_filter {
-        color: #64748b;
-        font-size: 12px;
-    }
-
-    .export-loader {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        display: none;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .export-loader-content {
-        background: white;
-        padding: 40px 60px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-    }
-
-    .export-loader-spinner {
-        width: 60px;
-        height: 60px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #28a745;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 0 auto 20px;
-    }
-
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
-    }
-
-    .export-loader-text {
-        font-size: 18px;
-        color: #333;
-        font-weight: 500;
-    }
-
-    .export-loader-subtext {
-        font-size: 14px;
-        color: #666;
-        margin-top: 8px;
-    }
-
-    .export-success {
-        display: none;
-        background: #d4edda;
-        color: #155724;
-        padding: 15px;
-        border-radius: 8px;
-        margin-top: 20px;
-        border: 1px solid #c3e6cb;
-        text-align: center;
-        font-weight: 500;
-    }
-
-    /* ── Dark mode ─────────────────────────────── */
-    html[data-bs-theme="dark"] .card-header {
-        background-color: var(--bs-card-bg) !important;
-        border-color: var(--bs-border-color) !important;
-    }
-
-    html[data-bs-theme="dark"] #dt {
-        border-color: var(--bs-border-color);
-    }
-
-    html[data-bs-theme="dark"] #dt thead th {
-        background-color: var(--bs-tertiary-bg) !important;
-        color: var(--bs-emphasis-color) !important;
-        border-color: var(--bs-border-color) !important;
-    }
-
-    html[data-bs-theme="dark"] #dt tbody td {
-        color: var(--bs-body-color) !important;
-        border-color: var(--bs-border-color) !important;
-    }
-
-    html[data-bs-theme="dark"] #dt tbody tr:hover {
-        background-color: var(--bs-tertiary-bg) !important;
-    }
-
-    html[data-bs-theme="dark"] .export-loader-content {
-        background-color: var(--bs-card-bg) !important;
-    }
-
-    html[data-bs-theme="dark"] .export-loader-text {
-        color: var(--bs-body-color) !important;
-    }
-
-    html[data-bs-theme="dark"] .export-loader-subtext {
-        color: var(--bs-secondary-color) !important;
-    }
-
-    html[data-bs-theme="dark"] .export-success {
-        background-color: var(--bs-success-bg-subtle) !important;
-        color: var(--bs-success-text-emphasis) !important;
-        border-color: var(--bs-success-border-subtle) !important;
-    }
-</style>
+        <link rel="stylesheet" type="text/css"
+            href="{{ asset('assets/libs/datatables.net-bs5/css/dataTables.bootstrap5.min.css') }}">
+        <link rel="stylesheet" type="text/css"
+            href="{{ asset('assets/libs/datatables.net-buttons-bs5/css/buttons.bootstrap5.min.css') }}">
+        <link rel="stylesheet" type="text/css"
+            href="{{ asset('assets/libs/datatables.net-keytable-bs5/css/keyTable.bootstrap5.min.css') }}">
+        <link rel="stylesheet" type="text/css"
+            href="{{ asset('assets/libs/datatables.net-responsive-bs5/css/responsive.bootstrap5.min.css') }}">
+        <link rel="stylesheet" type="text/css"
+            href="{{ asset('assets/libs/datatables.net-select-bs5/css/select.bootstrap5.min.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/sweetalert2.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/select2.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/custom-select2.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ asset('assets/css/vendors/flatpickr/flatpickr.min.css') }}">
+        @include('master.partials.table-style')
 @endpush
 
 @section('content')
-<!-- Export Loader -->
-<div class="export-loader" id="exportLoader">
-    <div class="export-loader-content">
-        <div class="export-loader-spinner"></div>
-        <div class="export-loader-text">Exporting Data...</div>
-        <div class="export-loader-subtext">Please wait while we prepare your Excel file</div>
-    </div>
-</div>
-
-<div class="col-sm-12">
-    <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
-        {{-- Card Header --}}
-        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center"
-            style="border-color: #e2e8f0;">
-            <div>
-                <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
-                    <i class="mdi mdi-calculator-variant-outline text-primary fs-20"></i>
-                    {{ $title }} Data
-                </h4>
-                <small class="text-muted">Daftar master komponen biaya operasional armada</small>
-            </div>
-
-            <div class="d-flex align-items-center gap-2">
-                <a href="javascript:void(0)" onclick="exportExcel()" class="btn btn-sm btn-success d-inline-flex align-items-center gap-1"
-                    id="btn-export" style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
-                    <i class="mdi mdi-file-excel"></i> Export Excel
-                </a>
-                <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1"
-                    id="btnBulkUpdatePrice" title="Penyesuaian Harga"
-                    style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
-                    <i class="mdi mdi-cash-multiple"></i> Penyesuaian Harga
-                </button>
-                <a href="{{ route($view . 'create') }}"
-                    class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
-                    style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
-                    <i class="mdi mdi-plus"></i> {{ __('general.add_data') }}
-                </a>
-            </div>
-        </div>
-
-        <div class="card-body p-4">
-            @include('partials.alert')
-            <div id="exportSuccessMessage" class="export-success">
-                <i class="mdi mdi-check-circle"></i> Export completed successfully! Your Excel file has been downloaded.
-            </div>
-            <div class="table-responsive custom-scrollbar">
-                <table class="table align-middle w-100 mb-0" id="dt">
-                    <thead>
-                        <tr>
-                            <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
-                            <th class="text-center" style="width: 80px;">#</th>
-                            <th class="text-center" style="width: 60px;">No</th>
-                            <th>Nama Komponen</th>
-                            <th class="text-end">Harga</th>
-                            <th class="text-center">Tipe</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<form id="delete-form" method="post">
-    @csrf
-    @method('DELETE')
-</form>
-
-<!-- Modal Bulk Update Price -->
-<div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalBulkUpdatePriceLabel">Penyesuaian Harga Masal</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formBulkUpdatePrice">
-                    <div class="mb-3">
-                        <label class="form-label">Tipe Penyesuaian</label>
-                        <select class="form-select" id="bulkUpdateType" name="type" required>
-                            <option value="increase">Kenaikan</option>
-                            <option value="decrease">Penurunan</option>
-                        </select>
+        <div class="col-sm-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                {{-- Card Header --}}
+                <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2"
+                    style="border-color: #e2e8f0;">
+                    <div>
+                        <h4 class="mb-1 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="mdi mdi-calculator-variant-outline text-primary fs-20"></i>
+                            {{ $title }} Data
+                        </h4>
+                        <small class="text-muted">Daftar master komponen biaya operasional armada</small>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Persentase (%)</label>
-                        <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage" min="0.01" step="0.01" required placeholder="Contoh: 10">
+
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <a href="{{ route('master.cost-component.export-excel') }}" target="_blank" id="export-excel"
+                            class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                            <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                        </a>
+                        <a href="{{ route('master.cost-component.export-pdf') }}" target="_blank" id="export-pdf"
+                            class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                            <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                        </a>
+                        <button type="button" class="btn btn-sm btn-warning d-inline-flex align-items-center gap-1"
+                            id="btnBulkUpdatePrice" title="Penyesuaian Harga"
+                            style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                            <i class="mdi mdi-cash-multiple"></i> Penyesuaian Harga
+                        </button>
+                        <a href="{{ route($view . 'create') }}"
+                            class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                            style="border-radius: 8px; font-weight: 600; padding: 7px 14px;">
+                            <i class="mdi mdi-plus"></i> {{ __('general.add_data') }}
+                        </a>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="btnSubmitBulkUpdate">Simpan Perubahan</button>
+                </div>
+
+                <div class="card-body p-4">
+                    @include('partials.alert')
+
+                    {{-- Filter Bar (§3 PHL, tertutup default) --}}
+                    <div class="filter-card">
+                        <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                            data-bs-target="#costComponentFilterCollapse" aria-expanded="false"
+                            aria-controls="costComponentFilterCollapse">
+                            <span class="filter-card-heading">
+                                <i class="mdi mdi-filter-variant"></i>
+                                <strong>Filter Data</strong>
+                                <small>Gunakan filter nama/kode, tipe komponen, atau tanggal dibuat</small>
+                            </span>
+                            <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                        </button>
+
+                        <div class="collapse filter-collapse" id="costComponentFilterCollapse">
+                            <div class="filter-collapse-body">
+                                <div id="filterForm">
+                                    <div class="row g-3">
+                                        <div class="col-xl-3 col-md-6">
+                                            <label class="filter-label" for="keyword">Kode / Nama Komponen</label>
+                                            <input class="form-control" name="keyword" id="keyword" type="text"
+                                                placeholder="Cari kode atau nama komponen...">
+                                        </div>
+                                        <div class="col-xl-3 col-md-6">
+                                            <label class="filter-label" for="type">Tipe Komponen</label>
+                                            <select class="form-select select2-filter" name="type" id="type">
+                                                <option value="">Semua Tipe</option>
+                                                @foreach ($types as $t)
+                                                    <option value="{{ $t->value }}">{{ ucfirst($t->value) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-xl-3 col-md-6">
+                                            <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                            <input class="form-control filter-control" name="startDate" id="startDate"
+                                                type="text" placeholder="Pilih tanggal mulai">
+                                        </div>
+                                        <div class="col-xl-3 col-md-6">
+                                            <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                            <input class="form-control filter-control" name="endDate" id="endDate"
+                                                type="text" placeholder="Pilih tanggal akhir">
+                                        </div>
+                                        <div class="col-12 d-flex align-items-end justify-content-end gap-2">
+                                            <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                                id="btnFilter">
+                                                <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                            </button>
+                                            <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                                data-bs-toggle="tooltip" title="Reset Filter">
+                                                <i class="mdi mdi-refresh"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive custom-scrollbar">
+                        <table class="table align-middle w-100 mb-0" id="dt">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20px;"><input type="checkbox" class="form-check-input" id="checkAll"></th>
+                                    <th class="text-center" style="width: 80px;">#</th>
+                                    <th class="text-center" style="width: 60px;">No</th>
+                                    <th>Nama Komponen</th>
+                                    <th class="text-end">Harga</th>
+                                    <th class="text-center">Tipe</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
+
+        <form id="delete-form" method="post">
+            @csrf
+            @method('DELETE')
+        </form>
+
+        <!-- Modal Bulk Update Price -->
+        <div class="modal fade" id="modalBulkUpdatePrice" tabindex="-1" aria-labelledby="modalBulkUpdatePriceLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="modalBulkUpdatePriceLabel">Penyesuaian Harga Masal</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formBulkUpdatePrice">
+                            <div class="mb-3">
+                                <label class="form-label">Tipe Penyesuaian</label>
+                                <select class="form-select" id="bulkUpdateType" name="type" required>
+                                    <option value="increase">Kenaikan</option>
+                                    <option value="decrease">Penurunan</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Persentase (%)</label>
+                                <input type="number" class="form-control" id="bulkUpdatePercentage" name="percentage" min="0.01" step="0.01" required placeholder="Contoh: 10">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" id="btnSubmitBulkUpdate">Simpan Perubahan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 @endsection
 
 @push('script')
-<script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-keytable-bs5/js/keyTable.bootstrap5.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
+        <script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
+        <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
+        <script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
+        <script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
+        <script src="{{ asset('assets/libs/flatpickr/flatpickr.min.js') }}"></script>
 
-<!-- dataTables.bootstrap5 -->
-<script src="{{ asset('assets/libs/datatables.net-bs5/js/dataTables.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
+        <script>
+            const ROUTES = {
+                costComponentIndex: @json(route('master.cost-component.index')),
+                dtCostComponent: @json(route('dt.cost-component')),
+                exportExcel: @json(route('master.cost-component.export-excel')),
+                exportPdf: @json(route('master.cost-component.export-pdf')),
+                bulkUpdatePrice: @json(route('ajax.cost-component.bulk-update-price'))
+            };
 
-<!-- dataTables.keyTable -->
-<script src="{{ asset('assets/libs/datatables.net-keytable/js/dataTables.keyTable.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-keytable-bs5/js/keyTable.bootstrap5.min.js') }}"></script>
+            $(document).ready(function() {
+                let filterStartPicker;
+                let filterEndPicker;
 
-<!-- dataTable.responsive -->
-<script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-responsive-bs5/js/responsive.bootstrap5.min.js') }}"></script>
+                $('.select2-filter').select2({
+                    placeholder: 'Semua Tipe',
+                    allowClear: true,
+                    width: '100%'
+                });
 
-<!-- dataTables.select -->
-<script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
-<script src="{{ asset('assets/libs/datatables.net-select-bs5/js/select.bootstrap5.min.js') }}"></script>
-<script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
-
-<!-- Select2 JS -->
-<script src="{{ asset('assets/js/select2/select2.full.min.js') }}"></script>
-<script src="{{ asset('assets/js/select2/select2-custom.js') }}"></script>
-
-<script>
-    const ROUTES = {
-        costComponentIndex: @json(route('master.cost-component.index')),
-        dtCostComponent: @json(route('dt.cost-component')),
-        exportExcel: @json(route('master.cost-component.export-excel')),
-        bulkUpdatePrice: @json(route('ajax.cost-component.bulk-update-price'))
-    };
-
-    $(document).ready(function() {
-        $('#dt').DataTable({
-            "processing": true,
-            "serverSide": true,
-            "destroy": true,
-            "ajax": {
-                "url": ROUTES.dtCostComponent,
-            },
-            "columns": [{
-                    "data": 'checkbox',
-                    "className": 'text-center align-middle',
-                    "orderable": false,
-                    "searchable": false
-                },
-                {
-                    "data": 'action',
-                    "className": 'text-center align-middle',
-                },
-                {
-                    "data": 'DT_RowIndex',
-                    "className": 'text-center align-middle',
-                },
-                {
-                    "data": 'name',
-                    "className": 'align-middle fw-semibold text-dark',
-                },
-                {
-                    "data": 'formatted_price',
-                    "className": 'text-end align-middle font-monospace fw-bold',
-                },
-                {
-                    "data": 'type',
-                    "className": 'text-center align-middle',
-                    "render": function(data, type, row) {
-                        return data ? data.charAt(0).toUpperCase() + data.slice(1) : '-';
+                filterStartPicker = flatpickr('#startDate', {
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    onChange: function(selectedDates, dateStr) {
+                        if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
                     }
-                },
-            ],
-            "columnDefs": [{
-                    "searchable": false,
-                    "targets": [0, 1, 2]
-                },
-                {
-                    "orderable": false,
-                    "targets": [0, 1]
+                });
+
+                filterEndPicker = flatpickr('#endDate', {
+                    dateFormat: 'Y-m-d',
+                    allowInput: true,
+                    onChange: function(selectedDates, dateStr) {
+                        if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                    }
+                });
+
+                function getFilters() {
+                    return {
+                        keyword: $('#keyword').val() || '',
+                        type: $('#type').val() || '',
+                        startDate: $('#startDate').val() || '',
+                        endDate: $('#endDate').val() || ''
+                    };
                 }
-            ],
-            "order": [
-                [3, 'asc']
-            ]
-        })
 
-        // Handle Check All
-        $('#checkAll').on('click', function() {
-            $('.component-checkbox').prop('checked', this.checked);
-        });
-
-        // Handle individual checkbox change
-        $('#dt tbody').on('change', '.component-checkbox', function() {
-            if (!this.checked) {
-                $('#checkAll').prop('checked', false);
-            } else {
-                if ($('.component-checkbox:checked').length === $('.component-checkbox').length) {
-                    $('#checkAll').prop('checked', true);
+                function syncExportUrls() {
+                    const params = new URLSearchParams();
+                    Object.entries(getFilters()).forEach(function(entry) {
+                        if (entry[1]) params.set(entry[0], entry[1]);
+                    });
+                    const query = params.toString() ? '?' + params.toString() : '';
+                    $('#export-excel').attr('href', ROUTES.exportExcel + query);
+                    $('#export-pdf').attr('href', ROUTES.exportPdf + query);
                 }
-            }
-        });
 
-        // Handle Bulk Update Button Click
-        $('#btnBulkUpdatePrice').click(function() {
-            var selectedIds = [];
-            $('.component-checkbox:checked').each(function() {
-                selectedIds.push($(this).val());
-            });
+                const table = $('#dt').DataTable({
+                    "processing": true,
+                    "serverSide": true,
+                    "destroy": true,
+                    "ajax": {
+                        "url": ROUTES.dtCostComponent,
+                        "data": function(d) {
+                            Object.assign(d, getFilters());
+                        }
+                    },
+                    "columns": [
+                        { "data": 'checkbox', "className": 'text-center align-middle', "orderable": false, "searchable": false },
+                        { "data": 'action', "className": 'text-center align-middle' },
+                        { "data": 'DT_RowIndex', "className": 'text-center align-middle' },
+                        { "data": 'name', "className": 'align-middle fw-semibold text-dark' },
+                        { "data": 'formatted_price', "className": 'text-end align-middle font-monospace fw-bold' },
+                        {
+                            "data": 'type',
+                            "className": 'text-center align-middle',
+                            "render": function(data) {
+                                return data ? data.charAt(0).toUpperCase() + data.slice(1) : '-';
+                            }
+                        }
+                    ],
+                    "columnDefs": [
+                        { "searchable": false, "targets": [0, 1, 2] },
+                        { "orderable": false, "targets": [0, 1] }
+                    ],
+                    "order": [[3, 'asc']]
+                });
 
-            if (selectedIds.length === 0) {
-                swal("Peringatan", "Pilih minimal satu komponen biaya untuk menyesuaikan harga.", "warning");
-                return;
-            }
+                function reloadWithFilters() {
+                    syncExportUrls();
+                    table.ajax.reload(null, true);
+                }
 
-            $('#formBulkUpdatePrice')[0].reset();
-            
-            // Fix Select2 in modal
-            $('#bulkUpdateType').select2({
-                dropdownParent: $('#modalBulkUpdatePrice'),
-                width: '100%',
-                minimumResultsForSearch: Infinity
-            });
+                $('#btnFilter').on('click', reloadWithFilters);
+                $('#keyword').on('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        reloadWithFilters();
+                    }
+                });
+                $('#btnResetFilter').on('click', function() {
+                    $('#filterForm').find('input').val('');
+                    $('.select2-filter').val('').trigger('change');
+                    if (filterStartPicker) {
+                        filterStartPicker.clear();
+                        filterStartPicker.set('maxDate', null);
+                    }
+                    if (filterEndPicker) {
+                        filterEndPicker.clear();
+                        filterEndPicker.set('minDate', null);
+                    }
+                    reloadWithFilters();
+                });
 
-            $('#modalBulkUpdatePrice').modal('show');
-        });
+                syncExportUrls();
 
-        // Handle Submit Bulk Update
-        $('#btnSubmitBulkUpdate').click(function() {
-            var selectedIds = [];
-            $('.component-checkbox:checked').each(function() {
-                selectedIds.push($(this).val());
-            });
+                // Handle Check All
+                $('#checkAll').on('click', function() {
+                    $('.component-checkbox').prop('checked', this.checked);
+                });
 
-            var type = $('#bulkUpdateType').val();
-            var percentage = $('#bulkUpdatePercentage').val();
-
-            if (!percentage || percentage <= 0) {
-                swal("Peringatan", "Masukkan persentase yang valid.", "warning");
-                return;
-            }
-
-            if (type === 'decrease' && percentage > 100) {
-                swal("Peringatan", "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.", "warning");
-                return;
-            }
-
-            $(this).prop('disabled', true).text('Menyimpan...');
-
-            $.ajax({
-                url: ROUTES.bulkUpdatePrice,
-                type: "POST",
-                data: {
-                    _token: "{{ csrf_token() }}",
-                    ids: selectedIds,
-                    type: type,
-                    percentage: percentage
-                },
-                success: function(response) {
-                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
-                    if (response.success) {
-                        $('#modalBulkUpdatePrice').modal('hide');
-                        swal("Berhasil", response.message, "success");
-                        $('#dt').DataTable().ajax.reload(null, false);
+                // Handle individual checkbox change
+                $('#dt tbody').on('change', '.component-checkbox', function() {
+                    if (!this.checked) {
                         $('#checkAll').prop('checked', false);
-                    } else {
-                        swal("Gagal", response.message, "error");
+                    } else if ($('.component-checkbox:checked').length === $('.component-checkbox').length) {
+                        $('#checkAll').prop('checked', true);
                     }
-                },
-                error: function(xhr) {
-                    $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
-                    swal("Error", "Terjadi kesalahan sistem.", "error");
-                }
+                });
+
+                // Handle Bulk Update Button Click
+                $('#btnBulkUpdatePrice').click(function() {
+                    var selectedIds = [];
+                    $('.component-checkbox:checked').each(function() {
+                        selectedIds.push($(this).val());
+                    });
+
+                    if (selectedIds.length === 0) {
+                        swal("Peringatan", "Pilih minimal satu komponen biaya untuk menyesuaikan harga.", "warning");
+                        return;
+                    }
+
+                    $('#formBulkUpdatePrice')[0].reset();
+
+                    $('#bulkUpdateType').select2({
+                        dropdownParent: $('#modalBulkUpdatePrice'),
+                        width: '100%',
+                        minimumResultsForSearch: Infinity
+                    });
+
+                    $('#modalBulkUpdatePrice').modal('show');
+                });
+
+                // Handle Submit Bulk Update
+                $('#btnSubmitBulkUpdate').click(function() {
+                    var selectedIds = [];
+                    $('.component-checkbox:checked').each(function() {
+                        selectedIds.push($(this).val());
+                    });
+
+                    var type = $('#bulkUpdateType').val();
+                    var percentage = $('#bulkUpdatePercentage').val();
+
+                    if (!percentage || percentage <= 0) {
+                        swal("Peringatan", "Masukkan persentase yang valid.", "warning");
+                        return;
+                    }
+
+                    if (type === 'decrease' && percentage > 100) {
+                        swal("Peringatan", "Persentase penurunan tidak boleh lebih dari 100% agar harga tidak menjadi negatif.", "warning");
+                        return;
+                    }
+
+                    $(this).prop('disabled', true).text('Menyimpan...');
+
+                    $.ajax({
+                        url: ROUTES.bulkUpdatePrice,
+                        type: "POST",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            ids: selectedIds,
+                            type: type,
+                            percentage: percentage
+                        },
+                        success: function(response) {
+                            $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                            if (response.success) {
+                                $('#modalBulkUpdatePrice').modal('hide');
+                                swal("Berhasil", response.message, "success");
+                                table.ajax.reload(null, false);
+                                $('#checkAll').prop('checked', false);
+                            } else {
+                                swal("Gagal", response.message, "error");
+                            }
+                        },
+                        error: function() {
+                            $('#btnSubmitBulkUpdate').prop('disabled', false).text('Simpan Perubahan');
+                            swal("Error", "Terjadi kesalahan sistem.", "error");
+                        }
+                    });
+                });
             });
-        });
-    });
 
-    function exportExcel() {
-        // Hide any existing success message
-        document.getElementById('exportSuccessMessage').style.display = 'none';
+            function deleteData(uuid) {
+                var url = ROUTES.costComponentIndex + '/' + uuid;
+                $('#delete-form').attr('action', url);
 
-        // Show loader
-        document.getElementById('exportLoader').style.display = 'flex';
-
-        // Create a hidden iframe to handle the download
-        var iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = ROUTES.exportExcel;
-        document.body.appendChild(iframe);
-
-        // Hide loader and show success message after download starts
-        setTimeout(function() {
-            document.getElementById('exportLoader').style.display = 'none';
-            document.getElementById('exportSuccessMessage').style.display = 'block';
-            document.body.removeChild(iframe);
-
-            // Hide success message after 5 seconds
-            setTimeout(function() {
-                document.getElementById('exportSuccessMessage').style.display = 'none';
-            }, 5000);
-        }, 3000);
-    }
-
-    function deleteData(uuid) {
-        var url = ROUTES.costComponentIndex + '/' + uuid;
-        $('#delete-form').attr('action', url);
-
-        swal({
-            title: "{{ __('general.are_you_sure') }}",
-            text: "{{ __('general.want_to_delete_this_data') }}",
-            icon: "warning",
-            buttons: true,
-            dangerMode: true,
-        }).then((willDelete) => {
-            if (willDelete) {
-                $('#delete-form').submit();
-            } else {
-                swal("{{ __('general.your_data_is_save') }}");
+                swal({
+                    title: "{{ __('general.are_you_sure') }}",
+                    text: "{{ __('general.want_to_delete_this_data') }}",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        $('#delete-form').submit();
+                    } else {
+                        swal("{{ __('general.your_data_is_save') }}");
+                    }
+                });
             }
-        });
-    }
-</script>
+        </script>
 @endpush

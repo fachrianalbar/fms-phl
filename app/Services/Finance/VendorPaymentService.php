@@ -37,12 +37,64 @@ class VendorPaymentService
         $this->paymentHistory = $paymentHistory;
     }
 
+    public function isEligibleVendorOrder($order): bool
+    {
+        if (! $order || ! $order->fleet || ! $order->fleet->company) {
+            return false;
+        }
+
+        $fleetCompany = $order->fleet->company;
+        $type = strtolower(trim((string) ($fleetCompany->type ?? '')));
+
+        if ($type === 'external') {
+            return true;
+        }
+
+        if ($type === 'internal') {
+            $fleetParentCode = trim((string) ($fleetCompany->companyCode ?? ''));
+            $customerCompanyCode = trim((string) ($order->customer?->companyCode ?? ($order->customer?->company?->code ?? '')));
+
+            return $fleetParentCode !== '' && $customerCompanyCode !== '' && $fleetParentCode !== $customerCompanyCode;
+        }
+
+        return false;
+    }
+
+    /**
+     * Filter query order yang layak masuk modul Hutang Vendor:
+     * armada External, atau armada Internal yang perusahaan induknya berbeda
+     * dengan perusahaan customer (antar PT Internal).
+     */
+    public function applyEligibleVendorOrderScope($query)
+    {
+        $orderTable = $this->order->getTable();
+
+        return $query->where(function ($outer) use ($orderTable) {
+            $outer->whereHas('fleet.company', function ($q) {
+                $q->whereRaw('LOWER(TRIM(type)) = ?', ['external']);
+            })->orWhereExists(function ($sub) use ($orderTable) {
+                $sub->selectRaw('1')
+                    ->from('fleet')
+                    ->join('fleet_company', 'fleet_company.code', '=', 'fleet.fleetCompanyCode')
+                    ->join('customer', 'customer.code', '=', $orderTable.'.customerCode')
+                    ->whereColumn('fleet.code', $orderTable.'.fleetCode')
+                    ->whereNull('fleet.deleted_at')
+                    ->whereNull('fleet_company.deleted_at')
+                    ->whereNull('customer.deleted_at')
+                    ->whereRaw('LOWER(TRIM(fleet_company.type)) = ?', ['internal'])
+                    ->whereNotNull('fleet_company.companyCode')
+                    ->whereNotNull('customer.companyCode')
+                    ->whereRaw("TRIM(fleet_company.companyCode) != ''")
+                    ->whereRaw("TRIM(customer.companyCode) != ''")
+                    ->whereRaw('TRIM(fleet_company.companyCode) != TRIM(customer.companyCode)');
+            });
+        });
+    }
+
     public function findAll()
     {
-        return $this->order->whereHas('fleet.company', function ($q) {
-            $q->whereRaw('LOWER(type) = ?', ['external']);
-        })
-            ->with(['fleet', 'fleet.company', 'customer', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'vendorPayments'])
+        return $this->applyEligibleVendorOrderScope($this->order->newQuery())
+            ->with(['fleet', 'fleet.company', 'fleet.company.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'vendorPayments'])
             ->orderBy('orderDate', 'asc')
             ->get();
     }
@@ -60,9 +112,60 @@ class VendorPaymentService
 
     public function vendorBaseAmount($order, $vendorPayment = null): float
     {
-        return max(0, $vendorPayment
-            ? (float) ($vendorPayment->amount ?? 0)
-            : (float) ($order->vendorPrice ?? 0));
+        if ($vendorPayment) {
+            return max(0, (float) ($vendorPayment->amount ?? 0));
+        }
+
+        $vendorPrice = (float) ($order?->vendorPrice ?? 0);
+        if ($vendorPrice > 0) {
+            return $vendorPrice;
+        }
+
+        return max(0, (float) ($order?->personalVendorPrice ?? 0));
+    }
+
+    /**
+     * Hitung harga satuan & subtotal dasar vendor untuk satu order (dipakai PDF Nota).
+     * Order antar PT Internal menyimpan harga pada personalVendorPrice/Single.
+     *
+     * @return array{unit_price: float, subtotal: float}
+     */
+    public function resolveOrderVendorLineAmounts($order): array
+    {
+        $qty = (float) ($order?->qty ?? 0);
+        $vendorPrice = (float) ($order?->vendorPrice ?? 0);
+
+        if ($vendorPrice > 0) {
+            $unitPrice = (float) ($order?->vendorPriceSingle ?? 0);
+            if ($unitPrice <= 0) {
+                $unitPrice = $qty > 0 ? $vendorPrice / $qty : $vendorPrice;
+            }
+
+            return [
+                'unit_price' => max(0, $unitPrice),
+                'subtotal' => max(0, $vendorPrice),
+            ];
+        }
+
+        $personalVendorPrice = (float) ($order?->personalVendorPrice ?? 0);
+        $unitPrice = (float) ($order?->personalVendorPriceSingle ?? 0);
+        if ($unitPrice <= 0 && $personalVendorPrice > 0) {
+            $unitPrice = $qty > 0 ? $personalVendorPrice / $qty : $personalVendorPrice;
+        }
+        if ($unitPrice <= 0) {
+            $routeVendorPrice = (float) ($order?->route?->vendorPrice ?? 0);
+            $routePersonalVendorPrice = (float) ($order?->route?->personalVendorPrice ?? 0);
+            $unitPrice = $routeVendorPrice > 0 ? $routeVendorPrice : $routePersonalVendorPrice;
+        }
+
+        $subtotal = $personalVendorPrice > 0
+            ? $personalVendorPrice
+            : ($qty > 0 ? $qty * $unitPrice : 0);
+
+        return [
+            'unit_price' => max(0, $unitPrice),
+            'subtotal' => max(0, $subtotal),
+        ];
     }
 
     public function vendorBillingAmount($order, $vendorPayment = null): float
@@ -75,21 +178,56 @@ class VendorPaymentService
     }
 
     /**
-     * Order fleet external yang belum punya nota (menunggu dibuat invoice/nota).
+     * Order fleet external atau antar PT internal yang belum punya nota.
      * Termasuk order yang punya vendor_payment lama tanpa nota_number.
      */
-    public function findWaitingOrders()
+    public function findWaitingOrders(array $filters = [])
     {
-        return $this->order->whereHas('fleet.company', function ($q) {
-            $q->whereRaw('LOWER(type) = ?', ['external']);
-        })
-            ->with(['fleet', 'fleet.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus', 'vendorPayments', 'cost.costComponent'])
+        $query = $this->applyEligibleVendorOrderScope($this->order->newQuery())
+            ->with(['fleet', 'fleet.company', 'fleet.company.company', 'customer', 'customer.company', 'driver', 'route', 'route.originLocation', 'route.destinationLocation', 'orderStatus', 'vendorPayments', 'cost.costComponent'])
             ->where(function ($q) {
                 $q->doesntHave('vendorPayments')
                     ->orWhereHas('vendorPayments', function ($q2) {
                         $q2->whereNull('nota_number');
                     });
-            })
+            });
+
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $fleetCompanyCode = trim((string) ($filters['fleetCompanyCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $plateNumber = trim((string) ($filters['plateNumber'] ?? ''));
+
+        if ($startDate !== '') {
+            $query->whereDate('orderDate', '>=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $query->whereDate('orderDate', '<=', $endDate);
+        }
+
+        if ($fleetCompanyCode !== '') {
+            $query->whereHas('fleet', function ($q) use ($fleetCompanyCode) {
+                $q->where('fleetCompanyCode', $fleetCompanyCode);
+            });
+        }
+
+        if ($companyCode !== '') {
+            $query->whereHas('customer', function ($q) use ($companyCode) {
+                $q->where('companyCode', $companyCode);
+            });
+        }
+
+        if ($customerCode !== '') {
+            $query->where('customerCode', $customerCode);
+        }
+
+        if ($plateNumber !== '') {
+            $query->wherePlateNumberLike($plateNumber);
+        }
+
+        return $query
             ->orderBy('orderDate', 'asc')
             ->orderBy('created_at', 'asc')
             ->get();
@@ -99,7 +237,7 @@ class VendorPaymentService
      * Grup vendor_payment per nomor nota (1 nota = 1 invoice ke vendor).
      * Return koleksi objek nota dengan agregat tagihan/terbayar/sisa & status.
      */
-    public function findNotaGroups()
+    public function findNotaGroups(array $filters = [])
     {
         $vendorPayments = $this->service->with([
             'order.fleet',
@@ -115,7 +253,7 @@ class VendorPaymentService
             ->whereNotNull('nota_number')
             ->get();
 
-        return $vendorPayments->groupBy('nota_number')->map(function ($group, $notaNumber) {
+        $groups = $vendorPayments->groupBy('nota_number')->map(function ($group, $notaNumber) {
             $orders = $group->pluck('order')->filter();
             $firstPayment = $group->first();
             $firstOrder = $orders->first();
@@ -145,10 +283,19 @@ class VendorPaymentService
                 $status = 'partial';
             }
 
+            $companyCodes = $orders
+                ->map(fn ($o) => trim((string) ($o?->customer?->companyCode ?? ($o?->customer?->company?->code ?? ''))))
+                ->filter()
+                ->unique()
+                ->values();
+
             return (object) [
                 'nota_number' => $notaNumber,
                 'fleet_company_name' => $firstOrder?->fleet?->company?->name,
                 'fleetCompanyCode' => $firstOrder?->fleet?->fleetCompanyCode,
+                'companyCode' => $firstOrder?->customer?->companyCode ?? ($firstOrder?->customer?->company?->code ?? null),
+                'company_name' => $firstOrder?->customer?->company?->name,
+                'company_codes' => $companyCodes,
                 'order_format' => strtoupper(trim((string) ($firstOrder?->customer?->company?->format ?? ''))),
                 'order_count' => $group->count(),
                 'orders' => $orders,
@@ -188,38 +335,83 @@ class VendorPaymentService
                 'latest_batch_code' => $latestBatchCode,
             ];
         })->values();
+
+        return $this->filterNotaGroups($groups, $filters);
+    }
+
+    private function filterNotaGroups($groups, array $filters)
+    {
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $fleetCompanyCode = trim((string) ($filters['fleetCompanyCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $notaNumber = trim((string) ($filters['notaNumber'] ?? ''));
+
+        if ($startDate === '' && $endDate === '' && $fleetCompanyCode === '' && $companyCode === '' && $notaNumber === '') {
+            return $groups;
+        }
+
+        return $groups->filter(function ($nota) use ($startDate, $endDate, $fleetCompanyCode, $companyCode, $notaNumber) {
+            $notaDate = substr((string) ($nota->nota_date ?? ''), 0, 10);
+
+            if ($startDate !== '' && ($notaDate === '' || $notaDate < $startDate)) {
+                return false;
+            }
+
+            if ($endDate !== '' && ($notaDate === '' || $notaDate > $endDate)) {
+                return false;
+            }
+
+            if ($fleetCompanyCode !== '' && trim((string) ($nota->fleetCompanyCode ?? '')) !== $fleetCompanyCode) {
+                return false;
+            }
+
+            if ($companyCode !== '') {
+                $matchesCompany = $nota->company_codes->contains($companyCode)
+                    || trim((string) ($nota->companyCode ?? '')) === $companyCode;
+                if (! $matchesCompany) {
+                    return false;
+                }
+            }
+
+            if ($notaNumber !== '' && ! str_contains(mb_strtolower((string) ($nota->nota_number ?? '')), mb_strtolower($notaNumber))) {
+                return false;
+            }
+
+            return true;
+        })->values();
     }
 
     /**
      * Nota yang belum memiliki pembayaran.
      */
-    public function findPendingNotas()
+    public function findPendingNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'pending')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status === 'pending')->values();
     }
 
     /**
      * Nota yang sudah dibayar sebagian tetapi masih memiliki sisa tagihan.
      */
-    public function findPartialNotas()
+    public function findPartialNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'partial')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status === 'partial')->values();
     }
 
     /**
      * Nota yang belum lunas (pending / partial).
      */
-    public function findUnpaidNotas()
+    public function findUnpaidNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status !== 'paid')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status !== 'paid')->values();
     }
 
     /**
      * Nota yang sudah lunas (semua order di dalamnya paid).
      */
-    public function findPaidNotas()
+    public function findPaidNotas(array $filters = [])
     {
-        return $this->findNotaGroups()->filter(fn ($nota) => $nota->payment_status === 'paid')->values();
+        return $this->findNotaGroups($filters)->filter(fn ($nota) => $nota->payment_status === 'paid')->values();
     }
 
     /**
@@ -229,14 +421,41 @@ class VendorPaymentService
      * ke beberapa order dalam satu atau beberapa nota. Riwayat lama yang belum
      * memiliki batch_code tetap ditampilkan per alokasi agar tidak hilang.
      */
-    public function findPayments()
+    public function findPayments(array $filters = [])
     {
-        $histories = $this->paymentHistory->with($this->paymentHistoryRelations())
+        $query = $this->paymentHistory->with($this->paymentHistoryRelations());
+
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $userBankCode = trim((string) ($filters['userBankCode'] ?? ''));
+        $fleetCompanyCode = trim((string) ($filters['fleetCompanyCode'] ?? ''));
+
+        if ($startDate !== '') {
+            $query->whereDate('payment_date', '>=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $query->whereDate('payment_date', '<=', $endDate);
+        }
+
+        if ($userBankCode !== '') {
+            $query->where('user_bank_code', $userBankCode);
+        }
+
+        $histories = $query
             ->orderByDesc('payment_date')
             ->orderByDesc('created_at')
             ->get();
 
-        return $this->mapPaymentTransactions($histories);
+        $transactions = $this->mapPaymentTransactions($histories);
+
+        if ($fleetCompanyCode !== '') {
+            $transactions = $transactions->filter(function ($transaction) use ($fleetCompanyCode) {
+                return $transaction->vendor_codes->contains($fleetCompanyCode);
+            })->values();
+        }
+
+        return $transactions;
     }
 
     /** Ambil satu transaksi beserta rincian nota dan order-nya. */
@@ -287,6 +506,7 @@ class VendorPaymentService
                             return (object) [
                                 'code' => $order?->code ?: ($payment?->orderCode ?: '-'),
                                 'shipment_number' => $order?->shipmentNumber,
+                                'vendor_code' => $order?->fleet?->fleetCompanyCode,
                                 'vendor_name' => $order?->fleet?->company?->name,
                                 'amount' => (float) $history->amount,
                             ];
@@ -311,6 +531,11 @@ class VendorPaymentService
                     'userBank' => $firstHistory->userBank,
                     'description' => $transaction->pluck('description')->filter()->first(),
                     'notas' => $notas,
+                    'vendor_codes' => $notas
+                        ->flatMap(fn ($nota) => $nota->orders->pluck('vendor_code'))
+                        ->filter()
+                        ->unique()
+                        ->values(),
                     'vendors' => $notas
                         ->flatMap(fn ($nota) => $nota->orders->pluck('vendor_name'))
                         ->filter()
@@ -476,7 +701,7 @@ class VendorPaymentService
         }
 
         $vendorPayments = $this->service->newQuery()
-            ->with(['order.fleet.company'])
+            ->with(['order.fleet.company.company', 'order.customer.company'])
             ->whereIn('nota_number', $notaNumbers)
             ->orderBy('nota_number')
             ->orderBy('orderCode')
@@ -490,10 +715,8 @@ class VendorPaymentService
         }
 
         foreach ($vendorPayments as $vendorPayment) {
-            $companyType = strtolower(trim((string) ($vendorPayment->order?->fleet?->company?->type ?? '')));
-
-            if (! $vendorPayment->order || $companyType !== 'external') {
-                throw new \DomainException('Nota hanya dapat dibayar untuk order vendor eksternal yang valid.', 422);
+            if (! $this->isEligibleVendorOrder($vendorPayment->order)) {
+                throw new \DomainException('Nota hanya dapat dibayar untuk order vendor eksternal atau antar PT internal yang berbeda perusahaan.', 422);
             }
         }
 
@@ -996,7 +1219,7 @@ class VendorPaymentService
         }
 
         // Ambil semua order terpilih dengan relasi customer, company, dan fleet
-        $orders = $this->order->with(['customer.company', 'fleet.company', 'cost'])
+        $orders = $this->order->with(['customer.company', 'fleet.company.company', 'cost'])
             ->whereIn('code', $orderCodes)
             ->orderBy('code')
             ->lockForUpdate()
@@ -1005,12 +1228,12 @@ class VendorPaymentService
             throw new \DomainException('Beberapa order tidak ditemukan.', 422);
         }
 
-        // Validasi 1: Perusahaan kendaraan (fleet company) yang berbeda tidak boleh dalam satu nota
+        // Validasi 1: Hanya order vendor eksternal atau antar PT internal yang berbeda perusahaan
         $nonVendorOrders = $orders->filter(function ($order) {
-            return strtolower(trim((string) ($order->fleet->company->type ?? ''))) !== 'external';
+            return ! $this->isEligibleVendorOrder($order);
         });
         if ($nonVendorOrders->isNotEmpty()) {
-            throw new \DomainException('Nota hanya dapat dibuat untuk order vendor eksternal.', 422);
+            throw new \DomainException('Nota hanya dapat dibuat untuk order vendor eksternal atau antar PT internal yang berbeda perusahaan.', 422);
         }
 
         $fleetCompanyCodes = $orders->map(function ($order) {
@@ -1020,12 +1243,17 @@ class VendorPaymentService
             throw new \DomainException('Gagal: Order yang dipilih memiliki perusahaan kendaraan yang berbeda. Satu nota hanya diperbolehkan untuk perusahaan kendaraan yang sama.', 422);
         }
 
-        // Validasi 3: Format Perusahaan (Pribadi, PHL, WTMS) yang berbeda tidak boleh dalam satu nota
+        // Validasi 3: Perusahaan customer (format nota Pribadi, PHL, WTMS) yang berbeda tidak boleh dalam satu nota
         $companyFormats = $orders->map(function ($order) {
             return strtoupper(trim((string) ($order->customer->company->format ?? '')));
         })->filter()->unique();
         if ($companyFormats->count() > 1) {
-            throw new \DomainException('Gagal: Order yang dipilih memiliki format perusahaan yang berbeda ('.$companyFormats->implode(', ').'). Semua order dalam satu nota harus memiliki format perusahaan yang sama.', 422);
+            $companyNames = $orders->map(function ($order) {
+                return trim((string) ($order->customer->company->name ?? $order->customer->company->format ?? ''));
+            })->filter()->unique();
+            $labelList = $companyNames->isNotEmpty() ? $companyNames : $companyFormats;
+
+            throw new \DomainException('Gagal: Order yang dipilih memiliki perusahaan yang berbeda ('.$labelList->implode(', ').'). Semua order dalam satu nota harus memiliki perusahaan yang sama.', 422);
         }
 
         // Cari vendor payment yang sudah ada untuk order-order ini

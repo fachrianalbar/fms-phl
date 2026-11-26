@@ -2,19 +2,23 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\MaintenanceCompanyInternalReport;
 use App\Http\Controllers\Controller;
 use App\Models\Master\Fleet;
 use App\Models\Master\FleetCompany;
 use App\Models\Warehouse\Maintenance;
+use App\Traits\RendersPdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\DataTables;
 
 class MaintenancePerCompanyController extends Controller
 {
+    use RendersPdf;
     protected $title;
 
     protected $view;
@@ -41,43 +45,7 @@ class MaintenancePerCompanyController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = Maintenance::query()
-                ->select([
-                    'fleet_company.code as fleetCompanyCode',
-                    'fleet_company.name as fleetCompanyName',
-                    'fleet_company.type as fleetCompanyType',
-                    DB::raw('COUNT(DISTINCT fleet.code) as totalFleet'),
-                    DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
-                    DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
-                    DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
-                ])
-                ->join('fleet', function ($join) {
-                    $join->on('fleet.code', '=', 'maintenance.fleetCode')
-                        ->whereNull('fleet.deleted_at');
-                })
-                ->join('fleet_company', function ($join) {
-                    $join->on('fleet_company.code', '=', 'fleet.fleetCompanyCode')
-                        ->whereNull('fleet_company.deleted_at');
-                })
-                ->leftJoin('maintenance_detail', function ($join) {
-                    $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
-                        ->whereNull('maintenance_detail.deleted_at');
-                })
-                ->leftJoin('item', function ($join) {
-                    $join->on('item.code', '=', 'maintenance_detail.itemCode')
-                        ->whereNull('item.deleted_at');
-                })
-                ->where('maintenance.status', 0)
-                ->whereNull('maintenance.deleted_at')
-                ->whereRaw("LOWER(TRIM(COALESCE(fleet_company.type, ''))) = ?", ['internal'])
-                ->groupBy('fleet_company.code', 'fleet_company.name', 'fleet_company.type')
-                ->orderBy('fleet_company.name');
-
-            if ($request->filled('fleetCompanyCode')) {
-                $data->where('fleet_company.code', $request->fleetCompanyCode);
-            }
-
-            $this->applyDateFilter($data, $request->startDate, $request->endDate);
+            $data = $this->buildSummaryQuery($request);
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -302,5 +270,89 @@ class MaintenancePerCompanyController extends Controller
         if ($endDate) {
             $query->whereDate('maintenance.date', '<=', $endDate);
         }
+    }
+
+    public function excelMaintenanceCompany(Request $request)
+    {
+        $rows = $this->buildSummaryQuery($request)->get();
+        $fleetCompanyName = $request->filled('fleetCompanyCode')
+            ? FleetCompany::where('code', $request->fleetCompanyCode)->value('name')
+            : null;
+
+        return Excel::download(
+            new MaintenanceCompanyInternalReport($rows, $fleetCompanyName, $request->startDate, $request->endDate),
+            'Laporan-Perawatan-Perusahaan-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function pdfMaintenanceCompany(Request $request)
+    {
+        $rows = $this->buildSummaryQuery($request)->get();
+
+        $filterSummary = [];
+        if ($request->filled('fleetCompanyCode')) {
+            $companyName = FleetCompany::where('code', $request->fleetCompanyCode)->value('name');
+            $filterSummary[] = 'Perusahaan: '.($companyName ?: $request->fleetCompanyCode);
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode: '.$start.' s/d '.$end;
+        }
+
+        return $this->renderPdfResponse(
+            $this->view.'report.maintenance-company-pdf',
+            [
+                'rows' => $rows,
+                'title' => 'Laporan Perawatan Per Perusahaan (Internal)',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Laporan-Perawatan-Perusahaan-'.now()->format('YmdHis').'.pdf',
+            'L'
+        );
+    }
+
+    private function buildSummaryQuery(Request $request)
+    {
+        $data = Maintenance::query()
+            ->select([
+                'fleet_company.code as fleetCompanyCode',
+                'fleet_company.name as fleetCompanyName',
+                'fleet_company.type as fleetCompanyType',
+                DB::raw('COUNT(DISTINCT fleet.code) as totalFleet'),
+                DB::raw('COUNT(DISTINCT maintenance.code) as totalMaintenance'),
+                DB::raw('COALESCE(SUM(maintenance_detail.qty), 0) as totalQty'),
+                DB::raw('COALESCE(SUM(maintenance_detail.price * maintenance_detail.qty), 0) as totalCost'),
+            ])
+            ->join('fleet', function ($join) {
+                $join->on('fleet.code', '=', 'maintenance.fleetCode')
+                    ->whereNull('fleet.deleted_at');
+            })
+            ->join('fleet_company', function ($join) {
+                $join->on('fleet_company.code', '=', 'fleet.fleetCompanyCode')
+                    ->whereNull('fleet_company.deleted_at');
+            })
+            ->leftJoin('maintenance_detail', function ($join) {
+                $join->on('maintenance_detail.maintenanceCode', '=', 'maintenance.code')
+                    ->whereNull('maintenance_detail.deleted_at');
+            })
+            ->leftJoin('item', function ($join) {
+                $join->on('item.code', '=', 'maintenance_detail.itemCode')
+                    ->whereNull('item.deleted_at');
+            })
+            ->where('maintenance.status', 0)
+            ->whereNull('maintenance.deleted_at')
+            ->whereRaw("LOWER(TRIM(COALESCE(fleet_company.type, ''))) = ?", ['internal'])
+            ->groupBy('fleet_company.code', 'fleet_company.name', 'fleet_company.type')
+            ->orderBy('fleet_company.name');
+
+        if ($request->filled('fleetCompanyCode')) {
+            $data->where('fleet_company.code', $request->fleetCompanyCode);
+        }
+
+        $this->applyDateFilter($data, $request->startDate, $request->endDate);
+
+        return $data;
     }
 }

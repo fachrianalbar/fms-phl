@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class OrderController extends Controller
@@ -435,61 +436,65 @@ class OrderController extends Controller
         return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
     }
 
+    private function filteredOrderQuery(Request $request)
+    {
+        $data = $this->service->datatable();
+
+        // Filter untuk role non-SPRADMIN/SPRUSER hanya tampilkan status 0, 1, 2
+        $isAuthorized = in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']);
+
+        // Pengecualian: User dengan nama/username mengandung "putri" atau "devi" hanya bisa melihat status 0, 1, 2
+        $userName = strtolower(Auth::user()->name ?? '');
+        $userUsername = strtolower(Auth::user()->username ?? '');
+        if (str_contains($userName, 'putri') || str_contains($userName, 'devi') ||
+            str_contains($userUsername, 'putri') || str_contains($userUsername, 'devi')) {
+            $isAuthorized = false;
+        }
+
+        if (! $isAuthorized) {
+            $data->whereIn('status', [0, 1, 2]);
+        }
+
+        if ($request->filled('plateNumber')) {
+            $data = $data->wherePlateNumberLike($request->plateNumber);
+        }
+
+        if ($request->filled('driverName')) {
+            $data = $data->whereDriverNameLike($request->driverName);
+        }
+
+        // Definisikan kolom filter dengan alias
+        $filters = [
+            'customer_name' => $request->customerName,
+            'fleetType_name' => $request->fleetTypeName,
+            'shipmentNumber' => $request->shipmentNumber,
+            // 'origin' => $request->origin,
+            'destination' => $request->destination,
+            'orderTypeCode' => $request->orderTypeCode,
+        ];
+
+        // Hubungkan alias ke relasi dan kolom yang sesuai
+        $relations = [
+            'customer_name' => 'customer.name',
+            'fleetType_name' => 'fleet.type.name',
+            // 'origin' => 'route.originLocation.name',
+            'destination' => 'route.destinationLocation.name',
+        ];
+
+        $dateFilters = [
+            'orderDate' => [
+                'start' => $request->startDate,
+                'end' => $request->endDate,
+            ],
+        ];
+
+        return FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+    }
+
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            // Filter untuk role non-SPRADMIN/SPRUSER hanya tampilkan status 0, 1, 2
-            $isAuthorized = in_array(Auth::user()->roleCode, ['SPRADMIN', 'SPRUSER']);
-
-            // Pengecualian: User dengan nama/username mengandung "putri" atau "devi" hanya bisa melihat status 0, 1, 2
-            $userName = strtolower(Auth::user()->name ?? '');
-            $userUsername = strtolower(Auth::user()->username ?? '');
-            if (str_contains($userName, 'putri') || str_contains($userName, 'devi') || 
-                str_contains($userUsername, 'putri') || str_contains($userUsername, 'devi')) {
-                $isAuthorized = false;
-            }
-
-            if (! $isAuthorized) {
-                $data->whereIn('status', [0, 1, 2]);
-            }
-
-            if ($request->filled('plateNumber')) {
-                $data = $data->wherePlateNumberLike($request->plateNumber);
-            }
-
-            if ($request->filled('driverName')) {
-                $data = $data->whereDriverNameLike($request->driverName);
-            }
-
-            // Definisikan kolom filter dengan alias
-            $filters = [
-                'customer_name' => $request->customerName,
-                'fleetType_name' => $request->fleetTypeName,
-                'shipmentNumber' => $request->shipmentNumber,
-                // 'origin' => $request->origin,
-                'destination' => $request->destination,
-                'orderTypeCode' => $request->orderTypeCode,
-
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [
-                'customer_name' => 'customer.name',
-                'fleetType_name' => 'fleet.type.name',
-                // 'origin' => 'route.originLocation.name',
-                'destination' => 'route.destinationLocation.name',
-            ];
-
-            $dateFilters = [
-                'orderDate' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->filteredOrderQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -869,6 +874,68 @@ class OrderController extends Controller
     public function excelOrder(Request $request)
     {
         return Excel::download(new OrderReport($request), 'Order-Report.xlsx');
+    }
+
+    public function pdfOrder(Request $request)
+    {
+        $orders = $this->filteredOrderQuery($request)->get();
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view('operational.order.report.order-pdf', [
+            'orders' => $orders,
+            'title' => $this->title,
+            'filterSummary' => $this->buildPdfFilterSummary($request),
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Order-Report-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function buildPdfFilterSummary(Request $request): array
+    {
+        $summary = [];
+
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $summary[] = 'Periode Order: '.$start.' s/d '.$end;
+        }
+        if ($request->filled('plateNumber')) {
+            $summary[] = 'No. Polisi: '.$request->plateNumber;
+        }
+        if ($request->filled('driverName')) {
+            $summary[] = 'Supir: '.$request->driverName;
+        }
+        if ($request->filled('customerName')) {
+            $summary[] = 'Customer: '.$request->customerName;
+        }
+        if ($request->filled('fleetTypeName')) {
+            $summary[] = 'Tipe Armada: '.$request->fleetTypeName;
+        }
+        if ($request->filled('shipmentNumber')) {
+            $summary[] = 'Shipment No: '.$request->shipmentNumber;
+        }
+        if ($request->filled('orderTypeCode')) {
+            $summary[] = 'Tipe Order: '.$request->orderTypeCode;
+        }
+        if ($request->filled('destination')) {
+            $summary[] = 'Tujuan: '.$request->destination;
+        }
+
+        return $summary;
     }
 
     public function deleteCost($id)

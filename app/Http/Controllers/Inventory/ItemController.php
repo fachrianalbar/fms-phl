@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Inventory;
 
-use App\Helpers\FilterHelper;
+use App\Exports\ItemExport;
 use App\Http\Controllers\Controller;
-use App\Models\inventory\Item;
+use App\Models\Inventory\Item;
+use App\Models\Inventory\ItemCategory;
+use App\Models\Master\Unit;
 use App\Services\Inventory\ItemCategoryService;
 use App\Services\Inventory\ItemService;
 use App\Services\Inventory\SupplierService;
@@ -15,6 +17,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class ItemController extends Controller
@@ -57,11 +61,17 @@ class ItemController extends Controller
     public function index()
     {
         $items = Item::orderBy('code', 'asc')->get();
+        $categories = $this->categorySvc->findAll();
+        $units = $this->unitSvc->findAllInventory();
+        $types = Item::types();
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('title', $this->title)
-            ->with('items', $items);
+            ->with('items', $items)
+            ->with('categories', $categories)
+            ->with('units', $units)
+            ->with('types', $types);
     }
 
     /**
@@ -330,21 +340,7 @@ class ItemController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
-
-            // Definisikan kolom filter dengan alias
-            // Pakai nama kolom yang ter-qualify karena sorting relasi membuat query
-            // melakukan left join ke tabel `unit` (kolom `code` jadi ambigu).
-            $filters = [
-                'item.code' => $request->itemCode,
-            ];
-
-            // Hubungkan alias ke relasi dan kolom yang sesuai
-            $relations = [];
-
-            $dateFilters = [];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->filteredQuery($request);
 
             return DataTables::of($data)
                 ->addIndexColumn()
@@ -496,5 +492,81 @@ class ItemController extends Controller
         }
 
         return is_numeric($value) ? (float) $value : null;
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new ItemExport($this->filteredQuery($request)->orderBy('item.code', 'asc')),
+            'Data-Barang-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $items = $this->filteredQuery($request)->orderBy('item.code', 'asc')->get();
+
+        $filterSummary = [];
+        if ($request->filled('itemCode')) {
+            $itemName = Item::query()->where('code', $request->itemCode)->value('name');
+            $filterSummary[] = 'Barang: '.$request->itemCode.($itemName ? ' - '.$itemName : '');
+        }
+        if ($request->filled('categoryCode')) {
+            $catName = ItemCategory::query()->where('code', $request->categoryCode)->value('name');
+            $filterSummary[] = 'Kategori: '.($catName ?: $request->categoryCode);
+        }
+        if ($request->filled('unitCode')) {
+            $unitName = Unit::query()->where('code', $request->unitCode)->value('name');
+            $filterSummary[] = 'Satuan: '.($unitName ?: $request->unitCode);
+        }
+        if ($request->filled('type')) {
+            $filterSummary[] = 'Tipe: '.(Item::types()[$request->type] ?? $request->type);
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($this->view.'report.items-pdf', [
+            'items' => $items,
+            'title' => 'Laporan Master Barang',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Data-Barang-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = $this->service->findAll();
+
+        if ($request->filled('itemCode')) {
+            $query->where('item.code', $request->itemCode);
+        }
+
+        if ($request->filled('categoryCode')) {
+            $query->where('item.categoryCode', $request->categoryCode);
+        }
+
+        if ($request->filled('unitCode')) {
+            $query->where('item.unitCode', $request->unitCode);
+        }
+
+        if ($request->filled('type')) {
+            $query->where('item.type', $request->type);
+        }
+
+        return $query;
     }
 }

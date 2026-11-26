@@ -71,7 +71,15 @@
                     </p>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <a href="{{ route('bank.user-bank.export-excel') }}" target="_blank" id="export-excel"
+                    class="btn btn-icon btn-sm bg-success-subtle text-success" data-bs-toggle="tooltip" title="Export Excel">
+                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                </a>
+                <a href="{{ route('bank.user-bank.export-pdf') }}" target="_blank" id="export-pdf"
+                    class="btn btn-icon btn-sm bg-danger-subtle text-danger" data-bs-toggle="tooltip" title="Export PDF">
+                    <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                </a>
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" id="btn-refresh-table" title="Muat Ulang Data Tabel">
                     <i class="mdi mdi-refresh me-1" id="refresh-icon"></i> Refresh
                 </button>
@@ -196,6 +204,67 @@
                 </div>
             </div>
             <div class="card-body p-3">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#userBankFilterCollapse" aria-expanded="false"
+                        aria-controls="userBankFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar bank pengguna</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="userBankFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterBankCode">Bank</label>
+                                        <select class="form-select select2-filter" name="bankCode" id="filterBankCode">
+                                            <option value="">Semua Bank</option>
+                                            @foreach ($bank ?? [] as $b)
+                                                <option value="{{ $b->code }}">{{ $b->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterType">Tipe Pemilik</label>
+                                        <select class="form-select select2-filter" name="type" id="filterType">
+                                            <option value="">Semua Tipe</option>
+                                            <option value="2">Perusahaan (Company)</option>
+                                            <option value="1">Pribadi (Person)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterRekeningType">Tipe Rekening</label>
+                                        <select class="form-select select2-filter" name="rekeningType" id="filterRekeningType">
+                                            <option value="">Semua Rekening</option>
+                                            <option value="internal">Internal</option>
+                                            <option value="external">External</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterKeyword">Nama Pemilik / No. Rekening</label>
+                                        <input class="form-control" name="keyword" id="filterKeyword" type="text"
+                                            placeholder="Cari nama pemilik / no. rekening..." autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    </div>
+                                    <div class="col-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button" id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="table-scroll-wrap custom-scrollbar">
                     <table class="table table-striped nowrap bank-table" id="dt">
                         <thead>
@@ -251,7 +320,7 @@
         let submissionInFlight = false;
 
         const urlStore = "{{ route($view . 'store') }}";
-        const urlUpdate = "{{ route($view . 'update', '') }}".replace(/\/+$/, ''); // strip trailing slash
+        const urlUpdate = "{{ route($view . 'update', '__ID__') }}".replace(/\/__ID__$/, '');
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
 
         // ==== HELPER ====
@@ -415,6 +484,39 @@
 
         // ==== DATATABLE ====
         $(document).ready(function() {
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            function getFilters() {
+                return {
+                    status: currentStatusFilter !== 'all' ? currentStatusFilter : '',
+                    bankCode: $('#filterBankCode').val() || '',
+                    type: $('#filterType').val() || '',
+                    rekeningType: $('#filterRekeningType').val() || '',
+                    keyword: $('#filterKeyword').val() || '',
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function(entry) {
+                    if (entry[1]) {
+                        params.set(entry[0], entry[1]);
+                    }
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('bank.user-bank.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('bank.user-bank.export-pdf') }}" + query);
+            }
+
+            function reloadWithFilters() {
+                syncExportUrls();
+                dataTableInstance.ajax.reload(null, true);
+            }
+
             dataTableInstance = $('#dt').DataTable({
                 "processing": true,
                 "serverSide": true,
@@ -425,6 +527,7 @@
                 "ajax": {
                     "url": "{{ route('dt.bank-user') }}",
                     "data": function(d) {
+                        Object.assign(d, getFilters());
                         d.status = currentStatusFilter;
                     }
                 },
@@ -468,7 +571,7 @@
                 $(this).addClass('active');
 
                 currentStatusFilter = $(this).data('status');
-                dataTableInstance.ajax.reload();
+                reloadWithFilters();
             });
 
             // KPI stat card click (filter trigger)
@@ -478,9 +581,23 @@
                     $('.filter-pill-btn').removeClass('active');
                     $('.filter-pill-btn[data-status="' + filter + '"]').addClass('active');
                     currentStatusFilter = filter;
-                    dataTableInstance.ajax.reload();
+                    reloadWithFilters();
                 }
             });
+
+            $('#btnFilter').on('click', reloadWithFilters);
+            $('#filterKeyword').on('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+            $('#btnResetFilter').on('click', function() {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                reloadWithFilters();
+            });
+            syncExportUrls();
 
             // Refresh button
             $('#btn-refresh-table').on('click', function() {

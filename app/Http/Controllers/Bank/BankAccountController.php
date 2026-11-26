@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Bank;
 
+use App\Exports\BankAccountExport;
 use App\Http\Controllers\Controller;
 use App\Services\Bank\BankAccountService;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class BankAccountController extends Controller
@@ -141,7 +144,7 @@ class BankAccountController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAll();
+            $data = $this->service->findAll($request->all());
 
             return Datatables::of($data)
                 ->addIndexColumn()
@@ -165,5 +168,58 @@ class BankAccountController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new BankAccountExport($request->all(), $this->service),
+            'Rekening-Bank-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $banks = $this->service->findAll($request->all());
+        $filterSummary = [];
+        if ($request->filled('bankCode')) {
+            $filterSummary[] = 'Kode Bank: '.$request->bankCode;
+        }
+        if ($request->filled('name')) {
+            $filterSummary[] = 'Nama Bank: '.$request->name;
+        }
+
+        return $this->renderLandscapePdf(
+            'bank.bank-account.report.bank-account-pdf',
+            [
+                'banks' => $banks,
+                'title' => 'Master Rekening Bank',
+                'filterSummary' => $filterSummary,
+                'printedAt' => now(),
+            ],
+            'Rekening-Bank-'.now()->format('YmdHis').'.pdf',
+            'P'
+        );
+    }
+
+    private function renderLandscapePdf(string $view, array $data, string $filename, string $orientation = 'L')
+    {
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => $orientation,
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($view, $data)->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
     }
 }

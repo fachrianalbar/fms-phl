@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\DriverSalaryExport;
 use App\Helpers\FilterHelper;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
@@ -19,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -495,21 +497,7 @@ class DriverSalaryController extends Controller
     public function datatableProcessed(Request $request)
     {
         if ($request->ajax()) {
-            $query = DriverSalary::with('driver');
-
-            if ($request->filled('filterDriverCode')) {
-                $query->where('driverCode', $request->filterDriverCode);
-            }
-
-            if ($request->filled('filterStartDate')) {
-                $query->whereDate('startDate', '>=', $request->filterStartDate);
-            }
-
-            if ($request->filled('filterEndDate')) {
-                $query->whereDate('endDate', '<=', $request->filterEndDate);
-            }
-
-            $query->orderBy('created_at', 'desc');
+            $query = $this->buildProcessedQuery($request);
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -945,5 +933,36 @@ class DriverSalaryController extends Controller
 
             return redirect()->route('report.driver-salary.index')->with('fail', 'Gagal sinkronisasi: ' . $th->getMessage());
         }
+    }
+
+    public function excelDriverSalary(Request $request)
+    {
+        return Excel::download(
+            new DriverSalaryExport($this->buildProcessedQuery($request)),
+            'Laporan-Gaji-Supir-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    private function buildProcessedQuery(Request $request)
+    {
+        $query = DriverSalary::with('driver');
+
+        $driverCode = $request->input('filterDriverCode') ?: $request->input('driverCode');
+        $startDate = $request->input('filterStartDate') ?: $request->input('startDate');
+        $endDate = $request->input('filterEndDate') ?: $request->input('endDate');
+
+        if (! empty($driverCode)) {
+            $query->where('driverCode', $driverCode);
+        }
+
+        if (! empty($startDate)) {
+            $query->whereDate('startDate', '>=', $startDate);
+        }
+
+        if (! empty($endDate)) {
+            $query->whereDate('endDate', '<=', $endDate);
+        }
+
+        return $query->orderBy('created_at', 'desc');
     }
 }

@@ -28,6 +28,7 @@
             border-color: #2563eb;
             box-shadow: 0 8px 22px rgba(37, 99, 235, 0.15);
         }
+
         .purchase-table tbody td.text-end,
         .purchase-table tbody td.payment-money {
             font-variant-numeric: tabular-nums;
@@ -58,8 +59,17 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-                <a href="{{ route('report.supplier.index') }}" class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm"
-                    data-bs-toggle="tooltip" title="Laporan Pembelian Per Supplier">
+                <a href="{{ route('purchasing.purchase.export-excel') }}" target="_blank" id="export-excel"
+                    class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                </a>
+                <a href="{{ route('purchasing.purchase.export-pdf') }}" target="_blank" id="export-pdf"
+                    class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                    <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                </a>
+                <a href="{{ route('report.supplier.index') }}"
+                    class="btn btn-outline-info btn-sm rounded-pill px-3 shadow-sm" data-bs-toggle="tooltip"
+                    title="Laporan Pembelian Per Supplier">
                     <i class="mdi mdi-file-chart-outline me-1"></i> Laporan Supplier
                 </a>
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm"
@@ -159,47 +169,76 @@
 
         {{-- 6. Kartu container tabel: filter + tabel --}}
         <div class="table-container-card mb-4">
-            <div class="table-top-bar">
-                <form id="filterForm" class="row g-2 align-items-end">
-                    <div class="col-md-3">
-                        <label class="form-label mb-1 fs-12" for="code">{{ __('menu_purchase.purchase_code') }}</label>
-                        <input class="form-control form-control-sm" name="code" type="text"
-                            placeholder="Kode pembelian">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label mb-1 fs-12" for="supplierCode">Supplier</label>
-                        <select class="form-select form-select-sm" name="supplierCode"
-                            id="supplierCode">
-                            <option value="">Semua Supplier</option>
-                            @foreach ($supplier as $item)
-                                <option value="{{ $item->code }}">{{ $item->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 fs-12" for="startDate">Dari Tanggal</label>
-                        <input class="form-control form-control-sm" name="startDate" type="date">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label mb-1 fs-12" for="endDate">Sampai Tanggal</label>
-                        <input class="form-control form-control-sm" name="endDate" type="date">
-                    </div>
-                    <div class="col-md-2 d-flex gap-2">
-                        <button class="btn btn-primary btn-sm flex-fill" type="submit">
-                            <i class="mdi mdi-magnify me-1"></i>Filter
-                        </button>
-                        <button class="btn btn-light btn-sm" type="button" id="btn-reset-filter" title="Reset filter">
-                            <i class="mdi mdi-refresh"></i>
-                        </button>
-                    </div>
-                </form>
-            </div>
+            <div class="card-body p-4">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#purchaseFilterCollapse" aria-expanded="false"
+                        aria-controls="purchaseFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar pembelian (PO)</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
 
-            <div class="card-body p-3">
+                    <div class="collapse filter-collapse" id="purchaseFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label"
+                                            for="code">{{ __('menu_purchase.purchase_code') }}</label>
+                                        <input class="form-control" name="code" id="code" type="text"
+                                            placeholder="Kode pembelian">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="supplierCode">Supplier</label>
+                                        <select class="form-select select2-filter" name="supplierCode" id="supplierCode">
+                                            <option value="">Semua Supplier</option>
+                                            @foreach ($supplier as $item)
+                                                <option value="{{ $item->code }}">{{ $item->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="paymentStatus">Status Pembayaran</label>
+                                        <select class="form-select select2-filter" name="paymentStatus" id="paymentStatus">
+                                            <option value="">Semua Status</option>
+                                            <option value="Paid">Sudah Lunas</option>
+                                            <option value="unpaid">Belum Lunas</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-xl-9 col-md-6 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-muted fs-12 mb-3">
                     <i class="mdi mdi-information-outline me-1 text-primary"></i>
                     Daftar pembelian (PO). Klik kartu ringkasan di atas untuk memfilter berdasarkan status pembayaran,
-                    atau gunakan kolom filter untuk menyaring kode, supplier, dan tanggal.
+                    atau gunakan panel filter untuk menyaring kode, supplier, status, dan tanggal.
                 </div>
                 <div class="table-responsive custom-scrollbar">
                     <table class="table table-striped nowrap purchase-table" id="dt">
@@ -236,8 +275,8 @@
     <script src="{{ asset('assets/libs/datatables.net-select/js/dataTables.select.min.js') }}"></script>
 
     {{-- 2. SweetAlert2 DULU, sweetalert v1 KEDUA.
-         v1 dimuat terakhir → window.swal = fungsi v1 (alur tunggal),
-         Swal = class v2 (batch/loader). --}}
+    v1 dimuat terakhir → window.swal = fungsi v1 (alur tunggal),
+    Swal = class v2 (batch/loader). --}}
     <script src="{{ asset('assets/js/sweet-alert/sweetalert2.min.js') }}"></script>
     <script src="{{ asset('assets/js/sweet-alert/sweetalert.min.js') }}"></script>
 
@@ -254,8 +293,52 @@
         // ==== STATE GLOBAL ====
         let dataTableInstance;
         let currentStatusFilter = '';
+        let filterStartPicker;
+        let filterEndPicker;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                }
+            });
+
+            function getFilters() {
+                return {
+                    code: $('#code').val() || '',
+                    supplierCode: $('#supplierCode').val() || '',
+                    paymentStatus: $('#paymentStatus').val() || currentStatusFilter || '',
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('purchasing.purchase.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('purchasing.purchase.export-pdf') }}" + query);
+            }
+
             // ==== DATATABLE ====
             dataTableInstance = $('#dt').DataTable({
                 "processing": true,
@@ -266,58 +349,54 @@
                 "pageLength": 25,
                 "ajax": {
                     "url": "{{ route('dt.purchase') }}",
-                    "data": function(d) {
-                        d.code = $('input[name="code"]').val();
-                        d.supplierCode = $('select[name="supplierCode"]').val();
-                        d.startDate = $('input[name="startDate"]').val();
-                        d.endDate = $('input[name="endDate"]').val();
-                        d.paymentStatus = currentStatusFilter;
+                    "data": function (d) {
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [{
-                        "data": 'action',
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false
-                    },
-                    {
-                        "data": 'DT_RowIndex',
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false
-                    },
-                    {
-                        "data": 'code',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'purchaseDate',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'dueDate',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'supplier.name',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'totalPrice',
-                        "className": 'text-end align-middle payment-money'
-                    },
-                    {
-                        "data": 'paymentStatusHtml',
-                        "className": 'text-center align-middle'
-                    }
+                    "data": 'action',
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": 'DT_RowIndex',
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": 'code',
+                    "className": 'align-middle'
+                },
+                {
+                    "data": 'purchaseDate',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'dueDate',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'supplier.name',
+                    "className": 'align-middle'
+                },
+                {
+                    "data": 'totalPrice',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
+                    "data": 'paymentStatusHtml',
+                    "className": 'text-center align-middle'
+                }
                 ],
                 "order": [
                     [3, 'desc']
                 ],
-                "drawCallback": function() {
+                "drawCallback": function () {
                     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
                         [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-                            .map(function(el) {
+                            .map(function (el) {
                                 return new bootstrap.Tooltip(el);
                             });
                     }
@@ -337,51 +416,74 @@
                 }
             });
 
+            function reloadWithFilters() {
+                syncExportUrls();
+                dataTableInstance.ajax.reload(null, true);
+            }
+
             // ==== FILTER ====
-            $('#filterForm').on('submit', function(e) {
-                e.preventDefault();
-                dataTableInstance.ajax.reload();
+            $('#btnFilter').on('click', function () {
+                currentStatusFilter = $('#paymentStatus').val() || '';
+                $('.stat-card').removeClass('is-active');
+                $('.stat-card[data-filter="' + (currentStatusFilter || 'all') + '"]').first().addClass('is-active');
+                reloadWithFilters();
             });
 
-            $('#btn-reset-filter').on('click', function() {
-                $('#filterForm')[0].reset();
-                $('#supplierCode').val('').trigger('change');
-                dataTableInstance.ajax.reload();
+            $('#code').on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+
+            $('#btnResetFilter').on('click', function () {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                currentStatusFilter = '';
+                $('.stat-card').removeClass('is-active');
+                $('.stat-card[data-filter="all"]').first().addClass('is-active');
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
             });
 
             // ==== KPI CARD → FILTER STATUS ====
-            $('.stat-card').on('click', function() {
+            $('.stat-card').on('click', function () {
                 const filter = $(this).data('filter') || 'all';
                 currentStatusFilter = (filter === 'all') ? '' : filter;
+                $('#paymentStatus').val(currentStatusFilter).trigger('change');
 
                 $('.stat-card').removeClass('is-active');
                 $(this).addClass('is-active');
 
-                dataTableInstance.ajax.reload();
+                reloadWithFilters();
             });
 
             // ==== REFRESH ====
-            $('#btn-refresh-table').on('click', function() {
+            $('#btn-refresh-table').on('click', function () {
                 const icon = $('#refresh-icon');
                 icon.addClass('mdi-spin');
-                dataTableInstance.ajax.reload(function() {
-                    setTimeout(function() {
+                dataTableInstance.ajax.reload(function () {
+                    setTimeout(function () {
                         icon.removeClass('mdi-spin');
                     }, 400);
                 });
             });
 
-            // ==== SELECT2 (filter supplier + length DataTables) ====
-            $('#supplierCode').select2({
-                width: '100%',
-                dropdownAutoWidth: true,
-            });
-
+            // ==== SELECT2 (length DataTables) ====
             $('#dt_wrapper .dataTables_length select').select2({
                 minimumResultsForSearch: Infinity,
                 width: '88px',
                 dropdownAutoWidth: true,
             });
+
+            syncExportUrls();
         });
 
         // ==== HAPUS DATA ====

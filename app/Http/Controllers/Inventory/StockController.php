@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Exports\StockExport;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Item;
@@ -10,6 +11,7 @@ use App\Models\StockTransaction;
 use App\Services\Inventory\WarehouseService;
 use App\Services\MenuService;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -37,17 +39,23 @@ class StockController extends Controller
     public function index()
     {
         $warehouse = $this->warehouseSvc->findAll();
+        $items = Item::query()->orderBy('code', 'asc')->get(['code', 'name']);
 
         return view($this->view.'index')
             ->with('view', $this->view)
             ->with('warehouse', $warehouse)
+            ->with('items', $items)
             ->with('title', $this->title);
     }
 
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $query = $this->stockSummaryQuery();
+            $query = $this->stockSummaryQuery(
+                $request->warehouseCode,
+                $request->itemCode,
+                $request->stockStatus
+            );
 
             return DataTables::of($query)
                 ->addIndexColumn()
@@ -158,19 +166,45 @@ class StockController extends Controller
         ]);
     }
 
+    public function excelStock(Request $request)
+    {
+        $stocks = $this->stockSummaryQuery(
+            $request->warehouseCode,
+            $request->itemCode,
+            $request->stockStatus
+        )->get()->map(function ($row) {
+            $row->itemName = $row->item->name ?? '-';
+            $row->warehouseName = $row->warehouse->name ?? $row->warehouseCode;
+
+            return $row;
+        });
+
+        return Excel::download(
+            new StockExport($stocks),
+            'Stok-Barang-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
     public function pdfStock(Request $request)
     {
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
         $mpdf = new Mpdf(
             [
                 'orientation' => 'P',
                 'format' => 'A4',
-                'tempDir' => storage_path('app/mpdf-temp'),
+                'tempDir' => $tempDir,
             ]
         );
 
         $warehouseCode = $request->warehouseCode;
+        $itemCode = $request->itemCode;
+        $stockStatus = $request->stockStatus;
 
-        $stocks = $this->stockSummaryQuery($warehouseCode)
+        $stocks = $this->stockSummaryQuery($warehouseCode, $itemCode, $stockStatus)
             ->get()
             ->map(function ($row) {
                 $row->itemName = $row->item->name ?? '-';
@@ -179,19 +213,38 @@ class StockController extends Controller
                 return $row;
             });
 
+        $filterSummary = [];
+        if ($warehouseCode) {
+            $whName = Warehouse::query()->where('code', $warehouseCode)->value('name');
+            $filterSummary[] = 'Gudang: '.($whName ?: $warehouseCode);
+        }
+        if ($itemCode) {
+            $itemName = Item::query()->where('code', $itemCode)->value('name');
+            $filterSummary[] = 'Barang: '.$itemCode.($itemName ? ' - '.$itemName : '');
+        }
+        if ($stockStatus === 'available') {
+            $filterSummary[] = 'Status Stok: Tersedia (> 0)';
+        } elseif ($stockStatus === 'empty') {
+            $filterSummary[] = 'Status Stok: Habis / Minus (<= 0)';
+        }
+
         $reportData = [
             'stocks' => $stocks,
+            'filterSummary' => $filterSummary,
         ];
 
         $mpdf->WriteHTML(
             view($this->view.'report.stock-pdf')
                 ->with('reportData', $reportData)
+                ->render()
         );
 
-        return $mpdf->Output('Laporan Stock.pdf', 'I');
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Laporan-Stock-'.now()->format('YmdHis').'.pdf"');
     }
 
-    private function stockSummaryQuery(?string $warehouseCode = null)
+    private function stockSummaryQuery(?string $warehouseCode = null, ?string $itemCode = null, ?string $stockStatus = null)
     {
         $query = StockTransaction::query()
             ->select('itemCode', 'warehouseCode')
@@ -207,6 +260,16 @@ class StockController extends Controller
 
         if ($warehouseCode) {
             $query->where('warehouseCode', $warehouseCode);
+        }
+
+        if ($itemCode) {
+            $query->where('itemCode', $itemCode);
+        }
+
+        if ($stockStatus === 'available') {
+            $query->havingRaw('(COALESCE(SUM(qtyIn), 0) - COALESCE(SUM(qtyOut), 0)) > 0');
+        } elseif ($stockStatus === 'empty') {
+            $query->havingRaw('(COALESCE(SUM(qtyIn), 0) - COALESCE(SUM(qtyOut), 0)) <= 0');
         }
 
         return $query;

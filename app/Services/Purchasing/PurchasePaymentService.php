@@ -75,6 +75,13 @@ class PurchasePaymentService
      */
     public static function effectiveDueDateSql(): string
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return 'COALESCE('
+                ."CASE WHEN CAST(strftime('%Y', purchase.dueDate) AS INTEGER) BETWEEN 2020 AND 2030 THEN date(purchase.dueDate) END,"
+                ."CASE WHEN CAST(strftime('%Y', purchase.date) AS INTEGER) BETWEEN 1000 AND 9999 THEN date(purchase.date) END,"
+                .'CURRENT_DATE)';
+        }
+
         return 'COALESCE('
             .'CASE WHEN YEAR(purchase.dueDate) BETWEEN 2020 AND 2030 THEN DATE(purchase.dueDate) END,'
             .'CASE WHEN YEAR(purchase.date) BETWEEN 1000 AND 9999 THEN DATE(purchase.date) END,'
@@ -97,6 +104,33 @@ class PurchasePaymentService
             ->orderBy('time', 'desc');
     }
 
+    public function filteredUnpaid(array $filters)
+    {
+        $query = $this->datatableUnpaid();
+
+        if (! empty($filters['code'])) {
+            $query->where('purchase.code', 'like', '%'.$filters['code'].'%');
+        }
+
+        if (! empty($filters['supplierCode'])) {
+            $query->where('purchase.supplierCode', $filters['supplierCode']);
+        }
+
+        if (in_array($filters['paymentStatus'] ?? '', ['Unpaid', 'Partial'], true)) {
+            $query->where('purchase.paymentStatus', $filters['paymentStatus']);
+        }
+
+        if (! empty($filters['startDate'])) {
+            $query->whereDate('purchase.date', '>=', $filters['startDate']);
+        }
+
+        if (! empty($filters['endDate'])) {
+            $query->whereDate('purchase.date', '<=', $filters['endDate']);
+        }
+
+        return $query;
+    }
+
     public function datatablePaid()
     {
         return $this->service->newQuery()->with([
@@ -111,6 +145,29 @@ class PurchasePaymentService
             ->orderBy('paymentDate', 'desc')
             ->orderBy('date', 'desc')
             ->orderBy('time', 'desc');
+    }
+
+    public function filteredPaid(array $filters)
+    {
+        $query = $this->datatablePaid();
+
+        if (! empty($filters['code'])) {
+            $query->where('purchase.code', 'like', '%'.$filters['code'].'%');
+        }
+
+        if (! empty($filters['supplierCode'])) {
+            $query->where('purchase.supplierCode', $filters['supplierCode']);
+        }
+
+        if (! empty($filters['startDate'])) {
+            $query->whereDate('purchase.date', '>=', $filters['startDate']);
+        }
+
+        if (! empty($filters['endDate'])) {
+            $query->whereDate('purchase.date', '<=', $filters['endDate']);
+        }
+
+        return $query;
     }
 
     /**
@@ -147,16 +204,39 @@ class PurchasePaymentService
      */
     public function unpaidBySupplier()
     {
+        return $this->filteredUnpaidBySupplier([]);
+    }
+
+    public function filteredUnpaidBySupplier(array $filters)
+    {
         $detailSums = DB::table('purchase_detail')
             ->whereNull('deleted_at')
             ->groupBy('purchaseCode')
             ->selectRaw('purchaseCode, SUM(price * COALESCE(qty, receivedQty)) as detail_sum');
 
-        return $this->service->newQuery()
+        $query = $this->service->newQuery()
             ->join('supplier', 'supplier.code', '=', 'purchase.supplierCode')
             ->leftJoinSub($detailSums, 'ds', 'ds.purchaseCode', '=', 'purchase.code')
             ->where('purchase.paymentStatus', '!=', 'Paid')
-            ->whereNull('supplier.deleted_at')
+            ->whereNull('supplier.deleted_at');
+
+        if (! empty($filters['supplierCode'])) {
+            $query->where('purchase.supplierCode', $filters['supplierCode']);
+        }
+
+        if (in_array($filters['paymentStatus'] ?? '', ['Unpaid', 'Partial'], true)) {
+            $query->where('purchase.paymentStatus', $filters['paymentStatus']);
+        }
+
+        if (! empty($filters['startDate'])) {
+            $query->whereDate('purchase.date', '>=', $filters['startDate']);
+        }
+
+        if (! empty($filters['endDate'])) {
+            $query->whereDate('purchase.date', '<=', $filters['endDate']);
+        }
+
+        return $query
             ->groupBy('purchase.supplierCode', 'supplier.name')
             ->selectRaw('purchase.supplierCode as supplierCode')
             ->selectRaw('supplier.name as supplierName')

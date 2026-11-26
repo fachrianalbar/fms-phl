@@ -15,15 +15,18 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::middleware(['access:SPRADMIN,SPRUSER,TRL250604212202'])->group(function () {
         Route::resource('profit-loss', ProfitLossController::class)->only(['index', 'show']);
         Route::get('excel-profit-loss', [ProfitLossController::class, 'excelProfitLoss'])->name('profit-loss.excel-profit-loss');
+        Route::get('pdf-profit-loss', [ProfitLossController::class, 'pdfProfitLoss'])->name('profit-loss.pdf-profit-loss');
     });
     Route::resource('driver-salary', DriverSalaryController::class)->except(['create']);
     Route::post('driver-salary/sync-existing-status', [DriverSalaryController::class, 'syncExistingStatus'])->name('driver-salary.sync-existing-status');
+    Route::get('excel-driver-salary', [DriverSalaryController::class, 'excelDriverSalary'])->name('driver-salary.excel-driver-salary');
     Route::get('pdf-driver-salary', [DriverSalaryController::class, 'pdfDriverSalary'])->name('driver-salary.pdf-driver-salary');
     Route::get('pdf-driver-salary-processed/{id}', [DriverSalaryController::class, 'pdfDriverSalaryProcessed'])->name('driver-salary.pdf-processed');
 
     Route::post('commission/order-payment-date', [CommissionReportController::class, 'updateOrderPaymentDate'])->name('commission.order-payment-date');
     Route::resource('commission', CommissionReportController::class)->except(['create']);
     Route::post('commission/{id}/payment-date', [CommissionReportController::class, 'updatePaymentDate'])->name('commission.payment-date');
+    Route::get('excel-commission', [CommissionReportController::class, 'excelCommission'])->name('commission.excel-commission');
     Route::get('pdf-commission', [CommissionReportController::class, 'pdfByDate'])->name('commission.pdf-by-date');
     Route::get('pdf-commission-processed/{id}', [CommissionReportController::class, 'pdfProcessed'])->name('commission.pdf-processed');
 
@@ -44,6 +47,8 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('pdf-maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'pdfMaintenanceFleetDetail'])->name('maintenance-fleet.pdf-maintenance-fleet-detail');
     Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'index'])->name('maintenance-company-internal.index');
     Route::get('maintenance-company-internal/detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'detail'])->name('maintenance-company-internal.detail');
+    Route::get('excel-maintenance-company-internal', [MaintenancePerCompanyController::class, 'excelMaintenanceCompany'])->name('maintenance-company-internal.excel');
+    Route::get('pdf-maintenance-company-internal', [MaintenancePerCompanyController::class, 'pdfMaintenanceCompany'])->name('maintenance-company-internal.pdf');
     Route::get('supplier', [SupplierPurchaseController::class, 'index'])->name('supplier.index');
     Route::get('supplier/detail/{supplierCode}', [SupplierPurchaseController::class, 'detail'])->name('supplier.detail');
     Route::get('excel-supplier', [SupplierPurchaseController::class, 'excelSupplier'])->name('supplier.excel-supplier');

@@ -17,9 +17,22 @@ class BankAccountService
         $this->service = $bankAccount;
     }
 
-    public function findAll()
+    public function findAll(array $filters = [])
     {
-        return $this->service->orderBy('name')->get();
+        $query = $this->service->newQuery();
+
+        $bankCode = trim((string) ($filters['bankCode'] ?? ''));
+        $name = trim((string) ($filters['name'] ?? ''));
+
+        if ($bankCode !== '') {
+            $query->where('bankCode', 'like', "%{$bankCode}%");
+        }
+
+        if ($name !== '') {
+            $query->where('name', 'like', "%{$name}%");
+        }
+
+        return $query->orderBy('name')->get();
     }
 
     public function getById($id)

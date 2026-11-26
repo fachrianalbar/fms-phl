@@ -27,16 +27,18 @@
         #dt tbody tr {
             cursor: pointer;
         }
+
         #dt tbody tr td:first-child {
             cursor: default;
         }
 
         /* ── Modal Pembayaran Batch (PHL Modal Standard §11) ──
-           Perbaikan scroll: <form> pembungkus header/body/footer dibuat flex-column
-           agar .modal-body benar-benar menjadi area scroll dan tidak terpotong. */
+               Perbaikan scroll: <form> pembungkus header/body/footer dibuat flex-column
+               agar .modal-body benar-benar menjadi area scroll dan tidak terpotong. */
         #batch-payment-modal .modal-dialog {
             margin: 1.75rem auto;
         }
+
         #batch-payment-modal .modal-content {
             max-height: calc(100vh - 3.5rem);
             overflow: hidden;
@@ -44,7 +46,8 @@
             border-radius: 16px;
             box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
         }
-        #batch-payment-modal .modal-content > form {
+
+        #batch-payment-modal .modal-content>form {
             display: flex;
             flex: 1 1 auto;
             flex-direction: column;
@@ -52,15 +55,18 @@
             max-height: 100%;
             overflow: hidden;
         }
+
         #batch-payment-modal .modal-header,
         #batch-payment-modal .modal-footer {
             flex-shrink: 0;
         }
+
         #batch-payment-modal .modal-header {
             align-items: center;
             gap: 12px;
             border-bottom: 1px solid #e2e8f0;
         }
+
         #batch-payment-modal .batch-payment-icon {
             align-items: center;
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
@@ -74,16 +80,19 @@
             justify-content: center;
             width: 40px;
         }
+
         #batch-payment-modal .modal-title {
             font-size: 16px;
             font-weight: 700;
         }
+
         #batch-payment-modal .modal-body {
             flex: 1 1 auto;
             min-height: 0;
             overflow-y: auto;
             padding: 20px 22px;
         }
+
         #batch-payment-modal .modal-footer {
             background: #f8fafc;
             border-top: 1px solid #e2e8f0;
@@ -91,14 +100,17 @@
             gap: 12px;
             padding: 14px 22px;
         }
+
         #batch-payment-modal .table-responsive {
             background: #ffffff;
             border: 1px solid #e2e8f0;
             border-radius: 12px;
         }
+
         #batch-payment-modal .payment-allocation-table {
             margin-bottom: 0;
         }
+
         #batch-payment-modal fieldset legend {
             border: 0;
         }
@@ -108,18 +120,22 @@
             background-color: var(--bs-card-bg);
             border-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] #batch-payment-modal .modal-header {
             background-color: var(--bs-card-bg);
             border-bottom-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] #batch-payment-modal .modal-body {
             background-color: var(--bs-card-bg);
             color: var(--bs-body-color);
         }
+
         html[data-bs-theme="dark"] #batch-payment-modal .modal-footer {
             background-color: var(--bs-secondary-bg);
             border-top-color: var(--bs-border-color);
         }
+
         html[data-bs-theme="dark"] #batch-payment-modal .table-responsive {
             background-color: var(--bs-card-bg);
             border-color: var(--bs-border-color);
@@ -150,13 +166,24 @@
                 </div>
             </div>
             <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('purchasing.purchase-payment.unpaid.export-excel', ['supplierCode' => $supplier->code ?? '']) }}"
+                    target="_blank" id="export-excel" class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip"
+                    title="Export Excel">
+                    <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                </a>
+                <a href="{{ route('purchasing.purchase-payment.unpaid.export-pdf', ['supplierCode' => $supplier->code ?? '']) }}"
+                    target="_blank" id="export-pdf" class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip"
+                    title="Export PDF">
+                    <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                </a>
                 @if (isset($supplier))
                     <a href="{{ route('purchasing.purchase-payment.index') }}"
                         class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
                         <i class="mdi mdi-arrow-left me-1"></i>Rekap Supplier
                     </a>
                 @endif
-                <a href="{{ route('purchasing.purchase-payment.paid') }}" class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm">
+                <a href="{{ route('purchasing.purchase-payment.paid') }}"
+                    class="btn btn-outline-success btn-sm rounded-pill px-3 shadow-sm">
                     <i class="mdi mdi-cash-check me-1"></i>Hutang Lunas
                 </a>
                 <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm"
@@ -235,7 +262,8 @@
                         <div>
                             <div class="stat-label">Total Sisa Hutang</div>
                             <div class="stat-value text-dark">
-                                <span class="fs-16">Rp</span> {{ number_format($stats['totalRemaining'] ?? 0, 0, ',', '.') }}
+                                <span class="fs-16">Rp</span>
+                                {{ number_format($stats['totalRemaining'] ?? 0, 0, ',', '.') }}
                             </div>
                         </div>
                         <div class="stat-icon-wrapper bg-danger-subtle text-danger">
@@ -293,6 +321,62 @@
             </div>
 
             <div class="card-body p-3">
+                <div class="filter-card">
+                    <button type="button" class="filter-card-header" data-bs-toggle="collapse"
+                        data-bs-target="#purchaseUnpaidFilterCollapse" aria-expanded="false"
+                        aria-controls="purchaseUnpaidFilterCollapse">
+                        <span class="filter-card-heading">
+                            <i class="mdi mdi-filter-variant"></i>
+                            <strong>Filter Data</strong>
+                            <small>Gunakan filter untuk mempersempit daftar PO hutang belum lunas</small>
+                        </span>
+                        <i class="mdi mdi-chevron-down filter-card-chevron"></i>
+                    </button>
+
+                    <div class="collapse filter-collapse" id="purchaseUnpaidFilterCollapse">
+                        <div class="filter-collapse-body">
+                            <div id="filterForm">
+                                <div class="row g-3">
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterCode">Kode Pembelian</label>
+                                        <input class="form-control" name="code" id="filterCode" type="text"
+                                            placeholder="Cari kode PO">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="filterPaymentStatus">Status Hutang</label>
+                                        <select class="form-select select2-filter" name="paymentStatus"
+                                            id="filterPaymentStatus">
+                                            <option value="">Semua Status</option>
+                                            <option value="Unpaid">Belum Bayar</option>
+                                            <option value="Partial">Belum Lunas (DP)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="startDate">Dari Tanggal PO</label>
+                                        <input class="form-control filter-control" name="startDate" id="startDate"
+                                            type="text" placeholder="Pilih tanggal mulai">
+                                    </div>
+                                    <div class="col-xl-3 col-md-6">
+                                        <label class="filter-label" for="endDate">Sampai Tanggal PO</label>
+                                        <input class="form-control filter-control" name="endDate" id="endDate" type="text"
+                                            placeholder="Pilih tanggal akhir">
+                                    </div>
+                                    <div class="col-12 d-flex align-items-end justify-content-md-end gap-2">
+                                        <button class="btn btn-filter-primary flex-grow-1 flex-md-grow-0" type="button"
+                                            id="btnFilter">
+                                            <i class="mdi mdi-filter-outline"></i> Terapkan Filter
+                                        </button>
+                                        <button class="btn btn-filter-reset" type="button" id="btnResetFilter"
+                                            data-bs-toggle="tooltip" title="Reset Filter">
+                                            <i class="mdi mdi-refresh"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="text-muted fs-12 mb-2">
                     <i class="mdi mdi-information-outline me-1 text-primary"></i>
                     Centang beberapa pembelian lalu klik <strong>Bayar Terpilih</strong> untuk membayarnya dalam
@@ -337,12 +421,12 @@
     </div>
 
     {{-- Batch payment modal --}}
-    <div class="modal fade" id="batch-payment-modal" tabindex="-1"
-        aria-labelledby="batchPaymentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="batch-payment-modal" tabindex="-1" aria-labelledby="batchPaymentModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
-                <form id="batch-payment-form" action="{{ route('purchasing.purchase-payment.batch.store') }}"
-                    method="POST" autocomplete="off">
+                <form id="batch-payment-form" action="{{ route('purchasing.purchase-payment.batch.store') }}" method="POST"
+                    autocomplete="off">
                     @csrf
                     <div class="modal-header">
                         <div class="d-flex align-items-center gap-3">
@@ -351,7 +435,8 @@
                             </span>
                             <div>
                                 <h5 class="modal-title mb-0" id="batchPaymentModalLabel">Bayar Hutang Supplier</h5>
-                                <small class="text-muted">Satu transaksi dapat melunasi beberapa pembelian sekaligus.</small>
+                                <small class="text-muted">Satu transaksi dapat melunasi beberapa pembelian
+                                    sekaligus.</small>
                             </div>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
@@ -365,13 +450,15 @@
                                 <label for="batchPaymentModeFull"><i class="mdi mdi-check-all me-1"></i>Lunasi Semua</label>
                                 <input type="radio" class="btn-check" name="paymentMode" id="batchPaymentModeCustom"
                                     value="custom">
-                                <label for="batchPaymentModeCustom"><i class="mdi mdi-pencil-outline me-1"></i>Nominal Manual</label>
+                                <label for="batchPaymentModeCustom"><i class="mdi mdi-pencil-outline me-1"></i>Nominal
+                                    Manual</label>
                             </div>
                         </fieldset>
 
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h6 class="fw-bold mb-0">Rincian Alokasi</h6>
-                            <span class="badge bg-primary-subtle text-primary" id="batchPaymentAllocationCount">0 pembelian</span>
+                            <span class="badge bg-primary-subtle text-primary" id="batchPaymentAllocationCount">0
+                                pembelian</span>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-sm payment-allocation-table align-middle mb-0">
@@ -419,7 +506,8 @@
                         <div class="payment-total-block text-start">
                             <span class="text-muted fs-12 d-block">Total Pembayaran</span>
                             <strong class="text-success" id="batchPaymentGrandTotal">Rp 0</strong>
-                            <small class="text-muted d-block" id="batchPaymentAfterSummary">Sisa setelah pembayaran: Rp 0</small>
+                            <small class="text-muted d-block" id="batchPaymentAfterSummary">Sisa setelah pembayaran: Rp
+                                0</small>
                         </div>
                         <div class="d-flex gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Tutup</button>
@@ -465,6 +553,8 @@
         // =====================================================================
         let dt;
         let currentStatusFilter = 'all';
+        let filterStartPicker;
+        let filterEndPicker;
         const selectedPayments = {}; // code -> { code, supplier, remaining }
         let batchRequestKey = null;
         let batchInFlight = false;
@@ -483,14 +573,14 @@
         }
 
         function escapeHtml(value) {
-            return String(value == null ? '' : value).replace(/[&<>"']/g, function(character) {
+            return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
                 return {
                     '&': '&amp;',
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;',
                     "'": '&#39;'
-                } [character];
+                }[character];
             });
         }
 
@@ -504,7 +594,7 @@
             if (window.crypto && typeof window.crypto.randomUUID === 'function') {
                 return window.crypto.randomUUID();
             }
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(character) {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (character) {
                 const random = Math.floor(Math.random() * 16);
                 const value = character === 'x' ? random : (random & 0x3) | 0x8;
                 return value.toString(16);
@@ -518,7 +608,7 @@
                 allowOutsideClick: false,
                 allowEscapeKey: false,
                 showConfirmButton: false,
-                didOpen: function() {
+                didOpen: function () {
                     Swal.showLoading();
                 },
             });
@@ -545,7 +635,7 @@
         function updateSelectionUI() {
             const items = selectedItems();
             const count = items.length;
-            const totalRemaining = items.reduce(function(sum, item) {
+            const totalRemaining = items.reduce(function (sum, item) {
                 return sum + (Number(item.remaining) || 0);
             }, 0);
 
@@ -557,7 +647,7 @@
         }
 
         function restoreSelectedCheckboxes() {
-            $('.row-payment-checkbox').each(function() {
+            $('.row-payment-checkbox').each(function () {
                 const checkbox = $(this);
                 const code = String(checkbox.attr('data-code') || '');
                 const isSelected = !!selectedPayments[code];
@@ -567,7 +657,7 @@
         }
 
         function clearSelection() {
-            Object.keys(selectedPayments).forEach(function(key) {
+            Object.keys(selectedPayments).forEach(function (key) {
                 delete selectedPayments[key];
             });
             $('.row-payment-checkbox').prop('checked', false).closest('tr').removeClass('table-active');
@@ -586,10 +676,10 @@
          */
         function resolveTransferBank(items) {
             const codes = items
-                .map(function(item) {
+                .map(function (item) {
                     return String(item.transferBankCode || '');
                 })
-                .filter(function(code) {
+                .filter(function (code) {
                     return code !== '';
                 });
 
@@ -597,7 +687,7 @@
                 return null;
             }
 
-            const unique = codes.filter(function(code, index) {
+            const unique = codes.filter(function (code, index) {
                 return codes.indexOf(code) === index;
             });
 
@@ -605,7 +695,7 @@
                 return null;
             }
 
-            const optionExists = $('#batchUserBankCode option').filter(function() {
+            const optionExists = $('#batchUserBankCode option').filter(function () {
                 return $(this).val() === unique[0];
             }).length > 0;
 
@@ -622,11 +712,11 @@
         function renderBatchAllocations() {
             const body = $('#batchPaymentAllocationBody').empty();
             const fullPayment = $('#batchPaymentModeFull').is(':checked');
-            const items = selectedItems().slice().sort(function(first, second) {
+            const items = selectedItems().slice().sort(function (first, second) {
                 return String(first.code).localeCompare(String(second.code));
             });
 
-            items.forEach(function(item) {
+            items.forEach(function (item) {
                 if (fullPayment || item.allocationAmount === undefined) {
                     item.allocationAmount = item.remaining;
                 }
@@ -645,11 +735,11 @@
                 }
                 const fleetCell = $('<td>');
                 if (item.fleetPlate && item.fleetPlate !== '-') {
-                    const plates = item.fleetPlate.split(',').map(function(p) {
+                    const plates = item.fleetPlate.split(',').map(function (p) {
                         return p.trim();
                     }).filter(Boolean);
                     if (plates.length > 0) {
-                        plates.forEach(function(plate, idx) {
+                        plates.forEach(function (plate, idx) {
                             if (idx > 0) fleetCell.append(' ');
                             fleetCell.append($('<span>', {
                                 class: 'badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11'
@@ -674,17 +764,17 @@
                     class: 'text-end payment-money'
                 }).text(formatCurrency(item.remaining));
                 const input = $('<input>', {
-                        type: 'text',
-                        inputmode: 'numeric',
-                        autocomplete: 'off',
-                        class: 'form-control form-control-sm allocation-amount-input',
-                    })
+                    type: 'text',
+                    inputmode: 'numeric',
+                    autocomplete: 'off',
+                    class: 'form-control form-control-sm allocation-amount-input',
+                })
                     .attr('data-code', item.code)
                     .prop('readonly', fullPayment)
                     .val(formatNumber(item.allocationAmount));
                 const inputGroup = $('<div>', {
-                        class: 'input-group input-group-sm'
-                    })
+                    class: 'input-group input-group-sm'
+                })
                     .append($('<span>', {
                         class: 'input-group-text'
                     }).text('Rp'))
@@ -723,12 +813,12 @@
             let totalAfter = 0;
             let firstError = '';
 
-            items.forEach(function(item) {
+            items.forEach(function (item) {
                 item.allocationAmount = Math.round(Number(item.allocationAmount) || 0);
                 totalPayment += item.allocationAmount;
                 totalAfter += Math.max(0, item.remaining - item.allocationAmount);
 
-                const row = $('#batchPaymentAllocationBody tr').filter(function() {
+                const row = $('#batchPaymentAllocationBody tr').filter(function () {
                     return $(this).attr('data-code') === item.code;
                 });
                 const error = allocationValidation(item);
@@ -776,13 +866,13 @@
         function applyBatchMode() {
             const fullPayment = $('#batchPaymentModeFull').is(':checked');
 
-            selectedItems().forEach(function(item) {
+            selectedItems().forEach(function (item) {
                 if (fullPayment) {
                     item.allocationAmount = item.remaining;
                 }
             });
 
-            $('.allocation-amount-input').each(function() {
+            $('.allocation-amount-input').each(function () {
                 const input = $(this);
                 const item = selectedPayments[String(input.attr('data-code') || '')];
                 input.prop('readonly', fullPayment);
@@ -818,7 +908,7 @@
             }
 
             batchRequestKey = generateRequestKey();
-            items.forEach(function(item) {
+            items.forEach(function (item) {
                 item.allocationAmount = item.remaining;
             });
             $('#batchPaymentModeFull').prop('checked', true);
@@ -841,7 +931,50 @@
         // =====================================================================
         // INIT
         // =====================================================================
-        $(document).ready(function() {
+        $(document).ready(function () {
+            $('.select2-filter').select2({
+                placeholder: 'Semua pilihan',
+                allowClear: true,
+                width: '100%'
+            });
+
+            filterStartPicker = flatpickr('#startDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterEndPicker) filterEndPicker.set('minDate', dateStr || null);
+                }
+            });
+
+            filterEndPicker = flatpickr('#endDate', {
+                dateFormat: 'Y-m-d',
+                allowInput: true,
+                onChange: function (selectedDates, dateStr) {
+                    if (filterStartPicker) filterStartPicker.set('maxDate', dateStr || null);
+                }
+            });
+
+            function getFilters() {
+                const statusVal = $('#filterPaymentStatus').val() || (currentStatusFilter === 'all' ? '' : currentStatusFilter);
+                return {
+                    supplierCode: @json($supplier->code ?? ''),
+                    code: $('#filterCode').val() || '',
+                    paymentStatus: statusVal,
+                    startDate: $('#startDate').val() || '',
+                    endDate: $('#endDate').val() || ''
+                };
+            }
+
+            function syncExportUrls() {
+                const params = new URLSearchParams();
+                Object.entries(getFilters()).forEach(function (entry) {
+                    if (entry[1]) params.set(entry[0], entry[1]);
+                });
+                const query = params.toString() ? '?' + params.toString() : '';
+                $('#export-excel').attr('href', "{{ route('purchasing.purchase-payment.unpaid.export-excel') }}" + query);
+                $('#export-pdf').attr('href', "{{ route('purchasing.purchase-payment.unpaid.export-pdf') }}" + query);
+            }
+
             dt = $('#dt').DataTable({
                 "processing": true,
                 "serverSide": true,
@@ -851,110 +984,109 @@
                 "pageLength": 25,
                 "ajax": {
                     "url": "{{ route('dt.purchase-payment.unpaid') }}",
-                    "data": function(d) {
-                        d.paymentStatus = currentStatusFilter === 'all' ? '' : currentStatusFilter;
-                        d.supplierCode = @json($supplier->code ?? '');
+                    "data": function (d) {
+                        Object.assign(d, getFilters());
                     }
                 },
                 "columns": [{
-                        "data": null,
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false,
-                        "render": function(data, type, row) {
-                            const supplier = (row.supplier && row.supplier.name) ? row.supplier.name : '';
-                            const remaining = (row.remainingRaw != null) ? row.remainingRaw : 0;
-                            const disabled = remaining < 1 ? ' disabled' : '';
-                            const title = remaining < 1 ? ' title="Tidak ada tagihan"' : '';
-                            const transferBank = row.transferBank || null;
-                            const transferBankCode = transferBank ? String(transferBank.code || '') : '';
-                            const transferBankLabel = transferBank
-                                ? [transferBank.bank, transferBank.accountNumber, transferBank.accountName]
-                                    .filter(Boolean).join(' · ')
-                                : '';
-                            return '<input class="form-check-input row-payment-checkbox" type="checkbox"' +
-                                disabled + title +
-                                ' data-code="' + escapeHtml(row.code) + '"' +
-                                ' data-supplier="' + escapeHtml(supplier) + '"' +
-                                ' data-remaining="' + remaining + '"' +
-                                ' data-transfer-bank="' + escapeHtml(transferBankCode) + '"' +
-                                ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '"' +
-                                ' data-fleet-plate="' + escapeHtml(row.fleetPlate || '-') + '">';
-                        }
-                    },
-                    {
-                        "data": 'DT_RowIndex',
-                        "className": 'text-center align-middle',
-                        "orderable": false,
-                        "searchable": false
-                    },
-                    {
-                        "data": 'code',
-                        "className": 'align-middle'
-                    },
-                    {
-                        "data": 'purchaseDate',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'dueDateHtml',
-                        "className": 'align-middle text-center'
-                    },
-                    {
-                        "data": 'fleetPlate',
-                        "name": 'fleetPlate',
-                        "className": 'align-middle',
-                        "orderable": false,
-                        "searchable": true,
-                        "render": function(data) {
-                            if (!data || data === '-') {
-                                return '<span class="text-muted">-</span>';
-                            }
-                            const plates = String(data).split(',').map(function(p) {
-                                return p.trim();
-                            }).filter(Boolean);
-                            if (plates.length === 0) {
-                                return '<span class="text-muted">-</span>';
-                            }
-                            return plates.map(function(plate) {
-                                return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
-                            }).join(' ');
-                        }
-                    },
-                    {
-                        "data": 'supplier.name',
-                        "name": 'supplierName',
-                        "className": 'align-middle',
-                        "visible": {{ isset($supplier) ? 'false' : 'true' }}
-                    },
-                    {
-                        "data": 'totalPrice',
-                        "className": 'text-end align-middle payment-money'
-                    },
-                    {
-                        "data": 'paidAmount',
-                        "className": 'text-end align-middle payment-money'
-                    },
-                    {
-                        "data": 'remaining',
-                        "className": 'text-end align-middle payment-money fw-semibold text-danger'
-                    },
-                    {
-                        "data": 'paymentStatusHtml',
-                        "className": 'text-center align-middle'
+                    "data": null,
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false,
+                    "render": function (data, type, row) {
+                        const supplier = (row.supplier && row.supplier.name) ? row.supplier.name : '';
+                        const remaining = (row.remainingRaw != null) ? row.remainingRaw : 0;
+                        const disabled = remaining < 1 ? ' disabled' : '';
+                        const title = remaining < 1 ? ' title="Tidak ada tagihan"' : '';
+                        const transferBank = row.transferBank || null;
+                        const transferBankCode = transferBank ? String(transferBank.code || '') : '';
+                        const transferBankLabel = transferBank
+                            ? [transferBank.bank, transferBank.accountNumber, transferBank.accountName]
+                                .filter(Boolean).join(' · ')
+                            : '';
+                        return '<input class="form-check-input row-payment-checkbox" type="checkbox"' +
+                            disabled + title +
+                            ' data-code="' + escapeHtml(row.code) + '"' +
+                            ' data-supplier="' + escapeHtml(supplier) + '"' +
+                            ' data-remaining="' + remaining + '"' +
+                            ' data-transfer-bank="' + escapeHtml(transferBankCode) + '"' +
+                            ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '"' +
+                            ' data-fleet-plate="' + escapeHtml(row.fleetPlate || '-') + '">';
                     }
+                },
+                {
+                    "data": 'DT_RowIndex',
+                    "className": 'text-center align-middle',
+                    "orderable": false,
+                    "searchable": false
+                },
+                {
+                    "data": 'code',
+                    "className": 'align-middle'
+                },
+                {
+                    "data": 'purchaseDate',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'dueDateHtml',
+                    "className": 'align-middle text-center'
+                },
+                {
+                    "data": 'fleetPlate',
+                    "name": 'fleetPlate',
+                    "className": 'align-middle',
+                    "orderable": false,
+                    "searchable": true,
+                    "render": function (data) {
+                        if (!data || data === '-') {
+                            return '<span class="text-muted">-</span>';
+                        }
+                        const plates = String(data).split(',').map(function (p) {
+                            return p.trim();
+                        }).filter(Boolean);
+                        if (plates.length === 0) {
+                            return '<span class="text-muted">-</span>';
+                        }
+                        return plates.map(function (plate) {
+                            return '<span class="badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11">' + escapeHtml(plate) + '</span>';
+                        }).join(' ');
+                    }
+                },
+                {
+                    "data": 'supplier.name',
+                    "name": 'supplierName',
+                    "className": 'align-middle',
+                    "visible": {{ isset($supplier) ? 'false' : 'true' }}
+                        },
+                {
+                    "data": 'totalPrice',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
+                    "data": 'paidAmount',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
+                    "data": 'remaining',
+                    "className": 'text-end align-middle payment-money fw-semibold text-danger'
+                },
+                {
+                    "data": 'paymentStatusHtml',
+                    "className": 'text-center align-middle'
+                }
                 ],
                 "order": [
                     [4, 'asc']
                 ],
-                "drawCallback": function() {
+                "drawCallback": function () {
                     restoreSelectedCheckboxes();
                     updateSelectionUI();
 
                     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
                         let tooltipTriggerList = [].slice.call(document.querySelectorAll(
                             '[data-bs-toggle="tooltip"]'));
-                        tooltipTriggerList.map(function(el) {
+                        tooltipTriggerList.map(function (el) {
                             return new bootstrap.Tooltip(el);
                         });
                     }
@@ -974,40 +1106,80 @@
                 }
             });
 
+            function reloadWithFilters() {
+                syncExportUrls();
+                dt.ajax.reload(null, true);
+            }
+
+            $('#btnFilter').on('click', function () {
+                const selectedStatus = $('#filterPaymentStatus').val() || 'all';
+                currentStatusFilter = selectedStatus;
+                $('.filter-pill-btn').removeClass('active');
+                $('.filter-pill-btn[data-status="' + selectedStatus + '"]').addClass('active');
+                reloadWithFilters();
+            });
+
+            $('#filterCode').on('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    reloadWithFilters();
+                }
+            });
+
+            $('#btnResetFilter').on('click', function () {
+                $('#filterForm').find('input').val('');
+                $('.select2-filter').val('').trigger('change');
+                currentStatusFilter = 'all';
+                $('.filter-pill-btn').removeClass('active');
+                $('.filter-pill-btn[data-status="all"]').addClass('active');
+                if (filterStartPicker) {
+                    filterStartPicker.clear();
+                    filterStartPicker.set('maxDate', null);
+                }
+                if (filterEndPicker) {
+                    filterEndPicker.clear();
+                    filterEndPicker.set('minDate', null);
+                }
+                reloadWithFilters();
+            });
+
             // Filter pills
-            $('.filter-pill-btn').on('click', function() {
+            $('.filter-pill-btn').on('click', function () {
                 $('.filter-pill-btn').removeClass('active');
                 $(this).addClass('active');
                 currentStatusFilter = $(this).data('status');
-                dt.ajax.reload();
+                $('#filterPaymentStatus').val(currentStatusFilter === 'all' ? '' : currentStatusFilter).trigger('change');
+                reloadWithFilters();
             });
 
             // KPI card click → filter
-            $('.stat-card').on('click', function() {
+            $('.stat-card').on('click', function () {
                 const filter = $(this).data('filter');
                 if (filter) {
+                    const mappedStatus = filter === 'unpaid' ? 'Unpaid' : (filter === 'partial' ? 'Partial' : 'all');
                     $('.filter-pill-btn').removeClass('active');
-                    $('.filter-pill-btn[data-status="' + filter + '"]').addClass('active');
-                    currentStatusFilter = filter;
-                    dt.ajax.reload();
+                    $('.filter-pill-btn[data-status="' + mappedStatus + '"]').addClass('active');
+                    currentStatusFilter = mappedStatus;
+                    $('#filterPaymentStatus').val(mappedStatus === 'all' ? '' : mappedStatus).trigger('change');
+                    reloadWithFilters();
                 }
             });
 
             // Refresh
-            $('#btn-refresh-table').on('click', function() {
+            $('#btn-refresh-table').on('click', function () {
                 const icon = $('#refresh-icon');
                 icon.addClass('mdi-spin');
-                dt.ajax.reload(function() {
-                    setTimeout(function() {
+                dt.ajax.reload(function () {
+                    setTimeout(function () {
                         icon.removeClass('mdi-spin');
                     }, 400);
                 });
             });
 
             // Check all
-            $('#check-all').on('change', function() {
+            $('#check-all').on('change', function () {
                 const isChecked = $(this).is(':checked');
-                $('.row-payment-checkbox:visible:not(:disabled)').each(function() {
+                $('.row-payment-checkbox:visible:not(:disabled)').each(function () {
                     if ($(this).is(':checked') !== isChecked) {
                         $(this).prop('checked', isChecked).trigger('change');
                     }
@@ -1015,7 +1187,7 @@
             });
 
             // Row checkbox
-            $(document).on('change', '.row-payment-checkbox', function() {
+            $(document).on('change', '.row-payment-checkbox', function () {
                 const checkbox = $(this);
                 const item = readRowCheckbox(checkbox);
 
@@ -1038,7 +1210,7 @@
             $('#btn-batch-pay').on('click', openBatchPaymentModal);
 
             // Klik baris → buka modal detail (kecuali kolom checkbox / elemen interaktif).
-            $(document).on('click', '#dt tbody tr', function(event) {
+            $(document).on('click', '#dt tbody tr', function (event) {
                 if ($(event.target).closest('input, button, a, select, .row-payment-checkbox').length) {
                     return;
                 }
@@ -1054,7 +1226,7 @@
             $('input[name="paymentMode"]').on('change', applyBatchMode);
 
             // Input nominal alokasi
-            $(document).on('input', '.allocation-amount-input', function() {
+            $(document).on('input', '.allocation-amount-input', function () {
                 const input = $(this);
                 const code = String(input.attr('data-code') || '');
                 const item = selectedPayments[code];
@@ -1068,12 +1240,12 @@
             });
 
             $('#batchDate, #batchUserBankCode').on('change', updateBatchSummary);
-            $('#batchDescription').on('input', function() {
+            $('#batchDescription').on('input', function () {
                 $('#batchDescriptionCount').text(String($(this).val()).length + '/255');
             });
 
             // Submit batch
-            $('#batch-payment-form').on('submit', function(event) {
+            $('#batch-payment-form').on('submit', function (event) {
                 event.preventDefault();
                 updateBatchSummary();
 
@@ -1083,7 +1255,7 @@
 
                 const payload = {
                     requestKey: batchRequestKey,
-                    payments: selectedItems().map(function(item) {
+                    payments: selectedItems().map(function (item) {
                         return {
                             purchase_code: item.code,
                             amount: Math.round(Number(item.allocationAmount) || 0),
@@ -1095,7 +1267,7 @@
                     description: $('#batchDescription').val().trim(),
                 };
 
-                const totalPayment = payload.payments.reduce(function(sum, payment) {
+                const totalPayment = payload.payments.reduce(function (sum, payment) {
                     return sum + payment.amount;
                 }, 0);
                 const selectedBankText = $('#batchUserBankCode option:selected').text();
@@ -1111,7 +1283,7 @@
                     confirmButtonText: 'Ya, Proses Pembayaran',
                     cancelButtonText: 'Periksa Lagi',
                     confirmButtonColor: '#198754',
-                }).then(function(result) {
+                }).then(function (result) {
                     if (!result.isConfirmed) {
                         return;
                     }
@@ -1131,7 +1303,7 @@
                             'X-Requested-With': 'XMLHttpRequest',
                             'X-CSRF-TOKEN': $('#batch-payment-form input[name="_token"]').val(),
                         },
-                        success: function(response) {
+                        success: function (response) {
                             Swal.close();
                             setBatchSubmitting(false);
                             $('#batch-payment-modal').modal('hide');
@@ -1141,7 +1313,7 @@
                                 ' pembelian lunas' + ((result.partial_count || 0) > 0 ? ' · ' +
                                     result.partial_count + ' pembelian masih sebagian' : '');
                             const successHtml = '<strong>' + escapeHtml(formatCurrency(result
-                                    .payment_amount || 0)) + '</strong> berhasil dicatat.<br>' +
+                                .payment_amount || 0)) + '</strong> berhasil dicatat.<br>' +
                                 escapeHtml(outcome) + '<br>Kode: <strong>' + escapeHtml(result
                                     .batch_code || '-') + '</strong>';
 
@@ -1151,11 +1323,11 @@
                                 icon: 'success',
                                 confirmButtonText: 'Lihat Daftar Terbaru',
                                 confirmButtonColor: '#198754',
-                            }).then(function() {
+                            }).then(function () {
                                 window.location.reload();
                             });
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             Swal.close();
                             setBatchSubmitting(false);
 
@@ -1193,6 +1365,7 @@
             });
 
             updateSelectionUI();
+            syncExportUrls();
         });
     </script>
 @endpush

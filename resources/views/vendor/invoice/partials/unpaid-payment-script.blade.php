@@ -645,6 +645,57 @@
     }
 
     $(document).ready(function() {
+        let filterStartPicker;
+        let filterEndPicker;
+
+        $('.select2-filter').select2({
+            placeholder: 'Semua pilihan',
+            allowClear: true,
+            width: '100%'
+        });
+
+        filterStartPicker = flatpickr('#startDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterEndPicker) {
+                    filterEndPicker.set('minDate', dateStr || null);
+                }
+            }
+        });
+
+        filterEndPicker = flatpickr('#endDate', {
+            dateFormat: 'Y-m-d',
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                if (filterStartPicker) {
+                    filterStartPicker.set('maxDate', dateStr || null);
+                }
+            }
+        });
+
+        function getFilters() {
+            return {
+                startDate: $('#startDate').val() || '',
+                endDate: $('#endDate').val() || '',
+                fleetCompanyCode: $('#fleetCompanyCode').val() || '',
+                companyCode: $('#companyCode').val() || '',
+                notaNumber: ($('#notaNumber').val() || '').trim(),
+            };
+        }
+
+        function syncExportUrls() {
+            const params = new URLSearchParams();
+            Object.entries(getFilters()).forEach(function(entry) {
+                if (entry[1]) {
+                    params.set(entry[0], entry[1]);
+                }
+            });
+            const query = params.toString() ? '?' + params.toString() : '';
+            $('#export-excel').attr('href', "{{ $isPartial ? route('vendor.invoice.partial.export-excel') : route('vendor.invoice.unpaid.export-excel') }}" + query);
+            $('#export-pdf').attr('href', "{{ $isPartial ? route('vendor.invoice.partial.export-pdf') : route('vendor.invoice.unpaid.export-pdf') }}" + query);
+        }
+
         vendorPaymentTable = $('#dtUnpaid').DataTable({
             processing: true,
             serverSide: true,
@@ -652,6 +703,9 @@
             pageLength: 25,
             ajax: {
                 url: "{{ $isPartial ? route('dt.vendor-invoice.partial') : route('dt.vendor-invoice.unpaid') }}",
+                data: function(d) {
+                    Object.assign(d, getFilters());
+                }
             },
             columns: [
                 { data: 'select', className: 'text-center', responsivePriority: 1 },
@@ -918,6 +972,33 @@
             });
         });
 
+        function reloadWithFilters() {
+            syncExportUrls();
+            vendorPaymentTable.ajax.reload(null, true);
+        }
+
+        $('#btnFilter').on('click', reloadWithFilters);
+        $('#notaNumber').on('keydown', function(event) {
+            if (event.key === 'Enter' && !event.isComposing) {
+                event.preventDefault();
+                reloadWithFilters();
+            }
+        });
+        $('#btnResetFilter').on('click', function() {
+            $('#filterForm').find('input').val('');
+            $('.select2-filter').val('').trigger('change');
+            if (filterStartPicker) {
+                filterStartPicker.clear();
+                filterStartPicker.set('maxDate', null);
+            }
+            if (filterEndPicker) {
+                filterEndPicker.clear();
+                filterEndPicker.set('minDate', null);
+            }
+            reloadWithFilters();
+        });
+
+        syncExportUrls();
         updateSelectionSummary();
     });
 </script>

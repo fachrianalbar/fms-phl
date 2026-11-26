@@ -12,12 +12,18 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
 
     // 2. Unpaid Invoice
     Route::get('unpaid', [InvoiceController::class, 'indexUnpaid'])->name('unpaid');
+    Route::get('unpaid/export/excel', [InvoiceController::class, 'exportUnpaidExcel'])->name('unpaid.export-excel');
+    Route::get('unpaid/export/pdf', [InvoiceController::class, 'exportUnpaidPdf'])->name('unpaid.export-pdf');
 
     // 3. Partially Paid Invoice
     Route::get('partial', [InvoiceController::class, 'indexPartial'])->name('partial');
+    Route::get('partial/export/excel', [InvoiceController::class, 'exportPartialExcel'])->name('partial.export-excel');
+    Route::get('partial/export/pdf', [InvoiceController::class, 'exportPartialPdf'])->name('partial.export-pdf');
 
     // 4. Paid Invoice
     Route::get('paid', [InvoiceController::class, 'indexPaid'])->name('paid');
+    Route::get('paid/export/excel', [InvoiceController::class, 'exportPaidExcel'])->name('paid.export-excel');
+    Route::get('paid/export/pdf', [InvoiceController::class, 'exportPaidPdf'])->name('paid.export-pdf');
 
     // Invoice Operations
     Route::get('{id}/edit', [InvoiceController::class, 'edit'])->name('edit');
@@ -46,6 +52,8 @@ Route::prefix('invoice')->name('invoice.')->group(function () {
         Route::get('/', [InvoicePaymentTransactionController::class, 'index'])->name('index');
         Route::get('create', [InvoicePaymentTransactionController::class, 'create'])->name('create');
         Route::post('/', [InvoicePaymentTransactionController::class, 'store'])->name('store');
+        Route::get('export/excel', [InvoicePaymentTransactionController::class, 'exportExcel'])->name('export-excel');
+        Route::get('export/pdf', [InvoicePaymentTransactionController::class, 'exportPdf'])->name('export-pdf');
         Route::get('{id}', [InvoicePaymentTransactionController::class, 'show'])->name('show');
         Route::get('customer/{customerCode}/invoices', [InvoicePaymentTransactionController::class, 'customerInvoices'])->name('customer-invoices');
     });

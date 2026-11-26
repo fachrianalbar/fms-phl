@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Inventory;
 
+use App\Exports\ItemUnitExport;
 use App\Http\Controllers\Controller;
+use App\Models\Master\Unit;
 use App\Services\Master\UnitService;
 use App\Services\MenuService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class ItemUnitController extends Controller
@@ -136,10 +141,13 @@ class ItemUnitController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->findAllInventory();
+            $data = $this->filteredQuery($request);
 
             return Datatables::of($data)
                 ->addIndexColumn()
+                ->filterColumn('DT_RowIndex', function ($query, $keyword) {
+                    return $query;
+                })
                 ->addColumn('action', function ($row) {
                     $btn = '<td>
         <a href="'.route($this->view.'edit', $row->id).'"
@@ -160,5 +168,74 @@ class ItemUnitController extends Controller
                 ->rawColumns(['action'])
                 ->toJson();
         }
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new ItemUnitExport($this->filteredQuery($request)),
+            'Satuan-Barang-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $units = $this->filteredQuery($request)->get();
+
+        $filterSummary = [];
+        if ($request->filled('keyword')) {
+            $filterSummary[] = 'Kata Kunci: '.$request->keyword;
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode Dibuat: '.$start.' s/d '.$end;
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'P',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($this->view.'report.item-unit-pdf', [
+            'units' => $units,
+            'title' => 'Laporan Satuan Barang',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Satuan-Barang-'.now()->format('YmdHis').'.pdf"');
+    }
+
+    private function filteredQuery(Request $request)
+    {
+        $query = Unit::query()->where('type', 'Inventory')->orderBy('code', 'asc');
+
+        if ($request->filled('keyword')) {
+            $keyword = strtolower(trim((string) $request->keyword));
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('LOWER(code) LIKE ?', ['%'.$keyword.'%'])
+                    ->orWhereRaw('LOWER(name) LIKE ?', ['%'.$keyword.'%']);
+            });
+        }
+
+        if ($request->filled('startDate')) {
+            $query->whereDate('created_at', '>=', $request->startDate);
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('created_at', '<=', $request->endDate);
+        }
+
+        return $query;
     }
 }

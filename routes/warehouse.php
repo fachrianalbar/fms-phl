@@ -5,6 +5,7 @@ use App\Http\Controllers\Warehouse\MaintenanceDetailController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('warehouse')->name('warehouse.')->group(function () {
+    Route::get('maintenance/export-excel', [MaintenanceController::class, 'exportExcel'])->name('maintenance.export-excel');
     Route::resource('maintenance', MaintenanceController::class);
     Route::resource('maintenance-detail', MaintenanceDetailController::class)->only(['store', 'update']);
     Route::delete('maintenance-detail/{id}', [MaintenanceController::class, 'deleteMaintenanceDetail'])->name('maintenance-detail.destroy');

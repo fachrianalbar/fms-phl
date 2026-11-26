@@ -94,25 +94,58 @@ class InvoiceService
         ]);
     }
 
-    public function findUnpaid()
+    private function applyListingFilters(Builder $query, array $filters = []): Builder
     {
-        return $this->invoiceListingQuery('unpaid')
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $companyCode = trim((string) ($filters['companyCode'] ?? ''));
+        $invoiceNumber = trim((string) ($filters['invoiceNumber'] ?? ''));
+
+        if ($startDate !== '') {
+            $query->whereDate('invoice.invoiceDate', '>=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $query->whereDate('invoice.invoiceDate', '<=', $endDate);
+        }
+
+        if ($customerCode !== '') {
+            $query->where('invoice.customerCode', $customerCode);
+        }
+
+        if ($companyCode !== '') {
+            $query->whereHas('customer', function ($q) use ($companyCode) {
+                $q->where('companyCode', $companyCode);
+            });
+        }
+
+        if ($invoiceNumber !== '') {
+            $query->where('invoice.invoiceNumber', 'like', "%{$invoiceNumber}%");
+        }
+
+        return $query;
+    }
+
+    public function findUnpaid(array $filters = [])
+    {
+        return $this->applyListingFilters($this->invoiceListingQuery('unpaid'), $filters)
             ->orderBy('invoiceDate', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
-    public function findPartial()
+    public function findPartial(array $filters = [])
     {
-        return $this->invoiceListingQuery('partial')
+        return $this->applyListingFilters($this->invoiceListingQuery('partial'), $filters)
             ->orderBy('invoiceDate', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
     }
 
-    public function findPaid()
+    public function findPaid(array $filters = [])
     {
-        return $this->invoiceListingQuery('paid')
+        return $this->applyListingFilters($this->invoiceListingQuery('paid'), $filters)
             ->orderBy('created_at', 'desc')
             ->get();
     }

@@ -223,6 +223,7 @@
                                     @foreach ($component as $comp)
                                         <option value="{{ $comp->code }}" 
                                             data-type="{{ $comp->type }}"
+                                            data-price="{{ $comp->price }}"
                                             data-is-salary="{{ ($comp->type === 'salary' || stripos($comp->name, 'gaji') !== false) ? '1' : '0' }}"
                                             {{ $item->componentType == $comp->code ? 'selected' : '' }}>
                                             {{ $comp->name }}
@@ -350,6 +351,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 driverPlaceholder.show();
                 driverSelect.val('').trigger('change.select2');
             }
+
+            // Auto-fill nominal from master cost component price when component is selected/changed
+            const masterPrice = selectedOpt.attr('data-price');
+            const nominalInput = row.find('input[name="internalCostNominal[]"]')[0];
+
+            if (nominalInput && masterPrice !== undefined && masterPrice !== null && masterPrice !== '') {
+                const numericPrice = Number(masterPrice);
+                if (Number.isFinite(numericPrice)) {
+                    nominalInput.value = String(Math.round(numericPrice));
+                    if (typeof formatAngka === 'function') {
+                        formatAngka(nominalInput);
+                    }
+                    calculateInternalCostTotal();
+                }
+            }
         });
     }
 
@@ -409,6 +425,7 @@ function addInternalCostRow() {
                 @foreach ($component as $item)
                     <option value="{{ $item->code }}"
                         data-type="{{ $item->type }}"
+                        data-price="{{ $item->price }}"
                         data-is-salary="{{ ($item->type === 'salary' || stripos($item->name, 'gaji') !== false) ? '1' : '0' }}">
                         {{ $item->name }}
                     </option>

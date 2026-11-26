@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Purchasing;
 
-use App\Helpers\FilterHelper;
+use App\Exports\DirectPurchaseExport;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Bank\UserBank;
 use App\Models\Inventory\Item;
+use App\Models\Inventory\Supplier;
+use App\Models\Master\Fleet;
 use App\Models\Purchasing\Purchase;
 use App\Services\Inventory\SupplierService;
 use App\Services\Inventory\WarehouseService;
@@ -20,6 +22,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
 class DirectPurchaseController extends Controller
@@ -360,24 +364,7 @@ class DirectPurchaseController extends Controller
     public function datatable(Request $request)
     {
         if ($request->ajax()) {
-            $data = $this->service->datatable();
-
-            $filters = [
-                'code' => $request->code,
-                'supplierCode' => $request->supplierCode,
-                'fleetCode' => $request->fleetCode,
-            ];
-
-            $relations = [];
-
-            $dateFilters = [
-                'date' => [
-                    'start' => $request->startDate,
-                    'end' => $request->endDate,
-                ],
-            ];
-
-            $data = FilterHelper::applyFilters($data, $filters, $relations, $dateFilters);
+            $data = $this->service->filteredDatatable($request->all());
 
             $search = $request->input('search.value');
             if (! empty($search)) {
@@ -488,5 +475,65 @@ class DirectPurchaseController extends Controller
         );
 
         return response()->json(['code' => $code]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        return Excel::download(
+            new DirectPurchaseExport($request->all(), $this->service),
+            'Pembelian-Langsung-'.now()->format('YmdHis').'.xlsx'
+        );
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $purchases = $this->service->filteredDatatable($request->all())->get();
+
+        $filterSummary = [];
+        if ($request->filled('fleetCode')) {
+            $plate = Fleet::query()->where('code', $request->fleetCode)->value('plateNumber');
+            $filterSummary[] = 'Armada: '.($plate ?: $request->fleetCode);
+        }
+        if ($request->filled('supplierCode')) {
+            $supplierName = Supplier::query()->where('code', $request->supplierCode)->value('name');
+            $filterSummary[] = 'Supplier: '.($supplierName ?: $request->supplierCode);
+        }
+        if ($request->filled('paymentStatus')) {
+            $statusLabel = match ($request->paymentStatus) {
+                'Paid' => 'Lunas',
+                'Partial' => 'Sebagian',
+                'Unpaid' => 'Belum Dibayar',
+                default => $request->paymentStatus,
+            };
+            $filterSummary[] = 'Status: '.$statusLabel;
+        }
+        if ($request->filled('startDate') || $request->filled('endDate')) {
+            $start = $request->filled('startDate') ? Carbon::parse($request->startDate)->format('d-m-Y') : 'Awal';
+            $end = $request->filled('endDate') ? Carbon::parse($request->endDate)->format('d-m-Y') : 'Sekarang';
+            $filterSummary[] = 'Periode: '.$start.' s/d '.$end;
+        }
+
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
+        $mpdf = new Mpdf([
+            'orientation' => 'L',
+            'format' => 'A4',
+            'tempDir' => $tempDir,
+            'default_font' => 'sans-serif',
+        ]);
+
+        $mpdf->WriteHTML(view($this->view.'report.direct-purchase-pdf', [
+            'purchases' => $purchases,
+            'title' => 'Laporan Pembelian Langsung',
+            'filterSummary' => $filterSummary,
+            'printedAt' => now(),
+        ])->render());
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Pembelian-Langsung-'.now()->format('YmdHis').'.pdf"');
     }
 }

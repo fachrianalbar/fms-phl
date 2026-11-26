@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Report;
 
+use App\Exports\CommissionReportExport;
 use App\Helpers\GenerateCode;
 use App\Http\Controllers\Controller;
 use App\Models\Master\CostComponent;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
 use Mpdf\Mpdf;
 use Yajra\DataTables\DataTables;
 
@@ -1257,5 +1259,13 @@ class CommissionReportController extends Controller
         $mpdf->WriteHTML($html);
 
         return $mpdf->Output($filename, 'I');
+    }
+
+    public function excelCommission(Request $request)
+    {
+        return Excel::download(
+            new CommissionReportExport($this->buildOrderCommissionFilterQuery($request)),
+            'Laporan-Komisi-'.now()->format('YmdHis').'.xlsx'
+        );
     }
 }

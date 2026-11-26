@@ -21,15 +21,23 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('direct-payment')->name('direct-payment.')->group(function () {
     // 1. Order Menunggu Nota (order standalone non-DO belum dibuat nota)
     Route::get('order/waiting', [DirectPaymentController::class, 'indexWaiting'])->name('order.waiting');
+    Route::get('order/waiting/export/excel', [DirectPaymentController::class, 'exportWaitingExcel'])->name('order.waiting.export-excel');
+    Route::get('order/waiting/export/pdf', [DirectPaymentController::class, 'exportWaitingPdf'])->name('order.waiting.export-pdf');
 
     // 2. Nota Belum Lunas (nota pending / partial, bayar DP/cicilan/lunas)
     Route::get('order/unpaid', [DirectPaymentController::class, 'indexUnpaid'])->name('order.unpaid');
+    Route::get('order/unpaid/export/excel', [DirectPaymentController::class, 'exportUnpaidExcel'])->name('order.unpaid.export-excel');
+    Route::get('order/unpaid/export/pdf', [DirectPaymentController::class, 'exportUnpaidPdf'])->name('order.unpaid.export-pdf');
 
     // 3. Order Lunas (baca + cetak + batal pembayaran)
     Route::get('order/paid', [DirectPaymentController::class, 'indexPaid'])->name('order.paid');
+    Route::get('order/paid/export/excel', [DirectPaymentController::class, 'exportPaidExcel'])->name('order.paid.export-excel');
+    Route::get('order/paid/export/pdf', [DirectPaymentController::class, 'exportPaidPdf'])->name('order.paid.export-pdf');
 
     // 4. Daftar Pembayaran (riwayat transaksi)
     Route::get('payment', [DirectPaymentController::class, 'paymentIndex'])->name('payment.index');
+    Route::get('payment/export/excel', [DirectPaymentController::class, 'exportPaymentExcel'])->name('payment.export-excel');
+    Route::get('payment/export/pdf', [DirectPaymentController::class, 'exportPaymentPdf'])->name('payment.export-pdf');
 
     // Detail order (halaman show legacy, dipakai redirect routes/finance.php)
     Route::get('show/{id}', [DirectPaymentController::class, 'show'])->name('show');

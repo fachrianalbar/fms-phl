@@ -19,15 +19,23 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('purchasing')->name('purchasing.')->group(function () {
+    Route::get('purchase/export-excel', [PurchaseController::class, 'exportExcel'])->name('purchase.export-excel');
+    Route::get('purchase/export-pdf', [PurchaseController::class, 'exportPdf'])->name('purchase.export-pdf');
     Route::resource('purchase', PurchaseController::class);
     Route::delete('purchase-detail/{id}', [PurchaseController::class, 'deletePurchaseDetail'])->name('purchase-detail.destroy');
 
+    Route::get('direct-purchase/export-excel', [DirectPurchaseController::class, 'exportExcel'])->name('direct-purchase.export-excel');
+    Route::get('direct-purchase/export-pdf', [DirectPurchaseController::class, 'exportPdf'])->name('direct-purchase.export-pdf');
     Route::resource('direct-purchase', DirectPurchaseController::class);
 
     Route::prefix('purchase-payment')->name('purchase-payment.')->group(function () {
         // Hutang Supplier Belum Lunas — rekap per supplier (bayar tunggal / batch
         // dilakukan di halaman detail PO per supplier).
         Route::get('/', [PurchasePaymentController::class, 'index'])->name('index');
+        Route::get('export-excel', [PurchasePaymentController::class, 'exportSummaryExcel'])->name('export-excel');
+        Route::get('export-pdf', [PurchasePaymentController::class, 'exportSummaryPdf'])->name('export-pdf');
+        Route::get('unpaid/export-excel', [PurchasePaymentController::class, 'exportUnpaidExcel'])->name('unpaid.export-excel');
+        Route::get('unpaid/export-pdf', [PurchasePaymentController::class, 'exportUnpaidPdf'])->name('unpaid.export-pdf');
 
         // Daftar PO hutang milik satu supplier (dari rekap)
         Route::get('supplier/{supplierCode}', [PurchasePaymentController::class, 'supplierDetail'])->name('supplier');
@@ -42,6 +50,8 @@ Route::prefix('purchasing')->name('purchasing.')->group(function () {
 
     // Hutang Supplier Lunas (arsip)
     Route::get('purchase-paid', [PurchasePaymentController::class, 'paid'])->name('purchase-payment.paid');
+    Route::get('purchase-paid/export-excel', [PurchasePaymentController::class, 'exportPaidExcel'])->name('purchase-payment.paid.export-excel');
+    Route::get('purchase-paid/export-pdf', [PurchasePaymentController::class, 'exportPaidPdf'])->name('purchase-payment.paid.export-pdf');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {

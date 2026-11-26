@@ -30,14 +30,17 @@
             overflow: hidden;
             transition: box-shadow 0.2s ease;
         }
+
         .master-card:hover {
             box-shadow: 0 4px 16px rgba(30, 41, 59, 0.07);
         }
+
         .master-card .card-header {
             background: #fbfcfe;
             border-bottom: 1px solid #edf1f7;
             padding: 1.1rem 1.4rem;
         }
+
         .master-card .card-body {
             padding: 1.4rem;
         }
@@ -68,10 +71,12 @@
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .metric-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
         }
+
         .metric-icon {
             width: 42px;
             height: 42px;
@@ -82,16 +87,34 @@
             font-size: 1.25rem;
             flex-shrink: 0;
         }
-        .metric-icon-total { background: #f1f5f9; color: #475569; }
-        .metric-icon-driver { background: #eef2ff; color: #4f46e5; }
-        .metric-icon-active { background: #ecfdf5; color: #059669; }
-        .metric-icon-inactive { background: #fef2f2; color: #dc2626; }
+
+        .metric-icon-total {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .metric-icon-driver {
+            background: #eef2ff;
+            color: #4f46e5;
+        }
+
+        .metric-icon-active {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .metric-icon-inactive {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
         .metric-value {
             font-size: 1.35rem;
             font-weight: 800;
             line-height: 1.2;
             color: #1e293b;
         }
+
         .metric-label {
             font-size: 0.72rem;
             font-weight: 700;
@@ -299,11 +322,13 @@
             border: 1px solid #e8ecf3;
             background: #fff;
         }
+
         table.dataTable {
             margin-top: 0 !important;
             margin-bottom: 0 !important;
             border-collapse: collapse !important;
         }
+
         table.dataTable thead th {
             background: linear-gradient(135deg, #f8faff 0%, #eef2f9 100%) !important;
             border-bottom: 2px solid #dce3ed !important;
@@ -315,13 +340,16 @@
             padding: 0.75rem 0.8rem !important;
             vertical-align: middle !important;
         }
+
         table.dataTable tbody tr {
             border-bottom: 1px solid #f1f5f9;
             transition: background 0.15s ease;
         }
+
         table.dataTable tbody tr:hover {
             background: #f9fbff !important;
         }
+
         table.dataTable tbody td {
             padding: 0.65rem 0.8rem !important;
             vertical-align: middle !important;
@@ -335,6 +363,7 @@
             cursor: pointer;
             transition: background-color 0.2s ease, border-color 0.2s ease;
         }
+
         .form-check-input.status-toggle-switch:checked {
             background-color: #10b981;
             border-color: #10b981;
@@ -356,6 +385,7 @@
             box-shadow: 0 2px 6px rgba(118, 105, 211, 0.3);
             text-decoration: none;
         }
+
         .btn-add-employee:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 14px rgba(118, 105, 211, 0.4);
@@ -493,7 +523,8 @@
                         <i class="mdi mdi-account-check-outline"></i>
                     </div>
                     <div>
-                        <div class="metric-value text-success" id="metric-active-count">{{ $counts['driver_active'] ?? 0 }}</div>
+                        <div class="metric-value text-success" id="metric-active-count">{{ $counts['driver_active'] ?? 0 }}
+                        </div>
                         <div class="metric-label text-success">Supir Aktif</div>
                     </div>
                 </div>
@@ -504,7 +535,8 @@
                         <i class="mdi mdi-account-off-outline"></i>
                     </div>
                     <div>
-                        <div class="metric-value text-danger" id="metric-inactive-count">{{ $counts['driver_inactive'] ?? 0 }}</div>
+                        <div class="metric-value text-danger" id="metric-inactive-count">
+                            {{ $counts['driver_inactive'] ?? 0 }}</div>
                         <div class="metric-label text-danger">Supir Nonaktif</div>
                     </div>
                 </div>
@@ -524,10 +556,20 @@
                     </div>
                 </div>
 
-                <a href="{{ route($view . 'create') }}" class="btn-add-employee">
-                    <i class="mdi mdi-plus-circle-outline fs-16"></i>
-                    {{ __('general.add_data') }}
-                </a>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <a href="{{ route('master.employee.export-excel') }}" target="_blank" id="export-excel"
+                        class="btn btn-icon btn-sm bg-success-subtle" data-bs-toggle="tooltip" title="Export Excel">
+                        <i class="mdi mdi-file-excel fs-14 text-success"></i>
+                    </a>
+                    <a href="{{ route('master.employee.export-pdf') }}" target="_blank" id="export-pdf"
+                        class="btn btn-icon btn-sm bg-danger-subtle" data-bs-toggle="tooltip" title="Export PDF">
+                        <i class="mdi mdi-file-pdf-box fs-14 text-danger"></i>
+                    </a>
+                    <a href="{{ route($view . 'create') }}" class="btn-add-employee">
+                        <i class="mdi mdi-plus-circle-outline fs-16"></i>
+                        {{ __('general.add_data') }}
+                    </a>
+                </div>
             </div>
 
             <div class="card-body">
@@ -628,7 +670,7 @@
     <script>
         let table;
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             const $filterForm = $('#filterForm');
 
             // 1. Inisialisasi Select2
@@ -656,7 +698,7 @@
             function syncExportUrls() {
                 if (!$('#export-excel').length && !$('#export-pdf').length) return;
                 const params = new URLSearchParams();
-                Object.entries(getFilters()).forEach(function(entry) {
+                Object.entries(getFilters()).forEach(function (entry) {
                     if (entry[1]) params.set(entry[0], entry[1]);
                 });
                 const qs = params.toString() ? '?' + params.toString() : '';
@@ -677,7 +719,7 @@
                 destroy: true,
                 ajax: {
                     url: "{{ route('dt.employee') }}",
-                    data: function(d) {
+                    data: function (d) {
                         Object.assign(d, getFilters());
                     }
                 },
@@ -703,11 +745,11 @@
                     zeroRecords: 'Data tidak ditemukan',
                     processing: '<div class="spinner-border spinner-border-sm text-primary" role="status"></div> Memuat data...'
                 },
-                drawCallback: function() {
+                drawCallback: function () {
                     // Re-initialize Bootstrap tooltips if available
                     if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
                         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                        tooltipTriggerList.map(function(tooltipTriggerEl) {
+                        tooltipTriggerList.map(function (tooltipTriggerEl) {
                             return new bootstrap.Tooltip(tooltipTriggerEl);
                         });
                     }
@@ -721,7 +763,7 @@
 
             // 5. Submit Filter (tombol & Enter)
             $('#btnFilter').on('click', reloadWithFilters);
-            $filterForm.on('keydown', function(event) {
+            $filterForm.on('keydown', function (event) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
                     reloadWithFilters();
@@ -729,7 +771,7 @@
             });
 
             // 6. Reset Filter
-            $('#btnResetFilter').on('click', function() {
+            $('#btnResetFilter').on('click', function () {
                 $('.select2-filter').val('').trigger('change');
                 reloadWithFilters();
             });
@@ -738,7 +780,7 @@
             syncExportUrls();
 
             // Event delegation for toggle switch clicks
-            $(document).on('change', '.status-toggle-switch', function(e) {
+            $(document).on('change', '.status-toggle-switch', function (e) {
                 const switchElem = $(this);
                 const id = switchElem.data('id');
                 const name = switchElem.data('name');
@@ -790,7 +832,7 @@
                         data: {
                             _token: '{{ csrf_token() }}'
                         },
-                        success: function(response) {
+                        success: function (response) {
                             if (response.success) {
                                 swal({
                                     title: "Berhasil!",
@@ -808,7 +850,7 @@
                                 });
                             }
                         },
-                        error: function(xhr) {
+                        error: function (xhr) {
                             const msg = (xhr.responseJSON && xhr.responseJSON.message)
                                 ? xhr.responseJSON.message
                                 : "Terjadi kesalahan saat mengubah status supir.";

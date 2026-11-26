@@ -56,14 +56,37 @@ class InvoicePaymentTransactionService
             ->first();
     }
 
-    public function datatable()
+    public function datatable(array $filters = [])
     {
-        return $this->service->with([
+        $query = $this->service->with([
             'customer',
             'userBank.bank',
             'payments.invoice',
             'claims.invoice',
-        ])
+        ]);
+
+        $startDate = trim((string) ($filters['startDate'] ?? ''));
+        $endDate = trim((string) ($filters['endDate'] ?? ''));
+        $customerCode = trim((string) ($filters['customerCode'] ?? ''));
+        $userBankCode = trim((string) ($filters['userBankCode'] ?? ''));
+
+        if ($startDate !== '') {
+            $query->whereDate('paymentDate', '>=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $query->whereDate('paymentDate', '<=', $endDate);
+        }
+
+        if ($customerCode !== '') {
+            $query->where('customerCode', $customerCode);
+        }
+
+        if ($userBankCode !== '') {
+            $query->where('userBankCode', $userBankCode);
+        }
+
+        return $query
             ->orderBy('paymentDate', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
