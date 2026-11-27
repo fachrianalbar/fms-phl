@@ -36,6 +36,7 @@ class MaintenanceExport implements FromCollection, ShouldAutoSize, WithColumnFor
             'Tanggal',
             'Jam',
             'Armada',
+            'Pemilik Kendaraan',
             'Gudang',
             'Item Digunakan',
             'Total Biaya',
@@ -65,6 +66,7 @@ class MaintenanceExport implements FromCollection, ShouldAutoSize, WithColumnFor
             $row->date ? Carbon::parse($row->date)->format('d-m-Y') : '-',
             $row->time ? Carbon::parse($row->time)->format('H:i') : '-',
             $row->fleet->plateNumber ?? '-',
+            $row->fleet?->company?->name ?? '-',
             $row->warehouse->name ?? '-',
             $itemsText,
             (float) ($row->grand_total ?? 0),
@@ -74,7 +76,7 @@ class MaintenanceExport implements FromCollection, ShouldAutoSize, WithColumnFor
     public function columnFormats(): array
     {
         return [
-            'I' => '#,##0',
+            'J' => '#,##0',
         ];
     }
 

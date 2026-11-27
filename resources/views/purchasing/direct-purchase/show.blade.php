@@ -166,6 +166,14 @@
                     </div>
 
                     <div class="col-md-4">
+                        <div class="info-label">Pemilik Kendaraan</div>
+                        <div class="info-value">
+                            <i class="mdi mdi-domain text-muted me-1"></i>
+                            {{ optional($data->fleet?->company)->name ?? '-' }}
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
                         <div class="info-label">Tanggal & Jam Pembelian</div>
                         <div class="info-value">
                             <i class="mdi mdi-calendar-clock text-muted me-1"></i>
@@ -244,10 +252,29 @@
                         </div>
                     </div>
 
+                    @php
+                        $showSubtotal = (float) ($data->subtotal ?: $data->details->sum(fn ($d) => (float) $d->qty * (float) $d->price));
+                        $showPpnRate = (float) ($data->ppn_rate ?? 0);
+                        $showPpnAmount = (float) ($data->ppn_amount ?? 0);
+                        $showGrandTotal = (float) ($data->nominal ?: ($showSubtotal + $showPpnAmount));
+                        $showPpnRateFormatted = rtrim(rtrim(number_format($showPpnRate, 2, ',', '.'), '0'), ',');
+                    @endphp
                     <div class="col-md-4">
-                        <div class="info-label">Total Biaya Pembelian</div>
+                        <div class="info-label">Subtotal (Sebelum PPN)</div>
+                        <div class="info-value font-monospace">
+                            Rp {{ number_format($showSubtotal, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">PPN ({{ $showPpnRateFormatted }}%)</div>
+                        <div class="info-value font-monospace">
+                            Rp {{ number_format($showPpnAmount, 0, ',', '.') }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="info-label">Jumlah Setelah PPN</div>
                         <div class="info-value font-monospace fw-bold fs-16 text-success">
-                            Rp {{ number_format($data->nominal, 0, ',', '.') }}
+                            Rp {{ number_format($showGrandTotal, 0, ',', '.') }}
                         </div>
                     </div>
                 </div>
@@ -322,11 +349,21 @@
                             @endforeach
                         </tbody>
                         <tfoot>
+                            <tr style="background: #f8fafc; font-weight: 600;">
+                                <td colspan="3" class="text-end text-uppercase" style="padding: 10px 14px;">Total Kuantitas:</td>
+                                <td class="text-center font-monospace" style="padding: 10px 14px;">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</td>
+                                <td class="text-end text-uppercase" style="padding: 10px 14px;">Subtotal:</td>
+                                <td class="text-end font-monospace" style="padding: 10px 14px;">Rp {{ number_format($showSubtotal, 0, ',', '.') }}</td>
+                                <td></td>
+                            </tr>
+                            <tr style="background: #f8fafc; font-weight: 600;">
+                                <td colspan="5" class="text-end text-uppercase" style="padding: 10px 14px;">PPN ({{ $showPpnRateFormatted }}%):</td>
+                                <td class="text-end font-monospace" style="padding: 10px 14px;">Rp {{ number_format($showPpnAmount, 0, ',', '.') }}</td>
+                                <td></td>
+                            </tr>
                             <tr style="background: #f8fafc; font-weight: 700;">
-                                <td colspan="3" class="text-end text-uppercase" style="padding: 12px 14px;">Total Kuantitas:</td>
-                                <td class="text-center font-monospace" style="padding: 12px 14px;">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</td>
-                                <td class="text-end text-uppercase" style="padding: 12px 14px;">Grand Total:</td>
-                                <td class="text-end font-monospace fs-15 text-success" style="padding: 12px 14px;">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+                                <td colspan="5" class="text-end text-uppercase" style="padding: 12px 14px;">Jumlah Setelah PPN:</td>
+                                <td class="text-end font-monospace fs-15 text-success" style="padding: 12px 14px;">Rp {{ number_format($showGrandTotal, 0, ',', '.') }}</td>
                                 <td></td>
                             </tr>
                         </tfoot>

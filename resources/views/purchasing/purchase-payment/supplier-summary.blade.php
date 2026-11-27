@@ -241,6 +241,7 @@
                             <tr>
                                 <th class="text-center" style="width: 45px;">No</th>
                                 <th>Supplier</th>
+                                <th class="text-center">Hutang Terlama</th>
                                 <th class="text-center">Jumlah PO</th>
                                 <th class="text-center">Belum Bayar</th>
                                 <th class="text-center">Belum Lunas</th>
@@ -330,7 +331,13 @@
                 },
                 {
                     "data": 'supplierName',
+                    "name": 'supplierName',
                     "className": 'align-middle supplier-name-cell'
+                },
+                {
+                    "data": 'oldestPurchaseDateHtml',
+                    "name": 'oldestPurchaseDateHtml',
+                    "className": 'text-center align-middle'
                 },
                 {
                     "data": 'poCount',
@@ -383,7 +390,7 @@
                 }
                 ],
                 "order": [
-                    [7, 'desc']
+                    [2, 'asc']
                 ],
                 "language": {
                     "processing": "Memuat data...",

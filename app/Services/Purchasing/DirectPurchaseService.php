@@ -5,6 +5,7 @@ namespace App\Services\Purchasing;
 use App\Helpers\GenerateCode;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
+use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
 use App\Models\LiveMutation;
 use App\Models\Mutation;
@@ -57,7 +58,8 @@ class DirectPurchaseService
             ->with([
                 'supplier',
                 'warehouse',
-                'fleet',
+                'fleet.company',
+                'fleet.brand',
                 'details.item',
                 'maintenances',
                 'transferUserBank.bank',
@@ -125,7 +127,8 @@ class DirectPurchaseService
             ->with([
                 'supplier',
                 'warehouse',
-                'fleet',
+                'fleet.company',
+                'fleet.brand',
                 'details.item',
                 'maintenances.details.item',
                 'transferUserBank.bank',
@@ -139,7 +142,7 @@ class DirectPurchaseService
 
         // 1. Resolve Unique Code untuk Purchase (PL-...)
         $carbonDate = Carbon::parse($request->date);
-        $basePurchaseCode = 'PL-' . $carbonDate->format('ymd');
+        $basePurchaseCode = 'PL-'.$carbonDate->format('ymd');
         $codePurchase = $this->uniqueCode->resolve(
             model: Purchase::class,
             field: 'code',
@@ -150,7 +153,7 @@ class DirectPurchaseService
         $purchaseCode = $codePurchase->resolvedCode;
 
         // 2. Resolve Unique Code untuk Maintenance (MNT-...)
-        $baseMntCode = 'MNT-' . $carbonDate->format('ymd');
+        $baseMntCode = 'MNT-'.$carbonDate->format('ymd');
         $codeMnt = $this->uniqueCode->resolve(
             model: Maintenance::class,
             field: 'code',
@@ -160,16 +163,20 @@ class DirectPurchaseService
         );
         $maintenanceCode = $codeMnt->resolvedCode;
 
-        // Hitung total nominal terlebih dahulu
-        $totalNominal = 0;
+        // Hitung subtotal, PPN, dan grand total terlebih dahulu
+        $subtotal = 0;
         $filtered = Arr::only($request->all(), ['qty', 'itemCode', 'price', 'description']);
         if (isset($filtered['itemCode'])) {
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $price = (int) str_replace(['Rp', '.', ' '], '', $filtered['price'][$i]);
                 $qty = (float) $filtered['qty'][$i];
-                $totalNominal += ($price * $qty);
+                $subtotal += ($price * $qty);
             }
         }
+
+        $ppnRate = max(0, min(100, (float) ($request->input('ppn_rate') ?? 0)));
+        $ppnAmount = round($subtotal * ($ppnRate / 100));
+        $totalNominal = $subtotal + $ppnAmount;
 
         // 3. Simpan data Purchase (Direct Purchase)
         //    Jenis pembayaran Tempo dicatat sebagai Hutang Supplier (paymentStatus Unpaid)
@@ -183,6 +190,16 @@ class DirectPurchaseService
             ? $request->transferUserBankCode
             : null;
 
+        $dueDate = null;
+        if ($isTempo) {
+            if ($request->filled('dueDate')) {
+                $dueDate = $request->dueDate;
+            } else {
+                $termDays = (int) (Supplier::query()->where('code', $request->supplierCode)->value('payment_term_days') ?? 0);
+                $dueDate = Carbon::parse($request->date)->addDays($termDays)->toDateString();
+            }
+        }
+
         $purchase = $this->service->newQuery()->create([
             'code' => $purchaseCode,
             'supplierCode' => $request->supplierCode,
@@ -191,7 +208,7 @@ class DirectPurchaseService
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $isTempo ? ($request->dueDate ?: $request->date) : null,
+            'dueDate' => $dueDate,
             'receivedDate' => $request->date,
             'paymentDate' => $isPaid ? $request->date : null,
             'status' => $isPaid ? 3 : 0, // 3: Complete / Lunas, 0: Purchase Created
@@ -200,6 +217,9 @@ class DirectPurchaseService
             'userBankCode' => $transferUserBankCode,
             'paymentStatus' => $isPaid ? 'Paid' : 'Unpaid',
             'paidAmount' => $isPaid ? $totalNominal : 0,
+            'subtotal' => $subtotal,
+            'ppn_rate' => $ppnRate,
+            'ppn_amount' => $ppnAmount,
             'nominal' => $totalNominal,
         ]);
 
@@ -266,7 +286,7 @@ class DirectPurchaseService
                     'qtyOut' => 0,
                     'transactionCode' => $purchaseCode,
                     'transactionDetailCode' => $purchaseDetail->code,
-                    'date' => $request->date . ' ' . $request->time,
+                    'date' => $request->date.' '.$request->time,
                     'transactionType' => 'IN',
                 ]);
 
@@ -301,11 +321,17 @@ class DirectPurchaseService
                     'qtyOut' => $qty,
                     'transactionCode' => $maintenanceCode,
                     'transactionDetailCode' => $maintenanceDetail->code,
-                    'date' => $request->date . ' ' . $request->time,
+                    'date' => $request->date.' '.$request->time,
                     'transactionType' => 'OUT',
                 ]);
             }
         }
+
+        // Pastikan grand_total Maintenance selaras dengan grand total setelah PPN
+        // (mencegah overwrite dari event MaintenanceDetail::created).
+        Maintenance::query()->where('id', $maintenance->id)->update([
+            'grand_total' => number_format($totalNominal, 2, '.', ''),
+        ]);
 
         // 7. Catat aktivitas
         $this->logActivity($title, $purchase, 'Create');
@@ -365,16 +391,20 @@ class DirectPurchaseService
             $mut->forceDelete();
         }
 
-        // 4. Hitung ulang total nominal baru
-        $totalNominal = 0;
+        // 4. Hitung ulang subtotal, PPN, dan grand total baru
+        $subtotal = 0;
         $filtered = Arr::only($request->all(), ['qty', 'itemCode', 'price', 'description']);
         if (isset($filtered['itemCode'])) {
             for ($i = 0; $i < count($filtered['itemCode']); $i++) {
                 $price = (int) str_replace(['Rp', '.', ' '], '', $filtered['price'][$i]);
                 $qty = (float) $filtered['qty'][$i];
-                $totalNominal += ($price * $qty);
+                $subtotal += ($price * $qty);
             }
         }
+
+        $ppnRate = max(0, min(100, (float) ($request->input('ppn_rate') ?? 0)));
+        $ppnAmount = round($subtotal * ($ppnRate / 100));
+        $totalNominal = $subtotal + $ppnAmount;
 
         // 5. Update Header Purchase
         //    Jenis pembayaran Tempo dicatat sebagai Hutang Supplier (paymentStatus Unpaid),
@@ -387,14 +417,27 @@ class DirectPurchaseService
             ? $request->transferUserBankCode
             : null;
 
+        $dueDate = null;
+        if ($isTempo) {
+            if ($request->filled('dueDate')) {
+                $dueDate = $request->dueDate;
+            } else {
+                $termDays = (int) (Supplier::query()->where('code', $request->supplierCode)->value('payment_term_days') ?? 0);
+                $dueDate = Carbon::parse($request->date)->addDays($termDays)->toDateString();
+            }
+        }
+
         $purchase->update([
             'supplierCode' => $request->supplierCode,
             'warehouseCode' => $warehouseCode,
             'fleetCode' => $request->fleetCode,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $isTempo ? ($request->dueDate ?: $request->date) : null,
+            'dueDate' => $dueDate,
             'receivedDate' => $request->date,
+            'subtotal' => $subtotal,
+            'ppn_rate' => $ppnRate,
+            'ppn_amount' => $ppnAmount,
             'nominal' => $totalNominal,
             'paymentType' => $paymentType,
             'transferUserBankCode' => $transferUserBankCode,
@@ -416,7 +459,7 @@ class DirectPurchaseService
             ]);
         } else {
             $carbonDate = Carbon::parse($request->date);
-            $baseMntCode = 'MNT-' . $carbonDate->format('ymd');
+            $baseMntCode = 'MNT-'.$carbonDate->format('ymd');
             $codeMnt = $this->uniqueCode->resolve(
                 model: Maintenance::class,
                 field: 'code',
@@ -486,7 +529,7 @@ class DirectPurchaseService
                     'qtyOut' => 0,
                     'transactionCode' => $purchaseCode,
                     'transactionDetailCode' => $purchaseDetail->code,
-                    'date' => $request->date . ' ' . $request->time,
+                    'date' => $request->date.' '.$request->time,
                     'transactionType' => 'IN',
                 ]);
 
@@ -517,11 +560,17 @@ class DirectPurchaseService
                     'qtyOut' => $qty,
                     'transactionCode' => $maintenance->code,
                     'transactionDetailCode' => $maintenanceDetail->code,
-                    'date' => $request->date . ' ' . $request->time,
+                    'date' => $request->date.' '.$request->time,
                     'transactionType' => 'OUT',
                 ]);
             }
         }
+
+        // Pastikan grand_total Maintenance selaras dengan grand total setelah PPN
+        // (mencegah overwrite dari event MaintenanceDetail::created).
+        Maintenance::query()->where('id', $maintenance->id)->update([
+            'grand_total' => number_format($totalNominal, 2, '.', ''),
+        ]);
 
         // 8. Catat aktivitas
         $this->logActivity($title, $purchase, 'After Update');

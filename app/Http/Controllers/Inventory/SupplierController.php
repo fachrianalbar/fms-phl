@@ -66,10 +66,18 @@ class SupplierController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required',
             'name' => 'required',
+            'payment_term_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
+
+        $request->merge([
+            'payment_term_days' => $request->filled('payment_term_days')
+                ? (int) $request->input('payment_term_days')
+                : 0,
+        ]);
+
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
@@ -110,10 +118,18 @@ class SupplierController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => 'required',
             'name' => 'required',
+            'payment_term_days' => ['nullable', 'integer', 'min:0', 'max:3650'],
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
+
+        $request->merge([
+            'payment_term_days' => $request->filled('payment_term_days')
+                ? (int) $request->input('payment_term_days')
+                : 0,
+        ]);
+
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request, $id) {
                 return DB::transaction(fn () => $this->service->update($request, $id, $this->title));
@@ -155,7 +171,7 @@ class SupplierController extends Controller
                 $query->whereDate('created_at', '<=', $request->endDate);
             }
 
-            return Datatables::of($query)
+            return DataTables::of($query)
                 ->addIndexColumn()
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
@@ -169,7 +185,9 @@ class SupplierController extends Controller
                                 ->orWhereRaw('LOWER(address) LIKE ?', ['%'.$search.'%'])
                                 ->orWhereRaw('LOWER(pic) LIKE ?', ['%'.$search.'%'])
                                 ->orWhereRaw('LOWER(phone) LIKE ?', ['%'.$search.'%'])
-                                ->orWhereRaw('LOWER(email) LIKE ?', ['%'.$search.'%']);
+                                ->orWhereRaw('LOWER(email) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw('CAST(payment_term_days AS CHAR) LIKE ?', ['%'.$search.'%'])
+                                ->orWhereRaw("CONCAT(CAST(payment_term_days AS CHAR), ' hari') LIKE ?", ['%'.$search.'%']);
                         });
                     }
                 })
@@ -178,6 +196,9 @@ class SupplierController extends Controller
                 })
                 ->editColumn('pph', function ($row) {
                     return $row->pph !== null && $row->pph !== '' ? $row->pph : '-';
+                })
+                ->editColumn('payment_term_days', function ($row) {
+                    return ((int) ($row->payment_term_days ?? 0)).' Hari';
                 })
                 ->addColumn('action', function ($row) {
                     $editUrl = route($this->view.'update', $row->id);
@@ -195,6 +216,7 @@ class SupplierController extends Controller
                         .' data-phone="'.e($row->phone ?? '').'"'
                         .' data-ppn="'.e($row->ppn ?? '').'"'
                         .' data-pph="'.e($row->pph ?? '').'"'
+                        .' data-payment-term-days="'.(int) ($row->payment_term_days ?? 0).'"'
                         .' title="Edit">'
                         .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i>'
                         .'</button>'
@@ -254,6 +276,8 @@ class SupplierController extends Controller
                 ->with('endDate', $request->endDate)
         );
 
-        return $mpdf->Output('Supplier-Report.pdf', 'I');
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Supplier-Report-'.now()->format('YmdHis').'.pdf"');
     }
 }

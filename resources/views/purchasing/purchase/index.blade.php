@@ -244,13 +244,16 @@
                     <table class="table table-striped nowrap purchase-table" id="dt">
                         <thead>
                             <tr>
-                                <th class="text-center" style="width: 110px;">Aksi</th>
+                                <th class="text-center" style="width: 135px;">Aksi</th>
                                 <th class="text-center" style="width: 45px;">No</th>
                                 <th>Kode Pembelian</th>
                                 <th class="text-center">Tanggal</th>
                                 <th class="text-center">Jatuh Tempo</th>
                                 <th>Supplier</th>
-                                <th class="text-end">Total</th>
+                                <th class="text-center">Nopol / Pemilik</th>
+                                <th class="text-end">Subtotal</th>
+                                <th class="text-end">PPN</th>
+                                <th class="text-end">Jumlah Setelah PPN</th>
                                 <th class="text-center">Status</th>
                             </tr>
                         </thead>
@@ -367,26 +370,48 @@
                 },
                 {
                     "data": 'code',
+                    "name": 'code',
                     "className": 'align-middle'
                 },
                 {
                     "data": 'purchaseDate',
+                    "name": 'date',
                     "className": 'align-middle text-center'
                 },
                 {
                     "data": 'dueDate',
+                    "name": 'dueDate',
                     "className": 'align-middle text-center'
                 },
                 {
                     "data": 'supplier.name',
+                    "name": 'supplier.name',
                     "className": 'align-middle'
                 },
                 {
+                    "data": 'fleetInfo',
+                    "name": 'fleet.plateNumber',
+                    "className": 'align-middle text-center',
+                    "orderable": false
+                },
+                {
+                    "data": 'subtotalAmount',
+                    "name": 'subtotal',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
+                    "data": 'ppnInfo',
+                    "name": 'ppn_amount',
+                    "className": 'text-end align-middle payment-money'
+                },
+                {
                     "data": 'totalPrice',
+                    "name": 'nominal',
                     "className": 'text-end align-middle payment-money'
                 },
                 {
                     "data": 'paymentStatusHtml',
+                    "name": 'paymentStatus',
                     "className": 'text-center align-middle'
                 }
                 ],
@@ -404,7 +429,7 @@
                 "language": {
                     "processing": "Memuat data...",
                     "search": "",
-                    "searchPlaceholder": "Cari kode pembelian / supplier...",
+                    "searchPlaceholder": "Cari kode, supplier, nopol, pemilik, nominal, status...",
                     "lengthMenu": "Tampilkan _MENU_ data",
                     "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                     "infoEmpty": "Tidak ada data",

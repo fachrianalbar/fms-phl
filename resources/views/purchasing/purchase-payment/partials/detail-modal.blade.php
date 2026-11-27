@@ -3,7 +3,7 @@
     SETELAH library jQuery/SweetAlert2 dimuat). --}}
 
 <div class="modal fade" id="purchase-detail-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <div>
@@ -20,6 +20,7 @@
                         <div class="detail-amount-tile" data-role="billing">
                             <div class="detail-tile-label">Total Tagihan</div>
                             <div class="detail-tile-value" id="pd-billing">Rp 0</div>
+                            <small class="text-muted d-none" id="pd-ppn-note"></small>
                         </div>
                     </div>
                     <div class="col-4">
@@ -56,6 +57,27 @@
                     <div class="col-md-4">
                         <div class="detail-tile-label">Mobil / Armada</div>
                         <div class="fw-semibold font-monospace" id="pd-fleet">-</div>
+                    </div>
+                </div>
+
+                <div class="mb-4 d-none" id="pd-vehicle-section">
+                    <h6 class="fw-bold mb-2">
+                        <i class="mdi mdi-truck-outline me-1 text-primary"></i>Rincian Pemakaian &amp; Pembayaran Per Mobil
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-center" style="width: 40px;">No</th>
+                                    <th>Nopol &amp; Pemilik</th>
+                                    <th>Barang &amp; Qty</th>
+                                    <th class="text-end">Tagihan Mobil</th>
+                                    <th class="text-end">Sudah Dibayar</th>
+                                    <th class="text-end">Sisa Hutang</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pd-vehicle-body"></tbody>
+                        </table>
                     </div>
                 </div>
 

@@ -28,6 +28,9 @@
             $('#pd-due-date').text('-');
             $('#pd-fleet').text('-');
             $('#pd-billing, #pd-paid, #pd-remaining').text('Rp 0');
+            $('#pd-ppn-note').addClass('d-none').text('');
+            $('#pd-vehicle-body').empty();
+            $('#pd-vehicle-section').addClass('d-none');
             $('#pd-history-body').empty();
             $('#pd-history-empty').addClass('d-none');
 
@@ -49,8 +52,60 @@
                     $('#pd-due-date').text(data.due_date || '-');
                     $('#pd-fleet').text(data.fleet_plate || '-');
                     $('#pd-billing').text(pdFormatCurrency(data.billing));
+                    if (Number(data.ppn_amount) > 0) {
+                        $('#pd-ppn-note')
+                            .removeClass('d-none')
+                            .text('DPP ' + pdFormatCurrency(data.subtotal) + ' + PPN ' + pdFormatCurrency(data.ppn_amount));
+                    } else {
+                        $('#pd-ppn-note').addClass('d-none').text('');
+                    }
                     $('#pd-paid').text(pdFormatCurrency(data.paid));
                     $('#pd-remaining').text(pdFormatCurrency(data.remaining));
+
+                    const breakdown = Array.isArray(data.vehicle_breakdown) ? data.vehicle_breakdown : [];
+                    const vehicleBody = $('#pd-vehicle-body').empty();
+                    if (breakdown.length > 0) {
+                        $('#pd-vehicle-section').removeClass('d-none');
+                        breakdown.forEach(function(v, idx) {
+                            const plateCell = $('<td>');
+                            plateCell.append($('<span>', {
+                                class: v.is_stock
+                                    ? 'badge bg-light text-muted border font-monospace fs-11'
+                                    : 'badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fs-11'
+                            }).text(v.plate_number || '-'));
+                            if (v.owner_name && v.owner_name !== '-') {
+                                plateCell.append($('<small>', {
+                                    class: 'd-block text-muted mt-1'
+                                }).text(v.owner_name));
+                            }
+
+                            const itemsCell = $('<td>');
+                            const items = Array.isArray(v.items) ? v.items : [];
+                            if (items.length > 0) {
+                                items.forEach(function(it) {
+                                    const qtyStr = (Number(it.qty) || 0).toLocaleString('id-ID', {
+                                        minimumFractionDigits: 0,
+                                        maximumFractionDigits: 1
+                                    });
+                                    itemsCell.append($('<div>', { class: 'fs-12' })
+                                        .text((it.item_name || it.item_code || '-') + ' × ' + qtyStr));
+                                });
+                            } else {
+                                itemsCell.append($('<span>', { class: 'text-muted' }).text('-'));
+                            }
+
+                            const vRow = $('<tr>')
+                                .append($('<td>', { class: 'text-center' }).text(idx + 1))
+                                .append(plateCell)
+                                .append(itemsCell)
+                                .append($('<td>', { class: 'text-end font-monospace fw-semibold' }).text(pdFormatCurrency(v.billing_amount)))
+                                .append($('<td>', { class: 'text-end font-monospace text-success' }).text(pdFormatCurrency(v.paid_amount)))
+                                .append($('<td>', { class: 'text-end font-monospace fw-semibold text-danger' }).text(pdFormatCurrency(v.remaining_amount)));
+                            vehicleBody.append(vRow);
+                        });
+                    } else {
+                        $('#pd-vehicle-section').addClass('d-none');
+                    }
 
                     const histories = Array.isArray(data.histories) ? data.histories : [];
                     const body = $('#pd-history-body').empty();

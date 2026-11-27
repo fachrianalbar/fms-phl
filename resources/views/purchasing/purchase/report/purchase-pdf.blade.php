@@ -31,6 +31,8 @@
     @endif
 
     @php
+        $sumSubtotal = 0;
+        $sumPpn = 0;
         $sumTotal = 0;
         $sumPaid = 0;
         $sumRemaining = 0;
@@ -44,8 +46,11 @@
                 <th>Tanggal</th>
                 <th>Jatuh Tempo</th>
                 <th>Supplier</th>
-                <th>Gudang</th>
-                <th>Total Tagihan</th>
+                <th>Nopol</th>
+                <th>Pemilik Kendaraan</th>
+                <th>Subtotal</th>
+                <th>PPN</th>
+                <th>Jumlah Setelah PPN</th>
                 <th>Terbayar</th>
                 <th>Sisa</th>
                 <th>Status</th>
@@ -58,8 +63,16 @@
                     if ($total <= 0 && $row->relationLoaded('details')) {
                         $total = (float) $row->details->sum(fn ($d) => (float) $d->price * (float) ($d->qty ?: $d->receivedQty));
                     }
+                    $subtotal = (float) ($row->subtotal ?? 0);
+                    if ($subtotal <= 0) {
+                        $subtotal = $total;
+                    }
+                    $ppnRate = (float) ($row->ppn_rate ?? 0);
+                    $ppnAmount = (float) ($row->ppn_amount ?? 0);
                     $paid = (float) ($row->paidAmount ?? 0);
                     $remaining = max(0, $total - $paid);
+                    $sumSubtotal += $subtotal;
+                    $sumPpn += $ppnAmount;
                     $sumTotal += $total;
                     $sumPaid += $paid;
                     $sumRemaining += $remaining;
@@ -75,7 +88,16 @@
                     <td class="center nowrap">{{ $row->date ? \Carbon\Carbon::parse($row->date)->format('d-m-Y') : '-' }}</td>
                     <td class="center nowrap">{{ $row->dueDate ? \Carbon\Carbon::parse($row->dueDate)->format('d-m-Y') : '-' }}</td>
                     <td>{{ $row->supplier->name ?? '-' }}</td>
-                    <td>{{ $row->warehouse->name ?? '-' }}</td>
+                    <td class="center nowrap">{{ $row->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $row->fleet->company->name ?? '-' }}</td>
+                    <td class="right nowrap">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                    <td class="right nowrap">
+                        @if ($ppnAmount > 0 || $ppnRate > 0)
+                            Rp {{ number_format($ppnAmount, 0, ',', '.') }} ({{ rtrim(rtrim(number_format($ppnRate, 2, ',', '.'), '0'), ',') }}%)
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td class="right nowrap">Rp {{ number_format($total, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($paid, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($remaining, 0, ',', '.') }}</td>
@@ -83,14 +105,16 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="center">Tidak ada data yang sesuai filter.</td>
+                    <td colspan="13" class="center">Tidak ada data yang sesuai filter.</td>
                 </tr>
             @endforelse
         </tbody>
         @if ($purchases->isNotEmpty())
             <tfoot>
                 <tr>
-                    <td colspan="6" class="right">TOTAL</td>
+                    <td colspan="7" class="right">TOTAL</td>
+                    <td class="right nowrap">Rp {{ number_format($sumSubtotal, 0, ',', '.') }}</td>
+                    <td class="right nowrap">Rp {{ number_format($sumPpn, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($sumTotal, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($sumPaid, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($sumRemaining, 0, ',', '.') }}</td>

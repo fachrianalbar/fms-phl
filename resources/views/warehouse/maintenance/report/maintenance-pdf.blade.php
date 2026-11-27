@@ -71,8 +71,16 @@
 <body>
     <div class="container">
         <h1>TRANSAKSI PEMAKAIAN PER TRUK</h1>
+        @php
+            use Carbon\Carbon;
+            $selectedOwner = ! empty($plateNumber) ? ($data->first()?->fleet?->company?->name ?? null) : null;
+            $totalPrice = 0;
+        @endphp
         <div class="info">
             <p><strong>NO.TRUK: {{ $plateNumber ?: 'Semua Armada' }}</strong></p>
+            @if (! empty($selectedOwner))
+                <p><strong>PEMILIK KENDARAAN: {{ $selectedOwner }}</strong></p>
+            @endif
             @if (! empty($itemLabel))
                 <p><strong>BARANG: {{ $itemLabel }}</strong></p>
             @endif
@@ -83,6 +91,8 @@
                 <tr>
                     <th>No</th>
                     <th>Tanggal</th>
+                    <th>Armada</th>
+                    <th>Pemilik Kendaraan</th>
                     <th>Kelompok</th>
                     <th>Kode Barang</th>
                     <th style="white-space: nowrap">Nama Barang</th>
@@ -94,30 +104,33 @@
             </thead>
             <tbody>
                 @php
-                    use Carbon\Carbon;
-                    $totalPrice = 0;
+                    $rowNo = 0;
                 @endphp
                 @foreach ($data as $item)
                     @foreach ($item->details as $it)
                         @php
-                            $totalPrice += $it->item->price * $it->qty;
+                            $rowNo++;
+                            $unitPrice = (float) ($it->price ?? ($it->item->price ?? 0));
+                            $lineTotal = $unitPrice * (float) $it->qty;
+                            $totalPrice += $lineTotal;
                         @endphp
                         <tr>
-                            <td>{{ $loop->iteration }}</td>
-                            <td>{{ Carbon::parse($item->created_at)->format('d-m-Y') }}</td>
-                            <td>{{ isset($it->item->category->name) ? $it->item->category->name : '' }}</td>
-                            <td>{{ isset($it->item->code) ? $it->item->code : '' }}</td>
-                            <td>{{ isset($it->item->name) ? $it->item->name : '' }}</td>
+                            <td>{{ $rowNo }}</td>
+                            <td>{{ Carbon::parse($item->date ?: $item->created_at)->format('d-m-Y') }}</td>
+                            <td>{{ $item->fleet->plateNumber ?? '-' }}</td>
+                            <td>{{ $item->fleet?->company?->name ?? '-' }}</td>
+                            <td>{{ $it->item->category->name ?? '' }}</td>
+                            <td>{{ $it->item->code ?? '' }}</td>
+                            <td>{{ $it->item->name ?? '' }}</td>
                             <td>{{ rtrim(rtrim(number_format((float) $it->qty, 1, ',', '.'), '0'), ',') }}</td>
-                            <td>{{ isset($it->item->price) ? number_format($it->item->price, 0, ',', '.') : '' }}</td>
-                            <td>{{ isset($it->item->price) ? number_format($it->item->price * $it->qty, 0, ',', '.') : 0 }}
-                            </td>
-                            <td>{{ isset($it->item->supplier->name) ? $it->item->supplier->name : '' }}</td>
+                            <td>{{ number_format($unitPrice, 0, ',', '.') }}</td>
+                            <td>{{ number_format($lineTotal, 0, ',', '.') }}</td>
+                            <td>{{ $it->item->supplier->name ?? '' }}</td>
                         </tr>
                     @endforeach
                 @endforeach
                 <tr>
-                    <td colspan="7" class="total-label">TOTAL</td>
+                    <td colspan="9" class="total-label">TOTAL</td>
                     <td class="total-amount">Rp {{ number_format($totalPrice, 0, ',', '.') }}</td>
                     <td></td>
                 </tr>

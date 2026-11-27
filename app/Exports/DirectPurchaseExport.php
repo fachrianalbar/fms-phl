@@ -39,13 +39,17 @@ class DirectPurchaseExport implements FromCollection, ShouldAutoSize, WithColumn
             'Tanggal',
             'Jam',
             'Armada',
+            'Pemilik Kendaraan',
             'Supplier / Toko',
             'No. Maintenance',
             'Jenis Bayar',
             'Status Bayar',
             'Jumlah Item',
             'Total Qty',
-            'Total Biaya',
+            'Subtotal',
+            'PPN (%)',
+            'Nominal PPN',
+            'Jumlah Setelah PPN',
         ];
     }
 
@@ -53,6 +57,9 @@ class DirectPurchaseExport implements FromCollection, ShouldAutoSize, WithColumn
     {
         $this->rowNumber++;
         $total = (float) ($row->nominal ?: $row->details->sum(fn ($d) => (float) $d->price * (float) $d->qty));
+        $subtotal = (float) ($row->subtotal ?: $total);
+        $ppnRate = (float) ($row->ppn_rate ?? 0);
+        $ppnAmount = (float) ($row->ppn_amount ?? 0);
         $mnt = $row->maintenances->first();
         $statusLabel = match ($row->paymentStatus) {
             'Paid' => 'Lunas',
@@ -66,12 +73,16 @@ class DirectPurchaseExport implements FromCollection, ShouldAutoSize, WithColumn
             $row->date ? Carbon::parse($row->date)->format('d-m-Y') : '-',
             $row->time ? Carbon::parse($row->time)->format('H:i') : '-',
             $row->fleet->plateNumber ?? '-',
+            $row->fleet->company->name ?? '-',
             $row->supplier->name ?? '-',
             $mnt->code ?? '-',
             $row->paymentType ?: 'Tunai',
             $statusLabel,
             (int) $row->details->count(),
             (float) $row->details->sum('qty'),
+            $subtotal,
+            $ppnRate,
+            $ppnAmount,
             $total,
         ];
     }
@@ -79,7 +90,9 @@ class DirectPurchaseExport implements FromCollection, ShouldAutoSize, WithColumn
     public function columnFormats(): array
     {
         return [
-            'L' => '#,##0',
+            'M' => '#,##0',
+            'O' => '#,##0',
+            'P' => '#,##0',
         ];
     }
 

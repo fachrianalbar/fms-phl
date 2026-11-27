@@ -5,6 +5,7 @@ namespace App\Models\Purchasing;
 use App\Models\Bank\UserBank;
 use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
+use App\Models\Master\Fleet;
 use App\Models\Warehouse\Maintenance;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,17 +39,23 @@ class Purchase extends Model
         'paymentType',
         'transferUserBankCode',
         'paymentCode',
+        'subtotal',
+        'ppn_rate',
+        'ppn_amount',
         'userBankCode',
         'dueDate',
     ];
 
     protected $casts = [
         'is_direct' => 'boolean',
+        'subtotal' => 'float',
+        'ppn_rate' => 'float',
+        'ppn_amount' => 'float',
     ];
 
     public function fleet()
     {
-        return $this->belongsTo(\App\Models\Master\Fleet::class, 'fleetCode', 'code');
+        return $this->belongsTo(Fleet::class, 'fleetCode', 'code');
     }
 
     public function supplier()
@@ -113,7 +120,7 @@ class Purchase extends Model
     {
         $plates = collect();
 
-        if ($this->fleet && !empty($this->fleet->plateNumber)) {
+        if ($this->fleet && ! empty($this->fleet->plateNumber)) {
             $plates->push($this->fleet->plateNumber);
         }
 
@@ -122,7 +129,7 @@ class Purchase extends Model
             : $this->maintenances()->with('fleet')->get();
 
         foreach ($maintenances as $maintenance) {
-            if ($maintenance->fleet && !empty($maintenance->fleet->plateNumber)) {
+            if ($maintenance->fleet && ! empty($maintenance->fleet->plateNumber)) {
                 $plates->push($maintenance->fleet->plateNumber);
             }
         }

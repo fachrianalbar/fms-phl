@@ -3,6 +3,7 @@
 use App\Http\Controllers\Inventory\ItemCategoryController;
 use App\Http\Controllers\Inventory\ItemController;
 use App\Http\Controllers\Inventory\ItemUnitController;
+use App\Http\Controllers\Inventory\ServiceItemController;
 use App\Http\Controllers\Inventory\StockController;
 use App\Http\Controllers\Inventory\StockSyncController;
 use App\Http\Controllers\Inventory\StockTransactionController;
@@ -16,6 +17,11 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     Route::get('items/export-pdf', [ItemController::class, 'exportPdf'])->name('items.export-pdf');
     Route::get('items/{itemCode}/purchase-history', [ItemController::class, 'purchaseHistory'])->name('items.purchase-history');
     Route::resource('items', ItemController::class);
+    Route::post('jasa/sync-latest-purchase-price', [ServiceItemController::class, 'syncLatestPurchasePrice'])->name('jasa.sync-latest-purchase-price');
+    Route::get('jasa/export-excel', [ServiceItemController::class, 'exportExcel'])->name('jasa.export-excel');
+    Route::get('jasa/export-pdf', [ServiceItemController::class, 'exportPdf'])->name('jasa.export-pdf');
+    Route::get('jasa/{itemCode}/purchase-history', [ServiceItemController::class, 'purchaseHistory'])->name('jasa.purchase-history');
+    Route::resource('jasa', ServiceItemController::class);
     Route::get('item-category/export-excel', [ItemCategoryController::class, 'exportExcel'])->name('item-category.export-excel');
     Route::get('item-category/export-pdf', [ItemCategoryController::class, 'exportPdf'])->name('item-category.export-pdf');
     Route::resource('item-category', ItemCategoryController::class);
@@ -50,6 +56,7 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
 
 Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('items', [ItemController::class, 'datatable'])->name('items');
+    Route::get('jasa', [ServiceItemController::class, 'datatable'])->name('jasa');
     Route::get('item-category', [ItemCategoryController::class, 'datatable'])->name('item-category');
     Route::get('warehouse', [WarehouseController::class, 'datatable'])->name('warehouse');
     Route::get('supplier', [SupplierController::class, 'datatable'])->name('supplier');

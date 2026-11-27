@@ -63,7 +63,7 @@ class PurchasePaymentController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /* Halaman                                                            */
+    /* Halaman */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -122,7 +122,7 @@ class PurchasePaymentController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /* Aksi pembayaran                                                    */
+    /* Aksi pembayaran */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -249,7 +249,7 @@ class PurchasePaymentController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /* Datatable & detail                                                 */
+    /* Datatable & detail */
     /* ------------------------------------------------------------------ */
 
     public function datatableSupplierSummary(Request $request)
@@ -259,6 +259,9 @@ class PurchasePaymentController extends Controller
         }
 
         $data = $this->service->filteredUnpaidBySupplier($request->all());
+        if (empty($request->input('order'))) {
+            $data->orderByRaw('MIN(purchase.date) asc');
+        }
 
         return DataTables::of($data)
             ->addIndexColumn()
@@ -269,9 +272,18 @@ class PurchasePaymentController extends Controller
                     ['%'.$keyword.'%']
                 );
             })
+            ->filterColumn('oldestPurchaseDateHtml', function ($query, $keyword) {
+                $query->where('purchase.date', 'like', '%'.$keyword.'%');
+            })
+            ->orderColumn('oldestPurchaseDateHtml', 'oldestPurchaseDate $1')
             ->orderColumn('totalBillingHtml', 'totalBilling $1')
             ->orderColumn('totalPaidHtml', 'totalPaid $1')
             ->orderColumn('totalRemainingHtml', 'totalRemaining $1')
+            ->addColumn('oldestPurchaseDateHtml', function ($row) {
+                return $row->oldestPurchaseDate
+                    ? Carbon::parse($row->oldestPurchaseDate)->format('d-M-Y')
+                    : '-';
+            })
             ->addColumn('totalBillingHtml', fn ($row) => number_format((float) $row->totalBilling, 0, ',', '.'))
             ->addColumn('totalPaidHtml', fn ($row) => number_format((float) $row->totalPaid, 0, ',', '.'))
             ->addColumn('totalRemainingHtml', function ($row) {
@@ -297,9 +309,15 @@ class PurchasePaymentController extends Controller
         }
 
         $data = $this->service->filteredUnpaid($request->all());
+        $pagePurchases = [];
 
-        return DataTables::of($data)
+        $response = DataTables::of($data)
             ->addIndexColumn()
+            ->addColumn('checkbox', function ($row) use (&$pagePurchases) {
+                $pagePurchases[$row->code] = $row;
+
+                return '';
+            })
             ->addColumn('purchaseDate', fn ($row) => $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '')
             ->addColumn('dueDateHtml', function ($row) {
                 $due = $this->effectiveDueDate($row);
@@ -359,10 +377,100 @@ class PurchasePaymentController extends Controller
 
                 return '<span class="badge bg-secondary">Unpaid</span>';
             })
+            ->orderColumn('purchaseDate', 'purchase.date $1, purchase.time $1')
             ->orderColumn('dueDateHtml', PurchasePaymentService::effectiveDueDateSql().' $1')
             ->orderColumn('supplierName', self::supplierNameSql().' $1')
+            ->orderColumn('totalPrice', 'COALESCE(NULLIF(purchase.nominal, 0), 0) $1')
+            ->orderColumn('paidAmount', 'COALESCE(purchase.paidAmount, 0) $1')
+            ->orderColumn('remaining', '(COALESCE(NULLIF(purchase.nominal, 0), 0) - COALESCE(purchase.paidAmount, 0)) $1')
+            ->orderColumn('paymentStatusHtml', 'purchase.paymentStatus $1')
+            ->filterColumn('purchaseDate', function ($query, $keyword) {
+                $query->where('purchase.date', 'like', '%'.$keyword.'%');
+            })
+            ->filterColumn('dueDateHtml', function ($query, $keyword) {
+                $query->where('purchase.dueDate', 'like', '%'.$keyword.'%');
+            })
             ->filterColumn('supplierName', function ($query, $keyword) {
                 $query->whereRaw(self::supplierNameSql().' LIKE ?', ['%'.$keyword.'%']);
+            })
+            ->filterColumn('totalPrice', function ($query, $keyword) {
+                $trimmed = trim($keyword);
+                if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                    $query->whereRaw('1 = 1');
+
+                    return;
+                }
+                if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m) !== 1) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $digits = preg_replace('/\D/', '', $m[1]) ?? '';
+                if ($digits === '') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereRaw('CAST(COALESCE(purchase.nominal, 0) AS CHAR) LIKE ?', ['%'.$digits.'%']);
+            })
+            ->filterColumn('paidAmount', function ($query, $keyword) {
+                $trimmed = trim($keyword);
+                if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                    $query->whereRaw('1 = 1');
+
+                    return;
+                }
+                if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m) !== 1) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $digits = preg_replace('/\D/', '', $m[1]) ?? '';
+                if ($digits === '') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereRaw('CAST(COALESCE(purchase.paidAmount, 0) AS CHAR) LIKE ?', ['%'.$digits.'%']);
+            })
+            ->filterColumn('remaining', function ($query, $keyword) {
+                $trimmed = trim($keyword);
+                if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                    $query->whereRaw('1 = 1');
+
+                    return;
+                }
+                if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m) !== 1) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $digits = preg_replace('/\D/', '', $m[1]) ?? '';
+                if ($digits === '') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereRaw('CAST(GREATEST(0, COALESCE(purchase.nominal, 0) - COALESCE(purchase.paidAmount, 0)) AS CHAR) LIKE ?', ['%'.$digits.'%']);
+            })
+            ->filterColumn('paymentStatusHtml', function ($query, $keyword) {
+                $lower = mb_strtolower(trim($keyword));
+                $matched = [];
+                if (str_contains('belum bayar', $lower) || str_contains('unpaid', $lower)) {
+                    $matched[] = 'Unpaid';
+                }
+                if (str_contains('sebagian', $lower) || str_contains('partial', $lower) || $lower === 'dp') {
+                    $matched[] = 'Partial';
+                }
+                if (str_contains('lunas', $lower) || str_contains('paid', $lower)) {
+                    $matched[] = 'Paid';
+                }
+                if ($matched === []) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereIn('purchase.paymentStatus', $matched);
             })
             ->filterColumn('fleetPlate', function ($query, $keyword) {
                 $query->where(function ($q) use ($keyword) {
@@ -391,6 +499,19 @@ class PurchasePaymentController extends Controller
                 return '';
             })
             ->toJson();
+
+        $payload = $response->getData(true);
+        $breakdowns = $this->service->resolveVehicleBreakdownForPurchases(collect($pagePurchases));
+        if (isset($payload['data']) && is_array($payload['data'])) {
+            foreach ($payload['data'] as &$item) {
+                $code = $item['code'] ?? '';
+                $item['vehicleBreakdown'] = $breakdowns[$code] ?? [];
+            }
+            unset($item);
+            $response->setData($payload);
+        }
+
+        return $response;
     }
 
     /**
@@ -452,9 +573,15 @@ class PurchasePaymentController extends Controller
         }
 
         $data = $this->service->filteredPaid($request->all());
+        $pagePurchases = [];
 
-        return DataTables::of($data)
+        $response = DataTables::of($data)
             ->addIndexColumn()
+            ->addColumn('checkbox', function ($row) use (&$pagePurchases) {
+                $pagePurchases[$row->code] = $row;
+
+                return '';
+            })
             ->addColumn('purchaseDate', fn ($row) => $row->date ? Carbon::parse($row->date)->format('d-M-Y') : '')
             ->addColumn('paymentDateHtml', fn ($row) => $row->paymentDate ? Carbon::parse($row->paymentDate)->format('d-M-Y') : '')
             ->addColumn('totalPrice', fn ($row) => number_format($this->service->billingOf($row), 0, ',', '.'))
@@ -462,6 +589,62 @@ class PurchasePaymentController extends Controller
             ->editColumn('supplier.name', fn ($row) => $row->supplier->name ?? '')
             ->addColumn('fleetPlate', fn ($row) => $row->plate_number_display ?? '-')
             ->addColumn('paymentStatusHtml', fn ($row) => '<span class="badge bg-success">Paid</span>')
+            ->orderColumn('purchaseDate', 'purchase.date $1, purchase.time $1')
+            ->orderColumn('paymentDateHtml', 'purchase.paymentDate $1')
+            ->orderColumn('totalPrice', 'COALESCE(NULLIF(purchase.nominal, 0), 0) $1')
+            ->orderColumn('paidAmount', 'COALESCE(purchase.paidAmount, 0) $1')
+            ->orderColumn('paymentStatusHtml', 'purchase.paymentStatus $1')
+            ->filterColumn('purchaseDate', fn ($query, $keyword) => $query->where('purchase.date', 'like', '%'.$keyword.'%'))
+            ->filterColumn('paymentDateHtml', fn ($query, $keyword) => $query->where('purchase.paymentDate', 'like', '%'.$keyword.'%'))
+            ->filterColumn('totalPrice', function ($query, $keyword) {
+                $trimmed = trim($keyword);
+                if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                    $query->whereRaw('1 = 1');
+
+                    return;
+                }
+                if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m) !== 1) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $digits = preg_replace('/\D/', '', $m[1]) ?? '';
+                if ($digits === '') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereRaw('CAST(COALESCE(purchase.nominal, 0) AS CHAR) LIKE ?', ['%'.$digits.'%']);
+            })
+            ->filterColumn('paidAmount', function ($query, $keyword) {
+                $trimmed = trim($keyword);
+                if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                    $query->whereRaw('1 = 1');
+
+                    return;
+                }
+                if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m) !== 1) {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $digits = preg_replace('/\D/', '', $m[1]) ?? '';
+                if ($digits === '') {
+                    $query->whereRaw('1 = 0');
+
+                    return;
+                }
+                $query->whereRaw('CAST(COALESCE(purchase.paidAmount, 0) AS CHAR) LIKE ?', ['%'.$digits.'%']);
+            })
+            ->filterColumn('paymentStatusHtml', function ($query, $keyword) {
+                $lower = mb_strtolower(trim($keyword));
+                if (str_contains('lunas', $lower) || str_contains('paid', $lower)) {
+                    $query->where('purchase.paymentStatus', 'Paid');
+
+                    return;
+                }
+                $query->whereRaw('1 = 0');
+            })
             ->filterColumn('fleetPlate', function ($query, $keyword) {
                 $query->where(function ($q) use ($keyword) {
                     $q->whereHas('fleet', function ($fleetQuery) use ($keyword) {
@@ -482,10 +665,23 @@ class PurchasePaymentController extends Controller
                         .'<i class="mdi mdi-close-circle-outline fs-14 text-danger"></i></button>';
                 }
 
-                return '<td>'.$btn.'</td>';
+                return $btn;
             })
             ->rawColumns(['paymentStatusHtml', 'action'])
             ->toJson();
+
+        $payload = $response->getData(true);
+        $breakdowns = $this->service->resolveVehicleBreakdownForPurchases(collect($pagePurchases));
+        if (isset($payload['data']) && is_array($payload['data'])) {
+            foreach ($payload['data'] as &$item) {
+                $code = $item['code'] ?? '';
+                $item['vehicleBreakdown'] = $breakdowns[$code] ?? [];
+            }
+            unset($item);
+            $response->setData($payload);
+        }
+
+        return $response;
     }
 
     /**
@@ -503,7 +699,7 @@ class PurchasePaymentController extends Controller
     }
 
     /* ------------------------------------------------------------------ */
-    /* Export Excel & PDF                                                 */
+    /* Export Excel & PDF */
     /* ------------------------------------------------------------------ */
 
     public function exportSummaryExcel(Request $request)
@@ -543,15 +739,13 @@ class PurchasePaymentController extends Controller
         $purchases = $this->service->filteredUnpaid($request->all())->get();
         $filterSummary = $this->buildPaymentFilterSummary($request);
 
-        return $this->renderPdf(
-            view($this->view.'report.purchase-unpaid-pdf', [
-                'purchases' => $purchases,
-                'service' => $this->service,
-                'title' => 'Daftar Hutang Supplier Belum Lunas',
-                'filterSummary' => $filterSummary,
-                'printedAt' => now(),
-            ])->render(),
-            'Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.pdf'
+        return $this->renderChunkedPurchasePdf(
+            $this->view.'report.purchase-unpaid-pdf',
+            $purchases,
+            'Daftar Hutang Supplier Belum Lunas',
+            $filterSummary,
+            'Hutang-Supplier-Belum-Lunas-'.now()->format('YmdHis').'.pdf',
+            true
         );
     }
 
@@ -568,15 +762,13 @@ class PurchasePaymentController extends Controller
         $purchases = $this->service->filteredPaid($request->all())->get();
         $filterSummary = $this->buildPaymentFilterSummary($request);
 
-        return $this->renderPdf(
-            view($this->view.'report.purchase-paid-pdf', [
-                'purchases' => $purchases,
-                'service' => $this->service,
-                'title' => 'Daftar Hutang Supplier Lunas',
-                'filterSummary' => $filterSummary,
-                'printedAt' => now(),
-            ])->render(),
-            'Hutang-Supplier-Lunas-'.now()->format('YmdHis').'.pdf'
+        return $this->renderChunkedPurchasePdf(
+            $this->view.'report.purchase-paid-pdf',
+            $purchases,
+            'Daftar Hutang Supplier Lunas',
+            $filterSummary,
+            'Hutang-Supplier-Lunas-'.now()->format('YmdHis').'.pdf',
+            false
         );
     }
 
@@ -603,21 +795,101 @@ class PurchasePaymentController extends Controller
         return $summary;
     }
 
-    private function renderPdf(string $html, string $filename)
+    private function createMpdf(): Mpdf
     {
         $tempDir = storage_path('app/mpdf-temp');
         if (! is_dir($tempDir)) {
             mkdir($tempDir, 0755, true);
         }
 
-        $mpdf = new Mpdf([
+        return new Mpdf([
             'orientation' => 'L',
             'format' => 'A4',
             'tempDir' => $tempDir,
             'default_font' => 'sans-serif',
         ]);
+    }
 
+    private function renderPdf(string $html, string $filename)
+    {
+        $mpdf = $this->createMpdf();
         $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output('', 'S'))
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="'.$filename.'"');
+    }
+
+    /**
+     * Render PDF daftar hutang secara bertahap (chunk 250 baris per WriteHTML)
+     * agar tidak menabrak limit pcre.backtrack_limit mPDF saat data ribuan baris.
+     */
+    private function renderChunkedPurchasePdf(
+        string $viewName,
+        $purchases,
+        string $title,
+        array $filterSummary,
+        string $filename,
+        bool $includeRemaining
+    ) {
+        $mpdf = $this->createMpdf();
+        $printedAt = now();
+
+        $sumBilling = 0.0;
+        $sumPaid = 0.0;
+        $sumRemaining = 0.0;
+
+        foreach ($purchases as $row) {
+            $billing = (float) $this->service->billingOf($row);
+            $paid = (float) ($row->paidAmount ?? 0);
+            $sumBilling += $billing;
+            $sumPaid += $paid;
+            if ($includeRemaining) {
+                $sumRemaining += max(0, $billing - $paid);
+            }
+        }
+
+        $vehicleBreakdowns = $this->service->resolveVehicleBreakdownForPurchases($purchases);
+
+        $baseData = [
+            'service' => $this->service,
+            'vehicleBreakdowns' => $vehicleBreakdowns,
+            'title' => $title,
+            'filterSummary' => $filterSummary,
+            'printedAt' => $printedAt,
+            'totalCount' => $purchases->count(),
+            'sumBilling' => $sumBilling,
+            'sumPaid' => $sumPaid,
+            'sumRemaining' => $sumRemaining,
+        ];
+
+        $mpdf->WriteHTML(view($viewName, array_merge($baseData, [
+            'section' => 'header',
+            'purchases' => $purchases,
+        ]))->render());
+
+        if ($purchases->isEmpty()) {
+            $mpdf->WriteHTML(view($viewName, array_merge($baseData, [
+                'section' => 'rows',
+                'purchases' => $purchases,
+                'startIndex' => 0,
+            ]))->render());
+        } else {
+            $offset = 0;
+            foreach ($purchases->chunk(250) as $chunk) {
+                $mpdf->WriteHTML(view($viewName, array_merge($baseData, [
+                    'section' => 'rows',
+                    'purchases' => $chunk,
+                    'startIndex' => $offset,
+                ]))->render());
+                $offset += $chunk->count();
+            }
+        }
+
+        $mpdf->WriteHTML(view($viewName, array_merge($baseData, [
+            'section' => 'footer',
+            'purchases' => $purchases,
+        ]))->render());
 
         return response($mpdf->Output('', 'S'))
             ->header('Content-Type', 'application/pdf')

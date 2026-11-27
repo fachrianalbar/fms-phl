@@ -618,6 +618,17 @@
         // SELEKSI
         // =====================================================================
         function readRowCheckbox(checkbox) {
+            let vehicleBreakdown = [];
+            try {
+                const raw = checkbox.attr('data-vehicle-breakdown');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) vehicleBreakdown = parsed;
+                }
+            } catch (e) {
+                vehicleBreakdown = [];
+            }
+
             return {
                 code: String(checkbox.attr('data-code') || ''),
                 supplier: String(checkbox.attr('data-supplier') || ''),
@@ -625,6 +636,7 @@
                 transferBankCode: String(checkbox.attr('data-transfer-bank') || ''),
                 transferBankLabel: String(checkbox.attr('data-transfer-bank-label') || ''),
                 fleetPlate: String(checkbox.attr('data-fleet-plate') || '-'),
+                vehicleBreakdown: vehicleBreakdown,
             };
         }
 
@@ -734,7 +746,12 @@
                         'Transfer')));
                 }
                 const fleetCell = $('<td>');
-                if (item.fleetPlate && item.fleetPlate !== '-') {
+                const vBreakdown = Array.isArray(item.vehicleBreakdown) ? item.vehicleBreakdown : [];
+                if (vBreakdown.length > 1) {
+                    fleetCell.append($('<div>', {
+                        class: 'allocation-vehicle-breakdown d-flex flex-column gap-1'
+                    }));
+                } else if (item.fleetPlate && item.fleetPlate !== '-') {
                     const plates = item.fleetPlate.split(',').map(function (p) {
                         return p.trim();
                     }).filter(Boolean);
@@ -831,6 +848,39 @@
                     .toggleClass('text-muted', error === '');
                 row.find('.allocation-after').text(formatCurrency(Math.max(0, item.remaining - item
                     .allocationAmount)));
+
+                const vBreakdown = Array.isArray(item.vehicleBreakdown) ? item.vehicleBreakdown : [];
+                if (vBreakdown.length > 1) {
+                    const vContainer = row.find('.allocation-vehicle-breakdown').empty();
+                    const totalRem = vBreakdown.reduce(function (acc, v) {
+                        return acc + Math.max(0, Number(v.remaining_amount) || 0);
+                    }, 0);
+                    const payTotal = Math.min(item.remaining, Math.max(0, item.allocationAmount));
+                    let allocated = 0;
+
+                    vBreakdown.forEach(function (v, idx) {
+                        const vRem = Math.max(0, Number(v.remaining_amount) || 0);
+                        const isLast = idx === vBreakdown.length - 1;
+                        const weight = totalRem > 0 ? (vRem / totalRem) : (1 / vBreakdown.length);
+                        const vPay = isLast
+                            ? Math.max(0, payTotal - allocated)
+                            : Math.min(vRem, Math.round(payTotal * weight));
+                        allocated += vPay;
+                        const vAfter = Math.max(0, vRem - vPay);
+
+                        const badgeClass = v.is_stock
+                            ? 'badge bg-light text-muted border font-monospace fs-11'
+                            : 'badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11';
+
+                        vContainer.append(
+                            $('<div>', { class: 'fs-11' })
+                                .append($('<span>', { class: badgeClass }).text(v.plate_number || '-'))
+                                .append(' Bayar ')
+                                .append($('<strong>', { class: 'text-success font-monospace' }).text(formatCurrency(vPay)))
+                                .append($('<span>', { class: 'text-muted font-monospace' }).text(' (Sisa ' + formatCurrency(vAfter) + ')'))
+                        );
+                    });
+                }
 
                 if (!firstError && error) {
                     firstError = item.code + ': ' + error;
@@ -989,7 +1039,8 @@
                     }
                 },
                 "columns": [{
-                    "data": null,
+                    "data": 'checkbox',
+                    "name": 'checkbox',
                     "className": 'text-center align-middle',
                     "orderable": false,
                     "searchable": false,
@@ -1011,7 +1062,8 @@
                             ' data-remaining="' + remaining + '"' +
                             ' data-transfer-bank="' + escapeHtml(transferBankCode) + '"' +
                             ' data-transfer-bank-label="' + escapeHtml(transferBankLabel) + '"' +
-                            ' data-fleet-plate="' + escapeHtml(row.fleetPlate || '-') + '">';
+                            ' data-fleet-plate="' + escapeHtml(row.fleetPlate || '-') + '"' +
+                            ' data-vehicle-breakdown="' + escapeHtml(JSON.stringify(row.vehicleBreakdown || [])) + '">';
                     }
                 },
                 {
@@ -1038,7 +1090,20 @@
                     "className": 'align-middle',
                     "orderable": false,
                     "searchable": true,
-                    "render": function (data) {
+                    "render": function (data, type, row) {
+                        const breakdown = (row && Array.isArray(row.vehicleBreakdown)) ? row.vehicleBreakdown : [];
+                        if (breakdown.length > 1) {
+                            return '<div class="d-flex flex-column gap-1">' + breakdown.map(function (v) {
+                                const badgeClass = v.is_stock
+                                    ? 'badge bg-light text-muted border font-monospace fs-11'
+                                    : 'badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11';
+                                const amt = Math.max(0, Number(v.remaining_amount != null ? v.remaining_amount : v.billing_amount) || 0);
+                                return '<div class="d-flex align-items-center gap-1">'
+                                    + '<span class="' + badgeClass + '">' + escapeHtml(v.plate_number || '-') + '</span>'
+                                    + '<span class="font-monospace fs-11 text-muted">· ' + formatCurrency(amt) + '</span>'
+                                    + '</div>';
+                            }).join('') + '</div>';
+                        }
                         if (!data || data === '-') {
                             return '<span class="text-muted">-</span>';
                         }
@@ -1077,7 +1142,7 @@
                 }
                 ],
                 "order": [
-                    [4, 'asc']
+                    [3, 'asc']
                 ],
                 "drawCallback": function () {
                     restoreSelectedCheckboxes();

@@ -602,6 +602,7 @@
                                 <th>No. PO</th>
                                 <th class="text-center">{{ __('menu_maintenance.date') }}</th>
                                 <th>{{ __('menu_maintenance.plate_no') }}</th>
+                                <th>Pemilik Kendaraan</th>
                                 <th class="text-end">Total Biaya</th>
                             </tr>
                         </thead>
@@ -633,25 +634,31 @@
 
                 <div class="modal-body">
                     <div class="row g-3 mb-4">
-                        <div class="col-md-6 col-lg-3">
+                        <div class="col-md-6 col-lg">
                             <div class="detail-meta-item">
                                 <span class="detail-meta-label">Kode</span>
                                 <span class="detail-meta-value font-monospace" id="detail-code">-</span>
                             </div>
                         </div>
-                        <div class="col-md-6 col-lg-3">
+                        <div class="col-md-6 col-lg">
                             <div class="detail-meta-item">
                                 <span class="detail-meta-label">Tanggal</span>
                                 <span class="detail-meta-value" id="detail-date">-</span>
                             </div>
                         </div>
-                        <div class="col-md-6 col-lg-3">
+                        <div class="col-md-6 col-lg">
                             <div class="detail-meta-item">
                                 <span class="detail-meta-label">Armada</span>
                                 <span class="detail-meta-value font-monospace" id="detail-fleet">-</span>
                             </div>
                         </div>
-                        <div class="col-md-6 col-lg-3">
+                        <div class="col-md-6 col-lg">
+                            <div class="detail-meta-item">
+                                <span class="detail-meta-label">Pemilik Kendaraan</span>
+                                <span class="detail-meta-value" id="detail-fleet-owner">-</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg">
                             <div class="detail-meta-item">
                                 <span class="detail-meta-label">Gudang</span>
                                 <span class="detail-meta-value" id="detail-warehouse">-</span>
@@ -779,12 +786,14 @@
                 columns: [
                     { data: 'action', className: 'text-center align-middle' },
                     { data: 'DT_RowIndex', className: 'text-center align-middle' },
-                    { data: 'code', className: 'align-middle font-monospace fw-semibold' },
-                    { data: 'po_numbers', className: 'align-middle' },
-                    { data: 'maintenanceDate', className: 'text-center align-middle' },
-                    { data: 'fleet.plateNumber', className: 'align-middle font-monospace' },
+                    { data: 'code', name: 'code', className: 'align-middle font-monospace fw-semibold' },
+                    { data: 'po_numbers', name: 'po_numbers', className: 'align-middle' },
+                    { data: 'maintenanceDate', name: 'maintenanceDate', className: 'text-center align-middle' },
+                    { data: 'fleet.plateNumber', name: 'fleet.plateNumber', className: 'align-middle font-monospace' },
+                    { data: 'fleetOwner', name: 'fleetOwner', className: 'align-middle' },
                     {
                         data: 'grand_total',
+                        name: 'grand_total',
                         className: 'text-end align-middle font-monospace fw-bold',
                         render: function (data) {
                             return 'Rp ' + new Intl.NumberFormat('id-ID').format(data || 0);
@@ -792,7 +801,7 @@
                     }
                 ],
                 columnDefs: [
-                    { searchable: false, targets: [0, 1, 4, 6] },
+                    { searchable: false, targets: [0, 1] },
                     { orderable: false, targets: [0, 1, 3] }
                 ],
                 order: [[2, 'asc']],
@@ -841,6 +850,7 @@
                     $('#detail-code').text(response.code || '-');
                     $('#detail-date').text((response.date || '-') + ' ' + (response.time || ''));
                     $('#detail-fleet').text(response.fleet ? response.fleet.plateNumber : '-');
+                    $('#detail-fleet-owner').text((response.fleet && response.fleet.company && response.fleet.company.name) ? response.fleet.company.name : '-');
                     $('#detail-warehouse').text(response.warehouse ? response.warehouse.name : '-');
 
                     let poHtml = '<span class="text-muted">-</span>';

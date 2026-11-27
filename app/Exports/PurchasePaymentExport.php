@@ -21,6 +21,9 @@ class PurchasePaymentExport implements FromCollection, ShouldAutoSize, WithColum
 
     protected int $rowNumber = 0;
 
+    /** @var array<string, array<int, array<string, mixed>>> */
+    protected array $vehicleBreakdowns = [];
+
     public function __construct(
         protected array $filters,
         protected string $mode,
@@ -29,9 +32,13 @@ class PurchasePaymentExport implements FromCollection, ShouldAutoSize, WithColum
 
     public function collection(): Collection
     {
-        return $this->mode === 'paid'
+        $purchases = $this->mode === 'paid'
             ? $this->service->filteredPaid($this->filters)->get()
             : $this->service->filteredUnpaid($this->filters)->get();
+
+        $this->vehicleBreakdowns = $this->service->resolveVehicleBreakdownForPurchases($purchases);
+
+        return $purchases;
     }
 
     public function headings(): array
@@ -70,13 +77,19 @@ class PurchasePaymentExport implements FromCollection, ShouldAutoSize, WithColum
         $billing = (float) $this->service->billingOf($row);
         $paid = (float) ($row->paidAmount ?? 0);
 
+        $vehicleText = $this->service->formatVehicleBreakdownText(
+            $this->vehicleBreakdowns[$row->code] ?? [],
+            $this->mode,
+            $row->plate_number_display
+        );
+
         if ($this->mode === 'paid') {
             return [
                 $this->rowNumber,
                 $row->code ?: '-',
                 $row->date ? Carbon::parse($row->date)->format('d-m-Y') : '-',
                 $row->paymentDate ? Carbon::parse($row->paymentDate)->format('d-m-Y') : '-',
-                $row->plate_number_display ?? '-',
+                $vehicleText,
                 $row->supplier->name ?? '-',
                 $billing,
                 $paid,
@@ -91,7 +104,7 @@ class PurchasePaymentExport implements FromCollection, ShouldAutoSize, WithColum
             $row->code ?: '-',
             $row->date ? Carbon::parse($row->date)->format('d-m-Y') : '-',
             $row->dueDate ? Carbon::parse($row->dueDate)->format('d-m-Y') : '-',
-            $row->plate_number_display ?? '-',
+            $vehicleText,
             $row->supplier->name ?? '-',
             $billing,
             $paid,

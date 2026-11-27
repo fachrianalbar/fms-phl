@@ -39,7 +39,10 @@ class StockController extends Controller
     public function index()
     {
         $warehouse = $this->warehouseSvc->findAll();
-        $items = Item::query()->orderBy('code', 'asc')->get(['code', 'name']);
+        $items = Item::query()
+            ->where('type', Item::TYPE_PART)
+            ->orderBy('code', 'asc')
+            ->get(['code', 'name']);
 
         return view($this->view.'index')
             ->with('view', $this->view)
@@ -246,12 +249,18 @@ class StockController extends Controller
 
     private function stockSummaryQuery(?string $warehouseCode = null, ?string $itemCode = null, ?string $stockStatus = null)
     {
+        $jasaCodes = Item::withTrashed()
+            ->where('type', Item::TYPE_JASA)
+            ->pluck('code')
+            ->all();
+
         $query = StockTransaction::query()
             ->select('itemCode', 'warehouseCode')
             ->selectRaw('COALESCE(SUM(qtyIn), 0) as totalIn')
             ->selectRaw('COALESCE(SUM(qtyOut), 0) as totalOut')
             ->selectRaw('COALESCE(SUM(qtyIn), 0) - COALESCE(SUM(qtyOut), 0) as stock')
             ->with(['item', 'warehouse'])
+            ->when($jasaCodes !== [], fn ($q) => $q->whereNotIn('itemCode', $jasaCodes))
             ->whereNotNull('warehouseCode')
             ->where('warehouseCode', '!=', '')
             ->groupBy('itemCode', 'warehouseCode')

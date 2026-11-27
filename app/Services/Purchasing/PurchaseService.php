@@ -5,6 +5,7 @@ namespace App\Services\Purchasing;
 use App\Helpers\GenerateCode;
 use App\Models\Inventory\Item;
 use App\Models\Inventory\Stock;
+use App\Models\Inventory\Supplier;
 use App\Models\Inventory\Warehouse;
 use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
@@ -45,6 +46,7 @@ class PurchaseService
         return $this->service->query()->with([
             'supplier',
             'warehouse',
+            'fleet.company',
             'purchaseStatus',
             'details',
         ])->where('is_direct', false)->orderBy('date', 'desc')->orderBy('time', 'desc');
@@ -119,6 +121,10 @@ class PurchaseService
     public function getById(string $id)
     {
         return $this->service->query()->where('id', $id)->with([
+            'supplier',
+            'warehouse',
+            'fleet.company',
+            'fleet.brand',
             'details',
             'details.item',
             'purchaseStatus',
@@ -135,13 +141,20 @@ class PurchaseService
         );
         $purchaseCode = $code->resolvedCode;
 
+        $dueDate = $request->input('dueDate');
+        if (empty($dueDate)) {
+            $termDays = (int) (Supplier::query()->where('code', $request->supplierCode)->value('payment_term_days') ?? 0);
+            $dueDate = Carbon::parse($request->date)->addDays($termDays)->toDateString();
+        }
+
         $data = $this->service->create([
             'code' => $purchaseCode,
             'supplierCode' => $request->supplierCode,
             'warehouseCode' => $warehouse->code,
+            'fleetCode' => $request->input('fleetCode') ?: null,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->dueDate,
+            'dueDate' => $dueDate,
         ]);
 
         if (isset($request->itemCode)) {
@@ -194,7 +207,7 @@ class PurchaseService
                     $filtered['qty'][$i],
                     $purchaseCode, // transactionCode = Purchase code
                     $pd->code, // transactionDetailCode = PurchaseDetail code
-                    $request->date . ' ' . $request->time,
+                    $request->date.' '.$request->time,
                     'IN'
                 );
 
@@ -202,10 +215,23 @@ class PurchaseService
             }
         }
 
-        // Recalculate and save total nominal from details
+        // Recalculate and save subtotal, PPN, and grand total nominal from details
         $data->refresh();
-        $totalNominal = $data->details->sum(fn ($d) => $d->price * $d->qty);
-        $data->update(['nominal' => $totalNominal]);
+        $subtotal = (float) $data->details->sum(fn ($d) => (float) $d->price * (float) $d->qty);
+        $rawPpnRate = $request->input('ppn_rate');
+        if ($rawPpnRate === null || $rawPpnRate === '') {
+            $rawPpnRate = Supplier::query()->where('code', $request->supplierCode)->value('ppn') ?? 0;
+        }
+        $ppnRate = max(0, min(100, (float) $rawPpnRate));
+        $ppnAmount = round($subtotal * ($ppnRate / 100));
+        $grandTotal = $subtotal + $ppnAmount;
+
+        $data->update([
+            'subtotal' => $subtotal,
+            'ppn_rate' => $ppnRate,
+            'ppn_amount' => $ppnAmount,
+            'nominal' => $grandTotal,
+        ]);
 
         $this->logActivity($title, $data, 'Create');
 
@@ -230,12 +256,19 @@ class PurchaseService
         // Delete semua StockTransaction untuk purchase ini
         StockTransaction::withTrashed()->where('transactionCode', $purchaseCode)->forceDelete();
 
+        $dueDate = $request->input('dueDate');
+        if (empty($dueDate)) {
+            $termDays = (int) (Supplier::query()->where('code', $request->supplierCode)->value('payment_term_days') ?? 0);
+            $dueDate = Carbon::parse($request->date)->addDays($termDays)->toDateString();
+        }
+
         $this->service->query()->where('id', $id)->update([
             // 'code' => $request->code,
             'supplierCode' => $request->supplierCode,
+            'fleetCode' => $request->input('fleetCode') ?: null,
             'date' => $request->date,
             'time' => $request->time,
-            'dueDate' => $request->dueDate,
+            'dueDate' => $dueDate,
         ]);
 
         if (isset($request->itemCode)) {
@@ -270,7 +303,7 @@ class PurchaseService
                     $pd = PurchaseDetail::query()->where('itemCode', $filtered['itemCode'][$i])
                         ->where('purchaseCode', $purchaseCode)
                         ->first();
-                    
+
                     if ($pd) {
                         $pd->update([
                             'qty' => $pd->qty + $filtered['qty'][$i],
@@ -327,7 +360,7 @@ class PurchaseService
                         'qtyOut' => 0,
                         'transactionCode' => $purchaseCode,
                         'transactionDetailCode' => $detailCode,
-                        'date' => $request->date . ' ' . $request->time,
+                        'date' => $request->date.' '.$request->time,
                         'transactionType' => 'IN',
                     ]);
                 }
@@ -344,10 +377,19 @@ class PurchaseService
             }
         }
 
-        // Recalculate and save total nominal from details
+        // Recalculate and save subtotal, PPN, and grand total nominal from details
         $purchaseData->refresh();
-        $totalNominal = $purchaseData->details->sum(fn ($d) => $d->price * $d->qty);
-        $this->service->query()->where('id', $id)->update(['nominal' => $totalNominal]);
+        $subtotal = (float) $purchaseData->details->sum(fn ($d) => (float) $d->price * (float) $d->qty);
+        $ppnRate = max(0, min(100, (float) ($request->input('ppn_rate') ?? 0)));
+        $ppnAmount = round($subtotal * ($ppnRate / 100));
+        $grandTotal = $subtotal + $ppnAmount;
+
+        $this->service->query()->where('id', $id)->update([
+            'subtotal' => $subtotal,
+            'ppn_rate' => $ppnRate,
+            'ppn_amount' => $ppnAmount,
+            'nominal' => $grandTotal,
+        ]);
 
         $this->logActivity($title, $this->getById($id), 'After Update');
     }

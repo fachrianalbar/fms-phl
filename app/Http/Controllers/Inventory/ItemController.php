@@ -39,6 +39,18 @@ class ItemController extends Controller
 
     protected $menuSvc;
 
+    protected string $itemType = Item::TYPE_PART;
+
+    protected string $routePrefix = 'inventory.items.';
+
+    protected string $dtRoute = 'dt.items';
+
+    protected string $entityLabel = 'Barang';
+
+    protected string $exportFilePrefix = 'Data-Barang';
+
+    protected string $pdfReportTitle = 'Laporan Master Barang';
+
     public function __construct(
         ItemService $itemSvc,
         UnitService $unitSvc,
@@ -51,8 +63,20 @@ class ItemController extends Controller
         $this->categorySvc = $categorySvc;
         $this->warehouseSvc = $warehouseSvc;
         $this->supplierSvc = $supplierSvc;
-        $this->title = 'Item';
+        $this->title = 'Barang';
         $this->view = 'inventory.items.';
+    }
+
+    protected function sharedViewData(): array
+    {
+        return [
+            'view' => $this->view,
+            'title' => $this->title,
+            'routePrefix' => $this->routePrefix,
+            'dtRoute' => $this->dtRoute,
+            'itemType' => $this->itemType,
+            'entityLabel' => $this->entityLabel,
+        ];
     }
 
     /**
@@ -60,18 +84,18 @@ class ItemController extends Controller
      */
     public function index()
     {
-        $items = Item::orderBy('code', 'asc')->get();
+        $items = Item::query()
+            ->where('type', $this->itemType)
+            ->orderBy('code', 'asc')
+            ->get();
         $categories = $this->categorySvc->findAll();
         $units = $this->unitSvc->findAllInventory();
-        $types = Item::types();
 
-        return view($this->view.'index')
-            ->with('view', $this->view)
-            ->with('title', $this->title)
-            ->with('items', $items)
-            ->with('categories', $categories)
-            ->with('units', $units)
-            ->with('types', $types);
+        return view($this->view.'index', array_merge($this->sharedViewData(), [
+            'items' => $items,
+            'categories' => $categories,
+            'units' => $units,
+        ]));
     }
 
     /**
@@ -83,16 +107,13 @@ class ItemController extends Controller
         $category = $this->categorySvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
-        $types = Item::types();
 
-        return view($this->view.'create')
-            ->with('view', $this->view)
-            ->with('unit', $unit)
-            ->with('category', $category)
-            ->with('warehouse', $warehouse)
-            ->with('supplier', $supplier)
-            ->with('types', $types)
-            ->with('title', $this->title);
+        return view($this->view.'create', array_merge($this->sharedViewData(), [
+            'unit' => $unit,
+            'category' => $category,
+            'warehouse' => $warehouse,
+            'supplier' => $supplier,
+        ]));
     }
 
     /**
@@ -100,34 +121,38 @@ class ItemController extends Controller
      */
     public function store(Request $request)
     {
+        $forced = ['type' => $this->itemType];
+        if ($this->itemType === Item::TYPE_JASA) {
+            $forced['warehouseCode'] = null;
+        }
+        $request->merge($forced);
+
         $this->normalizePriceInput($request);
+        $this->normalizeNullableForeignKeys($request);
 
         $validator = Validator::make($request->all(), [
             'code' => ['required', 'string', 'max:30'],
-            'name' => 'required',
-            // 'brandName' => 'required',
-            // 'categoryCode' => 'required',
-            // 'itemLocationCode' => 'required',
-            // 'warehouseCode' => 'required',
-            'unitCode' => 'required',
-            'type' => ['required', Rule::in(array_keys(Item::types()))],
-            // 'supplierCode' => 'required',
+            'name' => ['required', 'string', 'max:255'],
+            'unitCode' => ['required', 'string'],
+            'type' => ['required', Rule::in([$this->itemType])],
             'price' => ['nullable', 'numeric', 'min:0'],
         ]);
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
         try {
             $code = app(UniqueCodeService::class)->runWithDuplicateRetry(function () use ($request) {
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
             });
 
-            $redirect = redirect()->route($this->view.'index')
+            $redirect = redirect()->route($this->routePrefix.'index')
                 ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
             return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -136,7 +161,7 @@ class ItemController extends Controller
      */
     public function show(string $id)
     {
-        //
+        return redirect()->route($this->routePrefix.'index');
     }
 
     /**
@@ -146,25 +171,22 @@ class ItemController extends Controller
     {
         $data = $this->service->getById($id);
 
-        if (! $data) {
-            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
+        if (! $data || $data->type !== $this->itemType) {
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Data not found');
         }
 
         $unit = $this->unitSvc->findAllInventory();
         $category = $this->categorySvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
         $supplier = $this->supplierSvc->findAll();
-        $types = Item::types();
 
-        return view($this->view.'edit')
-            ->with('view', $this->view)
-            ->with('title', $this->title)
-            ->with('unit', $unit)
-            ->with('category', $category)
-            ->with('warehouse', $warehouse)
-            ->with('supplier', $supplier)
-            ->with('types', $types)
-            ->with('data', $data);
+        return view($this->view.'edit', array_merge($this->sharedViewData(), [
+            'unit' => $unit,
+            'category' => $category,
+            'warehouse' => $warehouse,
+            'supplier' => $supplier,
+            'data' => $data,
+        ]));
     }
 
     /**
@@ -172,23 +194,32 @@ class ItemController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $existing = $this->service->getById($id);
+
+        if (! $existing || $existing->type !== $this->itemType) {
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Data not found');
+        }
+
+        $forced = ['type' => $this->itemType];
+        if ($this->itemType === Item::TYPE_JASA) {
+            $forced['warehouseCode'] = null;
+        }
+        $request->merge($forced);
+
         $this->normalizePriceInput($request);
+        $this->normalizeNullableForeignKeys($request);
 
         $validator = Validator::make($request->all(), [
-            // 'code' => 'required',
-            'name' => 'required',
-            // 'brandName' => 'required',
-            // 'categoryCode' => 'required',
-            // 'itemLocationCode' => 'required',
-            // 'warehouseCode' => 'required',
-            'unitCode' => 'required',
-            'type' => ['required', Rule::in(array_keys(Item::types()))],
-            // 'supplierCode' => 'required',
+            'name' => ['required', 'string', 'max:255'],
+            'unitCode' => ['required', 'string'],
+            'type' => ['required', Rule::in([$this->itemType])],
             'price' => ['nullable', 'numeric', 'min:0'],
         ]);
+
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
+
         try {
             DB::beginTransaction();
 
@@ -196,11 +227,11 @@ class ItemController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
+            return redirect()->route($this->routePrefix.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -209,14 +240,20 @@ class ItemController extends Controller
      */
     public function destroy(string $id)
     {
+        $existing = $this->service->getById($id);
+
+        if (! $existing || $existing->type !== $this->itemType) {
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Data not found');
+        }
+
         try {
             $this->service->destroy($id, $this->title);
 
-            return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
+            return redirect()->route($this->routePrefix.'index')->with('success', 'Delete Data Success');
         } catch (\DomainException|\RuntimeException $th) {
-            return redirect()->route($this->view.'index')->with('fail', $th->getMessage());
+            return redirect()->route($this->routePrefix.'index')->with('fail', $th->getMessage());
         } catch (\Throwable $th) {
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -225,6 +262,22 @@ class ItemController extends Controller
         try {
             DB::beginTransaction();
 
+            $targetCodes = Item::query()
+                ->where('type', $this->itemType)
+                ->whereNull('deleted_at')
+                ->pluck('code')
+                ->all();
+
+            if ($targetCodes === []) {
+                DB::commit();
+
+                return redirect()->route($this->routePrefix.'index')->with(
+                    'fail',
+                    'Tidak ada data '.strtolower($this->entityLabel).' untuk sinkronisasi harga.'
+                );
+            }
+
+            $targetSet = array_flip($targetCodes);
             $latestPriceByItem = [];
 
             $rows = DB::table('purchase_detail')
@@ -242,7 +295,7 @@ class ItemController extends Controller
                 ->cursor();
 
             foreach ($rows as $row) {
-                if (isset($latestPriceByItem[$row->itemCode])) {
+                if (! isset($targetSet[$row->itemCode]) || isset($latestPriceByItem[$row->itemCode])) {
                     continue;
                 }
 
@@ -256,13 +309,17 @@ class ItemController extends Controller
             if (empty($latestPriceByItem)) {
                 DB::commit();
 
-                return redirect()->route($this->view.'index')->with('fail', 'Tidak ada history pembelian untuk sinkronisasi harga.');
+                return redirect()->route($this->routePrefix.'index')->with(
+                    'fail',
+                    'Tidak ada history pembelian '.strtolower($this->entityLabel).' untuk sinkronisasi harga.'
+                );
             }
 
             $updatedCount = 0;
 
             foreach ($latestPriceByItem as $itemCode => $price) {
                 $updatedCount += Item::where('code', $itemCode)
+                    ->where('type', $this->itemType)
                     ->whereNull('deleted_at')
                     ->update([
                         'price' => $price,
@@ -271,22 +328,27 @@ class ItemController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view.'index')->with('success', 'Sinkronisasi harga berhasil. '.$updatedCount.' item diperbarui dari pembelian terbaru.');
+            return redirect()->route($this->routePrefix.'index')->with(
+                'success',
+                'Sinkronisasi harga berhasil. '.$updatedCount.' '.strtolower($this->entityLabel).' diperbarui dari pembelian terbaru.'
+            );
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
+            return redirect()->route($this->routePrefix.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
     public function purchaseHistory(Request $request, string $itemCode)
     {
-        $item = Item::where('code', $itemCode)->first();
+        $item = Item::where('code', $itemCode)
+            ->where('type', $this->itemType)
+            ->first();
 
         if (! $item) {
             return response()->json([
                 'success' => false,
-                'message' => 'Item not found',
+                'message' => $this->entityLabel.' not found',
                 'data' => [],
             ], 404);
         }
@@ -347,20 +409,43 @@ class ItemController extends Controller
                 ->filterColumn('DT_RowIndex', function ($query, $keyword) {
                     return $query;
                 })
+                ->addColumn('categoryName', function ($row) {
+                    return $row->category->name ?? '-';
+                })
+                ->filterColumn('categoryName', function ($query, $keyword) {
+                    $trimmed = trim((string) $keyword);
+                    if ($trimmed === '-') {
+                        $query->whereNull('item.categoryCode');
+
+                        return;
+                    }
+                    $query->whereHas('category', function ($category) use ($trimmed) {
+                        $category->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower($trimmed).'%']);
+                    });
+                })
                 ->filterColumn('unit.name', function ($query, $keyword) {
                     $query->whereHas('unit', function ($unit) use ($keyword) {
-                        $unit->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($keyword).'%']);
+                        $unit->whereRaw('LOWER(name) LIKE ?', ['%'.mb_strtolower((string) $keyword).'%']);
                     });
                 })
                 ->filterColumn('price', function ($query, $keyword) {
-                    $digits = preg_replace('/[^\d]/', '', (string) $keyword);
+                    $trimmed = trim((string) $keyword);
+                    if (in_array(mb_strtolower($trimmed), ['rp', 'rp.', 'idr'], true)) {
+                        $query->whereRaw('1 = 1');
 
+                        return;
+                    }
+                    if (! preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $m)) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+                    $digits = preg_replace('/\D/', '', $m[1]) ?? '';
                     if ($digits === '') {
                         $query->whereRaw('1 = 0');
 
                         return;
                     }
-
                     $query->whereRaw('CAST(item.price AS CHAR) LIKE ?', ['%'.$digits.'%']);
                 })
                 ->orderColumn('code', function ($query, $order) {
@@ -369,6 +454,14 @@ class ItemController extends Controller
                 ->orderColumn('name', function ($query, $order) {
                     $query->orderBy('item.name', $order);
                 })
+                ->orderColumn('categoryName', function ($query, $order) {
+                    $query->orderBy(
+                        ItemCategory::select('name')
+                            ->whereColumn('item_category.code', 'item.categoryCode')
+                            ->limit(1),
+                        $order
+                    );
+                })
                 ->orderColumn('type', function ($query, $order) {
                     $query->orderBy('item.type', $order);
                 })
@@ -376,34 +469,42 @@ class ItemController extends Controller
                     $query->orderBy('item.price', $order);
                 })
                 ->orderColumn('unit.name', function ($query, $order) {
-                    // Yajra sudah melakukan left join `unit`, cukup arahkan ke kolom relasinya.
-                    $query->orderBy('unit.name', $order);
+                    $query->orderBy(
+                        Unit::select('name')
+                            ->whereColumn('unit.code', 'item.unitCode')
+                            ->limit(1),
+                        $order
+                    );
                 })
                 ->filter(function ($query) use ($request) {
                     if (! $request->has('search') || empty($request->search['value'])) {
                         return;
                     }
 
-                    $terms = preg_split('/\s+/', strtolower(trim($request->search['value']))) ?: [];
+                    $terms = preg_split('/\s+/', mb_strtolower(trim((string) $request->search['value']))) ?: [];
 
                     foreach ($terms as $term) {
-                        // Abaikan kata mata uang agar "Rp 1.500.000" tetap menemukan datanya.
                         if ($term === '' || in_array($term, ['rp', 'rp.', 'idr'], true)) {
                             continue;
                         }
 
-                        $priceTerm = preg_replace('/[^\d]/', '', $term);
+                        $priceDigits = '';
+                        if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $term, $m)) {
+                            $priceDigits = preg_replace('/\D/', '', $m[1]) ?? '';
+                        }
 
-                        $query->where(function ($group) use ($term, $priceTerm) {
+                        $query->where(function ($group) use ($term, $priceDigits) {
                             $group->whereRaw('LOWER(item.code) LIKE ?', ['%'.$term.'%'])
                                 ->orWhereRaw('LOWER(item.name) LIKE ?', ['%'.$term.'%'])
-                                ->orWhereRaw('LOWER(item.type) LIKE ?', ['%'.$term.'%'])
+                                ->orWhereHas('category', function ($cat) use ($term) {
+                                    $cat->whereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
+                                })
                                 ->orWhereHas('unit', function ($unit) use ($term) {
                                     $unit->whereRaw('LOWER(name) LIKE ?', ['%'.$term.'%']);
                                 });
 
-                            if ($priceTerm !== '') {
-                                $group->orWhereRaw('CAST(item.price AS CHAR) LIKE ?', ['%'.$priceTerm.'%']);
+                            if ($priceDigits !== '') {
+                                $group->orWhereRaw('CAST(item.price AS CHAR) LIKE ?', ['%'.$priceDigits.'%']);
                             }
                         });
                     }
@@ -411,32 +512,32 @@ class ItemController extends Controller
                 ->editColumn('type', function ($row) {
                     return Item::types()[$row->type] ?? ucfirst($row->type ?? '-');
                 })
-                ->escapeColumns(['code', 'name', 'unit.name'])
+                ->escapeColumns(['code', 'name', 'categoryName', 'unit.name'])
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <a href="javascript:void(0)"
-           class="btn btn-icon btn-sm bg-info-subtle me-1 btn-purchase-history"
-           data-item-code="'.e($row->code).'"
-           data-item-name="'.e($row->name).'"
-           data-url="'.e(route($this->view.'purchase-history', $row->code)).'"
-           data-bs-toggle="tooltip" title="History Pembelian">
-            <i class="mdi mdi-history fs-14 text-info"></i>
-        </a>
+                    $historyUrl = e(route($this->routePrefix.'purchase-history', $row->code));
+                    $editUrl = e(route($this->routePrefix.'edit', $row->id));
+                    $deleteUrl = e(route($this->routePrefix.'destroy', $row->id));
 
-        <a href="'.route($this->view.'edit', $row->id).'"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
-
-        <a href="javascript:deleteData(\''.e($row->id).'\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
-
-                    return $btn;
+                    return '<div class="d-inline-flex align-items-center gap-1">
+                        <a href="javascript:void(0)"
+                           class="btn btn-icon btn-sm bg-info-subtle btn-purchase-history"
+                           data-item-code="'.e($row->code).'"
+                           data-item-name="'.e($row->name).'"
+                           data-url="'.$historyUrl.'"
+                           data-bs-toggle="tooltip" title="History Pembelian">
+                            <i class="mdi mdi-history fs-14 text-info"></i>
+                        </a>
+                        <a href="'.$editUrl.'"
+                           class="btn btn-icon btn-sm bg-primary-subtle"
+                           data-bs-toggle="tooltip" title="Edit">
+                            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
+                        </a>
+                        <a href="javascript:deleteData(\''.$deleteUrl.'\')"
+                           class="btn btn-icon btn-sm bg-danger-subtle"
+                           data-bs-toggle="tooltip" title="Delete">
+                            <i class="mdi mdi-delete fs-14 text-danger"></i>
+                        </a>
+                    </div>';
                 })
                 ->rawColumns(['action', 'type'])
                 ->make();
@@ -447,7 +548,7 @@ class ItemController extends Controller
      * Normalisasi input price agar format ribuan/decimal Indonesia ("1.500.000", "1.500,50")
      * tetap tersimpan benar, dan nilai kosong dikirim sebagai null.
      */
-    private function normalizePriceInput(Request $request): void
+    protected function normalizePriceInput(Request $request): void
     {
         if (! $request->has('price')) {
             return;
@@ -463,11 +564,19 @@ class ItemController extends Controller
 
         $parsed = $this->parseRupiah($raw);
 
-        // Biarkan nilai asli bila tidak bisa di-parse supaya rule numeric menolaknya.
         $request->merge(['price' => $parsed ?? $raw]);
     }
 
-    private function parseRupiah(string $value): ?float
+    protected function normalizeNullableForeignKeys(Request $request): void
+    {
+        foreach (['categoryCode', 'warehouseCode', 'supplierCode', 'brandName'] as $field) {
+            if ($request->has($field) && trim((string) $request->input($field)) === '') {
+                $request->merge([$field => null]);
+            }
+        }
+    }
+
+    protected function parseRupiah(string $value): ?float
     {
         $value = preg_replace('/[^\d,.\-]/', '', $value) ?? '';
         $value = rtrim($value, '.,');
@@ -480,14 +589,11 @@ class ItemController extends Controller
         $hasDot = str_contains($value, '.');
 
         if ($hasComma && $hasDot) {
-            // Format id-ID: 1.500.000,50
             $value = str_replace('.', '', $value);
             $value = str_replace(',', '.', $value);
         } elseif ($hasComma) {
-            // Format desimal koma: 1500,50
             $value = str_replace(',', '.', $value);
         } elseif ($hasDot && preg_match('/^-?\d{1,3}(\.\d{3})+$/', $value) === 1) {
-            // Pemisah ribuan: 1.500.000
             $value = str_replace('.', '', $value);
         }
 
@@ -497,8 +603,12 @@ class ItemController extends Controller
     public function exportExcel(Request $request)
     {
         return Excel::download(
-            new ItemExport($this->filteredQuery($request)->orderBy('item.code', 'asc')),
-            'Data-Barang-'.now()->format('YmdHis').'.xlsx'
+            new ItemExport(
+                $this->filteredQuery($request)->orderBy('item.code', 'asc'),
+                $this->entityLabel,
+                $this->itemType
+            ),
+            $this->exportFilePrefix.'-'.now()->format('YmdHis').'.xlsx'
         );
     }
 
@@ -508,8 +618,11 @@ class ItemController extends Controller
 
         $filterSummary = [];
         if ($request->filled('itemCode')) {
-            $itemName = Item::query()->where('code', $request->itemCode)->value('name');
-            $filterSummary[] = 'Barang: '.$request->itemCode.($itemName ? ' - '.$itemName : '');
+            $itemName = Item::query()
+                ->where('code', $request->itemCode)
+                ->where('type', $this->itemType)
+                ->value('name');
+            $filterSummary[] = $this->entityLabel.': '.$request->itemCode.($itemName ? ' - '.$itemName : '');
         }
         if ($request->filled('categoryCode')) {
             $catName = ItemCategory::query()->where('code', $request->categoryCode)->value('name');
@@ -518,9 +631,6 @@ class ItemController extends Controller
         if ($request->filled('unitCode')) {
             $unitName = Unit::query()->where('code', $request->unitCode)->value('name');
             $filterSummary[] = 'Satuan: '.($unitName ?: $request->unitCode);
-        }
-        if ($request->filled('type')) {
-            $filterSummary[] = 'Tipe: '.(Item::types()[$request->type] ?? $request->type);
         }
 
         $tempDir = storage_path('app/mpdf-temp');
@@ -537,19 +647,22 @@ class ItemController extends Controller
 
         $mpdf->WriteHTML(view($this->view.'report.items-pdf', [
             'items' => $items,
-            'title' => 'Laporan Master Barang',
+            'title' => $this->pdfReportTitle,
+            'entityLabel' => $this->entityLabel,
+            'itemType' => $this->itemType,
             'filterSummary' => $filterSummary,
             'printedAt' => now(),
         ])->render());
 
         return response($mpdf->Output('', 'S'))
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="Data-Barang-'.now()->format('YmdHis').'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="'.$this->exportFilePrefix.'-'.now()->format('YmdHis').'.pdf"');
     }
 
-    private function filteredQuery(Request $request)
+    protected function filteredQuery(Request $request)
     {
-        $query = $this->service->findAll();
+        $query = $this->service->findAll()
+            ->where('item.type', $this->itemType);
 
         if ($request->filled('itemCode')) {
             $query->where('item.code', $request->itemCode);
@@ -561,10 +674,6 @@ class ItemController extends Controller
 
         if ($request->filled('unitCode')) {
             $query->where('item.unitCode', $request->unitCode);
-        }
-
-        if ($request->filled('type')) {
-            $query->where('item.type', $request->type);
         }
 
         return $query;

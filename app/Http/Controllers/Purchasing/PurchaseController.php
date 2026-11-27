@@ -12,6 +12,7 @@ use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchaseDetail;
 use App\Models\StockTransaction;
 use App\Services\Inventory\SupplierService;
+use App\Services\Master\FleetService;
 use App\Services\MenuService;
 use App\Services\Purchasing\PurchaseService;
 use App\Services\UniqueCodeService;
@@ -30,16 +31,19 @@ class PurchaseController extends Controller
 
     protected $supplierSvc;
 
+    protected FleetService $fleetSvc;
+
     protected $title;
 
     protected $view;
 
     protected $menuSvc;
 
-    public function __construct(PurchaseService $purchaseSvc, SupplierService $supplierSvc, MenuService $menuSvc)
+    public function __construct(PurchaseService $purchaseSvc, SupplierService $supplierSvc, FleetService $fleetSvc, MenuService $menuSvc)
     {
         $this->service = $purchaseSvc;
         $this->supplierSvc = $supplierSvc;
+        $this->fleetSvc = $fleetSvc;
         $this->menuSvc = $menuSvc->getByName('Purchase');
         $this->title = (Auth::user()?->languange ?? 'id') === 'en'
             ? ($this->menuSvc?->name ?? 'Purchase')
@@ -68,11 +72,13 @@ class PurchaseController extends Controller
     public function create()
     {
         $supplier = $this->supplierSvc->findAll();
+        $fleet = $this->fleetSvc->findAll();
         $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view.'create')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
+            ->with('fleet', $fleet)
             ->with('items', $items)
             ->with('title', $this->title);
     }
@@ -85,12 +91,12 @@ class PurchaseController extends Controller
         $validator = Validator::make($request->all(), [
             'code' => ['required', 'string', 'max:30'],
             'supplierCode' => 'required',
+            'fleetCode' => ['nullable', 'string'],
+            'ppn_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'date' => 'required',
             'time' => 'required',
             'itemCode' => 'required|array',
             'itemCode.*' => 'required',
-            'description' => 'sometimes|array',
-            'description.*' => 'nullable|string',
             'description' => 'sometimes|array',
             'description.*' => 'nullable|string',
             'price' => ['required', 'array', function ($attribute, $value, $fail) {
@@ -174,11 +180,13 @@ class PurchaseController extends Controller
         }
 
         $supplier = $this->supplierSvc->findAll();
+        $fleet = $this->fleetSvc->findAll();
         $items = Item::OrderBy('name', 'asc')->with(['latestPurchase'])->get();
 
         return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
+            ->with('fleet', $fleet)
             ->with('items', $items)
             ->with('title', $this->title)
             ->with('totalPrice', $totalPrice)
@@ -194,6 +202,8 @@ class PurchaseController extends Controller
         $validator = Validator::make($request->all(), [
             // 'code' => 'required',
             'supplierCode' => 'required',
+            'fleetCode' => ['nullable', 'string'],
+            'ppn_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'date' => 'required',
             'time' => 'required',
             'itemCode' => 'required|array',
@@ -268,24 +278,40 @@ class PurchaseController extends Controller
         if ($request->ajax()) {
             $data = $this->service->filteredDatatable($request->all());
 
-            // Pencarian global DataTables (kotak pencarian) — kode, supplier, gudang.
-            $search = $request->input('search.value');
+            // Pencarian global DataTables — kode, supplier, gudang, nopol, pemilik, tanggal, nominal/PPN, status.
+            $search = trim((string) $request->input('search.value', ''));
 
-            if (! empty($search)) {
-                $data->where(function ($query) use ($search) {
+            if ($search !== '') {
+                $lower = mb_strtolower($search);
+                $data->where(function ($query) use ($search, $lower) {
                     $query->where('purchase.code', 'like', '%'.$search.'%')
+                        ->orWhere('purchase.date', 'like', '%'.$search.'%')
+                        ->orWhere('purchase.dueDate', 'like', '%'.$search.'%')
+                        ->orWhereRaw('CAST(purchase.subtotal AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.ppn_amount AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.ppn_rate AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.nominal AS CHAR) LIKE ?', ['%'.$search.'%'])
                         ->orWhereHas('supplier', fn ($supplier) => $supplier->where('name', 'like', '%'.$search.'%'))
-                        ->orWhereHas('warehouse', fn ($warehouse) => $warehouse->where('name', 'like', '%'.$search.'%'));
+                        ->orWhereHas('warehouse', fn ($warehouse) => $warehouse->where('name', 'like', '%'.$search.'%'))
+                        ->orWhereHas('fleet', fn ($fleet) => $fleet->where('plateNumber', 'like', '%'.$search.'%')
+                            ->orWhereHas('company', fn ($company) => $company->where('name', 'like', '%'.$search.'%')));
+
+                    if (str_contains($lower, 'lunas') || $lower === 'paid') {
+                        $query->orWhere('purchase.paymentStatus', 'Paid');
+                    }
+                    if (str_contains($lower, 'sebagian') || str_contains($lower, 'partial')) {
+                        $query->orWhere('purchase.paymentStatus', 'Partial');
+                    }
+                    if (str_contains($lower, 'belum') || str_contains($lower, 'unpaid')) {
+                        $query->orWhere('purchase.paymentStatus', 'Unpaid');
+                    }
                 });
             }
 
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->addColumn('purchaseDate', function ($row) {
-                    $date = Carbon::parse($row->date)->format('d-M-Y');
-                    $time = Carbon::parse($row->time)->format('H:i');
-
-                    return $date;
+                    return Carbon::parse($row->date)->format('d-M-Y');
                 })
                 ->editColumn('receivedDate', function ($row) {
                     $receivedDate = '';
@@ -311,18 +337,46 @@ class PurchaseController extends Controller
 
                     return $paymentDate;
                 })
-                ->addColumn('totalPrice', function ($row) {
-                    // Use nominal from header (saved from detail price * qty)
-                    $totalPrice = $row->nominal ?? 0;
+                ->addColumn('fleetInfo', function ($row) {
+                    if (! $row->fleet) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    $owner = optional($row->fleet->company)->name;
 
-                    // Fallback: recalculate from details if nominal is empty
-                    if (! $totalPrice) {
-                        foreach ($row->details as $item) {
-                            $totalPrice += intval($item->price) * $item->qty;
+                    return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace fs-11 px-2 py-1">'
+                        .e($row->fleet->plateNumber).'</span>'
+                        .($owner ? '<small class="text-muted d-block mt-1">'.e($owner).'</small>' : '');
+                })
+                ->addColumn('subtotalAmount', function ($row) {
+                    $subtotal = (float) ($row->subtotal ?? 0);
+                    if ($subtotal <= 0) {
+                        $subtotal = (float) ($row->nominal ?? 0);
+                        if ($subtotal <= 0) {
+                            $subtotal = (float) $row->details->sum(fn ($item) => (float) $item->price * (float) $item->qty);
                         }
                     }
 
-                    return number_format($totalPrice, 0, ',', '.');
+                    return 'Rp '.number_format($subtotal, 0, ',', '.');
+                })
+                ->addColumn('ppnInfo', function ($row) {
+                    $ppnRate = (float) ($row->ppn_rate ?? 0);
+                    $ppnAmount = (float) ($row->ppn_amount ?? 0);
+                    if ($ppnRate <= 0 && $ppnAmount <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    $rateFormatted = rtrim(rtrim(number_format($ppnRate, 2, ',', '.'), '0'), ',');
+
+                    return '<span>Rp '.number_format($ppnAmount, 0, ',', '.').'</span>'
+                        .'<small class="text-muted d-block">('.$rateFormatted.'%)</small>';
+                })
+                ->addColumn('totalPrice', function ($row) {
+                    $totalPrice = (float) ($row->nominal ?? 0);
+
+                    if ($totalPrice <= 0) {
+                        $totalPrice = (float) $row->details->sum(fn ($item) => (float) $item->price * (float) $item->qty);
+                    }
+
+                    return '<span class="fw-semibold">Rp '.number_format($totalPrice, 0, ',', '.').'</span>';
                 })
                 ->editColumn('supplier.name', function ($row) {
                     $supplier = '';
@@ -354,25 +408,33 @@ class PurchaseController extends Controller
                     return '<span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill fs-11">Belum Bayar</span>';
                 })
                 ->addColumn('action', function ($row) {
-                    $isDetail = ($row->paidAmount > 0 || $row->status == 3);
-                    $icon = $isDetail ? 'mdi-eye' : 'mdi-pencil-outline';
-                    $title = $isDetail ? 'Detail' : 'Edit';
+                    $canEdit = ! ($row->paidAmount > 0 || $row->status == 3);
+                    $canDelete = ! (in_array($row->status, [1, 2, 3]) || $row->paidAmount > 0);
 
-                    $btn = '<a href="'.route($this->view.($isDetail ? 'show' : 'edit'), $row->id).'" '
-                        .'class="btn btn-icon btn-sm bg-primary-subtle me-1" '
-                        .'data-bs-toggle="tooltip" title="'.$title.'">'
-                        .'<i class="mdi '.$icon.' fs-14 text-primary"></i></a>';
+                    $btn = '<div class="d-inline-flex align-items-center justify-content-center gap-1">';
+                    $btn .= '<a href="'.route($this->view.'show', $row->id).'" '
+                        .'class="btn btn-icon btn-sm bg-info-subtle" '
+                        .'data-bs-toggle="tooltip" title="Detail">'
+                        .'<i class="mdi mdi-eye fs-14 text-info"></i></a>';
 
-                    if (! (in_array($row->status, [1, 2, 3]) || $row->paidAmount > 0)) {
+                    if ($canEdit) {
+                        $btn .= '<a href="'.route($this->view.'edit', $row->id).'" '
+                            .'class="btn btn-icon btn-sm bg-primary-subtle" '
+                            .'data-bs-toggle="tooltip" title="Edit">'
+                            .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>';
+                    }
+
+                    if ($canDelete) {
                         $btn .= '<a href="javascript:deleteData(\''.$row->id.'\')" '
                             .'class="btn btn-icon btn-sm bg-danger-subtle" '
                             .'data-bs-toggle="tooltip" title="Delete">'
                             .'<i class="mdi mdi-delete fs-14 text-danger"></i></a>';
                     }
+                    $btn .= '</div>';
 
                     return $btn;
                 })
-                ->rawColumns(['purchaseDate', 'dueDate', 'supplier.name', 'warehouse.name', 'totalPrice', 'paymentStatusHtml', 'action'])
+                ->rawColumns(['purchaseDate', 'dueDate', 'supplier.name', 'warehouse.name', 'fleetInfo', 'subtotalAmount', 'ppnInfo', 'totalPrice', 'paymentStatusHtml', 'action'])
                 ->toJson();
         }
     }

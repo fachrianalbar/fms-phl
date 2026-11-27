@@ -515,8 +515,8 @@
                                 type="time" required value="{{ $data->time }}">
                         </div>
 
-                        <!-- Fleet -->
-                        <div class="col-md-12">
+                        <!-- Fleet & Owner -->
+                        <div class="col-md-6">
                             <label class="form-label-custom" for="fleetCode">
                                 <i class="mdi mdi-truck-outline text-muted"></i>
                                 {{ __('menu_maintenance.fleet') }} / Plat Nomor <span class="required-star">*</span>
@@ -524,11 +524,23 @@
                             <select class="js-example-basic-single form-select" name="fleetCode" id="fleetCode" required>
                                 <option selected="" disabled="" value="">{{ __('general.choose') }} Armada...</option>
                                 @foreach ($fleet as $item)
-                                    <option value="{{ $item->code }}" {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
+                                    <option value="{{ $item->code }}"
+                                        data-owner="{{ $item->company->name ?? '-' }}"
+                                        data-owner-type="{{ $item->company->type ?? '' }}"
+                                        {{ $data->fleetCode == $item->code ? 'selected' : '' }}>
                                         {{ $item->plateNumber }}
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="fleetOwnerDisplay">
+                                <i class="mdi mdi-account-tie-outline text-muted"></i>
+                                Nama Pemilik Kendaraan
+                            </label>
+                            <input class="form-control form-control-custom fw-semibold" type="text"
+                                id="fleetOwnerDisplay" readonly placeholder="Otomatis muncul saat pilih Nopol..." value="-">
                         </div>
 
                         <!-- Hidden Warehouse Code -->
@@ -722,7 +734,16 @@
         let dataItem = [];
         let selectedWarehouse = null;
 
+        function syncFleetOwner() {
+            const selected = $('#fleetCode').find('option:selected');
+            const owner = selected.val() ? (selected.attr('data-owner') || '-') : '';
+            $('#fleetOwnerDisplay').val(owner || '-');
+        }
+
         $(document).ready(function() {
+            $('#fleetCode').on('change', syncFleetOwner);
+            syncFleetOwner();
+
             // Init select2 untuk pilihan No PO (multi select)
             $('#purchase_ids').select2({
                 placeholder: 'Pilih satu atau beberapa No PO...',

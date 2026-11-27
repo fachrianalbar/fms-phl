@@ -10,6 +10,7 @@ use App\Models\Purchasing\Purchase;
 use App\Models\Purchasing\PurchasePaymentHistory;
 use App\Models\Purchasing\SupplierPaymentBatch;
 use App\Traits\LogActivity;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class PurchasePaymentService
@@ -44,7 +45,7 @@ class PurchasePaymentService
     }
 
     /* ------------------------------------------------------------------ */
-    /* Query                                                              */
+    /* Query */
     /* ------------------------------------------------------------------ */
 
     public function getById(string $id)
@@ -99,9 +100,9 @@ class PurchasePaymentService
             'fleet',
             'maintenances.fleet',
         ])->where('paymentStatus', '!=', 'Paid')
-            ->orderByRaw(self::effectiveDueDateSql().' asc')
-            ->orderBy('date', 'desc')
-            ->orderBy('time', 'desc');
+            ->orderBy('purchase.date', 'asc')
+            ->orderBy('purchase.time', 'asc')
+            ->orderByRaw(self::effectiveDueDateSql().' asc');
     }
 
     public function filteredUnpaid(array $filters)
@@ -240,6 +241,7 @@ class PurchasePaymentService
             ->groupBy('purchase.supplierCode', 'supplier.name')
             ->selectRaw('purchase.supplierCode as supplierCode')
             ->selectRaw('supplier.name as supplierName')
+            ->selectRaw('MIN(purchase.date) as oldestPurchaseDate')
             ->selectRaw('COUNT(*) as poCount')
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Unpaid' THEN 1 ELSE 0 END) as unpaidCount")
             ->selectRaw("SUM(CASE WHEN purchase.paymentStatus = 'Partial' THEN 1 ELSE 0 END) as partialCount")
@@ -331,17 +333,25 @@ class PurchasePaymentService
 
         $billing = (float) $this->billingOf($purchase);
         $paid = (float) $purchase->paidAmount;
+        $subtotal = (float) ($purchase->subtotal ?: $purchase->details->sum(fn ($d) => (float) $d->price * (float) ($d->qty ?: $d->receivedQty)));
+        $ppnRate = (float) ($purchase->ppn_rate ?? 0);
+        $ppnAmount = (float) ($purchase->ppn_amount ?? max(0, $billing - $subtotal));
+        $vehicleBreakdown = $this->resolveVehicleBreakdown($purchase);
 
         return [
             'code' => $purchase->code,
             'supplier' => $purchase->supplier->name ?? '-',
             'date' => $purchase->date,
             'due_date' => $purchase->dueDate,
+            'subtotal' => $subtotal,
+            'ppn_rate' => $ppnRate,
+            'ppn_amount' => $ppnAmount,
             'billing' => $billing,
             'paid' => $paid,
             'remaining' => max(0, $billing - $paid),
             'payment_status' => $purchase->paymentStatus,
             'fleet_plate' => $purchase->plate_number_display ?? '-',
+            'vehicle_breakdown' => $vehicleBreakdown,
             'histories' => $histories->map(fn ($h) => [
                 'batch_code' => $h->batch_code,
                 'amount' => (float) $h->amount,
@@ -352,8 +362,330 @@ class PurchasePaymentService
         ];
     }
 
+    /**
+     * Hitung rincian pemakaian & pembayaran per mobil untuk satu PO/invoice.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function resolveVehicleBreakdown(Purchase $purchase): array
+    {
+        $map = $this->resolveVehicleBreakdownForPurchases(collect([$purchase]));
+
+        return $map[$purchase->code] ?? [];
+    }
+
+    /**
+     * Hitung rincian pemakaian & pembayaran per mobil untuk sekumpulan PO/invoice
+     * secara bulk (bebas N+1) untuk DataTables & Export.
+     *
+     * @param  Collection<int, Purchase>  $purchases
+     * @return array<string, array<int, array<string, mixed>>>
+     */
+    public function resolveVehicleBreakdownForPurchases(Collection $purchases): array
+    {
+        $purchaseCodes = $purchases->pluck('code')->filter()->unique()->values()->all();
+        if ($purchaseCodes === []) {
+            return [];
+        }
+
+        // 1. Ambil semua purchase_detail + nama item secara bulk
+        $details = DB::table('purchase_detail as pd')
+            ->leftJoin('item as it', 'it.code', '=', 'pd.itemCode')
+            ->whereIn('pd.purchaseCode', $purchaseCodes)
+            ->whereNull('pd.deleted_at')
+            ->select([
+                'pd.code',
+                'pd.purchaseCode',
+                'pd.itemCode',
+                'pd.qty',
+                'pd.receivedQty',
+                'pd.price',
+                'it.name as item_name',
+            ])
+            ->get();
+
+        $detailsByPurchase = $details->groupBy('purchaseCode');
+        $detailCodes = $details->pluck('code')->filter()->unique()->values()->all();
+
+        // 2. Ambil semua alokasi maintenance_fifo -> maintenance_detail -> maintenance -> fleet -> fleet_company
+        $fifosByDetail = collect();
+        if ($detailCodes !== []) {
+            $fifosByDetail = DB::table('maintenance_fifo as mf')
+                ->join('maintenance_detail as md', function ($join) {
+                    $join->on('md.code', '=', 'mf.maintenanceDetailCode')
+                        ->whereNull('md.deleted_at');
+                })
+                ->join('maintenance as m', function ($join) {
+                    $join->on('m.code', '=', 'md.maintenanceCode')
+                        ->whereNull('m.deleted_at');
+                })
+                ->leftJoin('fleet as f', 'f.code', '=', 'm.fleetCode')
+                ->leftJoin('fleet_company as fc', 'fc.code', '=', 'f.fleetCompanyCode')
+                ->whereIn('mf.purchaseDetailCode', $detailCodes)
+                ->select([
+                    'mf.purchaseDetailCode',
+                    'mf.qty as used_qty',
+                    'm.fleetCode as fleet_code',
+                    'f.plateNumber as plate_number',
+                    'fc.name as owner_name',
+                ])
+                ->get()
+                ->groupBy('purchaseDetailCode');
+        }
+
+        // 3. Ambil info fleet header untuk PO yang memiliki fleetCode langsung
+        $headerFleetCodes = $purchases->pluck('fleetCode')->filter()->unique()->values()->all();
+        $headerFleets = collect();
+        if ($headerFleetCodes !== []) {
+            $headerFleets = DB::table('fleet as f')
+                ->leftJoin('fleet_company as fc', 'fc.code', '=', 'f.fleetCompanyCode')
+                ->whereIn('f.code', $headerFleetCodes)
+                ->select([
+                    'f.code as fleet_code',
+                    'f.plateNumber as plate_number',
+                    'fc.name as owner_name',
+                ])
+                ->get()
+                ->keyBy('fleet_code');
+        }
+
+        $result = [];
+
+        foreach ($purchases as $purchase) {
+            $totalBilling = $this->billingOf($purchase);
+            $totalPaid = min($totalBilling, (int) round((float) ($purchase->paidAmount ?? 0)));
+            $purchaseDetails = $detailsByPurchase->get($purchase->code, collect());
+
+            $buckets = [];
+
+            $addToBucket = function (
+                string $key,
+                ?string $fleetCode,
+                string $plateNumber,
+                string $ownerName,
+                bool $isStock,
+                string $itemCode,
+                string $itemName,
+                float $qty,
+                float $price
+            ) use (&$buckets): void {
+                if (! isset($buckets[$key])) {
+                    $buckets[$key] = [
+                        'fleet_code' => $fleetCode,
+                        'plate_number' => $plateNumber,
+                        'owner_name' => $ownerName,
+                        'is_stock' => $isStock,
+                        'dpp_raw' => 0.0,
+                        'items_map' => [],
+                    ];
+                }
+
+                $lineSubtotal = $qty * $price;
+                $buckets[$key]['dpp_raw'] += $lineSubtotal;
+
+                $itemKey = $itemCode.'|'.$price;
+                if (! isset($buckets[$key]['items_map'][$itemKey])) {
+                    $buckets[$key]['items_map'][$itemKey] = [
+                        'item_code' => $itemCode,
+                        'item_name' => $itemName,
+                        'qty' => 0.0,
+                        'price' => (int) round($price),
+                        'subtotal' => 0.0,
+                    ];
+                }
+
+                $buckets[$key]['items_map'][$itemKey]['qty'] += $qty;
+                $buckets[$key]['items_map'][$itemKey]['subtotal'] += $lineSubtotal;
+            };
+
+            foreach ($purchaseDetails as $detail) {
+                $detailQty = (float) ($detail->qty ?: $detail->receivedQty ?: 0);
+                $detailPrice = (float) ($detail->price ?? 0);
+                $itemCode = (string) ($detail->itemCode ?? '');
+                $itemName = (string) ($detail->item_name ?: $itemCode ?: '-');
+
+                $fifos = $fifosByDetail->get($detail->code, collect());
+                $usedSum = 0.0;
+
+                foreach ($fifos as $fifo) {
+                    $usedQty = (float) ($fifo->used_qty ?? 0);
+                    if ($usedQty <= 0) {
+                        continue;
+                    }
+                    $usedSum += $usedQty;
+                    $fCode = $fifo->fleet_code ?: null;
+                    $key = $fCode ?: '__STOCK__';
+                    $plate = $fifo->plate_number ?: ($fCode ?: 'Stok Gudang');
+                    $owner = $fifo->owner_name ?: '-';
+                    $isStock = $fCode === null;
+
+                    $addToBucket($key, $fCode, $plate, $owner, $isStock, $itemCode, $itemName, $usedQty, $detailPrice);
+                }
+
+                $unassignedQty = max(0.0, $detailQty - $usedSum);
+                if ($unassignedQty > 0.0001) {
+                    if (! empty($purchase->fleetCode)) {
+                        $hf = $headerFleets->get($purchase->fleetCode);
+                        $plate = $hf?->plate_number ?: ($purchase->fleet?->plateNumber ?: $purchase->fleetCode);
+                        $owner = $hf?->owner_name ?: '-';
+                        $addToBucket(
+                            $purchase->fleetCode,
+                            $purchase->fleetCode,
+                            $plate,
+                            $owner,
+                            false,
+                            $itemCode,
+                            $itemName,
+                            $unassignedQty,
+                            $detailPrice
+                        );
+                    } else {
+                        $addToBucket(
+                            '__STOCK__',
+                            null,
+                            'Stok Gudang',
+                            '-',
+                            true,
+                            $itemCode,
+                            $itemName,
+                            $unassignedQty,
+                            $detailPrice
+                        );
+                    }
+                }
+            }
+
+            // Fallback bila PO tidak memiliki baris detail tetapi memiliki nominal
+            if ($buckets === [] && $totalBilling > 0) {
+                if (! empty($purchase->fleetCode)) {
+                    $hf = $headerFleets->get($purchase->fleetCode);
+                    $buckets[$purchase->fleetCode] = [
+                        'fleet_code' => $purchase->fleetCode,
+                        'plate_number' => $hf?->plate_number ?: ($purchase->fleet?->plateNumber ?: $purchase->fleetCode),
+                        'owner_name' => $hf?->owner_name ?: '-',
+                        'is_stock' => false,
+                        'dpp_raw' => (float) $totalBilling,
+                        'items_map' => [],
+                    ];
+                } else {
+                    $buckets['__STOCK__'] = [
+                        'fleet_code' => null,
+                        'plate_number' => 'Stok Gudang',
+                        'owner_name' => '-',
+                        'is_stock' => true,
+                        'dpp_raw' => (float) $totalBilling,
+                        'items_map' => [],
+                    ];
+                }
+            }
+
+            // Urutkan: mobil dulu (A-Z plate_number), lalu Stok Gudang di paling akhir
+            $ordered = array_values($buckets);
+            usort($ordered, function (array $a, array $b): int {
+                if ($a['is_stock'] !== $b['is_stock']) {
+                    return $a['is_stock'] ? 1 : -1;
+                }
+
+                return strcmp($a['plate_number'], $b['plate_number']);
+            });
+
+            $count = count($ordered);
+            if ($count === 0) {
+                $result[$purchase->code] = [];
+
+                continue;
+            }
+
+            $sumDppRaw = array_sum(array_column($ordered, 'dpp_raw'));
+            $targetDppTotal = $sumDppRaw > 0 ? min($totalBilling, (int) round($sumDppRaw)) : $totalBilling;
+            $targetPpnTotal = max(0, $totalBilling - $targetDppTotal);
+
+            $allocatedDpp = 0;
+            $allocatedPpn = 0;
+            $allocatedPaid = 0;
+            $rows = [];
+
+            foreach ($ordered as $idx => $bucket) {
+                $isLast = ($idx === $count - 1);
+                $weight = $sumDppRaw > 0 ? ($bucket['dpp_raw'] / $sumDppRaw) : (1 / $count);
+
+                $dppAmount = $isLast
+                    ? max(0, $targetDppTotal - $allocatedDpp)
+                    : (int) round($targetDppTotal * $weight);
+                $allocatedDpp += $dppAmount;
+
+                $ppnAmount = $isLast
+                    ? max(0, $targetPpnTotal - $allocatedPpn)
+                    : (int) round($targetPpnTotal * $weight);
+                $allocatedPpn += $ppnAmount;
+
+                $billingAmount = $dppAmount + $ppnAmount;
+
+                $paidWeight = $totalBilling > 0 ? ($billingAmount / $totalBilling) : (1 / $count);
+                $paidAmount = $isLast
+                    ? max(0, $totalPaid - $allocatedPaid)
+                    : min($billingAmount, (int) round($totalPaid * $paidWeight));
+                $allocatedPaid += $paidAmount;
+
+                $remainingAmount = max(0, $billingAmount - $paidAmount);
+
+                $itemsList = array_values(array_map(function (array $it): array {
+                    $it['qty'] = round((float) $it['qty'], 2);
+                    $it['subtotal'] = (int) round((float) $it['subtotal']);
+
+                    return $it;
+                }, $bucket['items_map']));
+
+                $rows[] = [
+                    'fleet_code' => $bucket['fleet_code'],
+                    'plate_number' => $bucket['plate_number'],
+                    'owner_name' => $bucket['owner_name'],
+                    'is_stock' => $bucket['is_stock'],
+                    'dpp_amount' => $dppAmount,
+                    'ppn_amount' => $ppnAmount,
+                    'billing_amount' => $billingAmount,
+                    'paid_amount' => $paidAmount,
+                    'remaining_amount' => $remainingAmount,
+                    'items' => $itemsList,
+                ];
+            }
+
+            $result[$purchase->code] = $rows;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Format teks ringkas kolom Mobil untuk Export Excel & PDF.
+     *
+     * @param  array<int, array<string, mixed>>  $breakdown
+     */
+    public function formatVehicleBreakdownText(array $breakdown, string $mode = 'unpaid', ?string $fallbackPlate = null): string
+    {
+        if ($breakdown === []) {
+            return $fallbackPlate ?: '-';
+        }
+
+        if (count($breakdown) === 1 && ! ($breakdown[0]['is_stock'] ?? false)) {
+            return (string) ($breakdown[0]['plate_number'] ?: ($fallbackPlate ?: '-'));
+        }
+
+        if (count($breakdown) === 1 && ($breakdown[0]['is_stock'] ?? false)) {
+            return $fallbackPlate && $fallbackPlate !== '-' ? $fallbackPlate : 'Stok Gudang';
+        }
+
+        return collect($breakdown)->map(function (array $row) use ($mode): string {
+            $amount = $mode === 'paid'
+                ? (int) ($row['paid_amount'] ?? $row['billing_amount'] ?? 0)
+                : (int) ($row['remaining_amount'] ?? $row['billing_amount'] ?? 0);
+
+            return $row['plate_number'].' (Rp '.number_format($amount, 0, ',', '.').')';
+        })->implode(', ');
+    }
+
     /* ------------------------------------------------------------------ */
-    /* Pembayaran tunggal (halaman edit lama)                             */
+    /* Pembayaran tunggal (halaman edit lama) */
     /* ------------------------------------------------------------------ */
 
     public function update($request, string $id, string $title): void
@@ -443,7 +775,7 @@ class PurchasePaymentService
     }
 
     /* ------------------------------------------------------------------ */
-    /* Pembayaran banyak pembelian sekaligus (batch)                      */
+    /* Pembayaran banyak pembelian sekaligus (batch) */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -672,7 +1004,7 @@ class PurchasePaymentService
     }
 
     /* ------------------------------------------------------------------ */
-    /* Pembatalan pembayaran (batch)                                      */
+    /* Pembatalan pembayaran (batch) */
     /* ------------------------------------------------------------------ */
 
     /**
@@ -767,7 +1099,7 @@ class PurchasePaymentService
     }
 
     /* ------------------------------------------------------------------ */
-    /* Helper saldo bank                                                  */
+    /* Helper saldo bank */
     /* ------------------------------------------------------------------ */
 
     /**

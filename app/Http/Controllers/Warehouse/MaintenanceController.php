@@ -16,9 +16,7 @@ use App\Models\Warehouse\MaintenanceDetail;
 use App\Models\Warehouse\MaintenanceFifo;
 use App\Services\Inventory\StockService;
 use App\Services\Inventory\WarehouseService;
-
 use App\Services\Master\FleetService;
-
 use App\Services\MenuService;
 use App\Services\UniqueCodeService;
 use App\Services\Warehouse\MaintenanceService;
@@ -67,7 +65,7 @@ class MaintenanceController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $stock = $this->stockSvc->findAll();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('stock', $stock)
@@ -82,7 +80,7 @@ class MaintenanceController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $warehouse = $this->warehouseSvc->findAll();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('fleet', $fleet)
             ->with('warehouse', $warehouse)
@@ -105,7 +103,7 @@ class MaintenanceController extends Controller
             'purchase_ids.*' => 'required|exists:purchase,id',
         ]);
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         // Allow POs with remaining quantities to be reused across maintenance records
@@ -114,12 +112,12 @@ class MaintenanceController extends Controller
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
             });
 
-            $redirect = redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
             return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -135,7 +133,7 @@ class MaintenanceController extends Controller
         }
 
         // Load relationships
-        $data->load(['fleet', 'warehouse', 'details.item', 'purchases.supplier']);
+        $data->load(['fleet.company', 'warehouse', 'details.item', 'purchases.supplier']);
 
         return response()->json($data);
     }
@@ -148,7 +146,7 @@ class MaintenanceController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data not found');
+            return redirect()->route($this->view.'index')->with('fail', 'Data not found');
         }
 
         $fleet = $this->fleetSvc->findAll();
@@ -156,7 +154,7 @@ class MaintenanceController extends Controller
 
         $data->load(['purchases', 'purchases.supplier']);
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('fleet', $fleet)
@@ -179,7 +177,7 @@ class MaintenanceController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->route($this->view . 'index')->with('fail', $validator->errors()->all()[0]);
+            return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
         }
 
         // Allow POs with remaining quantities to be reused across maintenance records
@@ -190,11 +188,11 @@ class MaintenanceController extends Controller
 
             DB::commit();
 
-            return redirect()->route($this->view . 'index')->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
             DB::rollback();
 
-            return redirect()->route($this->view . 'index')->with('fail', 'Line : ' . $th->getLine() . '<br>' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Line : '.$th->getLine().'<br>'.$th->getMessage());
         }
     }
 
@@ -205,13 +203,13 @@ class MaintenanceController extends Controller
     {
         $this->service->destroy($id, $this->title);
 
-        return redirect()->route($this->view . 'index')->with('success', 'Delete Data Success');
+        return redirect()->route($this->view.'index')->with('success', 'Delete Data Success');
     }
 
     public function deleteMaintenanceDetail($id)
     {
         $md = MaintenanceDetail::where('id', $id)->firstOrFail();
-        $isJasa = optional($md->item)->type === \App\Models\Inventory\Item::TYPE_JASA;
+        $isJasa = optional($md->item)->type === Item::TYPE_JASA;
 
         // Rollback qtyUsed pada PurchaseDetail berdasarkan FIFO (baik part maupun jasa)
         $fifos = MaintenanceFifo::where('maintenanceDetailCode', $md->code)->get();
@@ -236,7 +234,7 @@ class MaintenanceController extends Controller
         $maintenanceId = $md->maintenance->id;
         $md->delete();
 
-        return redirect()->route($this->view . 'edit', $maintenanceId)
+        return redirect()->route($this->view.'edit', $maintenanceId)
             ->with('success', 'Delete Data Success');
     }
 
@@ -252,7 +250,7 @@ class MaintenanceController extends Controller
                     if ($row->purchases && $row->purchases->isNotEmpty()) {
                         return $row->purchases->map(function ($p) {
                             return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fs-11 px-2 py-1 me-1 mb-1">'
-                                . e($p->code) . '</span>';
+                                .e($p->code).'</span>';
                         })->implode(' ');
                     }
 
@@ -267,45 +265,70 @@ class MaintenanceController extends Controller
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = Carbon::parse($row->time)->format('H:i');
 
-                    return $date . ' ' . $time;
+                    return $date.' '.$time;
                 })
+                ->filterColumn('maintenanceDate', function ($query, $keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('maintenance.date', 'like', "%{$keyword}%")
+                            ->orWhere('maintenance.time', 'like', "%{$keyword}%");
+                    });
+                })
+                ->orderColumn('maintenanceDate', 'maintenance.date $1, maintenance.time $1')
                 ->editColumn('fleet.plateNumber', function ($row) {
-                    $fleet = '';
-
-                    if (isset($row->fleet->plateNumber)) {
-                        $fleet = $row->fleet->plateNumber;
-                    }
-
-                    return $fleet;
+                    return $row->fleet?->plateNumber ?? '-';
                 })
+                ->addColumn('fleetOwner', function ($row) {
+                    return e($row->fleet?->company?->name ?? '-');
+                })
+                ->filterColumn('fleetOwner', function ($query, $keyword) {
+                    $query->whereHas('fleet.company', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->orderColumn('fleetOwner', '(select fc.name from fleet f left join fleet_company fc on fc.code = f.fleetCompanyCode where f.code = maintenance.fleetCode and f.deleted_at is null limit 1) $1')
+                ->filterColumn('grand_total', function ($query, $keyword) {
+                    $trimmed = trim($keyword);
+                    if (in_array(mb_strtolower($trimmed), ['rp', 'rp.'], true)) {
+                        $query->whereRaw('1 = 1');
 
+                        return;
+                    }
+                    if (preg_match('/^(?:rp\.?\s*)?([\d.,]+)$/i', $trimmed, $matches) !== 1) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+                    $digits = preg_replace('/\D/', '', $matches[1]) ?? '';
+                    if ($digits === '') {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+                    $query->whereRaw('CAST(COALESCE(maintenance.grand_total, 0) AS CHAR) LIKE ?', ["%{$digits}%"]);
+                })
                 ->addColumn('warehouse', function ($row) {
                     return $row->warehouse ? $row->warehouse->name : '-';
                 })
                 ->addColumn('action', function ($row) {
-                    $btn = '<td>
-        <button type="button" class="btn btn-icon btn-sm bg-info-subtle me-1" 
-           onclick="showDetail(\'' . $row->id . '\')"
-           data-bs-toggle="tooltip" title="Detail">
-            <i class="mdi mdi-eye-outline fs-14 text-info"></i>
-        </button>
-
-        <a href="' . route($this->view . 'edit', $row->id) . '"
-           class="btn btn-icon btn-sm bg-primary-subtle me-1"
-           data-bs-toggle="tooltip" title="Edit">
-            <i class="mdi mdi-pencil-outline fs-14 text-primary"></i>
-        </a>
-
-        <a href="javascript:deleteData(\'' . $row->id . '\')"
-           class="btn btn-icon btn-sm bg-danger-subtle"
-           data-bs-toggle="tooltip" title="Delete">
-            <i class="mdi mdi-delete fs-14 text-danger"></i>
-        </a>
-    </td>';
+                    $btn = '<button type="button" class="btn btn-icon btn-sm bg-info-subtle me-1" '
+                        .'onclick="showDetail(\''.$row->id.'\')" '
+                        .'data-bs-toggle="tooltip" title="Detail">'
+                        .'<i class="mdi mdi-eye-outline fs-14 text-info"></i>'
+                        .'</button>'
+                        .'<a href="'.route($this->view.'edit', $row->id).'" '
+                        .'class="btn btn-icon btn-sm bg-primary-subtle me-1" '
+                        .'data-bs-toggle="tooltip" title="Edit">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i>'
+                        .'</a>'
+                        .'<a href="javascript:deleteData(\''.$row->id.'\')" '
+                        .'class="btn btn-icon btn-sm bg-danger-subtle" '
+                        .'data-bs-toggle="tooltip" title="Delete">'
+                        .'<i class="mdi mdi-delete fs-14 text-danger"></i>'
+                        .'</a>';
 
                     return $btn;
                 })
-                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'po_numbers', 'warehouse', 'action'])
+                ->rawColumns(['maintenanceDate', 'fleet.plateNumber', 'fleetOwner', 'po_numbers', 'warehouse', 'action'])
                 ->toJson();
         }
     }
@@ -346,7 +369,7 @@ class MaintenanceController extends Controller
         }
 
         $mpdf->WriteHTML(
-            view($this->view . 'report.maintenance-pdf')
+            view($this->view.'report.maintenance-pdf')
                 ->with('data', $query->get())
                 ->with('plateNumber', $request->plateNumber)
                 ->with('itemLabel', $itemLabel)
@@ -364,7 +387,7 @@ class MaintenanceController extends Controller
     {
         $query = $forPdf
             ? Maintenance::with([
-                'fleet',
+                'fleet.company',
                 'details',
                 'details.item',
                 'details.item.supplier',

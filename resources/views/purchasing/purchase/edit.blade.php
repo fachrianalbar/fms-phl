@@ -435,7 +435,7 @@
                     </div>
 
                     {{-- Supplier --}}
-                    <div class="col-md-6">
+                    <div class="col-md-5">
                         <label class="form-label form-label-custom" for="supplierCode">
                             Supplier <span class="required-dot"></span>
                         </label>
@@ -443,6 +443,8 @@
                             <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                             @foreach ($supplier as $item)
                             <option value="{{ $item->code }}"
+                                data-payment-term="{{ (int) ($item->payment_term_days ?? 0) }}"
+                                data-ppn="{{ (float) ($item->ppn ?? 0) }}"
                                 {{ $data->supplierCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
                             </option>
                             @endforeach
@@ -450,12 +452,53 @@
                     </div>
 
                     {{-- Due Date --}}
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label form-label-custom" for="dueDate">
                             {{ __('menu_purchase.due_date') }} <span class="required-dot"></span>
                         </label>
                         <input class="form-control form-control-custom" name="dueDate" id="dueDate" type="date" required
                             value="{{ $data->dueDate }}" placeholder="{{ __('menu_purchase.due_date') }}">
+                        <small class="text-muted fs-11">Otomatis dihitung ulang saat Supplier atau Tanggal diubah</small>
+                    </div>
+
+                    {{-- PPN (%) --}}
+                    <div class="col-md-3">
+                        <label class="form-label form-label-custom" for="ppnRate">
+                            PPN (%)
+                        </label>
+                        <div class="input-group">
+                            <input class="form-control form-control-custom" name="ppn_rate" id="ppnRate" type="number"
+                                min="0" max="100" step="0.01" value="{{ old('ppn_rate', $data->ppn_rate ?? 0) }}" placeholder="0">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted fs-11">Otomatis dari PPN supplier saat diganti, dapat diubah</small>
+                    </div>
+
+                    {{-- Nopol / Armada (Opsional) --}}
+                    <div class="col-md-6">
+                        <label class="form-label form-label-custom" for="fleetCode">
+                            Nopol / Armada (Opsional)
+                        </label>
+                        <select class="js-example-basic-single" name="fleetCode" id="fleetCode">
+                            <option value="">-- Tanpa Armada --</option>
+                            @foreach ($fleet as $f)
+                            <option value="{{ $f->code }}"
+                                data-owner="{{ $f->company->name ?? '-' }}"
+                                {{ old('fleetCode', $data->fleetCode) == $f->code ? 'selected' : '' }}>
+                                {{ $f->plateNumber }}{{ $f->brand ? ' - ' . $f->brand->name : '' }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Pemilik Kendaraan (Auto-fill Readonly) --}}
+                    <div class="col-md-6">
+                        <label class="form-label form-label-custom" for="fleetOwnerDisplay">
+                            Pemilik Kendaraan
+                        </label>
+                        <input class="form-control form-control-custom" id="fleetOwnerDisplay" type="text" readonly
+                            value="{{ optional($data->fleet?->company)->name ?? '' }}"
+                            placeholder="Otomatis terisi saat Nopol dipilih">
                     </div>
                 </div>
             </div>
@@ -509,7 +552,7 @@
                                         <option value="{{ $it->code }}" data-name="{{ $it->name }}"
                                             data-price="{{ $it->price }}"
                                             {{ $item->itemCode == $it->code ? 'selected' : '' }}>
-                                            {{ $it->code . ' - ' . $it->name }}
+                                            {{ $it->code . ' - ' . $it->name . ($it->type === 'jasa' ? ' [Jasa]' : '') }}
                                         </option>
                                         @endforeach
                                     </select>
@@ -548,6 +591,12 @@
                 </div>
 
                 {{-- ===== SUMMARY PANEL ===== --}}
+                @php
+                    $editSubtotal = (float) ($data->subtotal ?: $totalPrice);
+                    $editPpnRate = (float) ($data->ppn_rate ?? 0);
+                    $editPpnAmount = (float) ($data->ppn_amount ?? round($editSubtotal * ($editPpnRate / 100)));
+                    $editGrandTotal = (float) ($data->nominal ?: ($editSubtotal + $editPpnAmount));
+                @endphp
                 <div class="summary-panel" id="summaryPanel">
                     <div class="summary-item">
                         <div class="summary-label">Total Items</div>
@@ -559,9 +608,19 @@
                         <div class="summary-value" id="summaryTotalQty">{{ rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') }}</div>
                     </div>
                     <div class="summary-divider d-none d-md-block"></div>
+                    <div class="summary-item">
+                        <div class="summary-label">Subtotal (Sebelum PPN)</div>
+                        <div class="summary-value" id="summarySubtotal">Rp {{ number_format($editSubtotal, 0, ',', '.') }}</div>
+                    </div>
+                    <div class="summary-divider d-none d-md-block"></div>
+                    <div class="summary-item">
+                        <div class="summary-label">PPN (<span id="summaryPpnRate">{{ rtrim(rtrim(number_format($editPpnRate, 2, ',', '.'), '0'), ',') }}%</span>)</div>
+                        <div class="summary-value" id="summaryPpnAmount">Rp {{ number_format($editPpnAmount, 0, ',', '.') }}</div>
+                    </div>
+                    <div class="summary-divider d-none d-md-block"></div>
                     <div class="summary-item grand-total-highlight">
-                        <div class="summary-label">Grand Total</div>
-                        <div class="summary-value" id="summaryGrandTotal">Rp {{ number_format($totalPrice, 0, ',', '.') }}</div>
+                        <div class="summary-label">Jumlah Setelah PPN</div>
+                        <div class="summary-value" id="summaryGrandTotal">Rp {{ number_format($editGrandTotal, 0, ',', '.') }}</div>
                     </div>
                 </div>
             </div>
@@ -621,10 +680,62 @@
     let dataItem;
     let itemsData = @json($items);
     let rowCounter = {{ $data->details->count() }};
+    let dueDateManual = false;
+
+    function addDaysToIsoDate(isoDate, days) {
+        if (!isoDate) return '';
+        const parts = isoDate.split('-').map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return '';
+        const dt = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+        dt.setUTCDate(dt.getUTCDate() + (parseInt(days, 10) || 0));
+        return dt.toISOString().slice(0, 10);
+    }
+
+    function recalculateDueDate(force) {
+        if (dueDateManual && !force) return;
+        const baseDate = $('input[name="date"]').val();
+        const selectedSupplier = $('#supplierCode option:selected');
+        const termDays = parseInt(selectedSupplier.data('payment-term'), 10) || 0;
+        if (baseDate) {
+            $('#dueDate').val(addDaysToIsoDate(baseDate, termDays));
+        }
+    }
+
+    function syncFleetOwner() {
+        const selectedFleet = $('#fleetCode option:selected');
+        const val = $('#fleetCode').val();
+        $('#fleetOwnerDisplay').val(val ? (selectedFleet.data('owner') || '-') : '');
+    }
 
     $(document).ready(function() {
         dataItem = <?php echo json_encode($items); ?>;
+        syncFleetOwner();
         updateGrandTotal();
+
+        $('#supplierCode').on('change', function() {
+            const selectedOpt = $(this).find('option:selected');
+            const ppn = parseFloat(selectedOpt.data('ppn')) || 0;
+            $('#ppnRate').val(ppn);
+            dueDateManual = false;
+            recalculateDueDate(true);
+            updateGrandTotal();
+        });
+
+        $('input[name="date"]').on('change', function() {
+            recalculateDueDate(false);
+        });
+
+        $('#dueDate').on('change', function() {
+            dueDateManual = true;
+        });
+
+        $('#ppnRate').on('input change', function() {
+            updateGrandTotal();
+        });
+
+        $('#fleetCode').on('change', function() {
+            syncFleetOwner();
+        });
     });
 
     function deletePurchaseDetail(id) {
@@ -748,7 +859,7 @@
     function updateGrandTotal() {
         let totalItems = 0;
         let totalQty = 0;
-        let grandTotal = 0;
+        let subtotal = 0;
 
         $('#purchaseDetails tr').each(function() {
             totalItems++;
@@ -758,20 +869,30 @@
 
             let totalPriceStr = $(this).find('input[id^="totalPrice_"]').val() || '0';
             let totalPriceNum = parseInt(totalPriceStr.replace(/\./g, '')) || 0;
-            grandTotal += totalPriceNum;
+            subtotal += totalPriceNum;
         });
+
+        let ppnRate = Math.max(0, Math.min(100, parseFloat($('#ppnRate').val()) || 0));
+        let ppnAmount = Math.round(subtotal * (ppnRate / 100));
+        let grandTotal = subtotal + ppnAmount;
+        let ppnRateText = ppnRate.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '%';
 
         // Animate the update
         let $items = $('#summaryTotalItems');
         let $qty = $('#summaryTotalQty');
+        let $sub = $('#summarySubtotal');
+        let $ppn = $('#summaryPpnAmount');
         let $grand = $('#summaryGrandTotal');
 
         $items.text(totalItems);
         $qty.text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }));
+        $sub.text('Rp ' + new Intl.NumberFormat('id-ID').format(subtotal));
+        $('#summaryPpnRate').text(ppnRateText);
+        $ppn.text('Rp ' + new Intl.NumberFormat('id-ID').format(ppnAmount));
         $grand.text('Rp ' + new Intl.NumberFormat('id-ID').format(grandTotal));
 
         // Pulse animation
-        [$items, $qty, $grand].forEach($el => {
+        [$items, $qty, $sub, $ppn, $grand].forEach($el => {
             $el.addClass('updated');
             setTimeout(() => $el.removeClass('updated'), 300);
         });
@@ -798,9 +919,10 @@
         // Mengisi options berdasarkan data items
         itemsData.forEach(item => {
             const price = item.latest_purchase?.price ?? 0;
+            const typeBadge = item.type === 'jasa' ? ' [Jasa]' : '';
 
             options += `<option value="${item.code}" data-name="${item.name}" data-price="${price}">
-                        ${item.code} - ${item.name}
+                        ${item.code} - ${item.name}${typeBadge}
                     </option>`;
         });
 

@@ -31,6 +31,8 @@
     @endif
 
     @php
+        $sumSubtotal = 0;
+        $sumPpn = 0;
         $sumNominal = 0;
         $sumQty = 0;
     @endphp
@@ -42,19 +44,27 @@
                 <th>No. Transaksi</th>
                 <th>Tanggal</th>
                 <th>Armada</th>
+                <th>Pemilik Kendaraan</th>
                 <th>Supplier / Toko</th>
                 <th>No. Maintenance</th>
                 <th>Jenis Bayar</th>
                 <th>Status</th>
                 <th>Item / Qty</th>
-                <th>Total Biaya</th>
+                <th>Subtotal</th>
+                <th>PPN</th>
+                <th>Jumlah Setelah PPN</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($purchases as $row)
                 @php
                     $total = (float) ($row->nominal ?: $row->details->sum(fn ($d) => (float) $d->price * (float) $d->qty));
+                    $subtotal = (float) ($row->subtotal ?: $total);
+                    $ppnRate = (float) ($row->ppn_rate ?? 0);
+                    $ppnAmount = (float) ($row->ppn_amount ?? 0);
                     $qty = (float) $row->details->sum('qty');
+                    $sumSubtotal += $subtotal;
+                    $sumPpn += $ppnAmount;
                     $sumNominal += $total;
                     $sumQty += $qty;
                     $mnt = $row->maintenances->first();
@@ -72,24 +82,35 @@
                         {{ $row->time ? \Carbon\Carbon::parse($row->time)->format('H:i') : '' }}
                     </td>
                     <td class="center nowrap">{{ $row->fleet->plateNumber ?? '-' }}</td>
+                    <td>{{ $row->fleet->company->name ?? '-' }}</td>
                     <td>{{ $row->supplier->name ?? '-' }}</td>
                     <td class="center nowrap">{{ $mnt->code ?? '-' }}</td>
                     <td class="center">{{ $row->paymentType ?: 'Tunai' }}</td>
                     <td class="center">{{ $statusLabel }}</td>
                     <td class="center nowrap">{{ $row->details->count() }} Item / {{ rtrim(rtrim(number_format($qty, 1, ',', '.'), '0'), ',') }} Qty</td>
+                    <td class="right nowrap">Rp {{ number_format($subtotal, 0, ',', '.') }}</td>
+                    <td class="right nowrap">
+                        @if ($ppnAmount > 0 || $ppnRate > 0)
+                            Rp {{ number_format($ppnAmount, 0, ',', '.') }} ({{ rtrim(rtrim(number_format($ppnRate, 2, ',', '.'), '0'), ',') }}%)
+                        @else
+                            -
+                        @endif
+                    </td>
                     <td class="right nowrap">Rp {{ number_format($total, 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="10" class="center">Tidak ada data yang sesuai filter.</td>
+                    <td colspan="13" class="center">Tidak ada data yang sesuai filter.</td>
                 </tr>
             @endforelse
         </tbody>
         @if ($purchases->isNotEmpty())
             <tfoot>
                 <tr>
-                    <td colspan="8" class="right">TOTAL</td>
+                    <td colspan="9" class="right">TOTAL</td>
                     <td class="center nowrap">{{ rtrim(rtrim(number_format($sumQty, 1, ',', '.'), '0'), ',') }} Qty</td>
+                    <td class="right nowrap">Rp {{ number_format($sumSubtotal, 0, ',', '.') }}</td>
+                    <td class="right nowrap">Rp {{ number_format($sumPpn, 0, ',', '.') }}</td>
                     <td class="right nowrap">Rp {{ number_format($sumNominal, 0, ',', '.') }}</td>
                 </tr>
             </tfoot>

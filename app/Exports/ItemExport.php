@@ -21,7 +21,11 @@ class ItemExport implements FromCollection, ShouldAutoSize, WithColumnFormatting
 
     protected int $rowNumber = 0;
 
-    public function __construct(protected Builder $query) {}
+    public function __construct(
+        protected Builder $query,
+        protected string $entityLabel = 'Barang',
+        protected string $itemType = Item::TYPE_PART
+    ) {}
 
     public function collection(): Collection
     {
@@ -30,11 +34,22 @@ class ItemExport implements FromCollection, ShouldAutoSize, WithColumnFormatting
 
     public function headings(): array
     {
+        if ($this->itemType === Item::TYPE_JASA) {
+            return [
+                'No',
+                'Kode '.$this->entityLabel,
+                'Nama '.$this->entityLabel,
+                'Kategori',
+                'Satuan',
+                'Supplier',
+                'Harga',
+            ];
+        }
+
         return [
             'No',
-            'Kode',
-            'Nama Barang',
-            'Tipe',
+            'Kode '.$this->entityLabel,
+            'Nama '.$this->entityLabel,
             'Kategori',
             'Satuan',
             'Gudang',
@@ -47,11 +62,22 @@ class ItemExport implements FromCollection, ShouldAutoSize, WithColumnFormatting
     {
         $this->rowNumber++;
 
+        if ($this->itemType === Item::TYPE_JASA) {
+            return [
+                $this->rowNumber,
+                $row->code ?: '-',
+                $row->name ?: '-',
+                $row->category->name ?? '-',
+                $row->unit->name ?? '-',
+                $row->supplier->name ?? '-',
+                (float) ($row->price ?? 0),
+            ];
+        }
+
         return [
             $this->rowNumber,
             $row->code ?: '-',
             $row->name ?: '-',
-            Item::types()[$row->type] ?? ucfirst((string) ($row->type ?? '-')),
             $row->category->name ?? '-',
             $row->unit->name ?? '-',
             $row->warehouse->name ?? '-',
@@ -63,7 +89,7 @@ class ItemExport implements FromCollection, ShouldAutoSize, WithColumnFormatting
     public function columnFormats(): array
     {
         return [
-            'I' => '#,##0',
+            ($this->itemType === Item::TYPE_JASA ? 'G' : 'H') => '#,##0',
         ];
     }
 

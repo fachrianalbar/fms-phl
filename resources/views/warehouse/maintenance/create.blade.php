@@ -574,8 +574,8 @@
                                 type="time" required value="{{ now()->setTimezone('Asia/Jakarta')->format('H:i') }}">
                         </div>
 
-                        <!-- Fleet -->
-                        <div class="col-md-12">
+                        <!-- Fleet & Owner -->
+                        <div class="col-md-6">
                             <label class="form-label-custom" for="fleetCode">
                                 <i class="mdi mdi-truck-outline text-muted"></i>
                                 {{ __('menu_maintenance.fleet') }} / Plat Nomor <span class="required-star">*</span>
@@ -583,11 +583,22 @@
                             <select class="js-example-basic-single form-select" name="fleetCode" id="fleetCode" required>
                                 <option selected="" disabled="" value="">{{ __('general.choose') }} Armada...</option>
                                 @foreach ($fleet as $item)
-                                    <option value="{{ $item->code }}">
+                                    <option value="{{ $item->code }}"
+                                        data-owner="{{ $item->company->name ?? '-' }}"
+                                        data-owner-type="{{ $item->company->type ?? '' }}">
                                         {{ $item->plateNumber }}
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label-custom" for="fleetOwnerDisplay">
+                                <i class="mdi mdi-account-tie-outline text-muted"></i>
+                                Nama Pemilik Kendaraan
+                            </label>
+                            <input class="form-control form-control-custom fw-semibold" type="text"
+                                id="fleetOwnerDisplay" readonly placeholder="Otomatis muncul saat pilih Nopol..." value="-">
                         </div>
 
                         <!-- Hidden Warehouse Code (Default Gudang) -->
@@ -764,8 +775,17 @@
         let dataItem = [];
         let selectedWarehouse = null;
 
+        function syncFleetOwner() {
+            const selected = $('#fleetCode').find('option:selected');
+            const owner = selected.val() ? (selected.attr('data-owner') || '-') : '';
+            $('#fleetOwnerDisplay').val(owner || '-');
+        }
+
         $(document).ready(function() {
             generateCode('input[name="date"]', '#code_display', '#code_hidden', '/ajax/maintenance-generate-code');
+
+            $('#fleetCode').on('change', syncFleetOwner);
+            syncFleetOwner();
 
             // Initialize select2 for Purchase Order multi-select
             $('#purchase_ids').select2({

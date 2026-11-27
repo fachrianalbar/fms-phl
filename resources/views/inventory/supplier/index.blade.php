@@ -349,6 +349,16 @@
             box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
         }
 
+        .entity-crud-modal .input-group-text {
+            border: 1px solid #cbd5e1;
+            border-left: 0;
+            border-radius: 0 9px 9px 0;
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
         .entity-crud-modal .entity-crud-cancel {
             border: 1px solid #cbd5e1;
             border-radius: 9px;
@@ -437,6 +447,11 @@
             background-color: var(--bs-secondary-bg);
             border-color: var(--bs-border-color);
             color: var(--bs-body-color);
+        }
+        html[data-bs-theme="dark"] .entity-crud-modal .input-group-text {
+            background-color: var(--bs-tertiary-bg);
+            border-color: var(--bs-border-color);
+            color: var(--bs-secondary-color);
         }
         html[data-bs-theme="dark"] .entity-crud-modal .entity-crud-cancel {
             background: var(--bs-tertiary-bg);
@@ -535,14 +550,15 @@
                             <tr>
                                 <th style="width: 6%;" class="text-center">Aksi</th>
                                 <th style="width: 4%;" class="text-center">No</th>
-                                <th style="width: 9%;">Kode</th>
-                                <th style="width: 17%;">Nama</th>
-                                <th style="width: 18%;">Alamat</th>
-                                <th style="width: 10%;">PIC</th>
-                                <th style="width: 10%;">Telepon</th>
-                                <th style="width: 14%;">Email</th>
+                                <th style="width: 8%;">Kode</th>
+                                <th style="width: 16%;">Nama</th>
+                                <th style="width: 16%;">Alamat</th>
+                                <th style="width: 9%;">PIC</th>
+                                <th style="width: 9%;">Telepon</th>
+                                <th style="width: 12%;">Email</th>
                                 <th style="width: 6%;" class="text-end">PPN</th>
                                 <th style="width: 6%;" class="text-end">PPH</th>
+                                <th style="width: 8%;" class="text-end">Jatuh Tempo</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -576,7 +592,7 @@
                     </div>
 
                     <div class="modal-body">
-                        <div class="row g-3">
+                        <div class="row g-3 align-items-end">
                             <div class="col-md-6">
                                 <label class="form-label" for="supplierCodeInput">Kode <span
                                         class="text-danger">*</span></label>
@@ -609,15 +625,23 @@
                                 <input class="form-control" name="email" id="supplierEmailInput" type="email"
                                     maxlength="100" placeholder="email@supplier.com" autocomplete="off">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label" for="supplierPpnInput">PPN</label>
                                 <input class="form-control" name="ppn" id="supplierPpnInput" type="number"
                                     step="0.01" min="0" placeholder="cth: 11">
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label" for="supplierPphInput">PPH</label>
                                 <input class="form-control" name="pph" id="supplierPphInput" type="number"
                                     step="0.01" min="0" placeholder="cth: 2">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="supplierPaymentTermInput">Periode Jatuh Tempo (Hari)</label>
+                                <div class="input-group">
+                                    <input class="form-control" name="payment_term_days" id="supplierPaymentTermInput"
+                                        type="number" min="0" max="3650" step="1" value="0" placeholder="cth: 30">
+                                    <span class="input-group-text">Hari</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -759,6 +783,13 @@
                     {
                         data: 'pph',
                         className: 'text-end align-middle font-monospace'
+                    },
+                    {
+                        data: 'payment_term_days',
+                        name: 'payment_term_days',
+                        className: 'text-end align-middle font-monospace',
+                        searchable: true,
+                        orderable: true
                     }
                 ],
                 columnDefs: [{
@@ -831,6 +862,7 @@
                 $('#supplierPhoneInput').val(isEdit ? (trigger.data('phone') ?? '') : '');
                 $('#supplierPpnInput').val(isEdit ? (trigger.data('ppn') ?? '') : '');
                 $('#supplierPphInput').val(isEdit ? (trigger.data('pph') ?? '') : '');
+                $('#supplierPaymentTermInput').val(isEdit ? (trigger.data('payment-term-days') ?? 0) : 0);
 
                 $('#supplierCrudSubmit').prop('disabled', false).text('Simpan');
             });

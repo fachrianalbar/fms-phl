@@ -680,12 +680,14 @@
                                 <th class="text-center" style="width: 45px;">No</th>
                                 <th>No. Transaksi</th>
                                 <th class="text-center" style="width: 120px;">Tgl & Jam</th>
-                                <th class="text-center" style="width: 110px;">Armada</th>
+                                <th class="text-center" style="width: 130px;">Armada / Pemilik</th>
                                 <th>Supplier / Toko</th>
                                 <th class="text-center" style="width: 140px;">Pemeliharaan (MNT)</th>
                                 <th class="text-center" style="width: 130px;">Jenis Bayar</th>
                                 <th class="text-center" style="width: 100px;">Item / Qty</th>
-                                <th class="text-end" style="width: 130px;">Total Biaya</th>
+                                <th class="text-end" style="width: 120px;">Subtotal</th>
+                                <th class="text-end" style="width: 110px;">PPN</th>
+                                <th class="text-end" style="width: 140px;">Jumlah Setelah PPN</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -747,6 +749,11 @@
                                         <div id="modalFleet">-</div>
                                     </div>
                                     <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <small class="text-muted text-uppercase fw-semibold" style="font-size: 11px;">Pemilik
+                                            Kendaraan</small>
+                                        <div class="fw-semibold text-dark fs-13" id="modalFleetOwner">-</div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
                                         <small class="text-muted text-uppercase fw-semibold"
                                             style="font-size: 11px;">Supplier / Toko</small>
                                         <div class="fw-semibold text-dark fs-13" id="modalSupplier">-</div>
@@ -805,13 +812,27 @@
                                     </thead>
                                     <tbody id="modalItemsBody"></tbody>
                                     <tfoot>
-                                        <tr style="background: #f8fafc; font-weight: 700;">
+                                        <tr style="background: #f8fafc; font-weight: 600;">
                                             <td colspan="3" class="text-end fw-bold text-uppercase"
-                                                style="padding: 10px 12px; font-size: 12px;">Total Kuantitas:</td>
-                                            <td class="text-center font-monospace fw-bold" style="padding: 10px 12px;"
+                                                style="padding: 8px 12px; font-size: 12px;">Total Kuantitas:</td>
+                                            <td class="text-center font-monospace fw-bold" style="padding: 8px 12px;"
                                                 id="modalTotalQty">0</td>
                                             <td class="text-end fw-bold text-uppercase"
-                                                style="padding: 10px 12px; font-size: 12px;">Grand Total:</td>
+                                                style="padding: 8px 12px; font-size: 12px;">Subtotal:</td>
+                                            <td class="text-end font-monospace fw-bold"
+                                                style="padding: 8px 12px;" id="modalSubtotal">Rp 0</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr style="background: #f8fafc; font-weight: 600;">
+                                            <td colspan="5" class="text-end fw-bold text-uppercase"
+                                                style="padding: 8px 12px; font-size: 12px;">PPN (<span id="modalPpnRate">0%</span>):</td>
+                                            <td class="text-end font-monospace fw-bold"
+                                                style="padding: 8px 12px;" id="modalPpnAmount">Rp 0</td>
+                                            <td></td>
+                                        </tr>
+                                        <tr style="background: #f8fafc; font-weight: 700;">
+                                            <td colspan="5" class="text-end fw-bold text-uppercase"
+                                                style="padding: 10px 12px; font-size: 12px;">Jumlah Setelah PPN:</td>
                                             <td class="text-end font-monospace fw-bold text-success fs-14"
                                                 style="padding: 10px 12px;" id="modalGrandTotal">Rp 0</td>
                                             <td></td>
@@ -921,6 +942,8 @@
                     { data: 'maintenanceBadge', name: 'maintenances.code', className: 'align-middle text-center' },
                     { data: 'bankInfo', name: 'paymentType', className: 'align-middle text-center' },
                     { data: 'itemSummary', name: 'itemSummary', orderable: false, searchable: false, className: 'text-center align-middle' },
+                    { data: 'subtotalAmount', name: 'subtotal', className: 'text-end align-middle font-monospace' },
+                    { data: 'ppnInfo', name: 'ppn_amount', className: 'text-end align-middle font-monospace' },
                     { data: 'totalPrice', name: 'nominal', className: 'text-end align-middle font-monospace fw-bold text-dark' },
                 ],
                 columnDefs: [
@@ -1023,6 +1046,7 @@
                             fleetHtml += ' <small class="text-muted d-block">' + escapeHtml(d.fleetBrand) + '</small>';
                         }
                         $('#modalFleet').html(fleetHtml);
+                        $('#modalFleetOwner').text(d.fleetOwner || '-');
 
                         $('#modalSupplier').text(d.supplierName);
 
@@ -1079,6 +1103,9 @@
 
                         $('#modalItemsBody').html(rowsHtml);
                         $('#modalTotalQty').text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }));
+                        $('#modalSubtotal').text(d.subtotalFormatted || d.nominalFormatted);
+                        $('#modalPpnRate').text(d.ppnRateFormatted || '0%');
+                        $('#modalPpnAmount').text(d.ppnAmountFormatted || 'Rp 0');
                         $('#modalGrandTotal').text(d.nominalFormatted);
 
                         $('#modalLoading').hide();

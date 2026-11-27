@@ -293,12 +293,23 @@
                         <select class="form-select select2-basic" name="fleetCode" id="fleetCode" required>
                             <option value="">Pilih Mobil / Armada...</option>
                             @foreach ($fleet as $f)
-                                <option value="{{ $f->code }}" {{ old('fleetCode') == $f->code ? 'selected' : '' }}>
+                                <option value="{{ $f->code }}"
+                                    data-owner="{{ $f->company->name ?? '-' }}"
+                                    {{ old('fleetCode') == $f->code ? 'selected' : '' }}>
                                     {{ $f->plateNumber }} {{ $f->brand ? ' - ' . $f->brand->name : '' }}
                                 </option>
                             @endforeach
                         </select>
                         <small class="text-muted fs-11">Suku cadang otomatis terhubung ke servis mobil ini</small>
+                    </div>
+
+                    {{-- Pemilik Kendaraan (Auto-fill Readonly) --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="fleetOwnerDisplay">
+                            Pemilik Kendaraan
+                        </label>
+                        <input class="form-control form-control-custom" id="fleetOwnerDisplay" type="text" readonly
+                            placeholder="Otomatis terisi saat Nopol dipilih">
                     </div>
 
                     {{-- Supplier / Toko --}}
@@ -309,11 +320,27 @@
                         <select class="form-select select2-basic" name="supplierCode" id="supplierCode" required>
                             <option value="">Pilih Supplier...</option>
                             @foreach ($supplier as $s)
-                                <option value="{{ $s->code }}" {{ old('supplierCode') == $s->code ? 'selected' : '' }}>
+                                <option value="{{ $s->code }}"
+                                    data-payment-term="{{ (int) ($s->payment_term_days ?? 0) }}"
+                                    data-ppn="{{ (float) ($s->ppn ?? 0) }}"
+                                    {{ old('supplierCode') == $s->code ? 'selected' : '' }}>
                                     {{ $s->name }}
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+
+                    {{-- PPN (%) --}}
+                    <div class="col-md-4">
+                        <label class="form-label form-label-custom" for="ppnRate">
+                            PPN (%)
+                        </label>
+                        <div class="input-group">
+                            <input class="form-control form-control-custom" name="ppn_rate" id="ppnRate" type="number"
+                                min="0" max="100" step="0.01" value="{{ old('ppn_rate', 0) }}" placeholder="0">
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <small class="text-muted fs-11">Terisi otomatis dari PPN supplier, dapat diubah</small>
                     </div>
 
                     {{-- Jenis Pembayaran (Tunai / Transfer / Tempo) --}}
@@ -405,7 +432,7 @@
                                             <option value="{{ $it->code }}"
                                                 data-price="{{ $it->latestPurchase->price ?? ($it->price ?? 0) }}"
                                                 data-name="{{ $it->name }}">
-                                                {{ $it->code }} - {{ $it->name }}
+                                                {{ $it->code }} - {{ $it->name }}{{ $it->type === 'jasa' ? ' [Jasa]' : '' }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -443,11 +470,19 @@
                         <div class="summary-value" id="summaryTotalItems">1</div>
                     </div>
                     <div class="summary-item">
-                        <div class="summary-label">Total Kuantitas (Qty)</div>
+                        <div class="summary-label">Total Qty</div>
                         <div class="summary-value" id="summaryTotalQty">1</div>
                     </div>
+                    <div class="summary-item">
+                        <div class="summary-label">Subtotal (Sebelum PPN)</div>
+                        <div class="summary-value" id="summarySubtotal">Rp 0</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-label">PPN (<span id="summaryPpnRate">0%</span>)</div>
+                        <div class="summary-value" id="summaryPpnAmount">Rp 0</div>
+                    </div>
                     <div class="summary-item grand-total-box">
-                        <div class="summary-label" style="color: #6ee7b7;">Grand Total Biaya</div>
+                        <div class="summary-label" style="color: #6ee7b7;">Jumlah Setelah PPN</div>
                         <div class="summary-value" id="summaryGrandTotal">Rp 0</div>
                     </div>
                 </div>
@@ -543,11 +578,15 @@
             }
         }
 
-        const itemsData = @json($items->map(fn($it) => [
-            'code' => $it->code,
-            'name' => $it->name,
-            'price' => $it->latestPurchase->price ?? ($it->price ?? 0)
-        ]));
+        @php
+            $itemsPayload = $items->map(fn ($it) => [
+                'code' => $it->code,
+                'name' => $it->name,
+                'type' => $it->type,
+                'price' => $it->latestPurchase->price ?? ($it->price ?? 0),
+            ])->values();
+        @endphp
+        const itemsData = @json($itemsPayload);
 
         $(document).ready(function() {
             // Select2 Init
@@ -559,9 +598,26 @@
 
             initSelect2Item(1);
 
-            // Inisialisasi field pembayaran
+            // Inisialisasi field pembayaran & pemilik kendaraan
             togglePaymentFields();
+            syncFleetOwner();
             $('#paymentType').on('change', togglePaymentFields);
+            $('#fleetCode').on('change', syncFleetOwner);
+
+            $('#supplierCode').on('change', function() {
+                const selectedOpt = $(this).find('option:selected');
+                const ppn = parseFloat(selectedOpt.data('ppn')) || 0;
+                $('#ppnRate').val(ppn);
+                dueDateTouched = false;
+                if ($('#paymentType').val() === 'Tempo') {
+                    syncDueDate(true);
+                }
+                updateSummary();
+            });
+
+            $('#ppnRate').on('input change', function() {
+                updateSummary();
+            });
 
             // Fetch auto-generated code
             generateCode();
@@ -569,11 +625,11 @@
             $('#date').on('change', function() {
                 generateCode();
                 if ($('#paymentType').val() === 'Tempo') {
-                    syncDueDate();
+                    syncDueDate(false);
                 }
             });
 
-            // Jatuh tempo mengikuti tanggal pembelian, kecuali sudah diubah manual
+            // Jatuh tempo mengikuti tanggal pembelian + periode jatuh tempo supplier, kecuali diubah manual
             $('#dueDate').on('change', function() {
                 dueDateTouched = true;
             });
@@ -596,11 +652,30 @@
             });
         });
 
-        function syncDueDate() {
-            if (dueDateTouched) {
+        function addDaysToIsoDate(isoDate, days) {
+            if (!isoDate) return '';
+            const parts = isoDate.split('-').map(Number);
+            if (parts.length !== 3 || parts.some(isNaN)) return '';
+            const dt = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+            dt.setUTCDate(dt.getUTCDate() + (parseInt(days, 10) || 0));
+            return dt.toISOString().slice(0, 10);
+        }
+
+        function syncFleetOwner() {
+            const val = $('#fleetCode').val();
+            const owner = $('#fleetCode option:selected').data('owner') || '-';
+            $('#fleetOwnerDisplay').val(val ? owner : '');
+        }
+
+        function syncDueDate(force) {
+            if (dueDateTouched && !force) {
                 return;
             }
-            $('#dueDate').val($('#date').val());
+            const baseDate = $('#date').val();
+            const termDays = parseInt($('#supplierCode option:selected').data('payment-term'), 10) || 0;
+            if (baseDate) {
+                $('#dueDate').val(addDaysToIsoDate(baseDate, termDays));
+            }
         }
 
         function generateCode() {
@@ -659,7 +734,7 @@
         function updateSummary() {
             let totalItems = 0;
             let totalQty = 0;
-            let grandTotal = 0;
+            let subtotal = 0;
 
             $('#itemsBody tr').each(function() {
                 const rowId = $(this).attr('id').replace('row_', '');
@@ -673,11 +748,19 @@
 
                 const priceRaw = $(`#price_${rowId}`).val().replace(/[^0-9]/g, '');
                 const price = parseInt(priceRaw, 10) || 0;
-                grandTotal += (qty * price);
+                subtotal += (qty * price);
             });
+
+            const ppnRate = Math.max(0, Math.min(100, parseFloat($('#ppnRate').val()) || 0));
+            const ppnAmount = Math.round(subtotal * (ppnRate / 100));
+            const grandTotal = subtotal + ppnAmount;
+            const ppnRateText = ppnRate.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '%';
 
             $('#summaryTotalItems').text(totalItems);
             $('#summaryTotalQty').text(totalQty.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 1 }));
+            $('#summarySubtotal').text('Rp ' + numberFormat(subtotal));
+            $('#summaryPpnRate').text(ppnRateText);
+            $('#summaryPpnAmount').text('Rp ' + numberFormat(ppnAmount));
             $('#summaryGrandTotal').text('Rp ' + numberFormat(grandTotal));
         }
 
@@ -687,7 +770,8 @@
 
             let optionsHtml = '<option value="">Pilih Suku Cadang...</option>';
             itemsData.forEach(function(item) {
-                optionsHtml += `<option value="${item.code}" data-price="${item.price}" data-name="${item.name}">${item.code} - ${item.name}</option>`;
+                const typeBadge = item.type === 'jasa' ? ' [Jasa]' : '';
+                optionsHtml += `<option value="${item.code}" data-price="${item.price}" data-name="${item.name}">${item.code} - ${item.name}${typeBadge}</option>`;
             });
 
             const html = `

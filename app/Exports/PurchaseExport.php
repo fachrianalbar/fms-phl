@@ -39,8 +39,13 @@ class PurchaseExport implements FromCollection, ShouldAutoSize, WithColumnFormat
             'Tanggal',
             'Jatuh Tempo',
             'Supplier',
+            'Nopol',
+            'Pemilik Kendaraan',
             'Gudang',
-            'Total Tagihan',
+            'Subtotal',
+            'PPN (%)',
+            'Nominal PPN',
+            'Jumlah Setelah PPN',
             'Terbayar',
             'Sisa',
             'Status Pembayaran',
@@ -54,6 +59,12 @@ class PurchaseExport implements FromCollection, ShouldAutoSize, WithColumnFormat
         if ($total <= 0 && $row->relationLoaded('details')) {
             $total = (float) $row->details->sum(fn ($d) => (float) $d->price * (float) ($d->qty ?: $d->receivedQty));
         }
+        $subtotal = (float) ($row->subtotal ?? 0);
+        if ($subtotal <= 0) {
+            $subtotal = $total;
+        }
+        $ppnRate = (float) ($row->ppn_rate ?? 0);
+        $ppnAmount = (float) ($row->ppn_amount ?? 0);
         $paid = (float) ($row->paidAmount ?? 0);
         $remaining = max(0, $total - $paid);
 
@@ -69,7 +80,12 @@ class PurchaseExport implements FromCollection, ShouldAutoSize, WithColumnFormat
             $row->date ? Carbon::parse($row->date)->format('d-m-Y') : '-',
             $row->dueDate ? Carbon::parse($row->dueDate)->format('d-m-Y') : '-',
             $row->supplier->name ?? '-',
+            $row->fleet->plateNumber ?? '-',
+            $row->fleet->company->name ?? '-',
             $row->warehouse->name ?? '-',
+            $subtotal,
+            $ppnRate,
+            $ppnAmount,
             $total,
             $paid,
             $remaining,
@@ -80,9 +96,11 @@ class PurchaseExport implements FromCollection, ShouldAutoSize, WithColumnFormat
     public function columnFormats(): array
     {
         return [
-            'G' => '#,##0',
-            'H' => '#,##0',
             'I' => '#,##0',
+            'K' => '#,##0',
+            'L' => '#,##0',
+            'M' => '#,##0',
+            'N' => '#,##0',
         ];
     }
 

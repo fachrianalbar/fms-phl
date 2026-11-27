@@ -72,7 +72,7 @@ class DirectPurchaseController extends Controller
         $fleet = $this->fleetSvc->findAll();
         $stats = $this->service->stats();
 
-        return view($this->view . 'index')
+        return view($this->view.'index')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('fleet', $fleet)
@@ -90,7 +90,7 @@ class DirectPurchaseController extends Controller
         $warehouse = $this->warehouseSvc->findAll();
         $items = Item::query()->orderBy('name', 'asc')->with(['latestPurchase'])->get();
 
-        return view($this->view . 'create')
+        return view($this->view.'create')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('fleet', $fleet)
@@ -109,12 +109,13 @@ class DirectPurchaseController extends Controller
         $validator = Validator::make($request->all(), [
             'fleetCode' => ['required', 'string'],
             'supplierCode' => ['required', 'string'],
+            'ppn_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'paymentType' => ['required', 'in:'.implode(',', DirectPurchaseService::PAYMENT_TYPES)],
             'dueDate' => [
                 'nullable',
-                'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TEMPO,
+                'required_if:paymentType,'.DirectPurchaseService::PAYMENT_TYPE_TEMPO,
                 'date',
                 'after_or_equal:date',
             ],
@@ -152,12 +153,12 @@ class DirectPurchaseController extends Controller
                 return DB::transaction(fn () => $this->service->store($request, $this->title));
             });
 
-            $redirect = redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_save_successfully'));
+            $redirect = redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_save_successfully'));
 
             return $code->wasChanged ? $redirect->with('code_replaced', $code->flashPayload()) : $redirect;
         } catch (\Throwable $th) {
-            return redirect()->back()->withInput()->with('fail', 'Terjadi kesalahan: ' . $th->getMessage());
+            return redirect()->back()->withInput()->with('fail', 'Terjadi kesalahan: '.$th->getMessage());
         }
     }
 
@@ -172,10 +173,16 @@ class DirectPurchaseController extends Controller
             if ($request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'Data tidak ditemukan.'], 404);
             }
-            return redirect()->route($this->view . 'index')->with('fail', 'Data tidak ditemukan.');
+
+            return redirect()->route($this->view.'index')->with('fail', 'Data tidak ditemukan.');
         }
 
         if ($request->ajax()) {
+            $subtotal = (float) ($data->subtotal ?: $data->details->sum(fn ($d) => (float) $d->qty * (float) $d->price));
+            $ppnRate = (float) ($data->ppn_rate ?? 0);
+            $ppnAmount = (float) ($data->ppn_amount ?? 0);
+            $nominal = (float) ($data->nominal ?: ($subtotal + $ppnAmount));
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -185,6 +192,7 @@ class DirectPurchaseController extends Controller
                     'time' => $data->time,
                     'fleetPlate' => optional($data->fleet)->plateNumber ?? '-',
                     'fleetBrand' => optional($data->fleet?->brand)->name ?? '',
+                    'fleetOwner' => optional($data->fleet?->company)->name ?? '-',
                     'supplierName' => optional($data->supplier)->name ?? '-',
                     'maintenanceCode' => optional($data->maintenances->first())->code ?? '-',
                     'paymentMethod' => $data->paymentType ?: 'Tunai',
@@ -195,26 +203,32 @@ class DirectPurchaseController extends Controller
                     'dueDate' => ($data->paymentType === DirectPurchaseService::PAYMENT_TYPE_TEMPO && $data->dueDate)
                         ? Carbon::parse($data->dueDate)->format('d F Y')
                         : '-',
-                    'nominal' => (float) $data->nominal,
-                    'nominalFormatted' => 'Rp ' . number_format((float) $data->nominal, 0, ',', '.'),
-                    'editUrl' => route($this->view . 'edit', $data->id),
+                    'subtotal' => $subtotal,
+                    'subtotalFormatted' => 'Rp '.number_format($subtotal, 0, ',', '.'),
+                    'ppnRate' => $ppnRate,
+                    'ppnRateFormatted' => rtrim(rtrim(number_format($ppnRate, 2, ',', '.'), '0'), ',').'%',
+                    'ppnAmount' => $ppnAmount,
+                    'ppnAmountFormatted' => 'Rp '.number_format($ppnAmount, 0, ',', '.'),
+                    'nominal' => $nominal,
+                    'nominalFormatted' => 'Rp '.number_format($nominal, 0, ',', '.'),
+                    'editUrl' => route($this->view.'edit', $data->id),
                     'details' => $data->details->map(function ($d) {
                         return [
                             'itemCode' => $d->itemCode,
                             'itemName' => optional($d->item)->name ?? '-',
                             'qty' => (float) $d->qty,
                             'price' => (float) $d->price,
-                            'priceFormatted' => 'Rp ' . number_format((float) $d->price, 0, ',', '.'),
+                            'priceFormatted' => 'Rp '.number_format((float) $d->price, 0, ',', '.'),
                             'subtotal' => (float) ($d->qty * $d->price),
-                            'subtotalFormatted' => 'Rp ' . number_format((float) ($d->qty * $d->price), 0, ',', '.'),
+                            'subtotalFormatted' => 'Rp '.number_format((float) ($d->qty * $d->price), 0, ',', '.'),
                             'description' => $d->description ?: '-',
                         ];
                     }),
-                ]
+                ],
             ]);
         }
 
-        return view($this->view . 'show')
+        return view($this->view.'show')
             ->with('view', $this->view)
             ->with('title', $this->title)
             ->with('data', $data);
@@ -228,7 +242,7 @@ class DirectPurchaseController extends Controller
         $data = $this->service->getById($id);
 
         if (! $data) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Data tidak ditemukan.');
+            return redirect()->route($this->view.'index')->with('fail', 'Data tidak ditemukan.');
         }
 
         $supplier = $this->supplierSvc->findAll();
@@ -236,7 +250,7 @@ class DirectPurchaseController extends Controller
         $warehouse = $this->warehouseSvc->findAll();
         $items = Item::query()->orderBy('name', 'asc')->with(['latestPurchase'])->get();
 
-        return view($this->view . 'edit')
+        return view($this->view.'edit')
             ->with('view', $this->view)
             ->with('supplier', $supplier)
             ->with('fleet', $fleet)
@@ -256,12 +270,13 @@ class DirectPurchaseController extends Controller
         $validator = Validator::make($request->all(), [
             'fleetCode' => ['required', 'string'],
             'supplierCode' => ['required', 'string'],
+            'ppn_rate' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'paymentType' => ['required', 'in:' . implode(',', DirectPurchaseService::PAYMENT_TYPES)],
+            'paymentType' => ['required', 'in:'.implode(',', DirectPurchaseService::PAYMENT_TYPES)],
             'dueDate' => [
                 'nullable',
-                'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TEMPO,
+                'required_if:paymentType,'.DirectPurchaseService::PAYMENT_TYPE_TEMPO,
                 'date',
                 'after_or_equal:date',
             ],
@@ -297,10 +312,10 @@ class DirectPurchaseController extends Controller
         try {
             DB::transaction(fn () => $this->service->update($request, $id, $this->title));
 
-            return redirect()->route($this->view . 'index')
-                ->with('success', $this->title . ' ' . __('general.data_was_update_succesfully'));
+            return redirect()->route($this->view.'index')
+                ->with('success', $this->title.' '.__('general.data_was_update_succesfully'));
         } catch (\Throwable $th) {
-            return redirect()->back()->withInput()->with('fail', 'Terjadi kesalahan: ' . $th->getMessage());
+            return redirect()->back()->withInput()->with('fail', 'Terjadi kesalahan: '.$th->getMessage());
         }
     }
 
@@ -312,9 +327,9 @@ class DirectPurchaseController extends Controller
         try {
             DB::transaction(fn () => $this->service->destroy($id, $this->title));
 
-            return redirect()->route($this->view . 'index')->with('success', 'Data Pembelian Langsung berhasil dihapus.');
+            return redirect()->route($this->view.'index')->with('success', 'Data Pembelian Langsung berhasil dihapus.');
         } catch (\Throwable $th) {
-            return redirect()->route($this->view . 'index')->with('fail', 'Gagal menghapus: ' . $th->getMessage());
+            return redirect()->route($this->view.'index')->with('fail', 'Gagal menghapus: '.$th->getMessage());
         }
     }
 
@@ -338,7 +353,7 @@ class DirectPurchaseController extends Controller
     {
         return [
             'nullable',
-            'required_if:paymentType,' . DirectPurchaseService::PAYMENT_TYPE_TRANSFER,
+            'required_if:paymentType,'.DirectPurchaseService::PAYMENT_TYPE_TRANSFER,
             Rule::exists('user_bank', 'code')
                 ->withoutTrashed()
                 ->using(fn ($query) => $query->whereRaw('LOWER(TRIM(rekening_type)) = ?', ['internal'])),
@@ -366,13 +381,32 @@ class DirectPurchaseController extends Controller
         if ($request->ajax()) {
             $data = $this->service->filteredDatatable($request->all());
 
-            $search = $request->input('search.value');
-            if (! empty($search)) {
-                $data->where(function ($query) use ($search) {
-                    $query->where('purchase.code', 'like', '%' . $search . '%')
-                        ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%' . $search . '%'))
-                        ->orWhereHas('fleet', fn ($f) => $f->where('plateNumber', 'like', '%' . $search . '%'))
-                        ->orWhereHas('warehouse', fn ($w) => $w->where('name', 'like', '%' . $search . '%'));
+            $search = trim((string) $request->input('search.value', ''));
+            if ($search !== '') {
+                $lower = mb_strtolower($search);
+                $data->where(function ($query) use ($search, $lower) {
+                    $query->where('purchase.code', 'like', '%'.$search.'%')
+                        ->orWhere('purchase.date', 'like', '%'.$search.'%')
+                        ->orWhere('purchase.paymentType', 'like', '%'.$search.'%')
+                        ->orWhereRaw('CAST(purchase.subtotal AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.ppn_amount AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.ppn_rate AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereRaw('CAST(purchase.nominal AS CHAR) LIKE ?', ['%'.$search.'%'])
+                        ->orWhereHas('supplier', fn ($s) => $s->where('name', 'like', '%'.$search.'%'))
+                        ->orWhereHas('fleet', fn ($f) => $f->where('plateNumber', 'like', '%'.$search.'%')
+                            ->orWhereHas('company', fn ($c) => $c->where('name', 'like', '%'.$search.'%')))
+                        ->orWhereHas('maintenances', fn ($m) => $m->where('code', 'like', '%'.$search.'%'))
+                        ->orWhereHas('warehouse', fn ($w) => $w->where('name', 'like', '%'.$search.'%'));
+
+                    if (str_contains($lower, 'lunas') || $lower === 'paid') {
+                        $query->orWhere('purchase.paymentStatus', 'Paid');
+                    }
+                    if (str_contains($lower, 'sebagian') || str_contains($lower, 'partial')) {
+                        $query->orWhere('purchase.paymentStatus', 'Partial');
+                    }
+                    if (str_contains($lower, 'belum') || str_contains($lower, 'unpaid')) {
+                        $query->orWhere('purchase.paymentStatus', 'Unpaid');
+                    }
                 });
             }
 
@@ -381,13 +415,18 @@ class DirectPurchaseController extends Controller
                 ->addColumn('purchaseDate', function ($row) {
                     $date = Carbon::parse($row->date)->format('d-M-Y');
                     $time = $row->time ? Carbon::parse($row->time)->format('H:i') : '';
-                    return $date . ($time ? ' <small class="text-muted">' . $time . '</small>' : '');
+
+                    return $date.($time ? ' <small class="text-muted">'.$time.'</small>' : '');
                 })
                 ->addColumn('fleetInfo', function ($row) {
                     if ($row->fleet) {
+                        $owner = optional($row->fleet->company)->name;
+
                         return '<span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace fs-12 px-2 py-1">'
-                            . e($row->fleet->plateNumber) . '</span>';
+                            .e($row->fleet->plateNumber).'</span>'
+                            .($owner ? '<small class="text-muted d-block mt-1">'.e($owner).'</small>' : '');
                     }
+
                     return '<span class="text-muted">-</span>';
                 })
                 ->addColumn('supplierInfo', function ($row) {
@@ -396,9 +435,10 @@ class DirectPurchaseController extends Controller
                 ->addColumn('maintenanceBadge', function ($row) {
                     $mnt = $row->maintenances->first();
                     if ($mnt) {
-                        return '<a href="' . route('warehouse.maintenance.index') . '" class="badge bg-info-subtle text-info border border-info-subtle rounded-pill font-monospace fs-11 px-2 py-1 text-decoration-none" title="Buka menu Maintenance">'
-                            . '<i class="mdi mdi-tools me-1"></i>' . e($mnt->code) . '</a>';
+                        return '<a href="'.route('warehouse.maintenance.index').'" class="badge bg-info-subtle text-info border border-info-subtle rounded-pill font-monospace fs-11 px-2 py-1 text-decoration-none" title="Buka menu Maintenance">'
+                            .'<i class="mdi mdi-tools me-1"></i>'.e($mnt->code).'</a>';
                     }
+
                     return '<span class="badge bg-secondary-subtle text-secondary rounded-pill fs-11">Tidak Terhubung</span>';
                 })
                 ->addColumn('bankInfo', function ($row) {
@@ -418,42 +458,60 @@ class DirectPurchaseController extends Controller
                     ];
                     [$statusClasses, $statusLabel] = $statusMap[$status] ?? $statusMap['Unpaid'];
 
-                    return '<span class="badge ' . $classes . ' border rounded-pill fs-11">'
-                        . '<i class="mdi ' . $icon . ' me-1"></i>' . e($type) . '</span>'
-                        . ($type === 'Transfer' && $row->transferUserBank
+                    return '<span class="badge '.$classes.' border rounded-pill fs-11">'
+                        .'<i class="mdi '.$icon.' me-1"></i>'.e($type).'</span>'
+                        .($type === 'Transfer' && $row->transferUserBank
                             ? '<small class="d-block text-muted fs-10 mt-1">'
-                                . e($row->transferUserBank->bank->name ?? 'Bank') . ' · '
-                                . e($row->transferUserBank->accountNumber) . '</small>'
+                                .e($row->transferUserBank->bank->name ?? 'Bank').' · '
+                                .e($row->transferUserBank->accountNumber).'</small>'
                             : '')
-                        . '<small class="d-block mt-1"><span class="badge ' . $statusClasses . ' rounded-pill fs-10">'
-                        . e($statusLabel) . '</span></small>';
+                        .'<small class="d-block mt-1"><span class="badge '.$statusClasses.' rounded-pill fs-10">'
+                        .e($statusLabel).'</span></small>';
                 })
                 ->addColumn('itemSummary', function ($row) {
                     $count = $row->details->count();
                     $totalQty = $row->details->sum('qty');
-                    return '<span class="fw-semibold">' . number_format($count, 0, ',', '.') . ' Item</span>'
-                        . '<small class="text-muted d-block">' . rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',') . ' Qty</small>';
+
+                    return '<span class="fw-semibold">'.number_format($count, 0, ',', '.').' Item</span>'
+                        .'<small class="text-muted d-block">'.rtrim(rtrim(number_format((float) $totalQty, 1, ',', '.'), '0'), ',').' Qty</small>';
+                })
+                ->addColumn('subtotalAmount', function ($row) {
+                    $subtotal = (float) ($row->subtotal ?: $row->details->sum(fn ($d) => (float) $d->price * (float) $d->qty));
+
+                    return 'Rp '.number_format($subtotal, 0, ',', '.');
+                })
+                ->addColumn('ppnInfo', function ($row) {
+                    $ppnRate = (float) ($row->ppn_rate ?? 0);
+                    $ppnAmount = (float) ($row->ppn_amount ?? 0);
+                    if ($ppnRate <= 0 && $ppnAmount <= 0) {
+                        return '<span class="text-muted">-</span>';
+                    }
+                    $rateFormatted = rtrim(rtrim(number_format($ppnRate, 2, ',', '.'), '0'), ',');
+
+                    return '<span>Rp '.number_format($ppnAmount, 0, ',', '.').'</span>'
+                        .'<small class="text-muted d-block">('.$rateFormatted.'%)</small>';
                 })
                 ->addColumn('totalPrice', function ($row) {
-                    $total = $row->nominal ?: $row->details->sum(fn ($d) => $d->price * $d->qty);
-                    return '<a href="javascript:void(0)" onclick="showDetailModal(\'' . $row->id . '\')" class="font-monospace fw-bold text-dark text-decoration-none" data-bs-toggle="tooltip" title="Klik untuk lihat detail biaya">'
-                        . 'Rp ' . number_format($total, 0, ',', '.') . '</a>';
+                    $total = (float) ($row->nominal ?: $row->details->sum(fn ($d) => (float) $d->price * (float) $d->qty));
+
+                    return '<a href="javascript:void(0)" onclick="showDetailModal(\''.$row->id.'\')" class="font-monospace fw-bold text-dark text-decoration-none" data-bs-toggle="tooltip" title="Klik untuk lihat detail biaya">'
+                        .'Rp '.number_format($total, 0, ',', '.').'</a>';
                 })
                 ->addColumn('action', function ($row) {
-                    $editUrl = route($this->view . 'edit', $row->id);
+                    $editUrl = route($this->view.'edit', $row->id);
 
                     $btn = '<div class="d-flex align-items-center justify-content-center gap-1">';
-                    $btn .= '<button type="button" class="btn btn-icon btn-sm bg-info-subtle" onclick="showDetailModal(\'' . $row->id . '\')" data-bs-toggle="tooltip" title="Lihat Detail Biaya">'
-                        . '<i class="mdi mdi-eye fs-14 text-info"></i></button>';
-                    $btn .= '<a href="' . $editUrl . '" class="btn btn-icon btn-sm bg-primary-subtle" data-bs-toggle="tooltip" title="Edit Data">'
-                        . '<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>';
-                    $btn .= '<button type="button" class="btn btn-icon btn-sm bg-danger-subtle" onclick="deleteData(\'' . $row->id . '\')" data-bs-toggle="tooltip" title="Hapus Data">'
-                        . '<i class="mdi mdi-delete fs-14 text-danger"></i></button>';
+                    $btn .= '<button type="button" class="btn btn-icon btn-sm bg-info-subtle" onclick="showDetailModal(\''.$row->id.'\')" data-bs-toggle="tooltip" title="Lihat Detail Biaya">'
+                        .'<i class="mdi mdi-eye fs-14 text-info"></i></button>';
+                    $btn .= '<a href="'.$editUrl.'" class="btn btn-icon btn-sm bg-primary-subtle" data-bs-toggle="tooltip" title="Edit Data">'
+                        .'<i class="mdi mdi-pencil-outline fs-14 text-primary"></i></a>';
+                    $btn .= '<button type="button" class="btn btn-icon btn-sm bg-danger-subtle" onclick="deleteData(\''.$row->id.'\')" data-bs-toggle="tooltip" title="Hapus Data">'
+                        .'<i class="mdi mdi-delete fs-14 text-danger"></i></button>';
                     $btn .= '</div>';
 
                     return $btn;
                 })
-                ->rawColumns(['purchaseDate', 'fleetInfo', 'supplierInfo', 'maintenanceBadge', 'bankInfo', 'itemSummary', 'totalPrice', 'action'])
+                ->rawColumns(['purchaseDate', 'fleetInfo', 'supplierInfo', 'maintenanceBadge', 'bankInfo', 'itemSummary', 'subtotalAmount', 'ppnInfo', 'totalPrice', 'action'])
                 ->toJson();
         }
     }
@@ -465,7 +523,7 @@ class DirectPurchaseController extends Controller
     {
         $date = $request->date ?? now()->toDateString();
         $carbonDate = Carbon::parse($date);
-        $base = 'PL-' . $carbonDate->format('ymd');
+        $base = 'PL-'.$carbonDate->format('ymd');
 
         $code = GenerateCode::generateCodeAscDate(
             $base,

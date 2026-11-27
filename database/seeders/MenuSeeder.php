@@ -80,13 +80,14 @@ class MenuSeeder extends Seeder
 
         // ── INVENTORY ─────────────────────────────────────────────────────
         ['code' => 'ITEM', 'name' => 'Item', 'nama' => 'Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/items', 'sort' => 1],
-        ['code' => 'ITEM_CATEGORY', 'name' => 'Item Category', 'nama' => 'Kategori Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/item-category', 'sort' => 2],
-        ['code' => 'ITEM_UNIT', 'name' => 'Item Unit', 'nama' => 'Satuan Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/item-unit', 'sort' => 3],
-        ['code' => 'WAREHOUSE', 'name' => 'Warehouse', 'nama' => 'Gudang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/warehouse', 'sort' => 4],
-        ['code' => 'STOCK', 'name' => 'Stock', 'nama' => 'Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/stock', 'sort' => 5],
-        ['code' => 'STOCK_TRANSACTION', 'name' => 'Stock Card', 'nama' => 'Kartu Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/transaction-stock', 'sort' => 6],
-        ['code' => 'STOCK_SYNC', 'name' => 'Stock Sync', 'nama' => 'Sinkronisasi Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/stock-sync', 'sort' => 7],
-        ['code' => 'MAINTENANCE', 'name' => 'Maintenance', 'nama' => 'Perawatan', 'parentCode' => 'INVENTORY', 'url' => 'warehouse/maintenance', 'sort' => 8],
+        ['code' => 'SERVICE_ITEM', 'name' => 'Service', 'nama' => 'Jasa', 'parentCode' => 'INVENTORY', 'url' => 'inventory/jasa', 'sort' => 2],
+        ['code' => 'ITEM_CATEGORY', 'name' => 'Item Category', 'nama' => 'Kategori Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/item-category', 'sort' => 3],
+        ['code' => 'ITEM_UNIT', 'name' => 'Item Unit', 'nama' => 'Satuan Barang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/item-unit', 'sort' => 4],
+        ['code' => 'WAREHOUSE', 'name' => 'Warehouse', 'nama' => 'Gudang', 'parentCode' => 'INVENTORY', 'url' => 'inventory/warehouse', 'sort' => 5],
+        ['code' => 'STOCK', 'name' => 'Stock', 'nama' => 'Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/stock', 'sort' => 6],
+        ['code' => 'STOCK_TRANSACTION', 'name' => 'Stock Card', 'nama' => 'Kartu Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/transaction-stock', 'sort' => 7],
+        ['code' => 'STOCK_SYNC', 'name' => 'Stock Sync', 'nama' => 'Sinkronisasi Stok', 'parentCode' => 'INVENTORY', 'url' => 'inventory/stock-sync', 'sort' => 8],
+        ['code' => 'MAINTENANCE', 'name' => 'Maintenance', 'nama' => 'Perawatan', 'parentCode' => 'INVENTORY', 'url' => 'warehouse/maintenance', 'sort' => 9],
 
         // ── FAKTUR (Piutang / AR) ─────────────────────────────────────────
         ['code' => 'FAKTUR_PEMBUATAN', 'name' => 'Create Invoice', 'nama' => 'Buat Faktur', 'parentCode' => 'FAKTUR', 'url' => 'invoice/create', 'sort' => 1],

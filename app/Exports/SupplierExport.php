@@ -56,6 +56,7 @@ class SupplierExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMap
             'Email',
             'PPN (%)',
             'PPH (%)',
+            'Jatuh Tempo (Hari)',
             'Dibuat Pada',
         ];
     }
@@ -74,6 +75,7 @@ class SupplierExport implements FromQuery, ShouldAutoSize, WithHeadings, WithMap
             $supplier->email ?: '-',
             $supplier->ppn !== null && $supplier->ppn !== '' ? (string) $supplier->ppn : '-',
             $supplier->pph !== null && $supplier->pph !== '' ? (string) $supplier->pph : '-',
+            ((int) ($supplier->payment_term_days ?? 0)).' Hari',
             $supplier->created_at ? $supplier->created_at->format('d/m/Y H:i') : '-',
         ];
     }

@@ -105,14 +105,15 @@
                 <thead>
                     <tr>
                         <th width="4%">No</th>
-                        <th width="9%">Kode</th>
-                        <th width="18%">Nama</th>
-                        <th width="20%">Alamat</th>
+                        <th width="8%">Kode</th>
+                        <th width="16%">Nama</th>
+                        <th width="18%">Alamat</th>
                         <th width="10%">PIC</th>
                         <th width="10%">Telepon</th>
-                        <th width="13%">Email</th>
+                        <th width="12%">Email</th>
                         <th width="6%">PPN</th>
                         <th width="6%">PPH</th>
+                        <th width="10%">Jatuh Tempo</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -127,6 +128,7 @@
                             <td class="text-left">{{ $supplier->email ?: '-' }}</td>
                             <td class="text-right">{{ $supplier->ppn !== null && $supplier->ppn !== '' ? $supplier->ppn : '-' }}</td>
                             <td class="text-right">{{ $supplier->pph !== null && $supplier->pph !== '' ? $supplier->pph : '-' }}</td>
+                            <td class="text-right">{{ (int) ($supplier->payment_term_days ?? 0) }} Hari</td>
                         </tr>
                     @endforeach
                 </tbody>

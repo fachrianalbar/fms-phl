@@ -24,5 +24,10 @@ class Supplier extends Model
         'email',
         'ppn',
         'pph',
+        'payment_term_days',
+    ];
+
+    protected $casts = [
+        'payment_term_days' => 'integer',
     ];
 }

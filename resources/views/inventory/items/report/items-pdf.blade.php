@@ -1,3 +1,9 @@
+@php
+    $entityLabel = $entityLabel ?? 'Barang';
+    $itemType = $itemType ?? \App\Models\Inventory\Item::TYPE_PART;
+    $isJasa = $itemType === \App\Models\Inventory\Item::TYPE_JASA;
+    $colCount = $isJasa ? 7 : 8;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -20,7 +26,7 @@
 <body>
     <div class="header">
         <h1>{{ $title }}</h1>
-        <div class="meta">Dicetak pada: {{ $printedAt->format('d-m-Y H:i') }} | Total Barang: {{ $items->count() }}</div>
+        <div class="meta">Dicetak pada: {{ $printedAt->format('d-m-Y H:i') }} | Total {{ $entityLabel }}: {{ $items->count() }}</div>
     </div>
 
     @if (! empty($filterSummary))
@@ -33,12 +39,13 @@
         <thead>
             <tr>
                 <th>No</th>
-                <th>Kode</th>
-                <th>Nama Barang</th>
-                <th>Tipe</th>
+                <th>Kode {{ $entityLabel }}</th>
+                <th>Nama {{ $entityLabel }}</th>
                 <th>Kategori</th>
                 <th>Satuan</th>
-                <th>Gudang</th>
+                @if (! $isJasa)
+                    <th>Gudang</th>
+                @endif
                 <th>Supplier</th>
                 <th>Harga</th>
             </tr>
@@ -49,16 +56,17 @@
                     <td class="center">{{ $loop->iteration }}</td>
                     <td class="nowrap">{{ $row->code ?: '-' }}</td>
                     <td>{{ $row->name ?: '-' }}</td>
-                    <td class="center">{{ \App\Models\Inventory\Item::types()[$row->type] ?? ucfirst((string) ($row->type ?? '-')) }}</td>
                     <td>{{ $row->category->name ?? '-' }}</td>
                     <td class="center">{{ $row->unit->name ?? '-' }}</td>
-                    <td>{{ $row->warehouse->name ?? '-' }}</td>
+                    @if (! $isJasa)
+                        <td>{{ $row->warehouse->name ?? '-' }}</td>
+                    @endif
                     <td>{{ $row->supplier->name ?? '-' }}</td>
                     <td class="right nowrap">Rp {{ number_format((float) ($row->price ?? 0), 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" class="center">Tidak ada data yang sesuai filter.</td>
+                    <td colspan="{{ $colCount }}" class="center">Tidak ada data yang sesuai filter.</td>
                 </tr>
             @endforelse
         </tbody>

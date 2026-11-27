@@ -58,7 +58,7 @@ class MaintenanceService
     public function findAll()
     {
         return $this->service->with([
-            'fleet',
+            'fleet.company',
             'details',
             'details.item',
         ])->latest();
@@ -67,7 +67,7 @@ class MaintenanceService
     public function datatable()
     {
         return $this->service->with([
-            'fleet',
+            'fleet.company',
             'warehouse',
             'purchases',
             'details',
@@ -269,7 +269,7 @@ class MaintenanceService
 
                     // Reset semua qty FIFO ke 0 (opsional jika kamu ingin audit)
                     MaintenanceFifo::query()->where('maintenanceDetailCode', $md->code)
-                            ->update(['qty' => 0]);
+                        ->update(['qty' => 0]);
 
                     // Reset stockOut hanya jika BUKAN jasa
                     if (! $isJasa) {

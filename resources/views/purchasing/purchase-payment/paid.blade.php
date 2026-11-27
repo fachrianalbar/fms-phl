@@ -266,6 +266,24 @@
                 $('#export-pdf').attr('href', "{{ route('purchasing.purchase-payment.paid.export-pdf') }}" + query);
             }
 
+            function formatCurrency(value) {
+                return 'Rp ' + new Intl.NumberFormat('id-ID', {
+                    maximumFractionDigits: 0
+                }).format(Math.round(Number(value) || 0));
+            }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+                    return {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[character];
+                });
+            }
+
             function swalLoader(title, html) {
                 return Swal.fire({
                     title: title,
@@ -322,7 +340,20 @@
                     "className": 'align-middle',
                     "orderable": false,
                     "searchable": true,
-                    "render": function (data) {
+                    "render": function (data, type, row) {
+                        const breakdown = (row && Array.isArray(row.vehicleBreakdown)) ? row.vehicleBreakdown : [];
+                        if (breakdown.length > 1) {
+                            return '<div class="d-flex flex-column gap-1">' + breakdown.map(function (v) {
+                                const badgeClass = v.is_stock
+                                    ? 'badge bg-light text-muted border font-monospace fs-11'
+                                    : 'badge bg-secondary-subtle text-secondary-emphasis font-monospace fs-11';
+                                const amt = Math.max(0, Number(v.paid_amount != null ? v.paid_amount : v.billing_amount) || 0);
+                                return '<div class="d-flex align-items-center gap-1">'
+                                    + '<span class="' + badgeClass + '">' + escapeHtml(v.plate_number || '-') + '</span>'
+                                    + '<span class="font-monospace fs-11 text-success">· ' + formatCurrency(amt) + '</span>'
+                                    + '</div>';
+                            }).join('') + '</div>';
+                        }
                         if (!data || data === '-') {
                             return '<span class="text-muted">-</span>';
                         }
