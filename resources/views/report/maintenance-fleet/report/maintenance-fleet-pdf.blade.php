@@ -75,6 +75,8 @@
         $grandMaintenance = 0;
         $grandQty = 0;
         $grandCost = 0;
+        $grandDue = 0;
+        $grandDebt = 0;
     @endphp
 
     <div class="container">
@@ -90,12 +92,14 @@
             <thead>
                 <tr>
                     <th>No</th>
-                    <th>Plate Number</th>
-                    <th>Fleet Company</th>
+                    <th>No Polisi</th>
+                    <th>Perusahaan</th>
                     <th>Type</th>
-                    <th>Total Maintenance</th>
+                    <th>Total Maint</th>
                     <th>Total Qty</th>
-                    <th>Total Cost</th>
+                    <th>Total Pembayaran</th>
+                    <th>Utang Jth Tempo</th>
+                    <th>Total Utang</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,6 +108,8 @@
                         $grandMaintenance += (float) $row->totalMaintenance;
                         $grandQty += (float) $row->totalQty;
                         $grandCost += (float) $row->totalCost;
+                        $grandDue += (float) $row->utangJatuhTempo;
+                        $grandDebt += (float) $row->totalUtang;
                     @endphp
                     <tr>
                         <td>{{ $loop->iteration }}</td>
@@ -113,10 +119,12 @@
                         <td>{{ number_format((float) $row->totalMaintenance, 0, ',', '.') }}</td>
                         <td>{{ number_format((float) $row->totalQty, 1, ',', '.') }}</td>
                         <td class="text-right">Rp {{ number_format((float) $row->totalCost, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format((float) $row->utangJatuhTempo, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format((float) $row->totalUtang, 0, ',', '.') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7">No data found</td>
+                        <td colspan="9">No data found</td>
                     </tr>
                 @endforelse
 
@@ -125,6 +133,8 @@
                     <td>{{ number_format($grandMaintenance, 0, ',', '.') }}</td>
                     <td>{{ number_format($grandQty, 1, ',', '.') }}</td>
                     <td class="text-right">Rp {{ number_format($grandCost, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($grandDue, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($grandDebt, 0, ',', '.') }}</td>
                 </tr>
             </tbody>
         </table>

@@ -117,11 +117,20 @@ class MenuSeeder extends Seeder
 
         // ── REPORT ────────────────────────────────────────────────────────
         ['code' => 'ORDER_DETAIL', 'name' => 'Order Detail', 'nama' => 'Detail Order', 'parentCode' => 'REPORT', 'url' => 'report/order-detail', 'sort' => 1],
-        ['code' => 'PROFIT_LOSS', 'name' => 'Profit & Loss', 'nama' => 'Laba & Rugi', 'parentCode' => 'REPORT', 'url' => 'report/profit-loss', 'sort' => 2],
-        ['code' => 'DRIVER_SALARY', 'name' => 'Driver Salary', 'nama' => 'Gaji Sopir', 'parentCode' => 'REPORT', 'url' => 'report/driver-salary', 'sort' => 3],
-        ['code' => 'MAINTENANCE_FLEET', 'name' => 'Maintenance Per Fleet', 'nama' => 'Perawatan Per Armada', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-fleet', 'sort' => 4],
-        ['code' => 'MAINTENANCE_COMPANY', 'name' => 'Maintenance Per Fleet Company', 'nama' => 'Perawatan Per Perusahaan', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-company-internal', 'sort' => 5],
-        ['code' => 'RECEIVABLE_AGING', 'name' => 'Receivable Aging', 'nama' => 'Umur Piutang', 'parentCode' => 'REPORT', 'url' => 'report/receivable-aging', 'sort' => 6],
+        ['code' => 'OVERALL_REPORT', 'name' => 'Overall Report', 'nama' => 'Laporan Keseluruhan', 'parentCode' => 'REPORT', 'url' => 'report/overall', 'sort' => 2],
+        ['code' => 'PROFIT_LOSS', 'name' => 'Profit & Loss', 'nama' => 'Laba & Rugi', 'parentCode' => 'REPORT', 'url' => 'report/profit-loss', 'sort' => 3],
+        ['code' => 'DRIVER_SALARY', 'name' => 'Driver Salary', 'nama' => 'Gaji Sopir', 'parentCode' => 'REPORT', 'url' => 'report/driver-salary', 'sort' => 4],
+        ['code' => 'COMMISSION_REPORT', 'name' => 'Commission Report', 'nama' => 'Laporan Komisi', 'parentCode' => 'REPORT', 'url' => 'report/commission', 'sort' => 5],
+        ['code' => 'OMSET_REPORT', 'name' => 'Turnover Report', 'nama' => 'Laporan Omset', 'parentCode' => 'REPORT', 'url' => 'report/omset', 'sort' => 6],
+        ['code' => 'MAINTENANCE_FLEET', 'name' => 'Maintenance Per Fleet', 'nama' => 'Perawatan Per Armada', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-fleet', 'sort' => 7],
+        ['code' => 'MAINTENANCE_SUPPLIER', 'name' => 'Maintenance Per Supplier', 'nama' => 'Perawatan Per Suplier', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-supplier', 'sort' => 8],
+        ['code' => 'MAINTENANCE_COMPANY', 'name' => 'Maintenance Per Fleet Company', 'nama' => 'Perawatan Per Perusahaan', 'parentCode' => 'REPORT', 'url' => 'report/maintenance-company-internal', 'sort' => 9],
+        ['code' => 'RECEIVABLE_AGING', 'name' => 'Receivable Aging', 'nama' => 'Umur Piutang', 'parentCode' => 'REPORT', 'url' => 'report/receivable-aging', 'sort' => 10],
+        ['code' => 'FACTORY_TAX_REPORT', 'name' => 'Factory Tax Report', 'nama' => 'Laporan Pajak Pabrik', 'parentCode' => 'REPORT', 'url' => 'report/factory-tax', 'sort' => 11],
+        ['code' => 'VENDOR_TAX_REPORT', 'name' => 'Vendor Tax Report', 'nama' => 'Laporan Pajak Vendor', 'parentCode' => 'REPORT', 'url' => 'report/vendor-tax', 'sort' => 12],
+        ['code' => 'FREIGHT_RATE_REPORT', 'name' => 'Freight Rate List', 'nama' => 'Daftar Ongkos Angkut', 'parentCode' => 'REPORT', 'url' => 'report/freight-rates', 'sort' => 13],
+        ['code' => 'ITEM_PRICE_REPORT', 'name' => 'Item Price List', 'nama' => 'Daftar Harga Barang', 'parentCode' => 'REPORT', 'url' => 'report/item-prices', 'sort' => 14],
+        ['code' => 'DRIVER_LIST_REPORT', 'name' => 'Driver List', 'nama' => 'Daftar Supir', 'parentCode' => 'REPORT', 'url' => 'report/drivers', 'sort' => 15],
 
         // ── ADMINISTRATOR ─────────────────────────────────────────────────
         ['code' => 'USER', 'name' => 'User', 'nama' => 'Pengguna', 'parentCode' => 'ADMINISTRATOR', 'url' => 'administrator/user', 'sort' => 1],

@@ -19,6 +19,7 @@ class FleetCompany extends Model
     protected $fillable = [
         'code',
         'name',
+        'npwp',
         'type',
         'companyCode',
         'address',

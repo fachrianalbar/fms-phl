@@ -2,6 +2,7 @@
 
 namespace App\Models\Finance;
 
+use App\Models\Mutation;
 use App\Models\Operational\Order;
 use App\Traits\Uuid;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +35,15 @@ class VendorPayment extends Model
         'claim_amount',
         'description',
         'date',
+        'tax_invoice_number',
+        'withholding_tax_number',
+        'withholding_tax_amount',
+        'withholding_tax_date',
+    ];
+
+    protected $casts = [
+        'withholding_tax_amount' => 'decimal:2',
+        'withholding_tax_date' => 'date',
     ];
 
     public function order()
@@ -43,11 +53,11 @@ class VendorPayment extends Model
 
     public function mutation()
     {
-        return $this->hasOne(\App\Models\Mutation::class, 'transactionTypeCode', 'code');
+        return $this->hasOne(Mutation::class, 'transactionTypeCode', 'code');
     }
 
     public function paymentHistory()
     {
-        return $this->hasMany(\App\Models\Finance\VendorPaymentHistory::class, 'vendor_payment_id', 'id');
+        return $this->hasMany(VendorPaymentHistory::class, 'vendor_payment_id', 'id');
     }
 }

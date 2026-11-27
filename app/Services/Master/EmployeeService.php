@@ -61,7 +61,7 @@ class EmployeeService
         $employee->status = $newStatus;
         $employee->save();
 
-        $this->logActivity($title, $employee, 'After Toggle Status: ' . ($newStatus === 1 ? 'Aktif' : 'Nonaktif'));
+        $this->logActivity($title, $employee, 'After Toggle Status: '.($newStatus === 1 ? 'Aktif' : 'Nonaktif'));
 
         return $employee;
     }
@@ -73,8 +73,9 @@ class EmployeeService
 
     public function store($request, $title)
     {
-        $data = $request->all();
+        $data = $request->only($this->service->getFillable());
         $data['code'] = GenerateCode::generateCode('TE');
+        $data['sim'] = isset($data['sim']) && trim((string) $data['sim']) !== '' ? trim((string) $data['sim']) : null;
         $result = $this->service->create($data);
 
         $this->logActivity($title, $result, 'Create');
@@ -84,9 +85,10 @@ class EmployeeService
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
-        $data = $request->all();
-        unset($data['_token']);
-        unset($data['_method']);
+        $data = $request->only($this->service->getFillable());
+        if (array_key_exists('sim', $data)) {
+            $data['sim'] = trim((string) $data['sim']) !== '' ? trim((string) $data['sim']) : null;
+        }
         $this->service->where('id', $id)->update($data);
 
         $this->logActivity($title, $this->getById($id), 'After Update');

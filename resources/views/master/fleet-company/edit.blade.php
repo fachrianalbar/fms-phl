@@ -31,6 +31,12 @@
                             placeholder="{{ __('menu_fleet_company.name') }}" value="{{ $data->name }}">
                     </div>
 
+                    <div class="col-md-12">
+                        <label class="form-label" for="npwp">NPWP</label>
+                        <input class="form-control" name="npwp" id="npwp" type="text" maxlength="50"
+                            placeholder="Contoh: 01.234.567.8-901.000" value="{{ $data->npwp ?? '' }}">
+                    </div>
+
                     <div class="col-md-12 position-relative">
                         <label class="form-label" for="type"> {{ __('menu_fleet_company.type') }} <i
                                 class="mdi mdi-information text-danger"></i></label>

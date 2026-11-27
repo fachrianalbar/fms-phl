@@ -44,6 +44,7 @@
 
         // Inventory & Gudang
         'inventory/items' => 'mdi-package-variant-closed',
+        'inventory/jasa' => 'mdi-wrench-cog-outline',
         'inventory/item-category' => 'mdi-tag-multiple-outline',
         'inventory/item-unit' => 'mdi-counter',
         'inventory/warehouse' => 'mdi-warehouse',
@@ -82,13 +83,20 @@
 
         // Report
         'report/order-detail' => 'mdi-chart-bar',
+        'report/overall' => 'mdi-table-large',
         'report/profit-loss' => 'mdi-finance',
         'report/driver-salary' => 'mdi-cash',
         'report/commission' => 'mdi-cash-multiple',
         'report/omset' => 'mdi-trending-up',
         'report/maintenance-fleet' => 'mdi-wrench-clock',
+        'report/maintenance-supplier' => 'mdi-store-cog-outline',
         'report/maintenance-company-internal' => 'mdi-domain',
         'report/receivable-aging' => 'mdi-account-cash-outline',
+        'report/factory-tax' => 'mdi-file-chart-outline',
+        'report/vendor-tax' => 'mdi-file-percent-outline',
+        'report/freight-rates' => 'mdi-map-marker-distance',
+        'report/item-prices' => 'mdi-tag-text-outline',
+        'report/drivers' => 'mdi-account-tie-hat-outline',
     ];
 @endphp
 

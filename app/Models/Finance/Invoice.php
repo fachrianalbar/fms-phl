@@ -43,6 +43,10 @@ class Invoice extends Model
         'pphBaseAmount',
         'customerCode',
         'status',
+        'tax_invoice_number',
+        'withholding_tax_number',
+        'withholding_tax_amount',
+        'withholding_tax_date',
     ];
 
     protected $casts = [
@@ -57,6 +61,8 @@ class Invoice extends Model
         'pphRate' => 'float',
         'pphBaseAmount' => 'integer',
         'status' => 'integer',
+        'withholding_tax_amount' => 'decimal:2',
+        'withholding_tax_date' => 'date',
     ];
 
     public function customer()

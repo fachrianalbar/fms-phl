@@ -29,8 +29,8 @@
                         <div class="col-md-6">
                             <label class="form-label" for="name">Name <i
                                     class="mdi mdi-information text-danger"></i></label>
-                            <input class="form-control" name="name" id="name" type="text"
-                                placeholder="Employee Name" value="{{ $data->name }}" required>
+                            <input class="form-control" name="name" id="name" type="text" placeholder="Employee Name"
+                                value="{{ $data->name }}" required>
                         </div>
 
                         <div class="col-md-6 position-relative">
@@ -39,8 +39,8 @@
                             <select class="js-example-basic-single" name="positionCode" id="positionCode" required>
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...</option>
                                 @foreach ($position as $item)
-                                    <option value="{{ $item->code }}"
-                                        {{ $data->positionCode == $item->code ? 'selected' : '' }}>{{ $item->name }}
+                                    <option value="{{ $item->code }}" {{ $data->positionCode == $item->code ? 'selected' : '' }}>
+                                        {{ $item->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -49,16 +49,22 @@
                     </div>
 
                     <div class="row mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="nik">NIK </label>
                             <input class="form-control" name="nik" id="nik" type="text" placeholder="NIK"
                                 value="{{ $data->nik }}">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="ktp">KTP </label>
                             <input class="form-control" name="ktp" id="ktp" type="number" placeholder="KTP"
                                 value="{{ $data->ktp }}">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="sim">No. SIM </label>
+                            <input class="form-control" name="sim" id="sim" type="text" maxlength="50" placeholder="No. SIM"
+                                value="{{ $data->sim }}">
                         </div>
                     </div>
 
@@ -116,8 +122,8 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($province as $item)
-                                    <option value="{{ $item->id }}"
-                                        {{ $data->provinceId == $item->id ? 'selected' : '' }}>{{ $item->name }}
+                                    <option value="{{ $item->id }}" {{ $data->provinceId == $item->id ? 'selected' : '' }}>
+                                        {{ $item->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -130,8 +136,8 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($city as $item)
-                                    <option value="{{ $item->id }}"
-                                        {{ $data->cityId == $item->id ? 'selected' : '' }}>{{ $item->name }}
+                                    <option value="{{ $item->id }}" {{ $data->cityId == $item->id ? 'selected' : '' }}>
+                                        {{ $item->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -145,8 +151,8 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($district as $item)
-                                    <option value="{{ $item->id }}"
-                                        {{ $data->districtId == $item->id ? 'selected' : '' }}>{{ $item->name }}
+                                    <option value="{{ $item->id }}" {{ $data->districtId == $item->id ? 'selected' : '' }}>
+                                        {{ $item->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -154,7 +160,8 @@
 
                         <div class="col-md-6">
                             <label class="form-label" for="address">Address </label>
-                            <textarea class="form-control" name="address" id="address" placeholder=" Address" rows="4">{{ $data->address }}</textarea>
+                            <textarea class="form-control" name="address" id="address" placeholder=" Address"
+                                rows="4">{{ $data->address }}</textarea>
                         </div>
                     </div>
 
@@ -165,8 +172,9 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($gender as $item)
-                                    <option value="{{ $item->value }}"
-                                        {{ $data->gender == $item->value ? 'selected' : '' }}>{{ $item->value }}</option>
+                                    <option value="{{ $item->value }}" {{ $data->gender == $item->value ? 'selected' : '' }}>
+                                        {{ $item->value }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -177,8 +185,8 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($citizenship as $item)
-                                    <option value="{{ $item->value }}"
-                                        {{ $data->citizenship == $item->value ? 'selected' : '' }}>{{ $item->value }}
+                                    <option value="{{ $item->value }}" {{ $data->citizenship == $item->value ? 'selected' : '' }}>
+                                        {{ $item->value }}
                                     </option>
                                 @endforeach
                             </select>
@@ -194,8 +202,7 @@
                                 <option selected="" disabled="" value="">{{ __('general.choose') }}...
                                 </option>
                                 @foreach ($bank as $item)
-                                    <option value="{{ $item->code }}"
-                                        {{ $data->bankCode == $item->code ? 'selected' : '' }}>
+                                    <option value="{{ $item->code }}" {{ $data->bankCode == $item->code ? 'selected' : '' }}>
                                         {{ $item->bankCode }} - {{ $item->name }}
                                     </option>
                                 @endforeach
@@ -216,7 +223,8 @@
                                 <option value="1" {{ (int) $data->status === 1 ? 'selected' : '' }}>Aktif</option>
                                 <option value="0" {{ (int) $data->status === 0 ? 'selected' : '' }}>Nonaktif</option>
                             </select>
-                            <small class="text-muted">Supir nonaktif tidak akan muncul pada penugasan armada dan order operasional.</small>
+                            <small class="text-muted">Supir nonaktif tidak akan muncul pada penugasan armada dan order
+                                operasional.</small>
                         </div>
                     </div>
 
@@ -242,7 +250,7 @@
             $('#cityId').html(html)
             $('#districtId').html(html)
 
-            $.get("{{ url('ajax/city-by-province') }}/" + id, function(data) {
+            $.get("{{ url('ajax/city-by-province') }}/" + id, function (data) {
                 data.forEach(i => {
                     html += '<option value="' + i.id + '">' + i.name + '</option>'
                 });
@@ -255,7 +263,7 @@
 
             $('#districtId').html(html)
 
-            $.get("{{ url('ajax/district-by-city') }}/" + id, function(data) {
+            $.get("{{ url('ajax/district-by-city') }}/" + id, function (data) {
 
                 data.forEach(i => {
                     html += '<option value="' + i.id + '">' + i.name + '</option>'

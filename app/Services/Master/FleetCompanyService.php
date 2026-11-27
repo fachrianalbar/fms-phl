@@ -39,8 +39,10 @@ class FleetCompanyService
 
     public function store($request, $title)
     {
+        $npwp = trim((string) $request->npwp);
         $data = $this->service->create([
             'name' => $request->name,
+            'npwp' => $npwp !== '' ? $npwp : null,
             'type' => $request->type,
             'companyCode' => $request->companyCode,
             'accountNumber' => $request->accountNumber,
@@ -56,8 +58,10 @@ class FleetCompanyService
     {
         $this->logActivity($title, $this->getById($id), 'Before Update');
 
+        $npwp = trim((string) $request->npwp);
         $this->service->where('id', $id)->update([
             'name' => $request->name,
+            'npwp' => $npwp !== '' ? $npwp : null,
             'type' => $request->type,
             'companyCode' => $request->companyCode,
             'accountNumber' => $request->accountNumber,

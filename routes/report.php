@@ -1,14 +1,21 @@
 <?php
 
 use App\Http\Controllers\Report\CommissionReportController;
+use App\Http\Controllers\Report\DriverReportController;
 use App\Http\Controllers\Report\DriverSalaryController;
+use App\Http\Controllers\Report\FactoryTaxController;
+use App\Http\Controllers\Report\FreightRateReportController;
+use App\Http\Controllers\Report\ItemPriceReportController;
 use App\Http\Controllers\Report\MaintenancePerCompanyController;
 use App\Http\Controllers\Report\MaintenancePerFleetController;
+use App\Http\Controllers\Report\MaintenancePerSupplierController;
 use App\Http\Controllers\Report\OmsetReportController;
 use App\Http\Controllers\Report\OrderDetailController;
+use App\Http\Controllers\Report\OverallReportController;
 use App\Http\Controllers\Report\ProfitLossController;
 use App\Http\Controllers\Report\ReceivableAgingController;
 use App\Http\Controllers\Report\SupplierPurchaseController;
+use App\Http\Controllers\Report\VendorTaxController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('report')->name('report.')->group(function () {
@@ -45,6 +52,12 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('pdf-maintenance-fleet', [MaintenancePerFleetController::class, 'pdfMaintenanceFleet'])->name('maintenance-fleet.pdf-maintenance-fleet');
     Route::get('excel-maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'excelMaintenanceFleetDetail'])->name('maintenance-fleet.excel-maintenance-fleet-detail');
     Route::get('pdf-maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'pdfMaintenanceFleetDetail'])->name('maintenance-fleet.pdf-maintenance-fleet-detail');
+    Route::get('maintenance-supplier', [MaintenancePerSupplierController::class, 'index'])->name('maintenance-supplier.index');
+    Route::get('maintenance-supplier/detail/{supplierCode}', [MaintenancePerSupplierController::class, 'detail'])->name('maintenance-supplier.detail');
+    Route::get('excel-maintenance-supplier', [MaintenancePerSupplierController::class, 'excelMaintenanceSupplier'])->name('maintenance-supplier.excel-maintenance-supplier');
+    Route::get('pdf-maintenance-supplier', [MaintenancePerSupplierController::class, 'pdfMaintenanceSupplier'])->name('maintenance-supplier.pdf-maintenance-supplier');
+    Route::get('excel-maintenance-supplier-detail/{supplierCode}', [MaintenancePerSupplierController::class, 'excelMaintenanceSupplierDetail'])->name('maintenance-supplier.excel-maintenance-supplier-detail');
+    Route::get('pdf-maintenance-supplier-detail/{supplierCode}', [MaintenancePerSupplierController::class, 'pdfMaintenanceSupplierDetail'])->name('maintenance-supplier.pdf-maintenance-supplier-detail');
     Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'index'])->name('maintenance-company-internal.index');
     Route::get('maintenance-company-internal/detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'detail'])->name('maintenance-company-internal.detail');
     Route::get('excel-maintenance-company-internal', [MaintenancePerCompanyController::class, 'excelMaintenanceCompany'])->name('maintenance-company-internal.excel');
@@ -60,6 +73,32 @@ Route::prefix('report')->name('report.')->group(function () {
     Route::get('receivable-aging/detail/{customerCode}', [ReceivableAgingController::class, 'detail'])->name('receivable-aging.detail');
     Route::get('excel-receivable-aging', [ReceivableAgingController::class, 'excel'])->name('receivable-aging.excel');
     Route::get('pdf-receivable-aging', [ReceivableAgingController::class, 'pdf'])->name('receivable-aging.pdf');
+
+    Route::get('drivers', [DriverReportController::class, 'index'])->name('drivers.index');
+    Route::get('excel-drivers', [DriverReportController::class, 'exportExcel'])->name('drivers.excel');
+    Route::get('pdf-drivers', [DriverReportController::class, 'exportPdf'])->name('drivers.pdf');
+
+    Route::get('freight-rates', [FreightRateReportController::class, 'index'])->name('freight-rates.index');
+    Route::get('excel-freight-rates', [FreightRateReportController::class, 'exportExcel'])->name('freight-rates.excel');
+    Route::get('pdf-freight-rates', [FreightRateReportController::class, 'exportPdf'])->name('freight-rates.pdf');
+
+    Route::get('item-prices', [ItemPriceReportController::class, 'index'])->name('item-prices.index');
+    Route::get('excel-item-prices', [ItemPriceReportController::class, 'exportExcel'])->name('item-prices.excel');
+    Route::get('pdf-item-prices', [ItemPriceReportController::class, 'exportPdf'])->name('item-prices.pdf');
+
+    Route::get('factory-tax', [FactoryTaxController::class, 'index'])->name('factory-tax.index');
+    Route::post('factory-tax/{id}/tax-info', [FactoryTaxController::class, 'updateTaxInfo'])->name('factory-tax.update-tax');
+    Route::get('excel-factory-tax', [FactoryTaxController::class, 'exportExcel'])->name('factory-tax.excel');
+    Route::get('pdf-factory-tax', [FactoryTaxController::class, 'exportPdf'])->name('factory-tax.pdf');
+
+    Route::get('vendor-tax', [VendorTaxController::class, 'index'])->name('vendor-tax.index');
+    Route::post('vendor-tax/{id}/tax-info', [VendorTaxController::class, 'updateTaxInfo'])->name('vendor-tax.update-tax');
+    Route::get('excel-vendor-tax', [VendorTaxController::class, 'exportExcel'])->name('vendor-tax.excel');
+    Route::get('pdf-vendor-tax', [VendorTaxController::class, 'exportPdf'])->name('vendor-tax.pdf');
+
+    Route::get('overall', [OverallReportController::class, 'index'])->name('overall.index');
+    Route::get('excel-overall', [OverallReportController::class, 'exportExcel'])->name('overall.excel');
+    Route::get('pdf-overall', [OverallReportController::class, 'exportPdf'])->name('overall.pdf');
 });
 
 Route::prefix('datatable')->name('dt.')->group(function () {
@@ -76,12 +115,20 @@ Route::prefix('datatable')->name('dt.')->group(function () {
     Route::get('order-detail', [OrderDetailController::class, 'datatable'])->name('order-detail');
     Route::get('maintenance-fleet', [MaintenancePerFleetController::class, 'datatable'])->name('maintenance-fleet');
     Route::get('maintenance-fleet-detail/{fleetCode}', [MaintenancePerFleetController::class, 'datatableDetail'])->name('maintenance-fleet-detail');
+    Route::get('maintenance-supplier', [MaintenancePerSupplierController::class, 'datatable'])->name('maintenance-supplier');
+    Route::get('maintenance-supplier-detail/{supplierCode}', [MaintenancePerSupplierController::class, 'datatableDetail'])->name('maintenance-supplier-detail');
     Route::get('maintenance-company-internal', [MaintenancePerCompanyController::class, 'datatable'])->name('maintenance-company-internal');
     Route::get('maintenance-company-internal-detail/{fleetCompanyCode}', [MaintenancePerCompanyController::class, 'datatableDetail'])->name('maintenance-company-internal-detail');
     Route::get('report-supplier', [SupplierPurchaseController::class, 'datatable'])->name('report-supplier');
     Route::get('report-supplier-detail/{supplierCode}', [SupplierPurchaseController::class, 'datatableDetail'])->name('report-supplier-detail');
     Route::get('receivable-aging', [ReceivableAgingController::class, 'datatable'])->name('receivable-aging');
     Route::get('receivable-aging-detail/{customerCode}', [ReceivableAgingController::class, 'datatableDetail'])->name('receivable-aging-detail');
+    Route::get('report-drivers', [DriverReportController::class, 'datatable'])->name('report-drivers');
+    Route::get('report-freight-rates', [FreightRateReportController::class, 'datatable'])->name('report-freight-rates');
+    Route::get('report-item-prices', [ItemPriceReportController::class, 'datatable'])->name('report-item-prices');
+    Route::get('report-factory-tax', [FactoryTaxController::class, 'datatable'])->name('report-factory-tax');
+    Route::get('report-vendor-tax', [VendorTaxController::class, 'datatable'])->name('report-vendor-tax');
+    Route::get('report-overall', [OverallReportController::class, 'datatable'])->name('report-overall');
 });
 
 Route::prefix('ajax')->name('ajax.')->group(function () {

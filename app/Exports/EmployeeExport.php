@@ -3,17 +3,24 @@
 namespace App\Exports;
 
 use App\Services\Master\EmployeeService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use PhpOffice\PhpSpreadsheet\Cell\Cell;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class EmployeeExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
+class EmployeeExport extends DefaultValueBinder implements FromCollection, ShouldAutoSize, WithColumnFormatting, WithCustomValueBinder, WithHeadings, WithMapping, WithStyles
 {
     use Exportable;
 
@@ -35,6 +42,10 @@ class EmployeeExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             'No',
             'Kode',
             'Nama Karyawan',
+            'Tgl Masuk',
+            'NIK',
+            'SIM',
+            'Alamat',
             'No. Telepon',
             'Email',
             'Jabatan',
@@ -50,10 +61,34 @@ class EmployeeExport implements FromCollection, ShouldAutoSize, WithHeadings, Wi
             $this->rowNumber,
             $row->code ?: '-',
             $row->name ?: '-',
-            $row->phone ?: '-',
+            $row->joinDate ? Carbon::parse($row->joinDate)->format('d-m-Y') : '-',
+            $row->nik ? (string) $row->nik : '-',
+            $row->sim ? (string) $row->sim : '-',
+            $row->address ?: '-',
+            $row->phone ? (string) $row->phone : '-',
             $row->email ?: '-',
             $row->position?->name ?? '-',
             (int) $row->status === 1 ? 'Aktif' : 'Nonaktif',
+        ];
+    }
+
+    public function bindValue(Cell $cell, $value): bool
+    {
+        if (in_array($cell->getColumn(), ['E', 'F', 'H'], true) && $cell->getRow() > 1) {
+            $cell->setValueExplicit((string) $value, DataType::TYPE_STRING);
+
+            return true;
+        }
+
+        return parent::bindValue($cell, $value);
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'E' => NumberFormat::FORMAT_TEXT,
+            'F' => NumberFormat::FORMAT_TEXT,
+            'H' => NumberFormat::FORMAT_TEXT,
         ];
     }
 

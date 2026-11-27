@@ -25,6 +25,7 @@ use Yajra\DataTables\DataTables;
 class EmployeeController extends Controller
 {
     use RendersPdf;
+
     protected $service;
 
     protected $title;
@@ -104,6 +105,7 @@ class EmployeeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'positionCode' => 'required',
+            'sim' => 'nullable|string|max:50',
         ]);
         if ($validator->fails()) {
             return redirect()->route($this->view.'index')->with('fail', $validator->errors()->all()[0]);
@@ -168,6 +170,7 @@ class EmployeeController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'positionCode' => 'required',
+            'sim' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -213,13 +216,14 @@ class EmployeeController extends Controller
 
             $data = $this->service->findAllQuery($filters);
 
-            return Datatables::of($data)
+            return DataTables::of($data)
                 ->addIndexColumn()
                 ->editColumn('code', function ($row) {
                     return '<span class="fw-semibold text-dark font-monospace fs-12">'.e($row->code ?? '-').'</span>';
                 })
                 ->editColumn('name', function ($row) {
                     $phone = $row->phone ? '<div class="text-muted fs-11 mt-1"><i class="mdi mdi-phone-outline me-1"></i>'.e($row->phone).'</div>' : '';
+
                     return '<div class="fw-bold text-dark fs-13">'.e($row->name).'</div>'.$phone;
                 })
                 ->addColumn('position_badge', function ($row) {

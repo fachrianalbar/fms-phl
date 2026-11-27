@@ -45,14 +45,20 @@
                     </div>
 
                     <div class="row mt-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="nik">NIK </label>
                             <input class="form-control" name="nik" id="nik" type="text" placeholder="NIK">
                         </div>
 
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label" for="ktp">KTP </label>
                             <input class="form-control" name="ktp" id="ktp" type="number" placeholder="KTP">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="sim">No. SIM </label>
+                            <input class="form-control" name="sim" id="sim" type="text" maxlength="50"
+                                placeholder="No. SIM">
                         </div>
                     </div>
 
