@@ -19,6 +19,7 @@
     <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" type="text/css" id="app-style" />
     <!-- Sidebar custom style -->
     <link href="{{ asset('assets/css/sidebar-custom.css') }}" rel="stylesheet" type="text/css" />
+    <link href="{{ asset('assets/css/topbar-custom.css?v=20261127-2') }}" rel="stylesheet" type="text/css" />
 
     <!-- Icons -->
     <link href="{{ asset('assets/css/icons.min.css') }}" rel="stylesheet" type="text/css" />

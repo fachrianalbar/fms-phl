@@ -1,38 +1,52 @@
+@php
+    $phlUser = auth()->user();
+    $phlName = trim($phlUser->name ?? 'User');
+    $phlParts = array_values(array_filter(preg_split('/\s+/', $phlName)));
+    if (count($phlParts) >= 2) {
+        $phlInitials = strtoupper(substr($phlParts[0], 0, 1) . substr(end($phlParts), 0, 1));
+    } else {
+        $phlInitials = strtoupper(substr($phlParts[0] ?? 'U', 0, 2));
+    }
+    $phlPalette = [
+        ['#7669D3', '#6558C8'],
+        ['#2f9e8f', '#1f7a6d'],
+        ['#e08a3c', '#c96a1e'],
+        ['#4a7fd4', '#3563ad'],
+        ['#d45a7a', '#b23a5c'],
+        ['#5aa24a', '#3f7d34'],
+    ];
+    $phlColor = $phlPalette[crc32($phlName) % count($phlPalette)];
+    $phlAvatarStyle = "background: linear-gradient(135deg, {$phlColor[0]}, {$phlColor[1]});";
+    $phlRoleName = $phlUser->role?->name;
+@endphp
 <div class="topbar-custom">
     <div class="container-fluid">
         <div class="d-flex justify-content-between">
             <ul class="list-unstyled topnav-menu mb-0 d-flex align-items-center">
                 <li>
-                    <button class="button-toggle-menu nav-link">
+                    <button class="button-toggle-menu phl-icon-btn" aria-label="Toggle menu">
                         <i data-feather="menu" class="noti-icon"></i>
                     </button>
                 </li>
                 <li class="d-none d-lg-block">
-                    <h5 class="mb-0">Hello {{ auth()->user()->name }}</h5>
+                    <div class="phl-greeting">
+                        <div class="phl-greeting-name"><span class="phl-greeting-hello">Hello,</span> {{ $phlName }}</div>
+                        <div class="phl-greeting-date">{{ now()->translatedFormat('l, d F Y') }}</div>
+                    </div>
                 </li>
             </ul>
 
             <ul class="list-unstyled topnav-menu mb-0 d-flex align-items-center">
-                {{-- <li class="d-none d-lg-block">
-                    <form class="app-search d-none d-md-block me-auto">
-                        <div class="position-relative topbar-search">
-                            <input type="text" class="form-control ps-4" placeholder="Search..." />
-                            <i
-                                class="mdi mdi-magnify fs-16 position-absolute text-muted top-50 translate-middle-y ms-2"></i>
-                        </div>
-                    </form>
-                </li> --}}
-
                 <!-- Button Trigger Customizer Offcanvas -->
                 <li class="d-none d-sm-flex">
-                    <button type="button" class="btn nav-link" data-toggle="fullscreen">
+                    <button type="button" class="phl-icon-btn" data-toggle="fullscreen" aria-label="Fullscreen">
                         <i data-feather="maximize" class="align-middle fullscreen noti-icon"></i>
                     </button>
                 </li>
 
                 <!-- Light/Dark Mode Button Themes -->
                 <li class="d-none d-sm-flex">
-                    <button type="button" class="btn nav-link" id="light-dark-mode">
+                    <button type="button" class="phl-icon-btn" id="light-dark-mode" aria-label="Toggle theme">
                         <i data-feather="moon" class="align-middle dark-mode"></i>
                         <i data-feather="sun" class="align-middle light-mode"></i>
                     </button>
@@ -40,10 +54,9 @@
 
                 {{-- Languange --}}
                 <li class="dropdown notification-list topbar-dropdown">
-                    <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
-                        role="button" aria-haspopup="false" aria-expanded="false">
+                    <a class="phl-icon-btn" data-bs-toggle="dropdown" href="#"
+                        role="button" aria-haspopup="false" aria-expanded="false" aria-label="Language">
                         <i data-feather="flag" class="align-middle fullscreen noti-icon"></i>
-
                     </a>
                     <div class="dropdown-menu dropdown-menu-end profile-dropdown">
                         <!-- item-->
@@ -70,53 +83,33 @@
                                 Indonesia
                             </button>
                         </form>
-
-
-                        <!-- item-->
-                        {{-- <a href="pages-profile.html" class="dropdown-item notify-item">
-                            <i class="mdi mdi-account-circle-outline fs-16 align-middle"></i>
-                            <span>My Account</span>
-                        </a>
-
-                        <!-- item-->
-                        <a href="auth-lock-screen.html" class="dropdown-item notify-item">
-                            <i class="mdi mdi-lock-outline fs-16 align-middle"></i>
-                            <span>Lock Screen</span>
-                        </a> --}}
-
-
-                        <!-- item-->
-                        {{-- <form action="{{ route('logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item notify-item">
-                                <i class="mdi mdi-location-exit fs-16 align-middle"></i>
-                                <span>Logout</span>
-                            </button>
-                        </form> --}}
-
                     </div>
                 </li>
 
                 <!-- User Dropdown -->
                 <li class="dropdown notification-list topbar-dropdown">
-                    <a class="nav-link dropdown-toggle nav-user me-0" data-bs-toggle="dropdown" href="#"
+                    <a class="nav-link dropdown-toggle phl-user-chip" data-bs-toggle="dropdown" href="#"
                         role="button" aria-haspopup="false" aria-expanded="false">
-                        <img src="{{ asset('assets/images/users/user-13.jpg') }}" alt="user-image"
-                            class="rounded-circle" />
-                        <span class="pro-user-name ms-1">{{ auth()->user()->name }} <i
-                                class="mdi mdi-chevron-down"></i></span>
+                        <span class="phl-avatar" style="{{ $phlAvatarStyle }}" aria-hidden="true">{{ $phlInitials }}</span>
+                        <span class="phl-user-meta">
+                            <span class="phl-user-name">{{ $phlName }}</span>
+                            @if ($phlRoleName)
+                                <span class="phl-user-role">{{ $phlRoleName }}</span>
+                            @endif
+                        </span>
+                        <i class="mdi mdi-chevron-down phl-user-chevron"></i>
                     </a>
                     <div class="dropdown-menu dropdown-menu-end profile-dropdown">
                         <!-- item-->
-                        <div class="dropdown-header noti-title">
-                            <h6 class="text-overflow m-0">Welcome !</h6>
+                        <div class="phl-dropdown-user">
+                            <span class="phl-avatar phl-avatar-lg" style="{{ $phlAvatarStyle }}" aria-hidden="true">{{ $phlInitials }}</span>
+                            <div>
+                                <div class="phl-dropdown-user-name">{{ $phlName }}</div>
+                                <div class="phl-dropdown-user-sub">{{ '@' . $phlUser->username }}{{ $phlRoleName ? ' · ' . $phlRoleName : '' }}</div>
+                            </div>
                         </div>
 
-                        <!-- item-->
-                        {{-- <a href="pages-profile.html" class="dropdown-item notify-item">
-                            <i class="mdi mdi-account-circle-outline fs-16 align-middle"></i>
-                            <span>My Account</span>
-                        </a> --}}
+                        <div class="dropdown-divider"></div>
 
                         <!-- item-->
                         <a href="{{ route('change-password.index') }}" class="dropdown-item notify-item">
@@ -134,7 +127,6 @@
                                 <span>Logout</span>
                             </button>
                         </form>
-
                     </div>
                 </li>
             </ul>
