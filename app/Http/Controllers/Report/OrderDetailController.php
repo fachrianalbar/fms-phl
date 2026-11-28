@@ -550,9 +550,15 @@ class OrderDetailController extends Controller
         $preparedRows = $this->reportService->prepareExportRows($orders);
         $totals = $this->reportService->computeGrandTotals($preparedRows);
 
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
         $mpdf = new Mpdf([
             'orientation' => 'L',
             'format' => 'A4',
+            'tempDir' => $tempDir,
         ]);
 
         $mpdf->setAutoTopMargin = 'stretch';

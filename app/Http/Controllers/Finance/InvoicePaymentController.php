@@ -190,9 +190,15 @@ class InvoicePaymentController extends Controller
         // Label dihitung dari seluruh pembayaran agar urutan DP/cicilan tetap benar
         $labels = $this->service->paymentLabels($this->service->datatable());
 
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
         $mpdf = new Mpdf([
             'orientation' => 'P',
             'format' => 'A4',
+            'tempDir' => $tempDir,
         ]);
 
         $mpdf->setAutoTopMargin = 'stretch';

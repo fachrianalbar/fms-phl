@@ -297,9 +297,15 @@ class NotReturnDoController extends Controller
     public function exportPdf(Request $request)
     {
         $orders = $this->filteredQuery($request)->get();
+        $tempDir = storage_path('app/mpdf-temp');
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+
         $pdf = new Mpdf([
             'orientation' => 'L',
             'format' => 'A4',
+            'tempDir' => $tempDir,
             'default_font' => 'sans-serif',
         ]);
 
