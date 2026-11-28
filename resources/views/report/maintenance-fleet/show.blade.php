@@ -144,6 +144,7 @@
                                 <th class="text-center">Tgl &amp; Jam</th>
                                 <th>Kode Item</th>
                                 <th>Nama Item</th>
+                                <th>Keterangan</th>
                                 <th>Supplier</th>
                                 <th class="text-end">Qty</th>
                                 <th class="text-end">Harga</th>
@@ -183,6 +184,7 @@
                     { data: 'maintenanceDate', className: 'text-center' },
                     { data: 'itemCode', className: 'font-monospace text-muted' },
                     { data: 'itemName', className: 'fw-medium' },
+                    { data: 'description', defaultContent: '-' },
                     { data: 'supplierName' },
                     { data: 'qty', className: 'text-end font-monospace' },
                     { data: 'price', className: 'text-end font-monospace' },

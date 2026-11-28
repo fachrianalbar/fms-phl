@@ -223,6 +223,7 @@
                             <input class="form-control font-monospace text-uppercase" name="plateNumber" id="plateNumber"
                                 type="text" placeholder="Contoh: B 1234 CD" value="{{ $data->plateNumber }}" required>
                             <input type="hidden" id="originalPlateNumber" value="{{ $data->plateNumber }}">
+                            <small class="text-muted d-block mt-1">Untuk <strong>hernopol / ganti plat</strong>: ubah nomor polisi di kolom ini, lalu isi alasan &amp; tanggal pergantian yang muncul di bawah. Riwayat plat lama → baru tercatat otomatis.</small>
                         </div>
 
                         <div class="col-md-6">

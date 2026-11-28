@@ -55,15 +55,15 @@
                     $grandDebt += (float) $row->totalUtang;
                 @endphp
                 <tr>
-                    <td style="text-align: center;">{{ $loop->iteration }}</td>
-                    <td style="text-align: center;">{{ $row->plateNumber }}</td>
-                    <td style="text-align: center;">{{ $row->fleetCompanyName ?: '-' }}</td>
-                    <td style="text-align: center;">{{ $row->fleetCompanyType ?: 'Internal' }}</td>
-                    <td style="text-align: center;">{{ number_format((float) $row->totalMaintenance, 0, ',', '.') }}</td>
-                    <td style="text-align: center;">{{ number_format((float) $row->totalQty, 1, ',', '.') }}</td>
-                    <td style="text-align: right;">{{ number_format((float) $row->totalCost, 0, ',', '.') }}</td>
-                    <td style="text-align: right;">{{ number_format((float) $row->utangJatuhTempo, 0, ',', '.') }}</td>
-                    <td style="text-align: right;">{{ number_format((float) $row->totalUtang, 0, ',', '.') }}</td>
+                    <td style="text-align: left;">{{ $loop->iteration }}</td>
+                    <td style="text-align: left;">{{ $row->plateNumber }}</td>
+                    <td style="text-align: left;">{{ $row->fleetCompanyName ?: '-' }}</td>
+                    <td style="text-align: left;">{{ $row->fleetCompanyType ?: 'Internal' }}</td>
+                    <td style="text-align: right; mso-number-format:#,##0;">{{ (float) $row->totalMaintenance }}</td>
+                    <td style="text-align: right; mso-number-format:#,##0.0;">{{ (float) $row->totalQty }}</td>
+                    <td style="text-align: right; mso-number-format:#,##0;">{{ (float) $row->totalCost }}</td>
+                    <td style="text-align: right; mso-number-format:#,##0;">{{ (float) $row->utangJatuhTempo }}</td>
+                    <td style="text-align: right; mso-number-format:#,##0;">{{ (float) $row->totalUtang }}</td>
                 </tr>
             @empty
                 <tr>
@@ -72,11 +72,11 @@
             @endforelse
             <tr>
                 <td colspan="4" style="text-align: right; font-weight: bold;">TOTAL</td>
-                <td style="text-align: center; font-weight: bold;">{{ number_format($grandMaintenance, 0, ',', '.') }}</td>
-                <td style="text-align: center; font-weight: bold;">{{ number_format($grandQty, 1, ',', '.') }}</td>
-                <td style="text-align: right; font-weight: bold;">{{ number_format($grandCost, 0, ',', '.') }}</td>
-                <td style="text-align: right; font-weight: bold;">{{ number_format($grandDue, 0, ',', '.') }}</td>
-                <td style="text-align: right; font-weight: bold;">{{ number_format($grandDebt, 0, ',', '.') }}</td>
+                <td style="text-align: right; font-weight: bold; mso-number-format:#,##0;">{{ $grandMaintenance }}</td>
+                <td style="text-align: right; font-weight: bold; mso-number-format:#,##0.0;">{{ $grandQty }}</td>
+                <td style="text-align: right; font-weight: bold; mso-number-format:#,##0;">{{ $grandCost }}</td>
+                <td style="text-align: right; font-weight: bold; mso-number-format:#,##0;">{{ $grandDue }}</td>
+                <td style="text-align: right; font-weight: bold; mso-number-format:#,##0;">{{ $grandDebt }}</td>
             </tr>
         </tbody>
     </table>

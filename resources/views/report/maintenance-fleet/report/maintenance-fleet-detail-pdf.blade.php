@@ -104,6 +104,7 @@
                     <th>Tgl &amp; Jam</th>
                     <th>Kode Item</th>
                     <th>Nama Item</th>
+                    <th>Keterangan</th>
                     <th>Supplier</th>
                     <th>Qty</th>
                     <th>Harga</th>
@@ -124,6 +125,7 @@
                         <td>{{ \Carbon\Carbon::parse($row->date)->format('d-m-Y') }} {{ \Carbon\Carbon::parse($row->time)->format('H:i') }}</td>
                         <td>{{ $row->itemCode }}</td>
                         <td>{{ $row->itemName ?: '-' }}</td>
+                        <td>{{ $row->description ?: '-' }}</td>
                         <td>{{ $row->supplierName ?: '-' }}</td>
                         <td>{{ number_format((float) $row->qty, 1, ',', '.') }}</td>
                         <td class="text-right">Rp {{ number_format((float) $row->price, 0, ',', '.') }}</td>
@@ -133,12 +135,12 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11">No data found</td>
+                        <td colspan="12">No data found</td>
                     </tr>
                 @endforelse
 
                 <tr class="bold">
-                    <td colspan="6" class="text-right">TOTAL ITEM USAGE</td>
+                    <td colspan="7" class="text-right">TOTAL ITEM USAGE</td>
                     <td>{{ number_format($detailTotalQty, 1, ',', '.') }}</td>
                     <td></td>
                     <td class="text-right">Rp {{ number_format($detailTotalCost, 0, ',', '.') }}</td>

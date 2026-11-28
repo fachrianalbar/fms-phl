@@ -147,6 +147,7 @@ class MaintenancePaymentStatusService
             'item.name as itemName',
             'maintenance_detail.qty',
             'maintenance_detail.price',
+            'maintenance_detail.description',
             DB::raw(self::LINE_AMOUNT.' as total'),
             DB::raw(self::SUPPLIER_CODE.' as supplierCode'),
             'supplier.name as supplierName',

@@ -9,10 +9,20 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
-class MaintenanceFleetDetailReport implements FromView, ShouldAutoSize
+class MaintenanceFleetDetailReport implements FromView, ShouldAutoSize, WithColumnFormatting
 {
     use Exportable;
+
+    public function columnFormats(): array
+    {
+        return [
+            'H' => '#,##0.0',
+            'I' => '#,##0',
+            'J' => '#,##0',
+        ];
+    }
 
     protected $request;
 
